@@ -1,0 +1,9 @@
+V1.14
+> Fixed some bug below:
+- Mobile cursor bug
+- Cursor movement bug
+- In-game song skip bug
+- Approach circle bug
+- Other bugs
+> Added 4 beatmapsets
+> Some small updates
