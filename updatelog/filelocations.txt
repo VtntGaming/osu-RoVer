@@ -1,1 +1,1 @@
-[["V1.14","main/updatelog/V1_14.txt"],["V1.13","main/updatelog/V1_13.txt"]]
+{"URL":"https://raw.githubusercontent.com/VtntGaming/osu-RoVer/","Location":[["V1.14","main/updatelog/V1_14.txt"],["V1.13","main/updatelog/V1_13.txt"]]}
