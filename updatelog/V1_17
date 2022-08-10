@@ -1,0 +1,10 @@
+V1.17
+
+-- Debug
+> Fixed skip song bug, currently work stable
+> Fixed some small updates
+
+-- Update
+> Added auto expoilt kick if found some suspicious detail from their play. All suspicious plays (which isn't submitted) will be sent to osu!rover server to the moderator to process
+> Some small updates
+> Added 6 beatmapsets
