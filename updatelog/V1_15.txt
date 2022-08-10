@@ -1,0 +1,12 @@
+V1.15
+
+-- Debug
+> Fixed mobile hit bug (Still on testing)
+> Fixed some small bugs
+
+-- Updates
+> Slider is now live, currently beta testing and unranked. Sliders will be ranked after beta testing.
+> Added more hitsounds to the note.
+> Added old cursor movement, this option will make your cursor position exactly with your roblox cursor (no using raw input)
+> Added beatmap sorting by difficulty
+> More small updates
