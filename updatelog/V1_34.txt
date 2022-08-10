@@ -1,0 +1,17 @@
+Got some fast-jump song in this update, gl FCing.
+The update includes:
+- Fixed some small bug in-game, and also added some effect update to the game as well.
+- Perfomance caculation could be a "little bit" changed compare to the previous version.
+
+- Added 8 Beatmaps [41 Difficulties]
+Yu Tokiwa - Shounen Ripples (Sotarks) [6 beatmaps]
+tokiwa yuu - shounen ripples (lahphnya) [1 beatmap]
+Nanahira - Chikatto Chika Chika (Agatsu) [7 beatmaps]
+DECO27 - Ghost Rule (Awaken) [11 beatmaps]
+Bliitzit - Team Magma & Aqua Leader Battle Theme (Unofficial) (Sotarks) [5 beatmaps]
+Shawn Wasabi - Marble Soda (Len) [5 beatmaps]
+DJ Mars - Lemon Tree (Lemon Dance Radio Edit) (waywern2012) [2 beatmaps]
+MAKOOTO - Tanukichi no Bouken (Teiz) [4 beatmaps]
+
+
+V1.34
