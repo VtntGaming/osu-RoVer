@@ -1,0 +1,50 @@
+osu!RoVer finally having a big update!
+- Multiplayer mode is now avaiable!
+- Fixed some in-game bug, reduced some lag in-game
+- New hit sound audio, from 4 simple audio now we have around 24 different hitsound.
+- Improved UI on some part, new game intro
+- Fixed some slider bug, slider transparment is now alvaiable (only if roblox release canvas group update)
+- Some new settings, removed some unused feature.
+- Adjustment to Perfomance Score, Hardrock will effect in-game PS and difficulty rating
+- New 39 beatmaps is now in the game (144 different diffitulties)
+Thaehan - Play (tom x tai) [3 beatmaps - Update]
+MISATO - Necro Fantasia (WORSTPOLACKEU) [1 beatmap]
+MISATO - Necro Fantasia (Chromoxx) [1 beatmap]
+Aitsuki Nakuru - Krewrap no uta (Settia) [1 beatmap]
+Cres - End Time (Kyshiro) [5 beatmaps]
+Kano - Stella-rium (Asterisk MAKINA Remix) (Vaporfly) [1 beatmap]
+IOSYS - Cirno's Perfect Math Class (Louis Cyphre) [4 beatmaps]
+yuikonnu - Heart no Atoaji (Fycho) [7 beatmaps]
+Rhapsody Of Fire - Master of Peace (Chanci) [1 beatmap]
+GYZE - HONESTY (emu1337) [1 beatmap]
+DJ Sharpnel - Back to the gate (Firika) [1 beatmap]
+Dragon Guardian - Tsuioku no Kuroki Makenshi ([Karcher]) [1 beatmap]
+SakiZ - osu!memories (Shmiklak) [2 beatmaps]
+Frederic - ONLYWONDER (n0ah) [2 beatmaps]
+Unlucky Morpheus - FAITH (Kyubey) [6 beatmaps]
+Unlucky Morpheus - FAITH (MakiDonalds) [5 beatmaps]
+Halozy - Genryuu Kaiko (Hollow Wings) [1 beatmap]
+9mm Parabellum Bullet - Inferno (Monstrata) [8 beatmaps]
+Kano - Dear Brave (Kowari) [6 beatmaps]
+MAXIMUM THE HORMONE - ChuChu Lovely MuniMuni MuraMura PrinPrin Boron Nururu ReroRero (Chiptune Cover) (Sotarks) [6 beatmaps]
+BLANKFIELD - Goodbye (Kyubey) [1 beatmap]
+Umeboshi Chazuke - Bison Charge (Nao Tomori) [8 beatmaps]
+Teminite & Panda Eyes - Highscore (TheBajanM) [1 beatmap]
+Kakichoco - Zan'ei (Lasse) [3 beatmaps]
+love solfege - Vanity Clock (Parachute) [2 beatmaps]
+katagiri - ch3rry (Short Ver.) (Inverse) [1 beatmap]
+Waterflame - Glorious Morning (None1637) [20 beatmaps]
+Himeringo - Ringo Uri no Utakata Shoujo (Half) [1 beatmap]
+yuikonnu - Yume Chizu (Speed Up Ver.) (ShogunMoon) [1 beatmap]
+Thaehan - Doki-Doki (Mr HeliX) [9 beatmaps]
+Thaehan - Doki-Doki (FrenZ396) [7 beatmaps]
+Thaehan - Superpower (Nozhomi) [5 beatmaps]
+Thaehan - Bwa ! (Sonnyc) [5 beatmaps]
+AngelMaker - A Dark Omen (Kyu96) [5 beatmaps]
+technoplanet - Juvenile (Astronic) [6 beatmaps]
+Kobaryo - Tool-Assisted Speedcore (TQBF Frame Advance RMX) (Mismagius) [1 beatmap]
+Kobaryo - Bookmaker (Mismagius) [1 beatmap]
+EBIMAYO - GOODBOUNCE (EmertxE) [3 beatmaps]
+Kobaryo - HUG AND KILL (Mismagius) [2 beatmaps]
+
+Stable V1.41 - Updated: June 28, 2022 23:30 GMT+7 (UTC+7)
