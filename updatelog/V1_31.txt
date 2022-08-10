@@ -1,0 +1,26 @@
+V1.31
+Got some interface update in this update:
+-- Bugfix
+Fixed perfomance chart making weird cut
+Fixed accuracy chart where it start at 0%
+Other small fix
+
+-- Game update
+Added ingame background image, some beatmap in the game is now have it.
+You can make the background invisible by go to [GameplaySettings] and set [Background dim Transparency] to 0
+Accuracy chart now have color which will display as below:
+- Cyan    >   SS
+- Yellow  >   S
+- Green   >   A
+- Blue    >   B
+- Purple  >   C
+- Red     >   D  
+Accuracy min value is now changed from 0% to 60%
+Added FPS count, it can be enabled in the settings
+Some other small update
+
+-- Added 4 beatmaps [26 difficulty]
+fripSide - black bullet (Julie) [5 beatmaps]
+fripSide - black bullet (TV Size) (Chloe) [6 beatmaps]
+DM DOKURO - SAVE (Encore) (browiec) [7 beatmaps]
+RetroSpecter - REVOLVANIA (Sanzu_Alternate) [8 beatmaps]
