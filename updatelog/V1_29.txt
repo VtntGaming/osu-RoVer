@@ -1,0 +1,18 @@
+--V1.29
+Got some update for today!
+-- Debug --
+> Fixed some small bug
+-- Update
+> Revamped HitError interface
+> HitError and Other interface such as Score, Acc, Combo, HitKey can be Disable or Enable in the settings
+> Sliders now have their reverse arrow, you can see it by turning on [Slider mode] in Settings.
+> Displaying Grade [Gameplay Rank] is now revamped, but not yet applied on the leaderboard.
+> Added new Accurancy and Perfomance Chart into the result, you can see it by completing a song.
+> New perfomance score system is working on progress, you can see it by turning on [New perfomance display] in the settings (You need to turn on [Display perfomance score]) to see this.
+
+
+-- Added 4 new beatmaps, with 15 new difficulties
+Carlito - Go Go Carlito (Who's That Boy) (saggi) [1 beatmap]
+Yamajet feat. Hiura Masako - Sunglow (Onlybiscuit) [1 beatmap]
+Aiurabu - KaniDo-Luck! (TV Size) (Azunyan-) [7 beatmaps]
+ColorsSlash - Colors Power ni Omakasero! (Log Off Now) [4 beatmaps]
