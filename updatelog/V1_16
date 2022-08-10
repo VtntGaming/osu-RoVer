@@ -1,0 +1,13 @@
+V1.16
+
+-- Debug
+> Fixed mobile hit bug (probaly?)
+> Decreased delay time loading for a leaderboard, player's play data will be reload only if their score changed.
+> Fixed some small bugs
+
+-- Update
+> New hit circle overlay
+> Added search option. You can search for a song name, artist, map creator, difficulty, tags, ect...
+> Other small updates
+
+-- Added 4 beatmapsets
