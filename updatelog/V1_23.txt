@@ -1,0 +1,24 @@
+Version: V1.23
+-- Debug
+Fixed spectate bug where it start spectating at the start
+Fixed bug that the game doesn't restart when you do Ctrl + Shift + R
+Decreased a little bit of time time taking to load leaderboard
+Fixed note goes miss when on spectate mode
+-- Update
+Made spectate cursor goes smoother (better internet connection required as well)
+Added spectate delay, more delay = more accurancy of the cursor depend on your connection
+New setting interface, added detail settings infomation. Move your mouse into any settings to see it infomation.
+Old score and circle overlay is back, you can turn it on in the settings
+
+
+-- Added 10 beatmapsets, with 50 beatmaps
+Komiya Mao - (can you) understand me (Sotarks) [5 beatmaps]
+Komiya Mao - (can you) understand me (Sotarks) [4 beatmaps - pack2]
+Komiya Mao - (can you) understand me (Revialink) [6 beatmaps]
+Komiya Mao - (can you) understand me (Okoratu) [8 beatmaps]
+Hanasaka Yui(CV M.A.O) - Harumachi Clover (Djulus) [6 beatmaps]
+Hanasaka Yui(CV M.A.O) - Harumachi Clover (lit120) [5 beatmaps]
+GYZE - HONESTY (Bibbity Bill) [1 beatmap]
+TUYU - Kuraberarekko (jonathanlfj) [4 beatmaps]
+TUYU - Kuraberarekko (TUYU Remix) (SnowNiNo_) [5 beatmaps]
+TUYU - Doro no Bunzai de Watashi dake no Taisetsu o Ubaouda nante (banter) [6 beatmaps]
