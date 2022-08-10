@@ -1,0 +1,18 @@
+-- Update V1.38 -- 
+Added bunch of gameplay update, containt:
++ Return button is now require hold for 1 second to return (Ctrl + R for instant)
++ Slider big fix (Timing, AT control, mass reverse slider fix, ect...)
++ Play screen area is now reduced from 0.9 > 0.8
++ In mobile mode, the area will increase 0.95x but no keyboard input will be accepted to hit the circle
++ Spinner rotate is now smoother
++ Beatmap choosing is now faster to load, beatmap transition is now smoother
++ In-Game leaderboard is now here, can show up to 100 players, work 90% like osu! leaderboard. You can turn this off if you don't want to get covered by the leaderboard (Leaderboard always off when on mobile with mobile mode enabled)
++ Some other bugfix/small updates
+
+Added 6 set of beatmaps [33 difficulties]:
+Ryu - Sakura Mirage (STARLiGHT Mix) (Jean-Michel Jr) [7 beatmaps]
+Ryu - Sakura Mirage (Priti) [7 beatmaps]
+Suzuyu - Euphorium (Dored) [7 beatmaps]
+Suzuyu - Euphorium (Flower) [7 beatmaps]
+Tanaka Hirokazu - C-TYPE (Arf) [10 beatmaps]
+Katagiri - Katagiri (waywern2012) [2 beatmaps]
