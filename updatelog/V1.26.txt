@@ -1,0 +1,17 @@
+-- V1.26 --
+-- The update including:
+-- Debug
+> Some small bugfix
+-- Update
+> Changed notelock style from osu!Stable to osu!Lazer, the note now can be clicked when there's still some previous notes which aren't cleared yet. (All of the previous note will auto miss)
+> Some small update
+
+
+-- Added new 7 beatmaps, with 36 new difficulties
+> Omoi - Teo (Kroytz) [7 beatmaps]
+> Frederic - oddloop (n0ah) [2 beatmaps]
+> Aitsuki Nakuru - Monochrome Butterfly (Sotarks) [7 beatmaps]
+> wowaka - World's End Dancehall (ROCKETMAN remix) (Ducky-) [2 beatmaps]
+> YOASOBI - Kaibutsu (TV Size) ([-Evil-]) [7 beatmaps]
+> Station Earth - Cold Green Eyes ft. Roos Denayer (Bearizm) [5 beatmaps]
+> Panda Eyes & Teminite - Immortal Flame (feat. Anna Yvette) (Sotarks) [8 beatmaps]
