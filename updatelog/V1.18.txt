@@ -1,0 +1,4 @@
+V1.18
+
+-- Debug
+> Fixed bug that people keep get kick for their plays
