@@ -1,0 +1,22 @@
+Version: V1.24
+
+-- Debug
+> Fixed some bug in the song selection
+> Fixed cursor bug
+> Some small fix
+-- Update
+> Added flashlight, you can set it in the settings, this mod give your score and your PS a multiplier of 1.12x.
+> New cursor on the menu, the style look like osu!lazer
+> Made the real roblox cursor moveable when a a play is finished
+> Updated gameplay result, you can now see online result, the 'Hi-Score' got replaced by the improvement on the [OnlineResult] screen
+> Added difficulty strike chart, you can now see which part of the map is going hard
+> Added perfomance score, worked depend on how you play the beatmap. If SS you could get a perfomance score by 10 - 14x of the beatmap difficulty. Working on a golbal leaderboard, will release soon.
+> You can now see total perfomance score in the roblox leaderstats, work exactly like osu perfomance point weight system
+> New difficulty rework
+> More small updates
+
+
+-- Added 3 beatmapsets, with 35 beatmaps
+xi - FREEDOM DiVE (elchxyrlia) [2 beatmaps]
+Luschka - Kami no Kotoba (byfar) [8 beatmaps]
+Turbo - PADORU  PADORU (Sotarks) [25 beatmaps]
