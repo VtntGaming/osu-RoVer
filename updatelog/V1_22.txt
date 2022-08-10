@@ -1,0 +1,14 @@
+Version: V1.22
+-- Debug
+> Fixed spectate bug, make it delayed a little bit (around 2000 ms) to make the spectate smoother
+> Fixed bug at the end of the play where you get lag when clicking
+
+-- Update
+> Some small updates
+
+-- Added 5 beatmapsets, with 24 beatmaps
+- Nanahoshi Kangengakudan - Rubik's Cube (Lego man) [6 beatmaps]
+- SOOOO - Happppy song (Kuron-kun) [1 beatmap]
+- Frederic - oddloop (Komore) [5 beatmaps]
+- MIMI feat. Hatsune Miku - Mizuoto to Curtain (Log Off Now) [6 beatmaps]
+- NayutalieN (Nhato Remix) - Alien Alien (Awlex) [6 beatmaps]
