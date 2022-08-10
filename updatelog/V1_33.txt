@@ -1,0 +1,19 @@
+Finally after very long time with some incident from roblox, an update is finally release.
+The update contain:
+- Fixed bug that you can't leave spectating someone
+- Circle overlay now can be hitted.
+- Cursor trail now can have it custom id, no more using default cursor for trail. You can check it in the skin customize settings
+- And some small bugfix, updates
+
+- Added 8 beatmaps [42 Difficulties]
+toby fox - MEGALOVANIA (Kyshiro) [7 beatmaps]
+Nakiri Ayame - Good-bye sengen (Mir) [7 beatmaps]
+Thaehan - Ohayou ! (Mafumafu) [5 beatmaps]
+Thaehan - Ohayou ! (Chanmann) [5 beatmaps]
+Thaehan - Ohayou ! (azamaki) [6 beatmaps]
+nano.RIPE - Hana no Iro (TV Size) (Irya) [5 beatmaps]
+Wake Up, May'n! - One In A Billion (A r M i N) [4 beatmaps]
+AliA - Kakurenbo (L1gHT_u) [3 beatmaps]
+
+
+V1.33
