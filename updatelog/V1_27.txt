@@ -1,0 +1,17 @@
+-- V1.27 --
+-- The update including:
+-- Debug --
+> Fixed some bug making the note can't be press after the spinner
+
+> Fixed some small hit bug on osu!New notelock system
+
+-- Update --
+> Perfomance display now can be saved to roblox
+
+> osu!Stable notelock system is back, if you want you can switch to new one by go to [Gameplay Settings] and set [In-game notelock] to [New] (Not recommended using this on a map having spaced stream or fast jump since it still buggy)
+
+> osu!Gameplay is now smoother, which can fixed alot of bug such as note visible time, delay, ect...
+
+> The update above also affected to AutoPlay, which putting the AT limmit higher than before. (Perfomance still depend on the framerate also)
+
+> Default value of [Old cursor movement] when player first played osu!RoVer is now Enabled (If you want to change cursor sensitivity, turn off old cursor movement. Players played the game before will not have this settings affected)
