@@ -1,0 +1,22 @@
+Here we have some update after a while:
+- Fixed blank background image when you play a new custom beatmap or quick-restart game
+- Reduced the lag while in the beatmapchoose screen
+- New hit sounds to the gameplay
+- The chat now can be disabled while in-game. Change it on the settings
+- Added sound pitch scale to 1x. Make it like when you playing DT/HT in osu!
+- And more update/bugfix...
+
+- Added 7 Beatmaps [47 Difficulties]
+RADWIMPS - Yume Tourou (Agatsu) [5 beatmaps]
+RADWIMPS - Yume Tourou (Monstrata) [11 beatmaps]
+Chinozo - Good-bye sengen (Ryuusei Aika) [4 beatmaps]
+Ni-Sokkususu - Blade Dance (Bearizm) [5 beatmaps]
+Ni-Sokkususu - Blade Dance (Sotarks) [8 beatmaps]
+Ni-Sokkususu - Blade Dance (CloudSplash16) [6 beatmaps]
+MisoilePunch - VVelcome!! (R3m) [8 beatmaps]
+Saiya - Remote Control (Garven) [5 beatmaps]
+
+
+V1.32
+All server will shutdown in 15 minutes for update by the time I post this announcement.
+Post your message in suggestions if you found any bug in osu!RoVer on this update.
