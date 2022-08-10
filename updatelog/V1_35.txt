@@ -1,0 +1,1 @@
+Got some small but important update at V1.35, fixed bug that the CS is always at 4.5 instead of beatmap custom... and some other small update.
