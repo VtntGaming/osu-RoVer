@@ -1,0 +1,33 @@
+We've made it to 1 million visits. It's time to bring out the update.
+Thank everyone for making the game goes like this so far!
+
+This update includes:
+- Added health bar at the top of the screen, it will display how much health left is your beatmap. If you turned on Hardcore you will be able to failed the baetmap if your health drain to 0. But you will get a double score multiplier and your perfomance will less drain.
+- Added Hidden mod, this option will invisible the approach circle (except the first note) and fade out before you click on it. Giving 1.06x multiplier on score and perfomance.
+- Circles now have some skin customize for it. To use it, you need to go to GameplaySettings > Skin customize (remember to scroll down), you can use roblox image library or making your own in roblox website.
+- Play button now have some effects, it will beat with the current beatmap bpm.
+- Have some change on the leaderboard, if you move your mouse into a player leaderboard, you can know detailed info such as total of 300, 100, 50 and miss, and some other detailed info.
+- Made size of 100s, 50s and miss smaller than before
+- Fixed but that make you lag while holding right click.
+- New difficulty caculation of the beatmap, some beatmap's difficulty may changed after this update.
+- New caculation of the Total perfomance of player's plays, all negative ps plays will set to 0ps, and you may noitce that you would get more ps after playing a song in this update for the first time.
+- Some other issue fix.
+
+Added 15 set of beatmaps, including 79 difficulties (It could be more but due to 1M event update):
+Ata - Euphoria (Ciyus Miapah) [1 beatmap]
+Demetori - Wind God Girl (lkp) [2 beatmaps]
+Okazaki Taiiku - Kimi no Bouken (TV Size) (Kroytz) [9 beatmaps]
+Okazaki Taiiku - Kimi no Bouken (TV Size) (leo16834) [9 beatmaps]
+Okazaki Taiiku - Kimi no Bouken (TV Size) (Sotarks) [5 beatmaps]
+Okazaki Taiiku - Kimi no Bouken (TV Size) (fieryrage) [7 beatmaps]
+inabakumori - Lost Umbrella (amanatu2) [1 beatmap]
+inabakumori - Lost Umbrella (Ryuusei Aika) [7 beatmaps]
+Remo Prototype[CV Hanamori Yumiri] - Sendan Life (Lami) [7 beatmaps]
+Remo Prototype[CV Hanamori Yumiri] - Sendan Life (Settia) [8 beatmaps]
+Remo Prototype[CV Hanamori Yumiri] - Sendan Life (Narcissu) [6 beatmaps]
+Remo Prototype[CV Hanamori Yumiri] - Sendan Life (Mir) [6 beatmaps]
+katagiri - Sendan Life (katagiri Bootleg) (Settia) [6 beatmaps]
+THE ORAL CIGARETTES - Kyouran Hey Kids!! (monstrata) [5 beatmaps]
+THE ORAL CIGARETTES - Kyouran Hey Kids!! (xxdeathx) [7 beatmaps]
+
+V1.36
