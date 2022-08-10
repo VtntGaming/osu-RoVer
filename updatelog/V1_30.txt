@@ -1,0 +1,30 @@
+-- V1.30
+-- debug
+Fixed bug that there's a reverse arrow at slider tail 
+Other small fix
+
+-- update
+Added back all the song which got removed on the recent update
+Added back all the update and debug from V1.28
+New chat interface
+Slider mode is now ranked as a mod [SL]
+Some small update
+
+
+-- Added 16 new beatmaps, with 62 new difficulties
+toby fox - Last Goodbye (Fatfan Kolek) [7 beatmaps]
+Loki - Wizard's Tower (Minorsonek) [10 beatmaps]
+Loki - Wizard's Tower (Taeyang) [6 beatmaps]
+ryu5150 - Louder than steel (ParkourWizard) [1 beatmap]
+ryu5150 - Louder than steel (Sotarks) [4 beatmaps]
+Unlucky Morpheus - Angreifer (KwAIMSuckASFuk) [1 beatmap]
+Unlucky Morpheus - Angreifer (Riven) [1 beatmap]
+DatManOvaDer - Busta Rhymes Goes To The Wii Shop Channel (Fowwo) [1 beatmap]
+Team Nekokan - Can't Defeat Airman (Blue Dragon) [1 beatmap]
+Team.NEKOKAN - Airman ga Taosenai (Sotarks) [8 beatmaps]
+Tatsh - Xevel (emu1337) [5 beatmaps]
+Our Stolen Theory - United (L.A.O.S Remix) (Asphyxia) [1 beatmap]
+Our Stolen Theory - United (L.A.O.S Remix) (Sotarks) [1 beatmap]
+Foreground Eclipse - Songs Compilation (Seni) [1 beatmap]
+yuikonnu - caramel heaven (sukiNathan) [9 beatmaps]
+Camellia - Flamewall (Sotarks) [5 beatmaps]
