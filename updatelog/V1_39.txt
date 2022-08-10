@@ -1,0 +1,48 @@
+-- V1.39
+
+New update include:
+
++ Added song/effect volume, offset, background transparency and sensitivity adjustment. Replace all the old manual adjustment.
++ Circles now fade out when miss instead of instantly disappear
++ Added a custom player list, similar to roblox player list but you can spectate players from it. Only enable if you've keyboard enabled or it will switch back to old player list.
++ Updated spectate option. If person you spectate leave the play, the game will auto start tracking their new play. (The game will stop tracking if you leave the play yourself or person you spectate leave the game)
++ WYSI badge is here, you can obtain it by 1 of the below condition:
+   - 727x Combo
+   - 727x 100s 50s
+   - x7.27% accuracy (x can be any number, including 0)
+   - No need to be a top play to obtain
++ Difficulty mass rework
++ Difficulty display is now as star rating (Difficulty 10 = 1 star difficulty)
++ Added some other small effect...
++ Reduced alot of lag compared to the older version when clicked the circle. (compared with prev version) [Can only be noitced on low-end device]
++  Updated spectate feature:
+   - Better interface.
+   - Display the connection delay between host's client and your client. (This could help you to know which spectate delay is best for you)
+   - Display host's fps to know if they're getting lag or not.
+   - Display real time PerfomanceScore (ps) captured from host's device, your computer will no longer caculate the ps when spectating.
++ New tutorial Page, you can check in the settings.
++ Some other interface updates
++ Changed how cursor movement and input detector work, this could prevent exploit/cheating for an amound of times.
++ New songs:
+-- Added 20 BeatmapSet [106 difficulties]
+
+USAO - Miracle 5ympho X (Mel) [8 beatmaps]
+USAO - Miracle 5ympho X (Extended Mix) (RLC) [7 beatmaps]
+USAO - Dynamite (Extended Mix) (sukiNathan) [6 beatmaps]
+USAO - USAO ULTIMATE HYPER MEGA MIX (Nathan) [2 beatmaps]
+USAO - USAO ULTIMATE HYPER MEGA MIX (Realazy) [1 beatmap]
+USAO - Cyaegha (- AzRaeL -) [6 beatmaps]
+USAO - Night sky (sukiNathan) [12 beatmaps]
+REDALiCE vs. USAO - SAIKYO STRONGER (Otosaka-Yu) [6 beatmaps]
+VINXIS - Sidetracked Day (Short ver.) (Sotarks) [5 beatmaps]
+VINXIS - Sidetracked Day (Short Ver.) (Hobbes2) [6 beatmaps]
+VINXIS - Sidetracked Day (emu1337) [1 beatmap]
+VINXIS - Sidetracked Day (SnowNiNo_) [1 beatmap]
+VINXIS - Sidetracked Day (DendyHere) [1 beatmap]
+VINXIS - Sidetracked Day (Chanci) [1 beatmap]
+Koda Kumi - Guess Who Is Back (TV Size) (Sotarks) [14 beatmaps]
+sakiz - osu!memories (derandom otaku) [1 beatmap]
+kano - stella-rium (kowari) [6 beatmaps]
+Camellia - Xeroa (Ryuusei Aika) [14 beatmaps]
+Mitsukiyo - Unwelcome School (gazimal) [7 beatmaps]
+??? - ??? (VtntGaming) [1 beatmap]
