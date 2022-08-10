@@ -1,0 +1,18 @@
+-- V1.28 --
+-- The update including:
+-- Debug --
+> Fixed bug that the note can't be press after the spinner #2
+
+> Some other small fix
+
+-- Update --
+> Some small update
+
+
+-- Added 6 new beatmaps, with 31 new difficulties
+HO-KAGO TEA TIME - Kira Kira Days (Kagetsu) [7 beatmaps]
+HO-KAGO TEA TIME - Kira Kira Days (Cut Ver.) (Sotarks) [5 beatmaps]
+AliA - utopia (Akitoshi) [6 beatmaps]
+Station Earth - Age Of Reason (Sotarks) [6 beatmaps]
+Kanon Wakeshima - Tsukinami (Kagetsu) [6 beatmaps]
+Kano - Sukisuki Zecchoushou (Loreley) [7 beatmaps]
