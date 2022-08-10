@@ -1,0 +1,10 @@
+Version: V1.21
+-- Debug
+Fixed some small bugs
+
+-- Update
+> Added custom player list, you can see if a player is idle, playing, spectating or autoplaying.
+> Added spectate system, you can spectate a player using player list. Still buggy some time, try to fix all of it in the next update.
+> More small security + gameplay update
+
+> Added 2 beatmapsets
