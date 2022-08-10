@@ -1,0 +1,21 @@
+ -- V1.25 -- 
+
+-- Debug
+> Fixed bug that make user leaderboard with FL mod have Score: 0 (0x)
+> Fixed frozen score submit
+> Making the score of the result only have 0 digit [Ex: Old: 1.234 | New: 1]
+> Some small in-game fix
+
+-- Update
+> Flashligh is buffed, making it a little bit harder than before
+> Added a perfomance rework (this update is supposed to be release at prev update), making it harder to get.
+> Added a option to display perfomance in real-time at top-left corner
+> Added perfomance leaderboard, where you can see perfomance score from top #1,000 [Thx to Neex#3712 for giving me idea of this leaderboard design]
+> [Beatmap submit] is now revamped into [osu!Beatmap browser], you can search for detailed info about it.
+> Beatmap now can be stacked with hypes, more hype = more chance to get into game
+
+
+-- Added 3 beatmapsets, with 28 beatmaps
+Camellia - introduction - INSANE INFLAME (Cris-) [7 beatmaps]
+Reol - Asymmetry (Gaia) [7 beatmaps]
+Reol - No title (VINXIS) [14 beatmaps]
