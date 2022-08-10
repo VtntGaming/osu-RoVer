@@ -1,0 +1,8 @@
+V1.20
+
+-- Update
+> More anti expoilt update, any action of the below will let you get kicked:
+- Removing ExpoiltReport remote
+- Removing server checker
+- Submit score from unknown source
+- ect...
