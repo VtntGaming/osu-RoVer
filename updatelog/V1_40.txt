@@ -1,0 +1,70 @@
+-- V1.40
+
+This update include:
++ New interface UI, contain:
+  + Settings
+  + Map infomation
+  + Map result
++ Added detail in Perfomance display (AimPS/StreamPS/AccPS)
++ Buffed Accuracy Perfomance, make it take part as 20% of the map.
++ Nerfed Aim/Stream Perfomance, only take part as 80% of the map.
++ Added another type of perfomance is Overall perfomance.
++ Added detail perfomance on the Perfomance display.
++ Updated perfomance/difficulty caculation
++ Changes to PS accuracy punishment (Because of Accuracy buff)
+    [details="Click to see what changed to PS punishment. (Mostly nerfed)"]
+   + Decrease 47% PS lost and 33% PS lost for HC if miss. (-68% / 0% HC Permanent)
+   + Decrease 35% PS lost and 25% PS lost for HC if 50s. (-13% / +66% HC Permanent)
+   + Decrease 53% PS lost and 50% PS lost for HC if 100s. (+60% / +300% HC Permanent)
+   + Permanent PS lost take with a calculated amound of Standard PS list by 20%.
+   + Increase 100% PS recover rate.
+   [/details]
++ Custom beatmap is now back. But **only** available on [BetaPlace]( https://www.roblox.com/games/7216838953/osu-RoVer-BetaPlace)
++ Fixed Hit key UI on Right Hitzone (Mobile Mode)
++ Some changes to Slider movement. 
++ Sliders now have slider tick, depend on how long the slider is you will either gain combo or **lose**  all of it.
++ Beatmap choose now load a little bit faster than before.
++ Added profile page, you can check your and other people top plays, customize Profile picture and Profile background. Can be loaded by clicking on the leaderboard or type on the search bar.
++ Added custom difficulty color editor [spoiler](This maybe called an update instead of new feature because it appear on V1.39)[/spoiler]
+
+-- New 39 beatmaps set [215 difficulties]
+
++ THE ORAL CIGARETTES - Mou Ii kai? (Nevo) [9 beatmaps]
++ Zekk - Cocoon (tom x tai) [1 beatmap]
++ Thaehan - Play (tom x tai) [2 beatmaps]
++ t+pazolite - Oshama Scramble! (DTM9 Nowa) [12 beatmaps]
++ Kero Kero Bonito - Flamingo (WTN3 Remix) (Nerova Riuz GX) [5 beatmaps]
++ MIMI feat. Hatsune Miku - Ai no Sukima (Log Off Now) [5 beatmaps]
++ MIMI feat. Hatsune Miku - Ai no Sukima (theramdans) [4 beatmaps]
++ umu. - Ai no Sukima (Sotarks) [5 beatmaps]
++ umu. - Ai no Sukima (Half) [5 beatmaps]
++ MIMI feat. Hatsune Miku - Ai no Sukima (Rock Cover) (Nuvolina) [8 beatmaps]
++ Icon For Hire - Make a Move (Speed Up Ver.) (Sotarks) [17 beatmaps]
++ MIMI feat. Hatsune Miku - Marshmary (Log Off Now) [4 beatmaps]
++ UPLIFT SPICE - Omega Rhythm (Jemmmmy) [6 beatmaps]
++ ALiCE'S EMOTiON - Dark Flight Dreamer (Sakaue Nachi) [7 beatmaps]
++ ALiCE'S EMOTiON - Dark Flight Dreamer (Natsu) [7 beatmaps]
++ HAG - Colorful (Sotarks) [15 beatmaps]
++ Yorushika - Itte. (deetz) [3 beatmaps]
++ Yuyoyuppe - AiAe (Fort) [8 beatmaps]
++ Suzuki Konomi - This game (TV Size) (Sekai-nyan) [4 beatmaps]
++ Suzuki Konomi - Redo (Rizia) [8 beatmaps]
++ shikata akiko - Katayoku no tori (lahphnya) [1 beatmap]
++ Rungran - d.m.c (Band Ver.) (Sieg) [3 beatmaps]
++ Hommarju feat. Latte - masterpiece (simplistiC) [4 beatmaps]
++ 07th Expansion - rog-unlimitation (AngelHoney) [5 beatmaps]
++ Niko - Made of Fire (lesjuh) [4 beatmaps]
++ Memme - Plasma Gun (emu1337) [8 beatmaps]
++ xi - FREEDOM DiVE (Nakagawa-Kanon) [2 beatmaps]
++ xi - FREEDOM DiVE (FrenZ396) [4 beatmaps]
++ xi/R3 Music Box - FREEDOM DiVE (Sotarks) [1 beatmap]
++ xi - Glorious Crown (Monstrata) [7 beatmaps]
++ xi - Ascension to Heaven (Shiirn) [1 beatmap]
++ xi - Ascension to Heaven (-Tynamo) [7 beatmaps]
++ xi - ANiMA (Kalindraz) [6 beatmaps]
++ Toyama Nao - Gunjou Infinity (Andrea) [2 beatmaps]
++ MIMI feat. KAFU - Kuu ni Naru (Vanya2) [3 beatmaps]
++ MIMI feat. KAFU - Issee noo de (Manquito) [6 beatmaps]
++ Kaf - Kako o Kurau (Abelia) [4 beatmaps]
++ Erehamonika remixed by kors k - Der Wald (Kors K Remix) (Rucker) [9 beatmaps]
++ Eleharmonica remixed by kors k - Der Wald (kors k Remix) (Cheesecake) [11 beatmaps]
