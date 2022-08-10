@@ -1,0 +1,15 @@
+V1.19
+
+-- Debug
+> Fixed small bug of preview song.
+> Fixed circle connection that connect to new combo.
+> Other small debug.
+
+-- Update
+> Default score multiplier moved from 2x (from the last update) to 6x, get ready to snipe!
+> CS and OD will be unranked if changing them in the settings.
+> Added anti-autoplay, which kicking people who click circles without 
+osu!corescript permission.
+> Changed the interface of Score, Accurancy, Combo. (The font look like osu! default skin font). Also made it scaled with the height of the screen.
+> Some small updates
+> Added 10 beatmapsets
