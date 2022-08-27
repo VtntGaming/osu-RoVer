@@ -1,0 +1,14 @@
+Another big update here!
+
+-- Changes (1.41.1 - 1.42)
+Modification:
+ - Added new mod: HealthDrain customization - You're now able to customize your HP rate (Unranked if HC is enabled)
+ - Difficulty/PerfomanceScore rating re-calculated
+ - FL mod re-calculated - No more 1.16x PS multiplier, instead FL will effect aim PS depend on the map you play (multiplier get effected by scoreV2)
+Gameplay:
+ - Changes to In-game UI
+ - Added new Settings: OptimizedPerfomance - Remove/minimum some animations and gameplay to improve perfomance such as increase FPS and decrease lag.
+ - Added new Settings: Restart Client - Remove all client cache and data and restart as a fresh new osu!RoVer client.
+ - Added new Settings: ScoreV2 - Display with a maximum score of 1,000,000. Displaying the ratio between your current score with maximum score you can get.
+Mobile support:
+ - Hold plays to see detailed info on the leaderboard.
