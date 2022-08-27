@@ -7856,7 +7856,7 @@ end
 
 -->         osu!RoVer       <--
 -- osu!corescript by VtntGaming
--- String size: 284.81KB (V1.42)
+-- String size: 285.06KB (V1.42)
 
 -- Source code used as a backup script, if you're not VtntGaming and see this please use it right :>
 ----------------- End script -----------------
