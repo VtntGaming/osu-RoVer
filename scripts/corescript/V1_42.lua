@@ -7848,14 +7848,15 @@ end
 --------------------------------------------------
 
 
+-- Script note: Some value name may spell incorrectly (And it may take ages to change bk .-.)
 
 
 
 
 
-
-
-
+-->         osu!RoVer       <--
 -- osu!corescript by VtntGaming
 -- String size: 284.81KB (V1.42)
+
+-- Source code used as a backup script, if you're not VtntGaming and see this please use it right :>
 ----------------- End script -----------------
