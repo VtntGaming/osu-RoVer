@@ -7857,5 +7857,5 @@ end
 
 
 -- osu!corescript by VtntGaming
-
+-- String size: 284.81KB (V1.42)
 ----------------- End script -----------------
