@@ -1,14 +1,24 @@
-Another big update here!
+DISCLAIMER - This is a beta version log (which can only be found in BetaPlace) and not 100% finished.
 
+Current betaplace version: Beta V1.42.7
 -- Changes (1.41.1 - 1.42)
 Modification:
  - Added new mod: HealthDrain customization - You're now able to customize your HP rate (Unranked if HC is enabled)
- - Difficulty/PerfomanceScore rating re-calculated
- - FL mod re-calculated - No more 1.16x PS multiplier, instead FL will effect aim PS depend on the map you play (multiplier get effected by scoreV2)
+ - Added new mod: Easy [EZ] - 0.5x Score multiplier, 0.75x PS multiplier. Half all the multiplier value.
+ - Difficulty/PerfomanceScore rating re-calculated.
+ - FL mod PS re-calculated - No more 1.16x PS multiplier, instead FL will effect aim PS depend on the map you play (multiplier get effected by scoreV2)
+ - HC modification - Set PS multiplier from 1.0x > 1.11x.
+ - HD modification - Set PS multiplier from 1.06x > 1.08x, Sliders will start fading once the slider start moving.
+ - HR modification - Set PS multiplier from 1.06x > 1.45x.
+ - SL modification - Flashlight Area expanded during BreakTime and Endtime, Gameplay dim appear while you're holding a slider.
 Gameplay:
- - Changes to In-game UI
+ - Changes to In-game UI.
+ - Remove/Relocated/Renamed some Settings.
  - Added new Settings: OptimizedPerfomance - Remove/minimum some animations and gameplay to improve perfomance such as increase FPS and decrease lag.
  - Added new Settings: Restart Client - Remove all client cache and data and restart as a fresh new osu!RoVer client.
  - Added new Settings: ScoreV2 - Display with a maximum score of 1,000,000. Displaying the ratio between your current score with maximum score you can get.
+ - Added new Settings: Detailed PS - Display detailed information (Aim, Speed, Mod, Acc, Punishment) [You must enable Display PS to use this].
+ - Optimized Perfomance - Remove some animations on Main menu leaderboard.
+ - Result screen UI - Old return button get replaced by 2 new button (which can instant click): Return and Retry.
 Mobile support:
  - Hold plays to see detailed info on the leaderboard.
