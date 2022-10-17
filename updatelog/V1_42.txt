@@ -20,5 +20,6 @@ Gameplay:
  - Added new Settings: Detailed PS - Display detailed information (Aim, Speed, Mod, Acc, Punishment) [You must enable Display PS to use this].
  - Optimized Perfomance - Remove some animations on Main menu leaderboard.
  - Result screen UI - Old return button get replaced by 2 new button (which can instant click): Return and Retry.
+ - Result screen UI #2 - Added date played, including mod you used for the play [AT,V2,HC,HD,HR,EZ,SL,FL supported].
 Mobile support:
  - Hold plays to see detailed info on the leaderboard.
