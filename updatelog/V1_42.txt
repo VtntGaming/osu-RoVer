@@ -1,18 +1,19 @@
 DISCLAIMER - This is a beta version log (which can only be found in BetaPlace) and not 100% finished.
 
-Current betaplace version: Beta V1.42.7
+Current betaplace version: Beta V1.42.22
 -- Changes (1.41.1 - 1.42)
 Modification:
  - Added new mod: HealthDrain customization - You're now able to customize your HP rate (Unranked if HC is enabled)
- - Added new mod: Easy [EZ] - 0.5x Score multiplier, 0.75x PS multiplier. Half all the multiplier value.
+ - Added new mod: Easy [EZ] - 0.5x Score multiplier, 0.87x PS multiplier. Half all the multiplier value.
  - Difficulty/PerfomanceScore rating re-calculated.
- - FL mod PS re-calculated - No more 1.16x PS multiplier, instead FL will effect aim PS depend on the map you play (multiplier get effected by scoreV2)
- - HC modification - Set PS multiplier from 1.0x > 1.11x.
- - HD modification - Set PS multiplier from 1.06x > 1.08x, Sliders will start fading once the slider start moving.
- - HR modification - Set PS multiplier from 1.06x > 1.45x.
+ - FL modification - PS re-calculated! No more 1.16x PS multiplier, instead FL will effect aim PS depend on the map you play (multiplier also get effected by scoreV2)
+ - HC modification - Set PS multiplier from 1.0x > 1.05x.
+ - HD modification - Set PS multiplier from 1.06x > 1.04x, Sliders will start fading once the slider start moving.
+ - HR modification - Set PS multiplier from 1.06x > 1.20x.
  - SL modification - Flashlight Area expanded during BreakTime and Endtime, Gameplay dim appear while you're holding a slider.
 Gameplay:
- - Changes to In-game UI.
+ - Added Update log (you are seeing this o.O), keep in tract update progress and see previous update progress that you may missed.
+ - AT modification - Changed movement tween.
  - Remove/Relocated/Renamed some Settings.
  - Added new Settings: OptimizedPerfomance - Remove/minimum some animations and gameplay to improve perfomance such as increase FPS and decrease lag.
  - Added new Settings: Restart Client - Remove all client cache and data and restart as a fresh new osu!RoVer client.
@@ -21,5 +22,20 @@ Gameplay:
  - Optimized Perfomance - Remove some animations on Main menu leaderboard.
  - Result screen UI - Old return button get replaced by 2 new button (which can instant click): Return and Retry.
  - Result screen UI #2 - Added date played, including mod you used for the play [AT,V2,HC,HD,HR,EZ,SL,FL supported].
+ - Result screen UI #3 - New transition, animation to the result screen.
+ - Small changes to In-game UI.
+ - Spectating: Changed offset distance for spectate delay from 500ms to 250ms (0.25s).
+ - In-game Leaderboard/Multiplayer Leaderboard: Changed UI design.
+ - Main menu Leaderboard: Small UI changes.
+ - User profile: Changed number display (1234ps > 1,234ps)
+ Multiplayer:
+ - Added local chat for room, can be reloaded for rejoining room. Chat history will be deleted if the room close.
+ - Added room editor for RoomName, PassCode and MaxPlayer.
+ - Applied text filtering for title naming.
 Mobile support:
  - Hold plays to see detailed info on the leaderboard.
+Score submission:
+- After Stable V1.42 release, your new play will overwrite the old play from V1.41 and older, whatever the score is.
+
+New beatmaps added:
+- ... please wait for StableVer to see .-.
