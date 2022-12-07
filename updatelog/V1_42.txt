@@ -1,7 +1,6 @@
-DISCLAIMER - This is a beta version log (which can only be found in BetaPlace) and not 100% finished.
+STABLE V1.42 HAS BEEN RELEASHED!
 
-Current betaplace version: Beta V1.42.22
--- Changes (1.41.1 - 1.42)
+Here are "some" of the update that have changed compare to the old update:
 Modification:
  - Added new mod: HealthDrain customization - You're now able to customize your HP rate (Unranked if HC is enabled)
  - Added new mod: Easy [EZ] - 0.5x Score multiplier, 0.87x PS multiplier. Half all the multiplier value.
@@ -22,20 +21,63 @@ Gameplay:
  - Optimized Perfomance - Remove some animations on Main menu leaderboard.
  - Result screen UI - Old return button get replaced by 2 new button (which can instant click): Return and Retry.
  - Result screen UI #2 - Added date played, including mod you used for the play [AT,V2,HC,HD,HR,EZ,SL,FL supported].
- - Result screen UI #3 - New transition, animation to the result screen.
+ - Result screen UI #3 - New transition, animation to the result screen. (and the startload screen)
  - Small changes to In-game UI.
  - Spectating: Changed offset distance for spectate delay from 500ms to 250ms (0.25s).
  - In-game Leaderboard/Multiplayer Leaderboard: Changed UI design.
- - Main menu Leaderboard: Small UI changes.
+ - Main menu Leaderboard: Small UI changes
  - User profile: Changed number display (1234ps > 1,234ps)
- Multiplayer:
+Multiplayer:
  - Added local chat for room, can be reloaded for rejoining room. Chat history will be deleted if the room close.
+ - Added custom commands that can be executed in multiplayer chat. /cmd for list of commands
  - Added room editor for RoomName, PassCode and MaxPlayer.
- - Applied text filtering for title naming.
+ - Applied text filtering for title naming.'
+ - Multiplayer leaderboard: Added Player Healthbar to the listing display
 Mobile support:
  - Hold plays to see detailed info on the leaderboard.
 Score submission:
 - After Stable V1.42 release, your new play will overwrite the old play from V1.41 and older, whatever the score is.
+Bug fix:
+- Fixed alot of bugs... (Too much that I can't list it out xd)
 
-New beatmaps added:
-- ... please wait for StableVer to see .-.
+
+New beatmaps added: Total of 35 beatmaps with 122 difficulties
+- release hallucination - chronostasis (wishkey) [1 beatmap]
+- halozy - genryuu kaiko (hollow wings) [2 beatmaps]
+- tyrfing - verflucht (muya) [7 beatmaps]
+- chopin - revolutionary etude (louis cyphre) [1 beatmap]
+- release hallucination - i.f. (livermorium) [1 beatmap]
+- TOMINAGA TOMMY HIROAKI - JoJo ~Sono Chi no Sadame~ Archetype MIX Ver. (Delis) [5 beatmaps]
+- konuko - toumei elegy (awaken) [8 beatmaps]
+- usada pekora - pekorandombrain! (yuuma) [3 beatmaps]
+- wagakki band - tengaku (shiro) [1 beatmap]
+- kasai harcores - triple play (chickensio) [1 beatmap]
+- kano - walk this way! (settia) [2 beatmaps]
+- kano - walk this way! (sotarks) [7 beatmaps]
+- araki - snow drive (01.23) (jieusieu) [1 beatmap]
+- kondo koji - slider (spookem) [1 beatmap]
+- xi - freedom dive (aistre) [9 beatmaps]
+- poppin'party - kizuna music (kxlman) [1 beatmap]
+- poppin'party - kizuna music (koldnoodl) [1 beatmap]
+- kano - prima stella (kowari) [6 beatmaps]
+- steve ouimette - the devil went down to georgia (mismagius) [1 beatmap]
+- Sati Akura - Hibana [1 beatmap]
+- Yuaru - Asu no Yozora Shoukaihan (Akitoshi) [7 beatmaps]
+- Suzuyu - Euphorium (Share) [3 beatmaps]
+- DJ SHARPNEL - FAKE PROMISE (Urushi38) [1 beatmap]
+- Vickeblanka - Black Rover (zhu) [7 beatmaps]
+- DIVELA feat. Hatsune Miku - BEAT SYNCER (Log Off Now) [5 beatmaps]
+- Will Stetson - Super Driver (Sotarks) [8 beatmaps]
+- LilDeuceDeuce - EVERYBODY DO THE FLOP (Cut Ver.) (wafer) [5 beatmaps]
+- Mutsuhiko Izumi - Snow Goose (wmfchris) [4 beatmaps]
+- Kitamura Eri - Arcadia Paroniria (Camo) [1 beatmap]
+- Demetori - Shinkou wa Hakanaki Ningen no Tame ni ~ Jehovah's YaHVeH (Camo) [1 beatmap]
+- Project Grimoire - Caliburne ~Story of the Legendary sword~ (SnowNiNo_) [1 beatmap]
+- Project Grimoire - Caliburne ~Story of the Legendary sword~ (Mikkuri) [6 beatmaps]
+- Lime - smiling (Speed Up Ver.) (elchxyrlia) [1 beatmap]
+- SOUND HOLIC - Airman ga Taosenai (SOUND HOLIC Ver.) (ChaoticRed) [5 beatmaps]
+- Hanatan - Airman ga Taosenai (SOUND HOLIC Ver.) (Natsu) [7 beatmaps]
+
+
+Version: Stable V1.42
+Pre-BetaVersion: Beta V1.42.30
