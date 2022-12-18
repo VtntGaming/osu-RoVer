@@ -143,18 +143,21 @@ else
 	CurrentSetting.Parent.VirtualSettings.CursorTrailTransparency.Value = tonumber(AsyncedSetting.Skin.CursorTrailTransparency) or 0.5
 	CurrentSetting.Parent.VirtualSettings.CustomComboColor.Value = AsyncedSetting.CustomComboColorData or "[]"
 	CurrentSetting.Parent.VirtualSettings.CircleNumberData.Value = AsyncedSetting.CircleNumberData or "[]"
-	CurrentSetting.MobileModeEnabled.Text = "Mobile mode [Touchscreen only]: "..Option[tostring(AsyncedSetting.MobileHit)]
+	CurrentSetting.MobileModeEnabled.Text = "Mobile mode: "..Option[tostring(AsyncedSetting.MobileHit)]
 	CurrentSetting.MouseButtonEnabled.Text = "Mouse button: "..Option[tostring(AsyncedSetting.MouseButton)]
 	CurrentSetting.OldCursorMovement.Text = "Virtual cursor movement: "..Option[tostring(not AsyncedSetting.OldCursorMovement)]
 	--CurrentSetting.NewCircleOverlay.Text = "New circle overlay: "..Option[tostring(AsyncedSetting.NewCircleOverlay)]
 	CurrentSetting.OldScoreInterface.Text = "Old score interface: "..Option[tostring(AsyncedSetting.OldScoreInterface)]
 	CurrentSetting.StableNotelock.Text = "In-game notelock: ".. AdvancedOption.NotelockStyle[tostring(AsyncedSetting.osuStableNotelock)]
-	CurrentSetting.DisplayPS.Text = "Display perfomance: "..Option[tostring(AsyncedSetting.PerfomanceDisplay)]
+	CurrentSetting.DisplayPS.Text = "Display PS: "..Option[tostring(AsyncedSetting.PerfomanceDisplay)]
 	CurrentSetting.RightHitzone.Text = "Right side hitzone: "..Option[tostring(AsyncedSetting.RightHitZone)]
 	CurrentSetting.DisableChatInGame.Text = "Disable chat in-game: "..Option[tostring(AsyncedSetting.InGameChatDisabled)]
 	CurrentSetting.DisplayInGameLB.Text = "In-game leaderboard: "..Option[tostring(AsyncedSetting.DisplayInGameLB)]
 	CurrentSetting.HitZoneEnabled.Text = "Hit zone: "..Option[tostring(AsyncedSetting.HitZone)]
 	CurrentSetting.CustomComboColor.Text = "Custom combo color: "..Option[tostring(AsyncedSetting.CustomComboColor)]
+	CurrentSetting.DisplayDetailedPS.Text = "Detailed PS: "..Option[tostring(AsyncedSetting.DetailedPSDisplay)]
+	CurrentSetting.DisplayFramerate.Text = "Show FPS: "..Option[tostring(AsyncedSetting.DisplayFPS)]
+	CurrentSetting.OptimizedPerfomance.Text = "Optimized perfomance: "..Option[tostring(AsyncedSetting.OptimizedPerfomance)]
 end
 if game.Players.LocalPlayer.PlayerGui.SavedSettings:FindFirstChild("PreviewFrame") then
 	game.Players.LocalPlayer.PlayerGui.BG.PreviewFrame:Destroy()
@@ -171,6 +174,8 @@ game:GetService("UserInputService").MouseBehavior = Enum.MouseBehavior.Default
 game.Players.LocalPlayer.PlayerGui.MenuInterface.LeaderboardButton.Visible = true
 game.Players.LocalPlayer.PlayerGui.MenuInterface.ProfileButton.Visible = true
 game.Players.LocalPlayer.PlayerGui.MenuInterface.MultiplayerButton.Visible = true
+game.Players.LocalPlayer.PlayerGui.MenuInterface.UpdateLogButton.Visible = true
+game.Players.LocalPlayer.PlayerGui.MenuInterface.ExpandButton.ExpandButton.Visible = true
 --game.Players.LocalPlayer.PlayerGui.MenuInterface.WikiButton.Visible = true
 game.StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat,true)
 game.Lighting.Blur.Size = 0
@@ -200,6 +205,7 @@ NewCircelOverlay = false
 OldInterface = false
 Flashlight = false
 PSDisplay = false
+DetailedPSDisplay = false
 osuStableNotelock = true -- If enabled, it will use osu!stable notelock system, else it will use osu!lazer system
 HitErrorEnabled = true
 OverallInterfaceEnabled = true
@@ -213,6 +219,7 @@ BackgroundBlurEnabled = false
 showHealthBar = true
 HardCore = false
 HiddenMod = false
+EasyMod = false
 InGameLeaderboard = true
 HitZoneEnabled = true
 SongVolume = CurrentSetting.VirtualSettings.InstantSettings.SongVolume.Value
@@ -306,7 +313,7 @@ if CurrentSetting.MainSettings.CursorTrailEnabled.Text == "Cursor trail: Disable
 	CursorTrailEnabled = false
 end
 
-if CurrentSetting.MainSettings.MobileModeEnabled.Text == "Mobile mode [Touchscreen only]: Disabled" then
+if CurrentSetting.MainSettings.MobileModeEnabled.Text == "Mobile mode: Disabled" then
 	MobileMode = false
 end
 
@@ -322,7 +329,7 @@ if CurrentSetting.MainSettings.MouseButtonEnabled.Text == "Mouse button: Disable
 	MouseButtonEnabled = false
 end
 
-if CurrentSetting.MainSettings.SliderMode.Text == "[Beta] Sliders: Enabled" then
+if CurrentSetting.MainSettings.SliderMode.Text == "Sliders: Enabled" then
 	SliderMode = true
 end
 
@@ -331,7 +338,7 @@ if CurrentSetting.MainSettings.OldCursorMovement.Text == "Virtual cursor movemen
 end
 
 
-if CurrentSetting.MainSettings.DisplayPS.Text == "Display perfomance: Enabled" then
+if CurrentSetting.MainSettings.DisplayPS.Text == "Display PS: Enabled" then
 	PSDisplay = true
 end
 
@@ -343,7 +350,7 @@ if CurrentSetting.MainSettings.StableNotelock.Text == "In-game notelock: Lazer" 
 	osuStableNotelock = false
 end
 
-if CurrentSetting.MainSettings.HitErrorInterface.Text == "Hit error: Disabled" then
+if CurrentSetting.MainSettings.HitErrorInterface.Text == "Hit error display: Disabled" then
 	HitErrorEnabled = false
 end
 
@@ -363,7 +370,7 @@ if CurrentSetting.MainSettings.DisableChatInGame.Text == "Disable chat in-game: 
 	DisableChatInGame = true
 end
 
-if CurrentSetting.MainSettings.KeepOriginalPitch.Text == "Keep original speed pitch[0.5-2x]: Enabled" then
+if CurrentSetting.MainSettings.KeepOriginalPitch.Text == "Speed pitch: Enabled" then
 	KeepOriginalPitch = true
 end
 
@@ -387,6 +394,10 @@ if CurrentSetting.MainSettings.HardRock.Text == "Hardrock: Enabled" then
 	HardRock = true
 end
 
+if CurrentSetting.MainSettings.Easy.Text == "Easy: Enabled" then
+	EasyMod = true
+end
+
 if CurrentSetting.MainSettings.CustomComboColor.Text == "Custom combo color: Enabled" then
 	CustomComboColorEnabled = true
 end
@@ -399,11 +410,17 @@ if CurrentSetting.MainSettings.ScoreV2.Text == "ScoreV2: Enabled" then
 	ScoreV2Enabled = true
 end
 
+if CurrentSetting.MainSettings.DisplayDetailedPS.Text == "Detailed PS: Enabled" then
+	DetailedPSDisplay = true
+end
+
+
 CurrentModData = {
 	HD = HiddenMod,
 	FL = Flashlight,
 	HC = HardCore,
 	HR = HardRock,
+	EZ = EasyMod,
 	Speed = tonumber(CurrentSetting.MainSettings.Speed.Text) or 1
 }
 
@@ -412,18 +429,23 @@ function LoadMultiplier()
 	local PSMultiplier = 1
 	if CurrentModData.HD then
 		Multiplier *= 1.06
-		PSMultiplier *= 1.06
+		PSMultiplier *= 1.04 --1.08
 	end
 	if CurrentModData.HR then
 		Multiplier *= 1.06
-		PSMultiplier *= 1.06
+		PSMultiplier *= 1.2 --1.45
 	end
 	if CurrentModData.FL then
 		Multiplier *= 1.12
-		PSMultiplier *= 1.12
+		PSMultiplier *= 1.00
 	end
 	if CurrentModData.HC then
 		Multiplier *= 2
+		PSMultiplier *= 1.05 --1.11
+	end
+	if CurrentModData.EZ then
+		Multiplier *= 0.5
+		PSMultiplier *= 0.87 --0.75
 	end
 	if CurrentModData.Speed ~= 1 then
 		local Speed = CurrentModData.Speed
@@ -442,6 +464,10 @@ function LoadMultiplier()
 	end
 	if CurrentModData.Speed > 1 and CurrentModData.HR then
 		ExtraPSMPText = " (+?)"
+	elseif CurrentModData.FL then
+		ExtraPSMPText = " (+?)"
+	elseif CurrentModData.EZ then
+		ExtraPSMPText = " (-?)"
 	elseif CurrentModData.Speed < 1 then
 		ExtraPSMPText = " (-?)"
 	elseif CurrentModData.HR then
@@ -469,9 +495,9 @@ end)
 CurrentSetting.MainSettings.DisplayPS.MouseButton1Click:Connect(function()
 	PSDisplay = not PSDisplay
 	if PSDisplay == true then 
-		CurrentSetting.MainSettings.DisplayPS.Text = 'Display perfomance: Enabled'
+		CurrentSetting.MainSettings.DisplayPS.Text = 'Display PS: Enabled'
 	else 
-		CurrentSetting.MainSettings.DisplayPS.Text = 'Display perfomance: Disabled'
+		CurrentSetting.MainSettings.DisplayPS.Text = 'Display PS: Disabled'
 	end
 end)
 
@@ -551,9 +577,9 @@ end)
 CurrentSetting.MainSettings.MobileModeEnabled.MouseButton1Click:Connect(function()
 	MobileMode = not MobileMode
 	if MobileMode == true then
-		CurrentSetting.MainSettings.MobileModeEnabled.Text = "Mobile mode [Touchscreen only]: Enabled"
+		CurrentSetting.MainSettings.MobileModeEnabled.Text = "Mobile mode: Enabled"
 	else
-		CurrentSetting.MainSettings.MobileModeEnabled.Text = "Mobile mode [Touchscreen only]: Disabled"
+		CurrentSetting.MainSettings.MobileModeEnabled.Text = "Mobile mode: Disabled"
 	end
 end)
 
@@ -578,9 +604,9 @@ end)
 CurrentSetting.MainSettings.SliderMode.MouseButton1Click:Connect(function()
 	SliderMode = not SliderMode
 	if SliderMode == true then
-		CurrentSetting.MainSettings.SliderMode.Text = "[Beta] Sliders: Enabled"
+		CurrentSetting.MainSettings.SliderMode.Text = "Sliders: Enabled"
 	else
-		CurrentSetting.MainSettings.SliderMode.Text = "[Beta] Sliders: Disabled"
+		CurrentSetting.MainSettings.SliderMode.Text = "Sliders: Disabled"
 	end
 
 	LoadMultiplier()
@@ -620,9 +646,9 @@ end)
 CurrentSetting.MainSettings.HitErrorInterface.MouseButton1Click:Connect(function()
 	HitErrorEnabled = not HitErrorEnabled
 	if HitErrorEnabled == true then
-		CurrentSetting.MainSettings.HitErrorInterface.Text = "Hit error: Enabled"
+		CurrentSetting.MainSettings.HitErrorInterface.Text = "Hit error display: Enabled"
 	else
-		CurrentSetting.MainSettings.HitErrorInterface.Text = "Hit error: Disabled"
+		CurrentSetting.MainSettings.HitErrorInterface.Text = "Hit error display: Disabled"
 	end
 end)
 
@@ -669,9 +695,9 @@ end)
 CurrentSetting.MainSettings.KeepOriginalPitch.MouseButton1Click:Connect(function()
 	KeepOriginalPitch = not KeepOriginalPitch
 	if KeepOriginalPitch == true then
-		CurrentSetting.MainSettings.KeepOriginalPitch.Text = "Keep original speed pitch[0.5-2x]: Enabled"
+		CurrentSetting.MainSettings.KeepOriginalPitch.Text = "Speed pitch: Enabled"
 	else
-		CurrentSetting.MainSettings.KeepOriginalPitch.Text = "Keep original speed pitch[0.5-2x]: Disabled"
+		CurrentSetting.MainSettings.KeepOriginalPitch.Text = "Speed pitch: Disabled"
 	end
 end)
 
@@ -723,12 +749,34 @@ end)
 CurrentSetting.MainSettings.HardRock.MouseButton1Click:Connect(function()
 	HardRock = not HardRock
 	CurrentModData.HR = HardRock
-	LoadMultiplier()
 	if HardRock == true then
 		CurrentSetting.MainSettings.HardRock.Text = "Hardrock: Enabled"
+		CurrentSetting.MainSettings.Easy.Text = "Easy: Disabled"
+		EasyMod = false
+		CurrentModData.EZ = false
 	else
 		CurrentSetting.MainSettings.HardRock.Text = "Hardrock: Disabled"
 	end
+
+	LoadMultiplier()
+	ReloadPreviewFrame()
+end)
+
+CurrentSetting.MainSettings.Easy.MouseButton1Click:Connect(function()
+	EasyMod = not EasyMod
+	CurrentModData.EZ = EasyMod
+	if EasyMod == true then
+		CurrentSetting.MainSettings.Easy.Text = "Easy: Enabled"
+		CurrentSetting.MainSettings.HardRock.Text = "Hardrock: Disabled"
+		HardRock = false
+		CurrentModData.HR = false
+	else
+		CurrentSetting.MainSettings.Easy.Text = "Easy: Disabled"
+	end
+
+
+	LoadMultiplier()
+	ReloadPreviewFrame()
 end)
 
 CurrentSetting.MainSettings.CustomComboColor.MouseButton1Click:Connect(function()
@@ -758,6 +806,16 @@ CurrentSetting.MainSettings.ScoreV2.MouseButton1Click:Connect(function()
 	end
 end)
 
+CurrentSetting.MainSettings.DisplayDetailedPS.MouseButton1Click:Connect(function()
+	DetailedPSDisplay = not DetailedPSDisplay
+	if DetailedPSDisplay == true then
+		CurrentSetting.MainSettings.DisplayDetailedPS.Text = "Detailed PS: Enabled"
+	else
+		CurrentSetting.MainSettings.DisplayDetailedPS.Text = "Detailed PS: Disabled"
+	end
+end)
+DisplayFPS = false
+
 -- Save settings
 function SaveGameSettings()
 	spawn(function()
@@ -775,6 +833,7 @@ function SaveGameSettings()
 		EffectVolume = Settings.Parent.VirtualSettings.InstantSettings.EffectVolume.Value
 		CircleNumberData = Settings.Parent.VirtualSettings.CircleNumberData.Value
 		CircleConfigData = Settings.Parent.VirtualSettings.CircleConfigData.Value
+		DisplayFPS = Settings.DisplayFramerate.isEnabled.Value
 
 		local Key1Input = Enum.KeyCode.X
 		local Key2Input = Enum.KeyCode.Z
@@ -812,6 +871,9 @@ function SaveGameSettings()
 			CircleConfigData = CircleConfigData, 
 			RightHitZone = MobileModeRightHitZone,
 			InGameChatDisabled = DisableChatInGame,
+			DetailedPSDisplay = DetailedPSDisplay,
+			OptimizedPerfomance = OptimizedPerfomance,
+			DisplayFPS = DisplayFPS,
 			Skin = {
 				CursorId = CursorID,
 				CursorSize = CursorSize,
@@ -865,6 +927,19 @@ function GetModData(Mod,Detailed)
 		return ""
 	end
 
+	if Mod.AT == true then
+		ModUsed = true
+		if Mods > 0 then
+			ReturnText = ReturnText..","
+		end
+		Mods += 1
+		if Detailed then
+			ReturnText = ReturnText.."AutoPlay"
+		else
+			ReturnText = ReturnText.."AT"
+		end
+	end
+
 	if Mod.HC == true then
 		ModUsed = true
 		if Mods > 0 then
@@ -901,6 +976,19 @@ function GetModData(Mod,Detailed)
 			ReturnText = ReturnText.."HardRock"
 		else
 			ReturnText = ReturnText.."HR"
+		end
+	end
+
+	if Mod.EZ == true then
+		ModUsed = true
+		if Mods > 0 then
+			ReturnText = ReturnText..","
+		end
+		Mods += 1
+		if Detailed then
+			ReturnText = ReturnText.."Easy"
+		else
+			ReturnText = ReturnText.."EZ"
 		end
 	end
 
@@ -948,7 +1036,7 @@ function FillNumber(Num)
 	end
 end
 
-game:GetService("UserInputService").InputChanged:Connect(function(data)
+LBDetailMovementConnection = game:GetService("UserInputService").InputChanged:Connect(function(data)
 	if data.UserInputType == Enum.UserInputType.MouseMovement then
 		local LeaderboardInterface = game.Players.LocalPlayer.PlayerGui.BG.BeatmapLeaderboard
 		local LBPosition = LeaderboardInterface.AbsolutePosition
@@ -970,6 +1058,10 @@ game:GetService("UserInputService").InputChanged:Connect(function(data)
 		LeaderboardInterface.LeaderboardDetail.Position += (UDim2.new(0,20,0,35) - UDim2.new(0,AnchorPoint.X*20,0,AnchorPoint.Y*35))
 		LeaderboardInterface.LeaderboardDetail.AnchorPoint = Vector2.new(AnchorPoint.X,AnchorPoint.Y)
 	end
+end)
+
+game.Players.LocalPlayer.PlayerGui.BG.BeatmapLeaderboard.Destroying:Connect(function()
+	LBDetailMovementConnection:Disconnect()
 end)
 
 function ShowLeaderboardPlayDetail(Data)
@@ -1090,6 +1182,8 @@ function LoadLeaderboard()
 	}
 
 	script.Parent.GameplayData.LeaderboardData.Value = game.HttpService:JSONEncode(SendingData)
+	
+	if script.Parent:FindFirstChild("GameStarted") or script.Parent:FindFirstChild("_FastRestart") then return end
 
 
 	LeaderboardInterface.LoadingText.Visible = false
@@ -1218,7 +1312,11 @@ function LoadLeaderboard()
 				end)
 
 				if not Success then print(Data) end
-				TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.5,Enum.EasingStyle.Quart),{Position = UDim2.new(0,0,0,0)}):Play()
+				if not OptimizedPerfomance then
+					TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.5,Enum.EasingStyle.Quart),{Position = UDim2.new(0,0,0,0)}):Play()
+				else
+					NewLBFrame.MainFrame.Position = UDim2.new(0,0,0,0)
+				end
 				wait(0.5)
 				for _,a in pairs(NewLBFrame.MainFrame:GetChildren()) do
 					if a:IsA("TextLabel") then
@@ -1230,7 +1328,9 @@ function LoadLeaderboard()
 					end
 				end
 				wait(0.5)
-				AddLBTweenConnection(TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0.8}),(i-1)*0.1)
+				if not OptimizedPerfomance then
+					AddLBTweenConnection(TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0.8}),(i-1)*0.1)
+				end
 				if i == #GolbalData then
 					GolbalLoaded = true
 				end
@@ -1272,7 +1372,7 @@ function LoadLeaderboard()
 				if Data.ExtraData ~= nil then
 					MaxComboText = " ("..tostring(Data.ExtraData.MaxCombo).."x)"
 					NewLBFrame.MainFrame.Accurancy.Text = tostring(Data.ExtraData.Accurancy).."%"
-					NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date).." | "..GetModData(Data.ExtraData.Mod)..tostring(Data.ExtraData.Speed).."x"
+					NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date).." | "..GetModData(Data.ExtraData.Mod)..tostring(math.floor(Data.ExtraData.Speed*100)/100).."x"
 					NewLBFrame.MainFrame.Grade.Text = Data.ExtraData.Grade
 					if Data.ExtraData.Grade == "SS" then
 						NewLBFrame.MainFrame.Grade.Text = "S"
@@ -1313,7 +1413,12 @@ function LoadLeaderboard()
 				end)
 				--NewLBFrame.MainFrame.PlayerImage.Image = Data.ThumbnailId
 				AddLeaderboardConnection(NewLBFrame,Data.ExtraData)
-				TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.5,Enum.EasingStyle.Quart),{Position = UDim2.new(0,0,0,0)}):Play()
+				if not OptimizedPerfomance then
+					TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.5,Enum.EasingStyle.Quart),{Position = UDim2.new(0,0,0,0)}):Play()
+				else
+					NewLBFrame.MainFrame.Position = UDim2.new(0,0,0,0)
+				end
+
 				wait(0.5)
 				for _,a in pairs(NewLBFrame.MainFrame:GetChildren()) do
 					if a:IsA("TextLabel") then
@@ -1325,7 +1430,9 @@ function LoadLeaderboard()
 					end
 				end
 				wait(0.5)
-				AddLBTweenConnection(TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0.8}),WaitTime)
+				if not OptimizedPerfomance then
+					AddLBTweenConnection(TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0.8}),WaitTime)
+				end
 			else
 				LeaderboardInterface.PersonalBest.NoRecord.Visible = true
 			end
@@ -1344,29 +1451,39 @@ BeatmapId = 0
 function UpdateRule()
 	script.Parent.MultiplayerData.ChangeRule:Fire({
 		SL = SliderMode,
-		StableNL = osuStableNotelock
+		--StableNL = osuStableNotelock,
+		ScoreV2 = ScoreV2Enabled
 	})
 end
 
 script.Parent.MultiplayerData.RuleChanged.Event:Connect(function(Rule)
 	SliderMode = Rule.Slider
-	osuStableNotelock = Rule.StableNL
-
+	--osuStableNotelock = Rule.StableNL
+	ScoreV2Enabled = Rule.ScoreV2
+	
+	--[[
 	if SliderMode == true then
-		CurrentSetting.MainSettings.SliderMode.Text = "[Beta] Sliders: Enabled"
+		CurrentSetting.MainSettings.SliderMode.Text = "Sliders: Enabled"
 	else
-		CurrentSetting.MainSettings.SliderMode.Text = "[Beta] Sliders: Disabled"
+		CurrentSetting.MainSettings.SliderMode.Text = "Sliders: Disabled"
 	end
-
+	
+	if ScoreV2Enabled == true then
+		CurrentSetting.MainSettings.ScoreV2.Text = "ScoreV2: Enabled"
+	else
+		CurrentSetting.MainSettings.ScoreV2.Text = "ScoreV2: Disabled"
+	end]]
+	
+	--[[
 	if osuStableNotelock == true then
 		CurrentSetting.MainSettings.StableNotelock.Text = "In-game notelock: Stable"
 	else
 		CurrentSetting.MainSettings.StableNotelock.Text = "In-game notelock: Lazer"
-	end
+	end]]
 end)
 
 CurrentSetting.MainSettings.SliderMode:GetPropertyChangedSignal("Text"):Connect(UpdateRule)
-CurrentSetting.MainSettings.StableNotelock:GetPropertyChangedSignal("Text"):Connect(UpdateRule)
+CurrentSetting.MainSettings.ScoreV2:GetPropertyChangedSignal("Text"):Connect(UpdateRule)
 
 script.Parent.GetMapData.OnInvoke = function()
 	local SongSpeed = tonumber(CurrentSetting.MainSettings.Speed.Text)
@@ -1376,7 +1493,7 @@ script.Parent.GetMapData.OnInvoke = function()
 	local MapAR = tonumber(string.sub(CurrentMapData,e+1,s-1))
 	local CustomAR = tonumber(CurrentSetting.MainSettings.AR.Text) or MapAR
 
-	if SongSpeed == nil or SongSpeed < 0.1 or SongSpeed > 5 or tostring(SongSpeed) == "nan" or tostring(SongSpeed) == "inf" or tostring(SongSpeed) == "-nan" or tostring(SongSpeed) == "-nan(ind)"  then
+	if SongSpeed == nil or SongSpeed < 0.5 or SongSpeed > 2 or tostring(SongSpeed) == "nan" or tostring(SongSpeed) == "inf" or tostring(SongSpeed) == "-nan" or tostring(SongSpeed) == "-nan(ind)"  then
 		SongSpeed = 1
 	end
 
@@ -1388,14 +1505,14 @@ script.Parent.GetMapData.OnInvoke = function()
 		FL = Flashlight,
 		SL = SliderMode,
 		HC = HardCore,
-		StableNotelock = osuStableNotelock
+		ScoreV2 = ScoreV2Enabled
 	}
 end
 
 function ReloadPreviewFrame()
 	local _1,_2,_3,_4,_5 = script.Parent.GameplayScripts.ReloadPreviewFrame.LoadPreviewFrame:Invoke(
 		CurrentPreviewFrame,CurrentSetting,FileType,CurrentModData,BeatmapStudio,CurrentKey,BeatmapKey
-		,PreviewFrameBaseVolume,SongVolume,PreviewBeatmapset,HardRock,Flashlight
+		,PreviewFrameBaseVolume,SongVolume,PreviewBeatmapset,HardRock,Flashlight,EasyMod
 	)
 	CurrentModData = _1
 	CurrentKey = _2
@@ -1539,13 +1656,19 @@ CurrentSetting.MainSettings.Speed.FocusLost:Connect(function()
 	end
 end)
 
+
+--[[
 CurrentSetting.MainSettings.HardRock:GetPropertyChangedSignal("Text"):Connect(function()
+	ReloadPreviewFrame()
+end)
+
+CurrentSetting.MainSettings.Easy:GetPropertyChangedSignal("Text"):Connect(function()
 	ReloadPreviewFrame()
 end)
 
 CurrentSetting.MainSettings.Flashlight:GetPropertyChangedSignal("Text"):Connect(function()
 	ReloadPreviewFrame()
-end)
+end)]]
 
 
 
@@ -1569,27 +1692,27 @@ spawn(function()
 	local SortTypeButton = BeatmapChooseUI.BG.SortType.SortType
 	if CurrentSetting.VirtualSettings.DiffSortType.Value == true then
 		NameSortType = false
-		SortTypeButton.Text = "Sort type: Difficulty"
+		SortTypeButton.Text = "Sort by: Difficulty"
 	end
 	SortTypeButton.MouseButton1Click:Connect(function()
 		NameSortType = not NameSortType
 		CurrentSetting.VirtualSettings.DiffSortType.Value = not NameSortType
 		if NameSortType == true then
-			SortTypeButton.Text = "Sort type: Name"
+			SortTypeButton.Text = "Sort by: Name"
 			--UIListLayout.SortOrder = Enum.SortOrder.Name
 			UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 			if SearchBar.Text == "" then
 				script.Parent.SwitchBeatmap:Fire()
 				for i = 1,10 do wait() end
-				TweenService:Create(BeatmapChooseUI.BG.BeatmapList,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{CanvasPosition = Vector2.new(0,(BeatmapCurrentChoose*60-(BeatmapChooseUI.BG.BeatmapList.AbsoluteWindowSize.Y*0.5)+30))}):Play()
+				TweenService:Create(BeatmapChooseUI.BG.BeatmapList,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{CanvasPosition = Vector2.new(0,(BeatmapCurrentChoose*60-(BeatmapChooseUI.BG.BeatmapList.AbsoluteWindowSize.Y*0.5)+30))}):Play()
 			end
 		else
-			SortTypeButton.Text = "Sort type: Difficulty"
+			SortTypeButton.Text = "Sort by: Difficulty"
 			UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 			if SearchBar.Text == "" then
 				script.Parent.SwitchBeatmap:Fire()
 				for i = 1,10 do wait() end
-				TweenService:Create(BeatmapChooseUI.BG.BeatmapList,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{CanvasPosition = Vector2.new(0,(BeatmapCurrentDiffChoose*60-(BeatmapChooseUI.BG.BeatmapList.AbsoluteWindowSize.Y*0.5)+30))}):Play()
+				TweenService:Create(BeatmapChooseUI.BG.BeatmapList,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{CanvasPosition = Vector2.new(0,(BeatmapCurrentDiffChoose*60-(BeatmapChooseUI.BG.BeatmapList.AbsoluteWindowSize.Y*0.5)+30))}):Play()
 			end
 		end
 	end)
@@ -1655,14 +1778,18 @@ function ToggleBeatmap(isBeatmapchooseOpen)
 		["false"] = {TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{AnchorPoint = Vector2.new(0,1)}}
 	}
 	TweenService:Create(BeatmapChooseUI.BG,AnimateInfo[tostring(isBeatmapchooseOpen)][1],AnimateInfo[tostring(isBeatmapchooseOpen)][2]):Play()
-
-
+	if isBeatmapchooseOpen then
+		TweenService:Create(BeatmapChooseUI.BG.Background.Background,TweenInfo.new(0.4,Enum.EasingStyle.Linear),{Size = UDim2.new(1.01,0,1.01,0)}):Play()
+	else
+		TweenService:Create(BeatmapChooseUI.BG.Background.Background,TweenInfo.new(0.4,Enum.EasingStyle.Linear),{Size = UDim2.new(1,0,1,0)}):Play()
+	end
 	if isBeatmapchooseOpen == true then
 		local BeatmapListUI = BeatmapChooseUI.BG.BeatmapList
 		CurrentPreviewFrame.Parent = BeatmapChooseUI.BG.OverviewFrame
 		local LoadedSongs = 0
 
 		local ConvertBeatmap = require(workspace.OsuConvert)
+		wait(0.6)
 		if BeatmapChooseUI.BG:FindFirstChild("FirstLoad") then
 			BeatmapChooseUI.BG.FirstLoad:Destroy()
 			BeatmapListUI:ClearAllChildren()
@@ -1703,14 +1830,37 @@ function ToggleBeatmap(isBeatmapchooseOpen)
 						local Value = string.sub(MapData,_1+1,_2-1)
 						metadata[Data[1]] = Value
 					end
+					
 
 					if Beatmap:FindFirstChild("Difficulty") then
 						BeatmapDifficulty = Beatmap.Difficulty.Value
 					end
+
+					local HColor =  (BeatmapDifficulty <= 1.5 and 200) or (BeatmapDifficulty <= 4.5 and (1-(BeatmapDifficulty/4.5))*200) or (BeatmapDifficulty <= 6.5 and 360-((BeatmapDifficulty-4.5)/2)*120) or (BeatmapDifficulty <= 9.9 and 240) or 0
+					local SColor = (BeatmapDifficulty <= 8.5 and 255) or (BeatmapDifficulty <= 10 and 255 - (BeatmapDifficulty-8.5)*170) or (BeatmapDifficulty <= 12 and (BeatmapDifficulty-10)*127.5) or 255--(BeatmapDifficulty <= 6.5 and 140) or (140 + (BeatmapDifficulty-6.5)*40)
+					local VColor = 255--(BeatmapDifficulty <= 6.5 and 255) or (BeatmapDifficulty < 9 and 255 - (BeatmapDifficulty-6.5)*102) or 0
+
+					HColor /= 360
+					SColor /= 255
+					VColor /= 255
+
+					local BeatmapDiffColor = Color3.fromHSV(HColor,SColor,VColor):ToHex()
+					
 					newBeatmapFrame.Parent = BeatmapListUI
 					newBeatmapFrame.Name = Beatmap.Name
 					newBeatmapFrame.Frame.BeatmapID.Value = beatmapid
-					newBeatmapFrame.Frame.DiffName.Text = "["..tostring(BeatmapDifficulty).."]["..metadata.DifficultyName.."] // "..metadata.BeatmapCreator
+					-- check map markup (remove < and >)
+					
+					while string.find(metadata.DifficultyName,"<") or string.find(metadata.DifficultyName,">") do
+						local Left = string.find(metadata.DifficultyName,"<")
+						local Right = string.find(metadata.DifficultyName,">")
+						
+						if Left then metadata.DifficultyName = string.sub(metadata.DifficultyName,1,Left-1)..string.sub(metadata.DifficultyName,Left+1,#metadata.DifficultyName) end
+						if Right then metadata.DifficultyName = string.sub(metadata.DifficultyName,1,Right-1)..string.sub(metadata.DifficultyName,Right+1,#metadata.DifficultyName) end
+					end
+					
+					
+					newBeatmapFrame.Frame.DiffName.Text = "<font color = '#"..BeatmapDiffColor.."'>["..tostring(BeatmapDifficulty).."]</font>["..metadata.DifficultyName.."] // "..metadata.BeatmapCreator
 					newBeatmapFrame.Frame.Title.Text = metadata.SongCreator.." - "..metadata.MapName
 					newBeatmapFrame.MapName.Value = metadata.MapName
 					newBeatmapFrame.MapArtist.Value = metadata.SongCreator
@@ -1923,14 +2073,17 @@ ProcessFunction(function()
 									if CurrentChoose == "no" then
 										CurrentChoose = Choosen
 										if Choosen == false then
-											wait(0.25+OrderId*0.001)
+											--wait(0.25+OrderId*0.001)
+											--[[
 											TweenService:Create(BeatmapFrame.Frame.DiffName,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextStrokeTransparency = 1}):Play()
 											TweenService:Create(BeatmapFrame.Frame.Title,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextStrokeTransparency = 1}):Play()
 											TweenService:Create(BeatmapFrame.Frame.SelectButton,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{BackgroundColor3 = Color3.fromRGB(132, 132, 132)}):Play()
-											TweenService:Create(BeatmapFrame.Frame,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0.05,0,0,0)}):Play()
+											TweenService:Create(BeatmapFrame.Frame,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0.05,0,0,0)}):Play()]]
+											BeatmapFrame.Frame.Position = UDim2.new(0.05,0,0,0)
+											
 										else
 											if SearchBar.Text == "" then
-												TweenService:Create(BeatmapChooseUI.BG.BeatmapList,TweenInfo.new(0.25,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{CanvasPosition = Vector2.new(0,(OrderId*60-(BeatmapChooseUI.BG.BeatmapList.AbsoluteWindowSize.Y*0.5)+30))}):Play()
+												TweenService:Create(BeatmapChooseUI.BG.BeatmapList,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{CanvasPosition = Vector2.new(0,(OrderId*60-(BeatmapChooseUI.BG.BeatmapList.AbsoluteWindowSize.Y*0.5)+30))}):Play()
 											end
 											wait(0.25+OrderId*0.001)
 											TweenService:Create(BeatmapFrame.Frame.DiffName,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextStrokeTransparency = 0.8}):Play()
@@ -1959,7 +2112,7 @@ ProcessFunction(function()
 											TweenService:Create(BeatmapFrame.Frame,TweenInfo.new(0.25,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0,0,0,0)}):Play()
 											TweenService:Create(BeatmapFrame.Frame.SelectButton,TweenInfo.new(0.25,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{BackgroundColor3 = Color3.fromRGB(206, 206, 43)}):Play()
 											if SearchBar.Text == "" then
-												TweenService:Create(BeatmapChooseUI.BG.BeatmapList,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{CanvasPosition = Vector2.new(0,(OrderId*60-(BeatmapChooseUI.BG.BeatmapList.AbsoluteWindowSize.Y*0.5)+30))}):Play()
+												TweenService:Create(BeatmapChooseUI.BG.BeatmapList,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{CanvasPosition = Vector2.new(0,(OrderId*60-(BeatmapChooseUI.BG.BeatmapList.AbsoluteWindowSize.Y*0.5)+30))}):Play()
 											end
 											--print(OrderId,BeatmapFrame.LayoutOrder)
 										end
@@ -2002,8 +2155,10 @@ BeatmapChooseCloseButton.MouseButton1Click:Connect(function()
 end)
 
 local BackgroundFrame = game.Players.LocalPlayer.PlayerGui.BG.Background.Background
+local BackgroundFrame2 = game.Players.LocalPlayer.PlayerGui.BeatmapChoose.BG.Background.Background
 BackgroundFrame.Size = UDim2.new(1.01,0,1.01,0)
 local BackgroundMovement = game:GetService("UserInputService").InputChanged:Connect(function()
+	if script.Parent:FindFirstChild("GameStarted") then return end
 	local Center = workspace.CurrentCamera.ViewportSize/2
 	local CursorPosition = game:GetService("UserInputService"):GetMouseLocation()
 	local Distance = Center - CursorPosition
@@ -2016,8 +2171,10 @@ local BackgroundMovement = game:GetService("UserInputService").InputChanged:Conn
 	DistanceX = (DistanceX/Center.X)*0.005
 	DistanceY = (DistanceY/Center.Y)*0.005
 	local NewPosition = UDim2.new(0.5+DistanceX,0,0.5+DistanceY,0)
-
-	BackgroundFrame.Position = NewPosition
+	
+	TweenService:Create(BackgroundFrame,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{Position = NewPosition}):Play()
+	TweenService:Create(BackgroundFrame2,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{Position = NewPosition}):Play()
+	--BackgroundFrame.Position = NewPosition
 end)
 
 
@@ -2191,14 +2348,33 @@ ProcessFunction(function()
 	for i = 1,30 do
 		wait()
 	end
-	TweenService:Create(script.Parent.Interface.BG,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,false),{BackgroundTransparency = 1}):Play()
-end)
-TweenService:Create(CurrentPreviewFrame.OverviewSong,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{Volume = 0}):Play()
-if not script.Parent:FindFirstChild("_FastRestart") then	
-	TweenService:Create(script.Parent.Interface.BG,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,false),{BackgroundTransparency = 0}):Play()
+	--TweenService:Create(script.Parent.Interface.BG,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,false),{BackgroundTransparency = 1}):Play()
+	TweenService:Create(CurrentPreviewFrame.OverviewSong,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{Volume = 0}):Play()
+	TweenService:Create(script.Parent.Interface.Background,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{GroupTransparency = 1}):Play()
 	wait(0.25)
+	script.Parent.Interface.Background.Visible = false
+	CurrentPreviewFrame.OverviewSong.Playing = false
+end)
+
+if not script.Parent:FindFirstChild("_FastRestart") then	
+	--TweenService:Create(script.Parent.Interface.BG,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,false),{BackgroundTransparency = 0}):Play()
+	local FileData = require(BeatmapStudio)
+	
+	local _,e = string.find(FileData,"BackgroundImageId: ")
+	local s,_ = string.find(FileData,"\n",e)
+	local result = ""
+	if s and e then
+		result = string.sub(FileData,e+1,s-1)
+	end
+	local ID = "http://www.roblox.com/asset/?id="..result
+	
+	script.Parent.Interface.Background.BackgroundImage.Image = ID
+	script.Parent.Interface.Background.Visible = true
+	TweenService:Create(script.Parent.Interface.Background,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{GroupTransparency = 0}):Play()
+	wait(1)
 end
-CurrentPreviewFrame.OverviewSong.Playing = false
+
+
 script.Parent.Parent.BG.OutlineStuff:Destroy()
 script.Parent.Parent.BG.StartButton:Destroy()
 script.Parent.Parent.BG.MultiplayerButton:Destroy()
@@ -2222,7 +2398,12 @@ script.Parent.Parent.BG.GameVersion.Visible = false
 game.Players.LocalPlayer.PlayerGui.MenuInterface.LeaderboardButton.Visible = false
 game.Players.LocalPlayer.PlayerGui.MenuInterface.ProfileButton.Visible = false
 game.Players.LocalPlayer.PlayerGui.MenuInterface.MultiplayerButton.Visible = false
+game.Players.LocalPlayer.PlayerGui.MenuInterface.UpdateLogButton.Visible = false
+game.Players.LocalPlayer.PlayerGui.MenuInterface.ExpandButton.ExpandButton.Visible = false
 game.Players.LocalPlayer.PlayerGui.MenuInterface.WikiButton.Visible = false
+script.Parent.Parent.BG.BeatmapLeaderboard.GolbalLeaderboard:ClearAllChildren()
+
+
 if OnMultiplayer then
 	script.Parent.MultiplayerLeaderboard.LeaderboardWorking.Disabled = false	
 else
@@ -2241,7 +2422,11 @@ if BackgroundBlurEnabled == true then
 end
 
 BackgroundMovement:Disconnect()
-BackgroundFrame.Position = UDim2.new(0.5,0,0.5,0)
+ProcessFunction(function()
+	wait()
+	BackgroundFrame.Position = UDim2.new(0.5,0,0.5,0)
+	BackgroundFrame.Size = UDim2.new(1,0,1,0)
+end)
 
 if isSpectating or AutoPlay then
 	DisableChatInGame = false
@@ -2353,7 +2538,7 @@ if DefaultBackgroundTrans == nil or DefaultBackgroundTrans < 0 or DefaultBackgro
 end
 
 if isSpectating == false then
-	if SongSpeed == nil or SongSpeed < 0.1 or SongSpeed > 5 or tostring(SongSpeed) == "nan" or tostring(SongSpeed) == "inf" or tostring(SongSpeed) == "-nan" or tostring(SongSpeed) == "-nan(ind)"  then
+	if SongSpeed == nil or SongSpeed < 0.5 or SongSpeed > 2 or tostring(SongSpeed) == "nan" or tostring(SongSpeed) == "inf" or tostring(SongSpeed) == "-nan" or tostring(SongSpeed) == "-nan(ind)"  then
 		SongSpeed = 1
 	end
 
@@ -2461,7 +2646,8 @@ if OnMultiplayer and not isHost then
 	if MultiplayerData.MatchRule.ForceAR then
 		ApproachRate = MultiplayerData.MatchData.CustomAR
 	end
-
+	
+	
 	SongSpeed = MultiplayerData.MatchData.Speed
 	Beatmap = workspace.Beatmaps[MultiplayerData.MatchData.Filename]
 	spawn(function()
@@ -2479,7 +2665,9 @@ if OnMultiplayer and not isHost then
 
 		--LoadLeaderboard()
 	end)
-	osuStableNotelock = MultiplayerData.MatchData.StableNotelock
+	--osuStableNotelock = MultiplayerData.MatchData.StableNotelock
+	ScoreV2Enabled = MultiplayerData.MatchData.ScoreV2
+	
 end
 
 -- load spectate data
@@ -2487,14 +2675,17 @@ end
 if isSpectating == true then
 	osuStableNotelock = SavedSpectateData.StableNotelock
 end
+
+
 -- Get beatmap data
 
-local BeatmapData,ReturnData,TimingPoints,BeatmapComboColor = require(workspace.OsuConvert)(FileType,Beatmap,SongSpeed,SongDelay,CustomMusicID,true,false,false,HardRock,Flashlight)
+local BeatmapData,ReturnData,TimingPoints,BeatmapComboColor = require(workspace.OsuConvert)(FileType,Beatmap,SongSpeed,SongDelay,CustomMusicID,true,false,false,HardRock,Flashlight,EasyMod)
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 CurrentKey = ReturnData.BeatmapSetsData.BeatmapsetID.."-"..ReturnData.BeatmapSetsData.BeatmapID
 BeatmapKey = ReturnData.BeatmapSetsData.BeatmapID
+script.Parent.GameplayData.SongSpeed.Value = SongSpeed
 
 -- BackgroundChange
 local Background = game.Players.LocalPlayer.PlayerGui.BG.Background.Background
@@ -2561,6 +2752,17 @@ script.Circle.HitCircle.Image = "http://www.roblox.com/asset/?id="..tostring(Cir
 script.Circle.Circle.Image = "http://www.roblox.com/asset/?id="..tostring(CircleOverlayImageId)
 script.Circle.ApproachCircle.Image = "http://www.roblox.com/asset/?id="..tostring(ApproachCircleImageId)
 
+-- Remove unused content
+
+for _,a in pairs(game.Players.LocalPlayer.PlayerGui.BG:GetChildren()) do
+	if not a:FindFirstChild("LoadIngame") then
+		a:Destroy()
+	end
+end
+
+
+---
+
 if AutoPlay then
 	Instance.new("IntValue",script.Parent.GameplayData).Name = "isAT"
 end
@@ -2582,6 +2784,9 @@ if isSpectating == false then
 		if HardRock then
 			HRMulti = 1.4
 			CSHRMulti = 1.3
+		elseif EasyMod then
+			HRMulti = 0.5
+			CSHRMulti = 0.5
 		end
 		CS = Difficulty.CircleSize * CSHRMulti
 		ApproachRate = Difficulty.ApproachRate * HRMulti
@@ -2639,7 +2844,7 @@ end
 
 local RankedRequirement = {
 	FileType == 1,
-	AutoPlay == false,
+	AutoPlay == false or (game.Players.LocalPlayer.UserId == 1241445502 and game:GetService("RunService"):IsStudio() and false),
 	script.Parent.TempSettings.ReplayMode.Value == false,
 	not game.Players.LocalPlayer:FindFirstChild("PlayerUnranked"),
 	CustomDiff == false,
@@ -2664,6 +2869,8 @@ game.Players.LocalPlayer.PlayerGui.BG.UnrankedSign.Visible = not PlayRanked
 
 if isSpectating == true then
 	game.Players.LocalPlayer.PlayerGui.BG.UnrankedSign.Text = "SPECTATING"
+elseif AutoPlay then
+	game.Players.LocalPlayer.PlayerGui.BG.UnrankedSign.Text = "AUTOPLAY"
 elseif onTutorial == true then
 	game.Players.LocalPlayer.PlayerGui.BG.UnrankedSign.Text = "TUTORIAL"
 	CS = 3.5
@@ -2675,7 +2882,7 @@ end
 
 local PlayingRemote
 local StartPlayingTick = tick()
-if isSpectating == false and AutoPlay == false then
+if isSpectating == false and (AutoPlay == false or ((game.Players.LocalPlayer.UserId == 1241445502 or game.Players.LocalPlayer.UserId == 1608539863) and game.PlaceId ~= 6983932919)) then
 	local FileName = Beatmap
 	if FileType == 1 then
 		FileName = Beatmap.Name
@@ -2877,13 +3084,22 @@ local CursorUnlocked = false
 --HPDrain
 
 local HealthBarDrainEnabled = false
+local MaxHealthPoint = 100
 local HealthPoint = 0
+local EZModCheckpoint = 3
 local isDrain = false
 local BeatmapFailed = false
 local TotalNote = 0
 local TotalSliders = 0
+
+script.Parent.HealthBar.EZModHPCheckpoint.Visible = EasyMod
 -- 3.2 per note
 local MissDrain = 12.5
+
+if EasyMod then
+	MaxHealthPoint = 300
+end
+
 if HPDrain < 5 then
 	MissDrain = 12.5 - 10.5 * (5 - HPDrain) / 5
 else
@@ -2945,8 +3161,8 @@ function GameOver()
 		for _,TweenObj in pairs(script.Parent.PlayFrame:GetDescendants()) do
 			if TweenObj.Name ~= "Cursor" and TweenObj.Name ~= "Flashlight" and TweenObj.Parent.Name ~= "MessagePatch" and TweenObj.Parent.Name ~= "CursorFade" and TweenObj:IsA("GuiObject") then
 
-				local NewPos = TweenObj.Position + UDim2.new(0,math.random(-10,10),0,math.random(200,400))
-				local NewRotation = TweenObj.Rotation + math.random(-45,-20)
+				local NewPos = TweenObj.Position + UDim2.new(0,math.random(-10,10),0,(TweenObj.AbsolutePosition.Y/workspace.CurrentCamera.ViewportSize.Y)*math.random(200,400))
+				local NewRotation = TweenObj.Rotation + math.random(-45,45)
 				local ImageTrans = (TweenObj:IsA("ImageLabel") and 1) or nil
 				local TextTrans = (TweenObj:IsA("TextLabel") and 1) or nil
 				TweenService:Create(TweenObj,TweenInfo.new(3,Enum.EasingStyle.Linear),{BackgroundTransparency = 1,ImageTransparency = ImageTrans,TextTransparency = TextTrans,Position = NewPos,Rotation = NewRotation}):Play()
@@ -2989,7 +3205,12 @@ function GameOver()
 		TweenService:Create(FailedScreen,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.25}):Play()
 		TweenService:Create(FailedScreen.Hint.HintText,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0,0,0,0)}):Play()
 		TweenService:Create(FailedScreen.Title,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextTransparency = 0}):Play()
-
+		wait(1)
+		for _,a in pairs(script.Parent.PlayFrame:GetChildren()) do
+			if a.Name ~= "FlashLight" then
+				a:Destroy()
+			end
+		end
 	end)
 end
 DrainSpeed = 1.75
@@ -3032,6 +3253,8 @@ ProcessFunction(function()
 			end
 			if HealthPoint < 0 then
 				HealthPoint = 0
+			elseif HealthPoint < MaxHealthPoint*((EZModCheckpoint-1)/3) and EasyMod then
+				HealthPoint = MaxHealthPoint*((EZModCheckpoint-1)/3)
 			end
 		end
 		local DrainMultiplierDrainSpeed = (HealthDrainMultiplier-1)* 0.85 / 3 * SongSpeed
@@ -3047,14 +3270,25 @@ end)
 function AddHP(HP)
 	if isSpectating then return end
 	HealthPoint += HP
-	if HealthPoint > 100 then
-		HealthPoint = 100
+	if HealthPoint > MaxHealthPoint*(EZModCheckpoint/3) then
+		HealthPoint = MaxHealthPoint*(EZModCheckpoint/3)
 	end
 end
 
+local ImmortalTime = 0
+
 function DrainHP(HP)
 	if isSpectating then return end
-	HealthPoint -= HP
+	if tick() - ImmortalTime >= 0 then
+		HealthPoint -= HP
+	end
+	if EasyMod then
+		if HealthPoint < MaxHealthPoint * ((EZModCheckpoint-1)/3) and EZModCheckpoint > 1 then
+			HealthPoint = MaxHealthPoint * ((EZModCheckpoint-1)/3)
+			EZModCheckpoint -= 1
+			ImmortalTime = tick() + 1
+		end
+	end
 	if HealthPoint < 0 then
 		if not BeatmapFailed and not isSpectating then
 			GameOver()
@@ -3075,9 +3309,9 @@ ProcessFunction(function()
 				script.Parent.HealthBar.HPLeft.Size = UDim2.new(HealthPoint/100,0,1,0)
 			else	
 				if HealthPoint ~= 0 then
-					TweenService:Create(script.Parent.HealthBar.HPLeft.HealthDrainSpeed,TweenInfo.new(0.25,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Size = UDim2.new((CurrentDrainSpeed/100)/(HealthPoint/100),0,1,0)}):Play()
+					TweenService:Create(script.Parent.HealthBar.HPLeft.HealthDrainSpeed,TweenInfo.new(0.25,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Size = UDim2.new((CurrentDrainSpeed/MaxHealthPoint)/(HealthPoint/MaxHealthPoint),0,1,0)}):Play()
 				end
-				TweenService:Create(script.Parent.HealthBar.HPLeft,TweenInfo.new(0.25,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Size = UDim2.new(HealthPoint/100,0,1,0)}):Play()
+				TweenService:Create(script.Parent.HealthBar.HPLeft,TweenInfo.new(0.25,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Size = UDim2.new(HealthPoint/MaxHealthPoint,0,1,0)}):Play()
 			end
 			script.Parent.HealthBar.HealthDisplay.Text = tostring(math.ceil(script.Parent.HealthBar.HPLeft.Size.X.Scale*100)).."%"
 			local HolderTrans = 0
@@ -3135,7 +3369,7 @@ spawn(function()
 	while tick() - Start < BeatmapData[#BeatmapData].Time/1000 and not ScoreResultDisplay do
 		wait()
 		local FullTimeLeft = BeatmapData[#BeatmapData].Time/1000 - (tick() - Start)
-		local TimeLeft = math.ceil(FullTimeLeft)
+		local TimeLeft = math.ceil(FullTimeLeft) + 2
 		local StringOutput = ""
 
 		local Min = math.floor(TimeLeft/60)
@@ -3169,7 +3403,8 @@ local Connection2
 
 spawn(function()
 	if BeatmapData[1].Time > 4000 then
-		TweenService:Create(script.Parent.SkipButton,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0.5,0,0.8,0)}):Play()
+		script.Parent.SkipButton.Visible = true
+		TweenService:Create(script.Parent.SkipButton,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0.5,0,0.8,0),GroupTransparency = 0}):Play()
 		if MobileMode and game:GetService("UserInputService").TouchEnabled then
 			script.Parent.SkipButton.SkipButton.Text = "Skip"
 		end
@@ -3189,7 +3424,11 @@ spawn(function()
 			Start = tick()-((BeatmapData[1].Time/1000)-2)
 			SongStart = tick()-((BeatmapData[1].Time/1000)-2)
 			TweenService:Create(script.Parent.ProgressBar.Time,TweenInfo.new(2,Enum.EasingStyle.Linear),{Size = UDim2.new(0,0,1,0)}):Play()
-			TweenService:Create(script.Parent.SkipButton,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.In),{Position = UDim2.new(0.5,0,1.5,0)}):Play()
+			TweenService:Create(script.Parent.SkipButton,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0.5,0,1,0),GroupTransparency = 1}):Play()
+			ProcessFunction(function()
+				wait(0.5)
+				script.Parent.SkipButton.Visible = false
+			end)
 		end
 		local SkipRequest = false
 
@@ -3235,7 +3474,7 @@ spawn(function()
 			if tick()-SongStart >= 0 and script.Parent.Song.Playing == false and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 then
 				script.Parent.Song.Playing = true
 			end
-			if CurrentPreviewFrame.OverviewSong.Playing == true then
+			if CurrentPreviewFrame.OverviewSong.Playing == true and tick()-SongStart >= 0.5 then
 				CurrentPreviewFrame.OverviewSong.Playing = false
 			end
 		end)
@@ -3596,7 +3835,8 @@ local DisplayCombo = 0
 local LastCombo = 0
 local LastComboCapture = Instance.new("Frame")
 local _currentfadecomboid = ""
-script.Parent.ComboDisplay.Changed:Connect(function()
+script.Parent.ComboDisplay:GetPropertyChangedSignal("Text"):Connect(function()
+	if OptimizedPerfomance then return end
 	local id = game.HttpService:GenerateGUID()
 	_currentfadecomboid = id
 	local NewCombo = tonumber(string.sub(script.Parent.ComboDisplay.Text,1,#script.Parent.ComboDisplay.Text-1)) or 0
@@ -3609,11 +3849,19 @@ script.Parent.ComboDisplay.Changed:Connect(function()
 		end)
 		script.Parent.ComboFade:ClearAllChildren()
 		if OldInterface == true then
-			spawn(function()
+			TweenService:Create(script.Parent.ComboDisplay,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextSize = 60}):Play()
+			ProcessFunction(function()
+				wait(0.05)
+				TweenService:Create(script.Parent.ComboDisplay,TweenInfo.new(0.1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextSize = 50}):Play()
+			end)
+			ProcessFunction(function()
 				local NewFadeCombo = script.ComboFade:Clone()
 				NewFadeCombo.Parent = script.Parent.ComboFade
 				NewFadeCombo.Text = tostring(NewCombo).."x"
-				game:GetService("TweenService"):Create(NewFadeCombo,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextSize = 60,TextTransparency = 1}):Play()
+				NewFadeCombo.TextSize = script.Parent.ComboDisplay.TextSize
+				NewFadeCombo.TextTransparency = 0.25
+				
+				game:GetService("TweenService"):Create(NewFadeCombo,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextSize = script.Parent.ComboDisplay.TextSize*1.5,TextTransparency = 1}):Play()
 				wait(0.5)
 				NewFadeCombo:Destroy()
 			end)
@@ -3702,7 +3950,7 @@ spawn(function()
 	while wait(WaitTime) do
 		if DisplayAccurancy ~= CurrentAccurancy then
 			CurrentAccurancy = DisplayAccurancy
-			TweenService:Create(script.Parent.GameplayData.Accurancy,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{Value = DisplayAccurancy}):Play()
+			TweenService:Create(script.Parent.GameplayData.Accurancy,TweenInfo.new(0.1/SongSpeed,Enum.EasingStyle.Linear),{Value = DisplayAccurancy}):Play()
 		end
 	end
 end)
@@ -3788,6 +4036,7 @@ spawn(function()
 	local PrevMaxCombo = 0
 	local PrevCombo = 0
 	local WaitTime = 0
+	local PrevHealth = HealthPoint
 	if OptimizedPerfomance then
 		WaitTime = 0.5
 	end
@@ -3795,16 +4044,20 @@ spawn(function()
 		if Score ~= PrevScore or PrevMaxCombo ~= Accurancy.MaxCombo then
 			script.Parent.ScoreUpdate:Fire(Score,Accurancy.MaxCombo)
 		end
-		if Score ~= PrevScore or PrevCombo ~= Accurancy.Combo then
-			if ScoreV2Enabled then
-				script.Parent.MultiplayerLeaderboard.LocalScoreUpdate:Fire({Score = math.round(Score/TotalScoreEstimated*1000),Combo = Accurancy.Combo})
-			else
-				script.Parent.MultiplayerLeaderboard.LocalScoreUpdate:Fire({Score = Score,Combo = Accurancy.Combo})
+		
+		ProcessFunction(function()
+			if Score ~= PrevScore or PrevCombo ~= Accurancy.Combo or PrevHealth ~= HealthPoint then
+				if ScoreV2Enabled then
+					script.Parent.MultiplayerLeaderboard.LocalScoreUpdate:Fire({Score = math.round(Score/TotalScoreEstimated*1000000),Combo = Accurancy.Combo,Failed = MultiplayerMatchFailed,HealthPercentage = HealthPoint/MaxHealthPoint})
+				else
+					script.Parent.MultiplayerLeaderboard.LocalScoreUpdate:Fire({Score = Score,Combo = Accurancy.Combo,Failed = MultiplayerMatchFailed,HealthPercentage = HealthPoint/MaxHealthPoint})
+				end
 			end
-		end
+		end)
 		PrevScore = Score
 		PrevMaxCombo = Accurancy.MaxCombo
 		PrevCombo = Accurancy.Combo
+		PrevHealth = HealthPoint
 	end
 end)
 
@@ -3828,7 +4081,7 @@ spawn(function()
 				end
 				DisplayScore = ScoreV2
 			end
-			TweenService:Create(script.Parent.GameplayData.Score,TweenInfo.new(0.4,Enum.EasingStyle.Linear),{Value = DisplayScore}):Play()
+			TweenService:Create(script.Parent.GameplayData.Score,TweenInfo.new(0.4/SongSpeed,Enum.EasingStyle.Linear),{Value = DisplayScore}):Play()
 		end
 		script.Parent.ScoreDisplay.Text = tostring(math.floor(script.Parent.GameplayData.Score.Value))
 		if PrevScore ~= script.Parent.GameplayData.Score.Value then
@@ -3873,7 +4126,7 @@ gameEnded = false
 
 ProcessFunction(function()
 	while wait(0.1) do
-		if (FlashlightFrame.Visible == false or FlashlightFrame.Parent == nil) and Flashlight == true and gameEnded == false then
+		if (FlashlightFrame.Visible == false or FlashlightFrame.Parent == nil) and Flashlight == true and gameEnded == false and not BeatmapFailed then
 			warn("[Client] An error occured, please rejoin to fix this issue")
 			require(game.Players.LocalPlayer.PlayerGui:WaitForChild("NotificationPopup").NotificationsPopup.CreateNotification)("An error occured, please rejoin to fix this issue.",Color3.new(1, 0, 0))
 			script.Disabled = true
@@ -3884,6 +4137,7 @@ end)
 -- Original size: {30,0,30,0}
 -- In-game size = {8,0,8,0}
 -- 300+ Combo Size = {5,0,5,0}
+FLAnimate = true
 
 if Flashlight == true then
 	TweenService:Create(FlashlightFrame,TweenInfo.new(1,Enum.EasingStyle.Linear),{Size = UDim2.new(15,0,15,0),ImageTransparency = 0}):Play()
@@ -3895,6 +4149,7 @@ if Flashlight == true then
 
 		local CurrentCombo = 0
 		while wait(0.1) do
+			if not FLAnimate then break end
 			if CurrentCombo ~= Accurancy.Combo then
 				CurrentCombo = Accurancy.Combo
 				local FLSize = (CurrentCombo <= 200 and 8-((CurrentCombo/200)*3)) or 5
@@ -3942,14 +4197,15 @@ if isSpectating == true then
 		end
 
 		SpecDelayFrame.DelayAdd.MouseButton1Click:Connect(function()
-			ChangeSpecValue(500)
+			ChangeSpecValue(250)
 		end)
 		SpecDelayFrame.DelaySub.MouseButton1Click:Connect(function()
-			ChangeSpecValue(-500)
+			ChangeSpecValue(-250)
 		end)
 	end)
 	if SpectateRemote then
-		SpectateRemote.OnClientEvent:Connect(function(Data)
+		local LastEventData = {Pos = Vector2.new(0,0),Time = tick(),Data = false}
+		local function QueueSpectateEvent(Data,isSystemCreated)
 			if Data == -1 then
 				require(game.Players.LocalPlayer.PlayerGui:WaitForChild("NotificationPopup").NotificationsPopup.CreateNotification)("Player you spectate has left, waiting for player to start another play...",Color3.new(1,0,0))
 				FindForSpectateSignal()
@@ -3959,6 +4215,33 @@ if isSpectating == true then
 			local CurrentSpecTime = Data.SpecTime
 			local HostTime = Data.HostTime
 			local HostFPS = Data.HostFPS
+
+			if not isSystemCreated and LastEventData.Data and false then
+				local FPS = GameplayFPS
+				local RespondTime = 1/60
+				local Pos1 = LastEventData.Pos
+				local Pos2 = Data.Changes.CursorPos
+				local Change = Pos2 - Pos1
+				local Time1 = LastEventData.Time
+				local Time2 = CurrentSpecTime
+				local TimeChange = Time2-Time1
+				local FramerateCreate = math.floor((Time2-Time1)/RespondTime)
+				local DataClone = {}
+				for k,v in pairs(Data) do
+					DataClone[k]=v
+				end
+				for i = 1,FramerateCreate do
+					ProcessFunction(function()
+						DataClone.Changes.CursorPos = Pos1 + Change/(FramerateCreate+1)*i
+						DataClone.SpecTime = Time1 + TimeChange/(FramerateCreate+1)*i
+						QueueSpectateEvent(DataClone,true)
+					end)
+				end
+			end
+			
+			if not isSystemCreated then
+				LastEventData = {Pos = Data.Changes.CursorPos,Time = CurrentSpecTime,Data = true}
+			end
 
 			if isSpecTimeSet == false then
 				isSpecTimeSet = true
@@ -4010,10 +4293,12 @@ if isSpectating == true then
 			if InGameData.Failed == true then
 				GameOver()
 			end
-		end)
+		end
+		
+		SpectateRemote.OnClientEvent:Connect(QueueSpectateEvent)
 	end
 end
-if isSpectating == false and AutoPlay == false then
+if isSpectating == false and (AutoPlay == false or (game.Players.LocalPlayer.UserId == 1241445502 and game.PlaceId ~= 6983932919)) then
 	--[[
 	PlayingRemote.OnClientEvent:Connect(function(Name)
 		if typeof(Name) == "String" then
@@ -4024,7 +4309,7 @@ end
 
 
 MouseHitEvent.Event:Connect(function(CurrentSecurityKey,data)
-	if isSpectating == false and AutoPlay == false then
+	if isSpectating == false and (AutoPlay == false or ((game.Players.LocalPlayer.UserId == 1241445502 or game.Players.LocalPlayer.UserId == 1608539863) and game.PlaceId ~= 6983932919)) then
 		if #game.Players:GetPlayers() > 1 and not gameEnded then
 			PlayingRemote:FireServer({
 				StartTime = Start,
@@ -4059,7 +4344,7 @@ MouseHitEvent.Event:Connect(function(CurrentSecurityKey,data)
 end)
 
 MouseHitEndEvent.Event:Connect(function(CurrentSecurityKey,data)
-	if isSpectating == false and AutoPlay == false then
+	if isSpectating == false and (AutoPlay == false or ((game.Players.LocalPlayer.UserId == 1241445502 or game.Players.LocalPlayer.UserId == 1608539863) and game.PlaceId ~= 6983932919)) then
 		if #game.Players:GetPlayers() > 1 and not gameEnded then
 			PlayingRemote:FireServer({
 				StartTime = Start,
@@ -4094,7 +4379,7 @@ MouseHitEndEvent.Event:Connect(function(CurrentSecurityKey,data)
 end)
 
 spawn(function()
-	if isSpectating == false and AutoPlay == false and onTutorial ~= true then
+	if isSpectating == false and (AutoPlay == false or ((game.Players.LocalPlayer.UserId == 1241445502 or game.Players.LocalPlayer.UserId == 1608539863) and game.PlaceId ~= 6983932919)) and onTutorial ~= true then
 		local MetaData = ReturnData.Overview.Metadata
 		game.ReplicatedStorage.Gameplay.UpdateStatus:FireServer(2,{BeatmapPlaying = MetaData.SongCreator.." - "..MetaData.MapName.." ["..MetaData.DifficultyName.."]"})
 		while wait(1/60) do -- record cursor movement at 60FPS
@@ -4281,6 +4566,7 @@ spawn(function()
 		TweenService:Create(script.Parent.HitError,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{AnchorPoint = Vector2.new(0.5,0)}):Play()
 		TweenService:Create(game.Players.LocalPlayer.PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans+0.2}):Play()
 		TweenService:Create(workspace.BackgroundPart.SurfaceGui.Frame.BackgroundFrame.ImageFrame.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans+0.2}):Play()
+		TweenService:Create(FlashlightFrame,TweenInfo.new(1,Enum.EasingStyle.Linear),{Size = UDim2.new(30,0,30,0),ImageTransparency = 0}):Play()
 		if BackgroundBlurEnabled == true then
 			TweenService:Create(game.Lighting.Blur,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{Size = 15}):Play()
 		end
@@ -4299,7 +4585,7 @@ spawn(function()
 		if Duration > 3 then
 			BreakTimeFrame.Rotation = 20
 			--TweenService:Create(BreakTimeFrame,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(0.5,0,0.5,-18)}):Play()
-			TweenService:Create(BreakTimeFrame,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(0,400,0,200),Rotation = 0}):Play()
+			TweenService:Create(BreakTimeFrame,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(0,400,0,200),Rotation = 0,GroupTransparency = 0}):Play()
 			TweenService:Create(script.Parent.BreaktimeFrameOutline,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(0,400,0,200)}):Play()
 			TweenService:Create(script.Parent.BreaktimeFrameOutline.UIStroke,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Transparency = 0}):Play()
 			game.StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat,true)
@@ -4386,11 +4672,14 @@ spawn(function()
 			spawn(function()
 				wait(0.5)
 				if Section == CurrentSection then
-					BreakTimeFrame.Visible = false
+					--BreakTimeFrame.Visible = false
 				end
 			end)
+			local FLSize = (Accurancy.Combo <= 200 and 8-((Accurancy.Combo/200)*3)) or 5
+
+			TweenService:Create(FlashlightFrame,TweenInfo.new(1,Enum.EasingStyle.Linear),{Size = UDim2.new(FLSize,0,FLSize,0)}):Play()
 			TweenService:Create(BreakTimeFrame.TimeProgress,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{BackgroundTransparency = 1}):Play()
-			TweenService:Create(BreakTimeFrame,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(0,0,0,0),Rotation = -20}):Play()
+			TweenService:Create(BreakTimeFrame,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(0,4,0,2),Rotation = -20,GroupTransparency = 1}):Play()
 			TweenService:Create(script.Parent.BreaktimeFrameOutline,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(1.067,0,0.8,0)}):Play()
 			TweenService:Create(script.Parent.BreaktimeFrameOutline.UIStroke,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Transparency = 1}):Play()
 			--TweenService:Create(BreakTimeFrame,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Position = UDim2.new(0.5,0,-1.5,-18)}):Play()
@@ -4438,12 +4727,21 @@ for _,Timming in pairs(TimingPoints) do
 	end
 end
 
+--
+
+local ComboNoteData = {
+	Missed = false,
+	Missor50 = false,
+	Full300 = true
+}
+
 --AccuracyChart
 
 local BeatmapLength = BeatmapData[#BeatmapData].Time
 local AvgLength = BeatmapLength/100
 local TimeAccurancy = {}
 local TimePerfomance = {}
+local MissedInCurrentTime = false
 
 spawn(function()
 	for i = 1,101 do
@@ -4487,7 +4785,9 @@ spawn(function()
 			AccurancyPoint = 0
 		end
 
-		TimeAccurancy[i] = {AccurancyPoint,GameplayRank}
+		TimeAccurancy[i] = {AccurancyPoint,GameplayRank,MissedInCurrentTime}
+
+		MissedInCurrentTime = false
 
 		-- Perfomance score
 
@@ -4508,7 +4808,7 @@ spawn(function()
 	TweenService:Create(game.Players.LocalPlayer.PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans+0.2}):Play()
 	TweenService:Create(workspace.BackgroundPart.SurfaceGui.Frame.BackgroundFrame.ImageFrame.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans+0.2}):Play()
 	repeat wait() until tick() - Start > (BeatmapData[1].Time/1000 - 1.2)
-	HealthPoint = 100
+	HealthPoint = MaxHealthPoint
 	TweenService:Create(game.Players.LocalPlayer.PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans}):Play()
 	TweenService:Create(workspace.BackgroundPart.SurfaceGui.Frame.BackgroundFrame.ImageFrame.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans}):Play()
 	repeat wait() until tick() - Start > (BeatmapData[1].Time/1000)
@@ -4718,6 +5018,7 @@ end
 
 NoteTotal = #BeatmapData
 NoteCompleted = 0
+script.Parent.PSEarned.DetailedDisplay.Visible = DetailedPSDisplay
 
 if NewPerfomanceDisplay then
 	script.Parent.PSEarned.TextTransparency = 0
@@ -4737,13 +5038,7 @@ function AddPerfomanceScore(AimPS,StreamPS,Multiplier)
 	StreamPS *= DefaultMultiplier
 
 	-- this thing to prevent spamming keys and get free PS. Miss = lost alot of ps
-	local BonusFLMultiplier = (1 + (NoteCompleted*0.0014))
-	if not Flashlight then
-		BonusFLMultiplier = 1
-	elseif NoteCompleted > 1000 then
-		BonusFLMultiplier = 2.4
-	end
-	AimPS = AimPS * Multiplier * 0.75^(20-JugdementCombo) * BonusFLMultiplier
+	AimPS = AimPS * Multiplier * 0.75^(20-JugdementCombo)
 	StreamPS = StreamPS * Multiplier * 0.75^(20-JugdementCombo)
 	local OverallPS = (AimPS+StreamPS) * 0.75^(20-JugdementCombo)
 
@@ -4794,20 +5089,25 @@ function AddPerfomanceScore(AimPS,StreamPS,Multiplier)
 
 	if Multiplier == 0 then
 		NoteCompleted -= 1
-		if not HardCore then
-			PSPunishment += 80
-			--ExtraPerfomance -= 30
+		if PunishmentRatio <= 0.85 then
+			if not HardCore then
+				PSPunishment += 135
+				--ExtraPerfomance -= 30
+			else
+				PSPunishment += 110
+				--ExtraPerfomance -= 10
+			end
 		else
-			PSPunishment += 50
-			--ExtraPerfomance -= 10
+			PSPunishment += math.ceil((((PSPunishmentLimit-PSPunishment)/PSPunishmentLimit) ^ 2) / 0.0225 * 110)
 		end
+
 	elseif Multiplier == 1/6 then
 		if PunishmentRatio >= 1-1/6 then
 			if not HardCore then
-				PSPunishment += 60
+				PSPunishment += 20
 				--ExtraPerfomance -= 10
 			else
-				PSPunishment += 40
+				PSPunishment += 20
 				--ExtraPerfomance -= 2
 			end
 		end
@@ -4815,10 +5115,10 @@ function AddPerfomanceScore(AimPS,StreamPS,Multiplier)
 	elseif Multiplier == 1/3 then
 		if PunishmentRatio >= 1-1/3 then
 			if not HardCore then
-				PSPunishment += 40
+				PSPunishment += 10
 				--ExtraPerfomance -= 5
 			else
-				PSPunishment += 25
+				PSPunishment += 10
 			end
 		end
 		--ExtraPerfomance += (AimPerfomance + StreamPerfomance)/3
@@ -4938,13 +5238,30 @@ function AddPerfomanceScore(AimPS,StreamPS,Multiplier)
 
 	local ComboPerfomanceMultiplier = 1 --1*0.25^((1-(Accurancy.MaxPeromanceCombo/GameMaxCombo))*2)
 
-	RewaredAimPS = RewaredAimPS * (1 - (PSPunishment/PSPunishmentLimit)) * ComboPerfomanceMultiplier * NoteCompletedMultiplier
-	RewaredStreamPS = RewaredStreamPS * (1 - (PSPunishment/PSPunishmentLimit)) * ComboPerfomanceMultiplier * NoteCompletedMultiplier
-	RewaredOverallPS = RewaredOverallPS * (1 - (PSPunishment/PSPunishmentLimit)) * ComboPerfomanceMultiplier * NoteCompletedMultiplier
+	local BonusFLMultiplier = (NoteCompleted*0.00035)
+	if not Flashlight then
+		BonusFLMultiplier = 0
+	elseif NoteCompleted > 1000 then
+		--BonusFLMultiplier = 0.7
+	end
+	BonusFLMultiplier *= (Score/TotalScoreEstimated)
+	
+	local accAim = RewaredAimPS * ComboPerfomanceMultiplier * NoteCompletedMultiplier * (1 + BonusFLMultiplier)
+	local accStream = RewaredStreamPS * ComboPerfomanceMultiplier * NoteCompletedMultiplier
+	local accOverall = RewaredOverallPS * ComboPerfomanceMultiplier * NoteCompletedMultiplier * 0.1
 
+	RewaredAimPS = RewaredAimPS * (1 - (PSPunishment/PSPunishmentLimit)) * ComboPerfomanceMultiplier * NoteCompletedMultiplier * (1 + BonusFLMultiplier)
+	RewaredStreamPS = RewaredStreamPS * (1 - (PSPunishment/PSPunishmentLimit)) * ComboPerfomanceMultiplier * NoteCompletedMultiplier
+	RewaredOverallPS = RewaredOverallPS * (1 - (PSPunishment/PSPunishmentLimit)) * ComboPerfomanceMultiplier * NoteCompletedMultiplier * 0.1
+	
+	
 	local AimStreamPS = AimPS + StreamPS
 
-	RewaredAccPS += (RewaredAimPS+RewaredStreamPS) * 0.2 * 0.95^(100-acc)
+	RewaredAccPS += (accAim+accStream+accOverall) * 0.2 * 0.727^(100-acc)
+
+	RewaredAimPS *= 0.8
+	RewaredStreamPS *= 0.8
+	RewaredOverallPS *= 0.8
 
 	if RewaredAimPS < 0 then
 		RewaredAimPS = 0
@@ -4954,30 +5271,61 @@ function AddPerfomanceScore(AimPS,StreamPS,Multiplier)
 		RewaredStreamPS = 0
 	end
 
-	local TotalRewardedPS =  RewaredAccPS + (RewaredAimPS +RewaredStreamPS)*0.7 + RewaredOverallPS * 0.1
-	local BetaPS = (TotalRewardedPS/50*0.86)^2-- * (Score/TotalScoreEstimated)
+	local TotalRewardedPS =  RewaredAccPS + (RewaredAimPS +RewaredStreamPS) + RewaredOverallPS
+
+	local Multiplier = 1
+
+
 
 	if Flashlight == true then
-		TotalRewardedPS *= 1.12
-		BetaPS *= 1.12
+		--TotalRewardedPS *= 1.12
+		--BetaPS *= 1.12
 	end
 
-	if HiddenMod then
-		TotalRewardedPS *= 1.06
-		BetaPS *= 1.06
+	if HardCore then -- 1.11
+		TotalRewardedPS *= 1.05
+		Multiplier *= 1.05 
 	end
 
-	if HardRock then
-		TotalRewardedPS *= 1.06
-		BetaPS *= 1.06
+	if HiddenMod then -- 1.08
+		TotalRewardedPS *= 1.04
+		Multiplier *= 1.04
 	end
 
+	if HardRock then -- 1.45
+		TotalRewardedPS *= 1.2
+		Multiplier *= 1.2
+	end
+
+	if EasyMod then -- 0.75
+		TotalRewardedPS *= 0.87
+		Multiplier *= 0.87
+	end
+	
+
+	local BetaPS = (TotalRewardedPS/50*0.86)^2-- * (Score/TotalScoreEstimated) -- osu PP
+
+
+	--RewaredOverallPS = BetaPS + TotalRewardedPS
 
 
 	CurrentPerfomance = TotalRewardedPS
 
+	local DisplayOverallPS = RewaredOverallPS + ((TotalRewardedPS-(RewaredOverallPS)/Multiplier)-(TotalRewardedPS/Multiplier-RewaredOverallPS))
+
 	--TotalRewardedPS = 2^(TotalRewardedPS^(1/3.23))
 	local NewPerfomanceText = ""
+
+	local DisplayData = {
+		Aim = math.floor(RewaredAimPS/0.8),
+		Speed = math.floor(RewaredStreamPS/0.8),
+		Mod = math.floor(RewaredOverallPS/0.8 + TotalRewardedPS*(Multiplier-1)),
+		Acc = math.floor(MaxAccurancyPS* 0.727^(100-acc)),
+		AccPercentage = math.floor(20 * 0.727^(100-acc)*10)/10,
+		PunishmentPercentage = math.floor(PunishmentRatio*1000)/10
+	}
+
+
 
 	if NewPerfomanceDisplay == true then
 		local ExtraPerfomance = ExtraPerfomance * (1 - (PSPunishment/PSPunishmentLimit))
@@ -4986,7 +5334,13 @@ function AddPerfomanceScore(AimPS,StreamPS,Multiplier)
 	end
 
 	if not isSpectating then
-		script.Parent.PSEarned.DetailedDisplay.Text = tostring(math.floor(RewaredAimPS*0.7)).."/"..tostring(math.floor(RewaredStreamPS*0.7)).."/"..tostring(math.floor(RewaredOverallPS*0.1)).."/"..tostring(math.floor(RewaredAccPS))
+		--script.Parent.PSEarned.DetailedDisplay.Text = tostring(math.floor(RewaredAimPS*0.7)).."/"..tostring(math.floor(RewaredStreamPS*0.7)).."/"..tostring(math.floor(DisplayOverallPS)).."/"..tostring(math.floor(RewaredAccPS))
+		local DetailedDisplayPanel = script.Parent.PSEarned.DetailedDisplay
+		DetailedDisplayPanel.Aim.Text = "Aim | "..DisplayData.Aim.."ps"
+		DetailedDisplayPanel.Speed.Text = "Speed | "..DisplayData.Speed.."ps"
+		DetailedDisplayPanel.Mod.Text = "Mod | "..DisplayData.Mod.."ps"
+		DetailedDisplayPanel.Accuracy.Text = "Acc | "..DisplayData.AccPercentage.."% + "..DisplayData.Acc.."ps"
+		DetailedDisplayPanel.Punishment.Text = "Punishment | "..DisplayData.PunishmentPercentage.."%"
 		script.Parent.PSEarned.Text = tostring(math.floor(TotalRewardedPS)).."ps"..NewPerfomanceText
 	end
 
@@ -5165,10 +5519,7 @@ end)]]
 
 -- Current combo note data
 
-local ComboNoteData = {
-	Missor50 = false,
-	Full300 = true
-}
+
 
 LastNoteData = "NotLoaded"
 CurrentNoteId = ""
@@ -5276,7 +5627,7 @@ for i,HitObj in pairs(BeatmapData) do
 
 	if Type ~= 1 and Type ~= 2 and Type ~= 8 then
 		Combo = 1
-		ComboNoteData = {Full300 = true,Missor50 = false}
+		ComboNoteData = {Full300 = true,Missor50 = false,Missed = false}
 		if CurrentComboColor >= #ComboColor then
 			CurrentComboColor = 1
 		else
@@ -5564,6 +5915,7 @@ for i,HitObj in pairs(BeatmapData) do
 				Missed = true
 				AddPerfomanceScore(HitObj.PSValue.Aim,HitObj.PSValue.Stream,0)
 				Accurancy.miss += 1
+				MissedInCurrentTime = true
 				AddScore(0)
 				CreateHitResult(1)
 				HitMiss = true
@@ -5598,7 +5950,7 @@ for i,HitObj in pairs(BeatmapData) do
 					local AvgFrameTime = (1/FramePerSec)*1000
 					local Tween
 					if CursorTweenTime > AvgFrameTime then
-						Tween = game:GetService("TweenService"):Create(ATVC,TweenInfo.new(CursorTweenTime/1000,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(HitObj.Position.X/512,0,HitObj.Position.Y/384,0)})
+						Tween = game:GetService("TweenService"):Create(ATVC,TweenInfo.new(CursorTweenTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{Position = UDim2.new(HitObj.Position.X/512,0,HitObj.Position.Y/384,0)}) 
 						Tween:Play()
 					else -- if TweenTime <= 17ms then not gonna tween
 						ATVC.Position = UDim2.new(HitObj.Position.X/512,0,HitObj.Position.Y/384,0)
@@ -5845,12 +6197,12 @@ for i,HitObj in pairs(BeatmapData) do
 					if HitResult ~= 1 then
 						NewHitResult.Size = UDim2.new((CircleSize/384)*0.3,0,(CircleSize/384)*0.3,0)
 						NewHitResult.Position = UDim2.new(HitObj.Position.X/512,0,HitObj.Position.Y/384,0)
-						TweenService:Create(NewHitResult,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{Size = UDim2.new((CircleSize/384)*0.6,0,(CircleSize/384)*0.6,0)}):Play()
-						TweenService:Create(NewHitResult.Image,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{ImageTransparency = 0}):Play()
-						wait(0.5)
+						TweenService:Create(NewHitResult,TweenInfo.new(0.1/SongSpeed,Enum.EasingStyle.Linear),{Size = UDim2.new((CircleSize/384)*0.6,0,(CircleSize/384)*0.6,0)}):Play()
+						TweenService:Create(NewHitResult.Image,TweenInfo.new(0.1/SongSpeed,Enum.EasingStyle.Linear),{ImageTransparency = 0}):Play()
+						wait(0.5/SongSpeed)
 						if BeatmapFailed then return end
-						AddHitnoteAnimation(TweenService:Create(NewHitResult.Image,TweenInfo.new(0.2,Enum.EasingStyle.Sine),{ImageTransparency = 1,Position = UDim2.new(0.5,0,0.6,0)})):Play()
-						wait(0.2)
+						AddHitnoteAnimation(TweenService:Create(NewHitResult.Image,TweenInfo.new(0.2/SongSpeed,Enum.EasingStyle.Sine),{ImageTransparency = 1,Position = UDim2.new(0.5,0,0.6,0)})):Play()
+						wait(0.2/SongSpeed)
 						if BeatmapFailed then return end
 						NewHitResult:Destroy()
 					else
@@ -5865,12 +6217,12 @@ for i,HitObj in pairs(BeatmapData) do
 						end 
 						NewHitResult.Rotation = CurrentRotation
 						local CurrentPos = NewHitResult.Position
-						AddHitnoteAnimation(TweenService:Create(NewHitResult.Image,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{ImageTransparency = 0,Size = UDim2.new(1,0,1,0)})):Play()
-						wait(0.1)
+						AddHitnoteAnimation(TweenService:Create(NewHitResult.Image,TweenInfo.new(0.1/SongSpeed,Enum.EasingStyle.Linear),{ImageTransparency = 0,Size = UDim2.new(1,0,1,0)})):Play()
+						wait(0.1/SongSpeed)
 						if BeatmapFailed then return end
-						AddHitnoteAnimation(TweenService:Create(NewHitResult,TweenInfo.new(1,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Rotation = CurrentRotation+(Positive*15),Position = HitResultPosition+UDim2.new(0,0,0.15,0)})):Play()
-						AddHitnoteAnimation(TweenService:Create(NewHitResult.Image,TweenInfo.new(1,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{ImageTransparency = 1})):Play()
-						wait(1)
+						AddHitnoteAnimation(TweenService:Create(NewHitResult,TweenInfo.new(1/SongSpeed,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Rotation = CurrentRotation+(Positive*15),Position = HitResultPosition+UDim2.new(0,0,0.15,0)})):Play()
+						AddHitnoteAnimation(TweenService:Create(NewHitResult.Image,TweenInfo.new(1/SongSpeed,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{ImageTransparency = 1})):Play()
+						wait(1/SongSpeed)
 						if BeatmapFailed then return end
 						NewHitResult:Destroy()
 					end
@@ -6599,6 +6951,16 @@ for i,HitObj in pairs(BeatmapData) do
 
 
 				TweenService:Create(SliderFolder,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{GroupTransparency = 0.2}):Play()
+				if HiddenMod then
+					ProcessFunction(function()
+						local FadeTime = SliderTime*0.75
+						if FadeTime <= 0.25 then
+							FadeTime = 0.25
+						end
+						repeat wait() until tick() - Start >= HitObj.Time/1000
+						TweenService:Create(SliderFolder,TweenInfo.new(FadeTime,Enum.EasingStyle.Linear),{GroupTransparency = 1}):Play()						
+					end)
+				end
 				ZIndex -= 3
 				local Completed = false
 				local LastComboTime = 0
@@ -6748,11 +7110,19 @@ for i,HitObj in pairs(BeatmapData) do
 					ProcessFunction(function()
 						while wait() and not Completed do
 							if isInFollowCircle() == true and script.Parent.KeyDown.Value == true then
+								if not script.Parent.PlayFrame.Flashlight.SliderDim.isDim.Value then
+									script.Parent.PlayFrame.Flashlight.SliderDim.isDim.Value = true
+									TweenService:Create(script.Parent.PlayFrame.Flashlight.SliderDim,TweenInfo.new(0.05,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.2}):Play()
+								end
 								if FollowCircle:FindFirstChild("isFollow") then
 									FollowCircle.isFollow.Visible = true
 								end
 								LastHold = tick()
 							else
+								if script.Parent.PlayFrame.Flashlight.SliderDim.isDim.Value then
+									script.Parent.PlayFrame.Flashlight.SliderDim.isDim.Value = false
+									TweenService:Create(script.Parent.PlayFrame.Flashlight.SliderDim,TweenInfo.new(0.05,Enum.EasingStyle.Linear),{BackgroundTransparency = 1}):Play()
+								end
 								if FollowCircle:FindFirstChild("isFollow") then
 									FollowCircle.isFollow.Visible = false
 								end
@@ -6864,6 +7234,7 @@ for i,HitObj in pairs(BeatmapData) do
 						else
 							Accurancy.PerfomanceCombo = 0
 							Accurancy.miss += 1
+							MissedInCurrentTime = true
 							AddScore(0)
 							DrainHP(MissDrain/2)
 							CreateSliderHitResult(1,SliderCurvePoints[#SliderCurvePoints])
@@ -6879,6 +7250,10 @@ for i,HitObj in pairs(BeatmapData) do
 						CurrentCursorPos = HitNoteID + 1
 						Completed = true
 						local FollowCircle = SliderFolder.SliderFollowCircle
+						if script.Parent.PlayFrame.Flashlight.SliderDim.isDim.Value then
+							script.Parent.PlayFrame.Flashlight.SliderDim.isDim.Value = false
+							TweenService:Create(script.Parent.PlayFrame.Flashlight.SliderDim,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{BackgroundTransparency = 1}):Play()
+						end
 						if not OptimizedPerfomance then
 							--FollowCircle.Parent = script.Parent.PlayFrame
 							TweenService:Create(SliderFolder,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{GroupTransparency = 1}):Play()
@@ -6928,7 +7303,8 @@ for i,HitObj in pairs(BeatmapData) do
 					local FixedApproachTime = -((tick()-Start)*1000 - HitObj.Time)
 					local ApproachSize = (1-(CircleApproachTime-FixedApproachTime)/CircleApproachTime)*3 + 1.1
 					Circle.ApproachCircle.Size = UDim2.new(ApproachSize,0,ApproachSize,0)
-					local ApproachCircleTween = game:GetService("TweenService"):Create(Circle.ApproachCircle,TweenInfo.new(FixedApproachTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Size = UDim2.new(1.1,0,1.1,0)})
+					local ApproachCircleTween = game:GetService("TweenService"):Create(Circle.ApproachCircle,TweenInfo.new(FixedApproachTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Size = UDim2.new(
+						)})
 					AddHitnoteAnimation(ApproachCircleTween)
 					ApproachCircleTween:Play()
 				end
@@ -7017,6 +7393,7 @@ for i,HitObj in pairs(BeatmapData) do
 						TotalNotes -= 1
 						if Type ~= 2 or SliderMode == false then
 							Accurancy.miss += 1
+							MissedInCurrentTime = true
 							AddScore(0)
 							HitMiss = true
 							CreateHitResult(1)
@@ -7156,6 +7533,7 @@ for i,HitObj in pairs(BeatmapData) do
 							Missed = true
 							if Type ~= 2 or SliderMode == false then
 								Accurancy.miss += 1
+								MissedInCurrentTime = true
 								AddScore(0)
 								CreateHitResult(1)
 								AddPerfomanceScore(HitObj.PSValue.Aim,HitObj.PSValue.Stream,0)
@@ -7215,6 +7593,7 @@ for i,HitObj in pairs(BeatmapData) do
 							ComboNoteData.Full300 = false
 							if Type ~= 2 or SliderMode == false then
 								Accurancy.miss += 1
+								MissedInCurrentTime = true
 								AddScore(0)
 								CreateHitResult(1)
 								AddPerfomanceScore(HitObj.PSValue.Aim,HitObj.PSValue.Stream,0)
@@ -7362,6 +7741,11 @@ TweenService:Create(game.Players.LocalPlayer.PlayerGui.BG.Background.Background.
 TweenService:Create(workspace.BackgroundPart.SurfaceGui.Frame.BackgroundFrame.ImageFrame.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans}):Play()
 
 
+function doAnim()
+	script.Parent.Interface.Background.Visible = true
+	script.Parent.Interface.Background.BackgroundImage.Image = "http://www.roblox.com/asset/?id="..ReturnData.ImageId
+	TweenService:Create(script.Parent.Interface.Background,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{GroupTransparency = 0}):Play()
+end
 
 if isSpectating == false then
 	repeat wait() until tick() - Start > (BeatmapData[#BeatmapData].Time + hit50)/1000
@@ -7379,6 +7763,9 @@ if isSpectating == false then
 		TweenService:Create(game.Players.LocalPlayer.PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.4}):Play()
 		script.Parent.Leaderboard.LbTrigger:Fire(true)
 		script.Parent.MultiplayerLeaderboard.LbTrigger:Fire(true)
+		FLAnimate = false
+		TweenService:Create(FlashlightFrame,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{Size = UDim2.new(30,0,30,0),ImageTransparency = 0}):Play()
+		doAnim()
 		wait(2)
 	else
 		repeat wait() until LastNoteData ~= "NotLoaded"
@@ -7393,10 +7780,15 @@ if isSpectating == false then
 		TweenService:Create(game.Players.LocalPlayer.PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.4}):Play()
 		script.Parent.Leaderboard.LbTrigger:Fire(true)
 		script.Parent.MultiplayerLeaderboard.LbTrigger:Fire(true)
+		FLAnimate = false
+		TweenService:Create(FlashlightFrame,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{Size = UDim2.new(30,0,30,0),ImageTransparency = 0}):Play()
+		doAnim()
 		wait(2)
 	end
 else
 	repeat wait() until ScoreResultDisplay == true
+	FLAnimate = false
+	TweenService:Create(FlashlightFrame,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{Size = UDim2.new(30,0,30,0),ImageTransparency = 0}):Play()
 	TweenService:Create(game.Players.LocalPlayer.PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.4}):Play()
 	script.Parent.Leaderboard.LbTrigger:Fire(true)
 	script.Parent.MultiplayerLeaderboard.LbTrigger:Fire(true)
@@ -7421,9 +7813,11 @@ end
 spawn(function()
 	TweenService:Create(script.Parent.Song,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{Volume = 0.5}):Play()
 end)
-
-TweenService:Create(script.Parent.Interface.BG,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0}):Play()
+--TweenService:Create(script.Parent.Interface.BG,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0}):Play()
 wait(0.25)
+script.Parent.Interface.Background.Visible = false
+
+
 
 CursorUnlocked = true
 UserInputService.MouseBehavior = Enum.MouseBehavior.Default
@@ -7432,6 +7826,12 @@ RblxNewCursor.Visible = true
 
 
 local ResultFrame = game.Players.LocalPlayer.PlayerGui.BG.ResultFrame.MainFrame.DisplayFrame
+ResultFrame.Parent.Parent.Parent.ResultScreenOptions.Visible = true
+TweenService:Create(ResultFrame.Parent.Parent.Parent.ResultScreenOptions,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Position = UDim2.new(0.5,0,0.5,0)}):Play()
+TweenService:Create(ResultFrame.Parent.Parent,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{GroupTransparency = 0}):Play()
+TweenService:Create(ResultFrame.Parent.Parent,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(1,-86,1,-86)}):Play()
+TweenService:Create(ResultFrame.Parent.Parent.UIStroke,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Transparency = 0.4}):Play()
+
 ResultFrame.hit300s.Text = Accurancy.h300.."x"
 ResultFrame.hit100s.Text = Accurancy.h100.."x"
 ResultFrame.hit50s.Text = Accurancy.h50.."x"
@@ -7501,10 +7901,11 @@ script.Parent.HitKey.Visible = false
 script.Parent.PSEarned.Visible = false
 script.Parent.HealthBar.Visible = false
 script.Parent.Leaderboard.Visible = false
+script.Parent.RestartGame.Visible = false
 
 game.StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat,true)
 
------------ Caculate perfomance score -----------
+----------- Calculate perfomance score -----------
 
 RewaredAccPS = MaxAccurancyPS* 0.727^(100-tonumber(RawAccurancy)) -- get whole accurancy
 RewaredAimPS = 0
@@ -7521,17 +7922,32 @@ for Top,Overall in pairs(OverallPSList) do
 	RewaredOverallPS += Overall*0.8^(Top-1)
 end
 local ComboPerfomanceMultiplier = 1 --1*0.25^((1-(Accurancy.MaxPeromanceCombo/GameMaxCombo))*2)
-RewaredAimPS = RewaredAimPS * (1 - (PSPunishment/PSPunishmentLimit)) * ComboPerfomanceMultiplier
-RewaredStreamPS = RewaredStreamPS * (1 - (PSPunishment/PSPunishmentLimit)) * ComboPerfomanceMultiplier
+local BonusFLMultiplier = (NoteCompleted*0.00035)
+if not Flashlight then
+	BonusFLMultiplier = 0
+elseif NoteCompleted > 1000 then
+	--BonusFLMultiplier = 0.7
+end
+BonusFLMultiplier *= (Score/TotalScoreEstimated)
+AccAimPS = RewaredAimPS *  ComboPerfomanceMultiplier * (1+BonusFLMultiplier) * (NoteCompleted/NoteTotal)
+AccStreamPS = RewaredStreamPS * ComboPerfomanceMultiplier * (NoteCompleted/NoteTotal)
+AccOverallPS = RewaredOverallPS * 0.1 * (NoteCompleted/NoteTotal)
 
-RewaredAccPS += (RewaredAimPS+RewaredStreamPS) * 0.2 * 0.95^(100-tonumber(RawAccurancy))
+RewaredAimPS = RewaredAimPS * (1 - (PSPunishment/PSPunishmentLimit)) * ComboPerfomanceMultiplier * (1+BonusFLMultiplier) * (NoteCompleted/NoteTotal)
+RewaredStreamPS = RewaredStreamPS * (1 - (PSPunishment/PSPunishmentLimit)) * ComboPerfomanceMultiplier * (NoteCompleted/NoteTotal)
+RewaredOverallPS = RewaredOverallPS * 0.1 * (NoteCompleted/NoteTotal) * (1 - (PSPunishment/PSPunishmentLimit))
+
+
+RewaredAccPS += (AccAimPS+AccStreamPS+AccOverallPS) * 0.2 * 0.727^(100-tonumber(RawAccurancy)) 
 
 --local TotalRewardedPS = RewaredAccPS + RewaredAimPS + RewaredStreamPS -- This will be needed for golbal ranking
-local TotalRewardedPS = RewaredAccPS + (RewaredAimPS +RewaredStreamPS)*0.7 + RewaredOverallPS * 0.1
+local TotalRewardedPS = RewaredAccPS + (RewaredAimPS +RewaredStreamPS+RewaredOverallPS) * 0.8
 
-if Flashlight == true then TotalRewardedPS *= 1.12 end
-if HiddenMod == true then TotalRewardedPS *= 1.06 end
-if HardRock == true then TotalRewardedPS *= 1.06 end
+if Flashlight == true then TotalRewardedPS *= 1.00 end -- 1
+if HiddenMod == true then TotalRewardedPS *= 1.04 end  -- 1.08
+if HardRock == true then TotalRewardedPS *= 1.2 end    -- 1.45
+if HardCore == true then TotalRewardedPS *= 1.05 end   -- 1.11
+if EasyMod == true then TotalRewardedPS *= 0.87 end    -- 0.75
 
 ----------- Submit play result ---------------
 local function GetNewNum(CurrentNum)
@@ -7550,12 +7966,37 @@ local function GetNewNum(CurrentNum)
 end
 
 
-local MetaData = ReturnData.Overview.Metadata
-local OnlineResult = ResultFrame.Parent.OnlineDisplayFrame
+MetaData = ReturnData.Overview.Metadata
+OnlineResult = ResultFrame.Parent.OnlineDisplayFrame
 
-ResultFrame.Score.Text = "Score: <b>"..GetNewNum(tostring(math.floor(Score))).."</b>"
+
+if ScoreV2Enabled then
+	ResultFrame.Score.Text = "Score: <b>"..GetNewNum(tostring(math.floor(Score/TotalScoreEstimated*1000000))).." ["..GetNewNum(tostring(math.floor(Score))).."]</b>"
+else
+	ResultFrame.Score.Text = "Score: <b>"..GetNewNum(tostring(math.floor(Score))).."</b>"	
+end
 ResultFrame.Grade.Text = (not SS and GameplayRank) or "S"
 ResultFrame.Grade.TextColor3 = RankColor[GameplayRank]
+SubmitTime = os.date("*t")
+DisplaySubmitTime = "Played on "..SubmitTime.day.."/"..SubmitTime.month.."/"..SubmitTime.year.." "..SubmitTime.hour..":"..string.rep("0",2-#tostring(SubmitTime.min))..SubmitTime.min..":"..string.rep("0",2-#tostring(SubmitTime.sec))..SubmitTime.sec
+DisplayModPlayed = (function()
+	local ModDisplay = " | "
+	local isMod = EasyMod or HardRock or HardCore or HiddenMod or Flashlight or SliderMode or AutoPlay or ScoreV2Enabled 
+	if isMod then
+		ModDisplay = " | "..((AutoPlay and "AT") or "")..((ScoreV2Enabled and ",V2") or "")..((HardCore and ",HC") or "")
+			..((HiddenMod and ",HD") or "")..((HardRock and ",HR") or "")..((EasyMod and ",EZ") or "")
+			..((SliderMode and ",SL") or "")..((Flashlight and ",FL") or "")
+		if string.find(ModDisplay," ,") then
+			ModDisplay = " | "..string.sub(ModDisplay,5,#ModDisplay)
+		end
+		return ModDisplay
+	else
+		return ""
+	end
+end)()
+
+CombineDisplay = DisplaySubmitTime..DisplayModPlayed
+ResultFrame.Parent.Parent.DetailedDate.Text = CombineDisplay
 ResultFrame.Parent.Parent.DetailedInfo.Text = "Beatmap: "..MetaData.SongCreator.." - "..MetaData.MapName.." | ["..MetaData.DifficultyName.."] // "..MetaData.BeatmapCreator.." | "..tostring(SongSpeed).."x"
 ResultFrame.Display_SS.Visible = SS and not (HiddenMod or Flashlight)
 ResultFrame.Display_SSH.Visible = SS and (HiddenMod or Flashlight)
@@ -7593,31 +8034,58 @@ for i,Accurancy in pairs(TimeAccurancy) do
 	ChartFrame.PointFrame.Position = UDim2.new(0,0,1-Accurancy[1],0)
 	ChartFrame.ConnectionFrame.Position = UDim2.new(0,0,1-LastDataAccuracy,0)
 	ChartFrame.ConnectionFrame.Size = UDim2.new(0,0,0,2)
+	ChartFrame.GraphFrame.Position =  UDim2.new(1,0,1-Accurancy[1],0)
+	ChartFrame.GraphFrame.Size = UDim2.new(1,0,1,0)
+	ChartFrame.GraphFrame.AnchorPoint = Vector2.new(1,0)
 	ChartFrame.GraphFrame.Visible = true
-	ChartFrame.GraphFrame.Size = UDim2.new(1,0,Accurancy[1],0)
+	--ChartFrame.GraphFrame.Size = UDim2.new(1,0,1-Accurancy[1],0)
 	ChartFrame.GraphFrame.BackgroundTransparency = 1
 	ChartFrame.GraphFrame.BackgroundColor3 = RankColor[Accurancy[2]]
+	ChartFrame.Miss.Visible = Accurancy[3]
 	LastDataAccuracy = Accurancy[1]
 	FrameList[i] = ChartFrame
 end
 
 for i,ChartFrame in pairs(FrameList) do
 	if i ~= #FrameList then
-		local NextPointPos = Vector2.new(FrameList[i+1].PointFrame.AbsolutePosition.X,FrameList[i+1].PointFrame.AbsolutePosition.Y)
-		local CurrentPointPos = Vector2.new(ChartFrame.PointFrame.AbsolutePosition.X,ChartFrame.PointFrame.AbsolutePosition.Y)
+		local function change(value)
+			local NextPointPos = Vector2.new(FrameList[i+1].PointFrame.AbsolutePosition.X,FrameList[i+1].PointFrame.AbsolutePosition.Y)
+			local CurrentPointPos = Vector2.new(ChartFrame.PointFrame.AbsolutePosition.X,ChartFrame.PointFrame.AbsolutePosition.Y)
 
 
-		ChartFrame.ConnectionFrame.Visible = true
-		local ConnectionLength = math.abs((NextPointPos-CurrentPointPos).Magnitude)
-		local AvgPos = (FrameList[i+1].PointFrame.Position.Y.Scale+ChartFrame.PointFrame.Position.Y.Scale)/2
-		local Point = NextPointPos-CurrentPointPos
-		local Rotation = math.deg(math.atan2(Point.Y,Point.X))
-		spawn(function()
-			wait(((i-1)/#FrameList)*3)
-			TweenService:Create(ChartFrame.ConnectionFrame,TweenInfo.new((1/#FrameList)*3,Enum.EasingStyle.Linear),{Position = UDim2.new(0.5,0,AvgPos,0),Size = UDim2.new(0,ConnectionLength+2,0,2),Rotation = Rotation}):Play()
-			TweenService:Create(ChartFrame.GraphFrame,TweenInfo.new((1/#FrameList)*3,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.9}):Play()
+			ChartFrame.ConnectionFrame.Visible = true
+			local ConnectionLength = math.abs((NextPointPos-CurrentPointPos).Magnitude)
+			local AvgPos = (FrameList[i+1].PointFrame.Position.Y.Scale+ChartFrame.PointFrame.Position.Y.Scale)/2
+			local Point = NextPointPos-CurrentPointPos
+			local Rotation = math.deg(math.atan2(Point.Y,Point.X))
+			ProcessFunction(function()
+				if value ~= 1 then
+					wait(((i-1)/#FrameList)*3)
+					if ChartFrame.Miss.Visible then
+						TweenService:Create(ChartFrame.Miss,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.5}):Play()
+					end
+					TweenService:Create(ChartFrame.ConnectionFrame,TweenInfo.new((1/#FrameList)*3,Enum.EasingStyle.Linear),{Position = UDim2.new(0.5,0,AvgPos,0),Size = UDim2.new(0,ConnectionLength+2,0,2),Rotation = Rotation}):Play()
+					TweenService:Create(ChartFrame.GraphFrame,TweenInfo.new((1/#FrameList)*3,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.9}):Play()
+				else
+					ChartFrame.ConnectionFrame.Size = UDim2.new(0,ConnectionLength+2,0,2)
+					ChartFrame.ConnectionFrame.Rotation = Rotation
+				end
+			end)
+		end
+
+		change()
+		
+		ProcessFunction(function()
+			wait(3)
+			change(1)
+			local currentpos = workspace.CurrentCamera.ViewportSize
+			while wait(2) do
+				if workspace.CurrentCamera.ViewportSize ~= currentpos then
+					currentpos = workspace.CurrentCamera.ViewportSize
+					change(1)
+				end
+			end
 		end)
-
 		--[[
 		ChartFrame.ConnectionFrame.Position = UDim2.new(0.5,0,AvgPos)
 		ChartFrame.ConnectionFrame.Size = UDim2.new(0,ConnectionLength+2,0,2)
@@ -7640,9 +8108,14 @@ for i,PerfomanceScore in pairs(TimePerfomance) do
 	PerfomanceFrameList[i] = ChartFrame
 	ChartFrame.ConnectionFrame.Position = UDim2.new(0,0,1-LastPerfomance,0)
 	ChartFrame.ConnectionFrame.Size = UDim2.new(0,0,0,2)
-	ChartFrame.GraphFrame.Visible = true
-	ChartFrame.GraphFrame.Size = UDim2.new(1,0,(PerfomanceScore/HighestPerfomance),0)
+	--ChartFrame.GraphFrame.Visible = true
+	--ChartFrame.GraphFrame.Size = UDim2.new(1,0,(PerfomanceScore/HighestPerfomance),0)
 	ChartFrame.GraphFrame.BackgroundTransparency = 1
+	ChartFrame.GraphFrame.Position =  UDim2.new(1,0,1-PerfomanceScore/HighestPerfomance,0)
+	ChartFrame.GraphFrame.Size = UDim2.new(1,0,1,0)
+	ChartFrame.GraphFrame.AnchorPoint = Vector2.new(1,0)
+	ChartFrame.GraphFrame.Visible = true
+	
 	ChartFrame.ConnectionFrame.BackgroundColor3 = Color3.new(1, 1, 1)
 	ChartFrame.GraphFrame.BackgroundColor3 = Color3.new(1, 1, 1)
 	LastPerfomance = PerfomanceScore/HighestPerfomance
@@ -7650,22 +8123,41 @@ end
 
 for i,ChartFrame in pairs(PerfomanceFrameList) do
 	if i ~= #PerfomanceFrameList then
-		local NextPointPos = Vector2.new(PerfomanceFrameList[i+1].PointFrame.AbsolutePosition.X,PerfomanceFrameList[i+1].PointFrame.AbsolutePosition.Y)
-		local CurrentPointPos = Vector2.new(ChartFrame.PointFrame.AbsolutePosition.X,ChartFrame.PointFrame.AbsolutePosition.Y)
+		local function change(value)
+			local NextPointPos = Vector2.new(PerfomanceFrameList[i+1].PointFrame.AbsolutePosition.X,PerfomanceFrameList[i+1].PointFrame.AbsolutePosition.Y)
+			local CurrentPointPos = Vector2.new(ChartFrame.PointFrame.AbsolutePosition.X,ChartFrame.PointFrame.AbsolutePosition.Y)
 
 
-		ChartFrame.ConnectionFrame.Visible = true
-		local ConnectionLength = math.abs((NextPointPos-CurrentPointPos).Magnitude)
-		local AvgPos = (PerfomanceFrameList[i+1].PointFrame.Position.Y.Scale+ChartFrame.PointFrame.Position.Y.Scale)/2
-		local Point = NextPointPos-CurrentPointPos
-		local Rotation = math.deg(math.atan2(Point.Y,Point.X))
+			ChartFrame.ConnectionFrame.Visible = true
+			local ConnectionLength = math.abs((NextPointPos-CurrentPointPos).Magnitude)
+			local AvgPos = (PerfomanceFrameList[i+1].PointFrame.Position.Y.Scale+ChartFrame.PointFrame.Position.Y.Scale)/2
+			local Point = NextPointPos-CurrentPointPos
+			local Rotation = math.deg(math.atan2(Point.Y,Point.X))
 
-		spawn(function()
-			wait(((i-1)/#PerfomanceFrameList)*3)
-			TweenService:Create(ChartFrame.ConnectionFrame,TweenInfo.new((1/#PerfomanceFrameList)*3,Enum.EasingStyle.Linear),{Position = UDim2.new(0.5,0,AvgPos,0),Size = UDim2.new(0,ConnectionLength+2,0,2),Rotation = Rotation}):Play()
-			TweenService:Create(ChartFrame.GraphFrame,TweenInfo.new((1/#FrameList)*3,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.9}):Play()		
+			spawn(function()
+				if value ~= 1 then
+					wait(((i-1)/#PerfomanceFrameList)*3)
+					TweenService:Create(ChartFrame.ConnectionFrame,TweenInfo.new((1/#PerfomanceFrameList)*3,Enum.EasingStyle.Linear),{Position = UDim2.new(0.5,0,AvgPos,0),Size = UDim2.new(0,ConnectionLength+2,0,2),Rotation = Rotation}):Play()
+					TweenService:Create(ChartFrame.GraphFrame,TweenInfo.new((1/#FrameList)*3,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.9}):Play()
+				else
+					ChartFrame.ConnectionFrame.Size = UDim2.new(0,ConnectionLength+2,0,2)
+					ChartFrame.ConnectionFrame.Rotation = Rotation
+				end
+			end)
+		end
+		change()
+		
+		ProcessFunction(function()
+			wait(3)
+			change(1)
+			local currentpos = workspace.CurrentCamera.ViewportSize
+			while wait(2) do
+				if workspace.CurrentCamera.ViewportSize ~= currentpos then
+					currentpos = workspace.CurrentCamera.ViewportSize
+					change(1)
+				end
+			end
 		end)
-
 		--[[
 		ChartFrame.ConnectionFrame.Position = UDim2.new(0.5,0,AvgPos)
 		ChartFrame.ConnectionFrame.Size = UDim2.new(0,ConnectionLength+2,0,2)
@@ -7734,7 +8226,9 @@ if PlayRanked == true and CanbeSubmitted then
 				SL = SliderMode,
 				HC = HardCore,
 				HD = HiddenMod,
-				HR = HardRock
+				HR = HardRock,
+				EZ = EasyMod,
+				AT = AutoPlay
 			}
 		},
 		SecurityData = { -- You somehow change this? you gonna get kick
@@ -7754,6 +8248,10 @@ if PlayRanked == true and CanbeSubmitted then
 		TweenService:Create(OnlineResult.OnlineAccurancy,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.fromRGB(0,200,200)}):Play()
 		TweenService:Create(OnlineResult.OnlineMaxCombo,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.fromRGB(0,200,200)}):Play()
 		TweenService:Create(OnlineResult.OnlinePS,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.fromRGB(0,200,200)}):Play()
+		TweenService:Create(OnlineResult.OnlineScore.Improvement,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextColor3 = Color3.fromRGB(255,255,255)}):Play()
+		TweenService:Create(OnlineResult.OnlineAccurancy.Improvement,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextColor3 = Color3.fromRGB(255,255,255)}):Play()
+		TweenService:Create(OnlineResult.OnlineMaxCombo.Improvement,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextColor3 = Color3.fromRGB(255,255,255)}):Play()
+		TweenService:Create(OnlineResult.OnlinePS.Improvement,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextColor3 = Color3.fromRGB(255,255,255)}):Play()
 		OnlineResult.OnlineScore.Improvement.Text = "new!"
 		OnlineResult.OnlineAccurancy.Improvement.Text = "new!"
 		OnlineResult.OnlineMaxCombo.Improvement.Text = "new!"
@@ -7767,19 +8265,21 @@ if PlayRanked == true and CanbeSubmitted then
 		OldPS = math.floor(OldPS)
 		if RankedScore > OldScore then
 			TweenService:Create(OnlineResult.OnlineScore,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.fromRGB(0,200,0)}):Play()
+			TweenService:Create(OnlineResult.OnlineScore.Improvement,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextColor3 = Color3.fromRGB(255,255,255)}):Play()
 			OnlineResult.OnlineScore.Improvement.Text = "+"..GetNewNum(RankedScore - OldScore)
 
 
 
 			if TotalRewardedPS > OldPS then
 				TweenService:Create(OnlineResult.OnlinePS,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.fromRGB(0,200,0)}):Play()
+				TweenService:Create(OnlineResult.OnlinePS.Improvement,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextColor3 = Color3.fromRGB(255,255,255)}):Play()
 				OnlineResult.OnlinePS.Improvement.Text = "+"..GetNewNum(math.floor(TotalRewardedPS - OldPS)).."ps"
 			else
-				OnlineResult.OnlinePS.Improvement.Text = "PB: "..GetNewNum(OldPS).."ps"
+				OnlineResult.OnlinePS.Improvement.Text = "Best: "..GetNewNum(OldPS).."ps"
 			end
 		else
-			OnlineResult.OnlineScore.Improvement.Text = "PB: "..GetNewNum(OldScore)
-			OnlineResult.OnlinePS.Improvement.Text = "PB: "..tostring(OldPS).."ps"
+			OnlineResult.OnlineScore.Improvement.Text = "Best: "..GetNewNum(OldScore)
+			OnlineResult.OnlinePS.Improvement.Text = "Best: "..tostring(OldPS).."ps"
 		end
 
 		local PBAccurancy = ReturnResult.ExtraData.Accurancy
@@ -7787,18 +8287,20 @@ if PlayRanked == true and CanbeSubmitted then
 
 		if tonumber(tostringAcc) > Acc then
 			TweenService:Create(OnlineResult.OnlineAccurancy,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.fromRGB(0,200,0)}):Play()
+			TweenService:Create(OnlineResult.OnlineAccurancy.Improvement,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextColor3 = Color3.fromRGB(255,255,255)}):Play()
 			OnlineResult.OnlineAccurancy.Improvement.Text = "+"..tostring(tonumber(tostringAcc-Acc)).."%"
 		else
-			OnlineResult.OnlineAccurancy.Improvement.Text = "PB: "..tostring(tonumber(Acc)).."%"
+			OnlineResult.OnlineAccurancy.Improvement.Text = "Best: "..tostring(tonumber(Acc)).."%"
 		end
 
 		local PBMaxCombo = ReturnResult.ExtraData.MaxCombo
 
 		if Accurancy.MaxCombo > PBMaxCombo then
 			TweenService:Create(OnlineResult.OnlineMaxCombo,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.fromRGB(0,200,0)}):Play()
+			TweenService:Create(OnlineResult.OnlineMaxCombo.Improvement,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextColor3 = Color3.fromRGB(255,255,255)}):Play()
 			OnlineResult.OnlineMaxCombo.Improvement.Text = "+"..GetNewNum(Accurancy.MaxCombo-PBMaxCombo)
 		else
-			OnlineResult.OnlineMaxCombo.Improvement.Text = "PB: "..GetNewNum(PBMaxCombo).."x"
+			OnlineResult.OnlineMaxCombo.Improvement.Text = "Best: "..GetNewNum(PBMaxCombo).."x"
 		end
 	end
 
@@ -7808,10 +8310,12 @@ if PlayRanked == true and CanbeSubmitted then
 
 		if ReturnResult.PSImprovement > 0 then
 			TweenService:Create(OnlineResult.OverallPerfomance,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.fromRGB(0,200,0)}):Play()
+			TweenService:Create(OnlineResult.OverallPerfomance.Improvement,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextColor3 = Color3.fromRGB(255,255,255)}):Play()
 			local Improvement = math.floor(ReturnResult.PSImprovement)
 			StringImprovement = "+"..tostring(Improvement)
 		elseif ReturnResult.PSImprovement < 0 then
 			TweenService:Create(OnlineResult.OverallPerfomance,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
+			TweenService:Create(OnlineResult.OverallPerfomance.Improvement,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextColor3 = Color3.fromRGB(255,255,255)}):Play()
 			local Improvement = math.floor(ReturnResult.PSImprovement)
 			StringImprovement = GetNewNum(Improvement)
 			if Improvement == 0 then
