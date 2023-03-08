@@ -1,3 +1,7 @@
+-- osu!RoVer converter
+-- convert raw osu file into readable and excutable lua data
+-- V1.43 (Size: 27.77KB)
+
 return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isReturnDifficulty,metadataonly,GetPS,IsHR,isFL,IsEZ)
 	local OsuData = Beatmap
 	if FileType == 1 then
@@ -148,7 +152,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 
 
 			if RblxData.SoundOffset ~= nil and CustomSongIDEnabled == false then
-				DelayedTime += RblxData.SoundOffset
+				DelayedTime += 100+RblxData.SoundOffset/SongSpeed
 				ReturningData.OriginalOffset = RblxData.SoundOffset
 			end
 			if RblxData.RblxSoundID ~= nil and CustomSongIDEnabled == false then
@@ -378,7 +382,13 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 	local RawDifficulty = {}
 	local RawDifficulty2 = {}
 	
-	local ODMultiplier = 74.5 / ((119.5 - 9 * ReturningData.Difficulty.OverallDifficulty * ((IsHR and 1.3) or (IsEZ and 0.5) or 1)))
+	local OD = ReturningData.Difficulty.OverallDifficulty * ((IsHR and 1.4) or (IsEZ and 0.5) or 1)
+	
+	if OD > 10 then
+		OD = 10
+	end
+	
+	local ODMultiplier = 74.5 / ((119.5 - 9 * OD))
 	ODMultiplier = ODMultiplier ^ 0.01
 
 	-- RawDifficulty = {[1] = {<Time>,<Diff>}}
@@ -639,8 +649,11 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 					end
 					if TimeBetween == 0 then TimeBetween = 1 end
 					local DistanceBetween = math.abs((Vector2.new(PrevHitObj.Position.X,PrevHitObj.Position.Y)-Vector2.new(HitPos.X,HitPos.Y)).Magnitude)
-					DistanceBetween *= 32/((54.4 - 4.48 * ReturningData.Difficulty.CircleSize * ((IsHR and 1.3) or (IsEZ and 0.5) or 1)))
-					DistanceBetween -= ((54.4 - 4.48 * ReturningData.Difficulty.CircleSize * ((IsHR and 1.3) or (IsEZ and 0.5) or 1))*2)
+					local CS = ReturningData.Difficulty.CircleSize * ((IsHR and 1.3) or (IsEZ and 0.5) or 1)
+					if CS > 10 then CS = 10 end
+					DistanceBetween *= 32/((54.4 - 4.48 * CS))
+					
+					DistanceBetween -= ((54.4 - 4.48 * CS)*2)
 					if DistanceBetween < 0 then DistanceBetween = 0 end
 					if isFL then
 						--DistanceBetween *= 3
@@ -683,10 +696,6 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 					
 					
 					--
-					
-					if objectID > 1 then -- New stream system
-						
-					end
 
 					if objectID > 1 then
 
@@ -729,7 +738,10 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 					end
 
 					if Type == 8 or Type == 12 or math.floor((Type-28)/16) == (Type-28)/16 or (PrevHitObj.Type == 8 or PrevHitObj.Type == 12 or math.floor((PrevHitObj.Type-28)/16) == (PrevHitObj.Type-28)/16) then
+						-- spinner
 						Difficulty = 0
+						AimDiff[#AimDiff] = 0
+						StreamDiff[#StreamDiff] = 0
 					end
 
 					--[[
@@ -884,7 +896,16 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 		end
 		
 		table.insert(DiffList,Top,AvgDiff)]]
-
+		
+		if isFL then
+			local objCount = #DiffList
+			DiffList = {}
+			
+			for i = 1,objCount do
+				DiffList[i] = AimDiff[i] * (1+(objCount*0.00035)) + StreamDiff[i]
+			end
+		end
+		
 		table.sort(DiffList,function(a,b) return a>b end)
 
 		for Top,Diff in pairs(DiffList) do
