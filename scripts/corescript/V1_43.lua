@@ -269,7 +269,16 @@ if IngamebeatmapID.Value == 0 then
 end
 
 if BeatmapStudio == "playerchoose" then
-	BeatmapStudio = BeatmapsList:GetChildren()[IngamebeatmapID.Value]
+	--BeatmapStudio = BeatmapsList:GetChildren()[IngamebeatmapID.Value]
+	
+	local CurrentBeatmap = game.Players.LocalPlayer.PlayerGui.BeatmapListing.CurrentBeatmap
+	local Map = BeatmapsList:GetChildren()[math.random(1,#BeatmapsList:GetChildren())]
+	
+	if not CurrentBeatmap.Value then
+		CurrentBeatmap.Value = Map
+	end
+	
+	BeatmapStudio = CurrentBeatmap.Value or Map
 	BeatmapChangeable = true
 end
 
@@ -488,12 +497,14 @@ LoadMultiplier()
 CurrentSetting.MainSettings.Flashlight.MouseButton1Click:Connect(function()
 	Flashlight = not Flashlight
 	CurrentModData.FL = Flashlight
-	LoadMultiplier()
 	if Flashlight == true then 
 		CurrentSetting.MainSettings.Flashlight.Text = 'Flashlight: Enabled'
 	else 
 		CurrentSetting.MainSettings.Flashlight.Text = 'Flashlight: Disabled'
 	end
+
+	LoadMultiplier()
+	ReloadPreviewFrame()
 end)
 
 CurrentSetting.MainSettings.DisplayPS.MouseButton1Click:Connect(function()
@@ -1469,6 +1480,11 @@ function LoadLeaderboard()
 			TweenService:Create(Leaderboard.Parent.PersonalBestTitle,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
 			local Data = PersonalData
 			if tonumber(Data.Score) ~= nil then
+				LeaderboardInterface.PersonalBest.Visible = true
+				LeaderboardInterface.PersonalBestTitle.Visible = true
+				LeaderboardInterface.GolbalLeaderboard.Size = UDim2.new(1,0,1,-100)
+				LeaderboardInterface.ScrollSide.Size = UDim2.new(0,4,1,-100)
+				
 				local PlayersFitScreen = math.floor(Leaderboard.AbsoluteSize.Y/40)+1
 				local WaitTime = (#GolbalData >= PlayersFitScreen and PlayersFitScreen*0.1) or (#GolbalData)*0.1
 				wait(WaitTime)
@@ -1558,7 +1574,12 @@ function LoadLeaderboard()
 					AddLBTweenConnection(TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0.8}),WaitTime)
 				end
 			else
-				LeaderboardInterface.PersonalBest.NoRecord.Visible = true
+				LeaderboardInterface.PersonalBest.Visible = false
+				LeaderboardInterface.PersonalBestTitle.Visible = false
+				LeaderboardInterface.GolbalLeaderboard.Size = UDim2.new(1,0,1,-40)
+				LeaderboardInterface.ScrollSide.Size = UDim2.new(0,4,1,-40)
+				
+				--LeaderboardInterface.PersonalBest.NoRecord.Visible = true
 			end
 		end)
 	end
@@ -1801,6 +1822,24 @@ end)]]
 
 
 
+script.Parent.MapListingChange.Event:Connect(function(MapFile,beatmapid)
+	local PrevMapID = IngamebeatmapID.Value
+	CurrentSetting.VirtualSettings.PrevBeatmapID.Value = CurrentSetting.VirtualSettings.IngameBeatmapID.Value
+	CurrentSetting.VirtualSettings.IngameBeatmapID.Value = beatmapid
+	if game.Players.LocalPlayer.PlayerGui.SavedSettings:FindFirstChild("SettingsFrame") then
+		game.Players.LocalPlayer.PlayerGui.SavedSettings.SettingsFrame.VirtualSettings.PrevBeatmapID.Value = game.Players.LocalPlayer.PlayerGui.SavedSettings.SettingsFrame.VirtualSettings.IngameBeatmapID.Value
+		game.Players.LocalPlayer.PlayerGui.SavedSettings.SettingsFrame.VirtualSettings.IngameBeatmapID.Value = beatmapid
+	end
+	PrevBeatmapID.Value = PrevMapID
+	IngamebeatmapID.Value = beatmapid
+	if BeatmapChangeable == true then
+		Id = beatmapid
+		BeatmapStudio = MapFile
+	end
+	ReloadPreviewFrame()
+	LoadLeaderboard()
+end)
+
 
 
 CurrentPreviewFrame.PreviewButton.MouseButton1Click:Connect(ReloadPreviewFrame)
@@ -1893,6 +1932,7 @@ function SortBeatmap()
 end
 
 function ToggleBeatmap(isBeatmapchooseOpen)
+	
 	if BeatmapChooseTweening == true then return end
 	if script.Parent.Enabled == false and isBeatmapchooseOpen == true then return end
 	BeatmapChooseTweening = true
@@ -2310,12 +2350,12 @@ ProcessFunction(function()
 end)
 
 BeatmapChooseButton.MouseButton1Click:Connect(function()
-	ToggleBeatmap(true)
+	--ToggleBeatmap(true)
 end)
 
 
 BeatmapChooseCloseButton.MouseButton1Click:Connect(function()
-	ToggleBeatmap(false)
+	--ToggleBeatmap(false)
 end)
 
 local BackgroundFrame = game.Players.LocalPlayer.PlayerGui.BG.Background.Background
@@ -2745,6 +2785,7 @@ CircleImageId = Settings.Parent.VirtualSettings.CircleImageId.Value
 CircleOverlayImageId = Settings.Parent.VirtualSettings.CircleOverlayImageId.Value
 ApproachCircleImageId = Settings.Parent.VirtualSettings.ApproachCircleImageId.Value
 EffectVolume = Settings.Parent.VirtualSettings.InstantSettings.EffectVolume.Value
+HitZoneArea = Settings.Parent.VirtualSettings.InstantSettings.MobileHitArea.Value*0.01
 
 CircleNumberData = game.HttpService:JSONDecode(Settings.Parent.VirtualSettings.CircleNumberData.Value)
 CircleConfigData = game.HttpService:JSONDecode(Settings.Parent.VirtualSettings.CircleConfigData.Value)
@@ -3758,7 +3799,7 @@ spawn(function()
 	repeat wait(0.1) until script.Parent.Song.IsLoaded == true
 	while wait(0.1) do
 		pcall(function()
-			if math.abs(script.Parent.Song.TimePosition - ((tick() - SongStart)*SongSpeed*ReturnData.SongSpeed)) > 0.05 and script.Parent.Song.IsLoaded == true and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 and not BeatmapFailed then
+			if math.abs(script.Parent.Song.TimePosition - ((tick() - SongStart)*SongSpeed*ReturnData.SongSpeed)) > 0.04 and script.Parent.Song.IsLoaded == true and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 and not BeatmapFailed then
 				script.Parent.Song.TimePosition = (tick() - SongStart)*SongSpeed*ReturnData.SongSpeed
 			end
 			if tick()-SongStart >= 0 and script.Parent.Song.Playing == false and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 then
@@ -3814,6 +3855,7 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 	if UserInputService.TouchEnabled and MobileMode == true then
 		script.Parent.RestartGame.Text = "Return (Hold)"
 		if HitZoneEnabled then
+			TweenService:Create(script.Parent.MobileHit,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(HitZoneArea,0,1,0)}):Play()
 			if MobileModeRightHitZone == true then
 				script.Parent.PSEarned.Position = UDim2.new(1,-5,1,0)
 				script.Parent.MobileHit.Position = UDim2.new(1,0,0,-36)
@@ -4160,8 +4202,8 @@ if MobileMode and game:GetService("UserInputService").TouchEnabled then
 end
 
 script.Parent.HitError.Size = UDim2.new(0,hit50*(19/16)*HitErrorMulti,0,25)
-script.Parent.HitError._300s.Size = UDim2.new(hit300/hit50,0,0.5,0)
-script.Parent.HitError._100s.Size = UDim2.new(hit100/hit50,0,0.5,0)
+script.Parent.HitError.HitErrorDisplay._300s.Size = UDim2.new(hit300/hit50,0,0.25,0)
+script.Parent.HitError.HitErrorDisplay._100s.Size = UDim2.new(hit100/hit50,0,0.25,0)
 
 local Accurancy = {
 	h300 = 0,h100 = 0,h50 = 0,miss = 0,Combo = 0, MaxCombo = 0, MaxPeromanceCombo = 0, PerfomanceCombo = 0, h300Bonus = 0, bonustotal = 0,
@@ -5626,7 +5668,7 @@ function AddPerfomanceScore(AimPS,StreamPS,Multiplier)
 	elseif NoteCompleted > 1000 then
 		--BonusFLMultiplier = 0.7
 	end
-	BonusFLMultiplier *= (Score/TotalScoreEstimated)
+	--BonusFLMultiplier *= (Score/TotalScoreEstimated)
 
 	local accAim = RewaredAimPS * ComboPerfomanceMultiplier * NoteCompletedMultiplier * (1 + BonusFLMultiplier)
 	local accStream = RewaredStreamPS * ComboPerfomanceMultiplier * NoteCompletedMultiplier
@@ -6102,7 +6144,7 @@ for i,HitObj in pairs(BeatmapData) do
 	end
 
 	local CurrentType = HitObj.Type
-	if CurrentType == 8 or CurrentType == 12 or math.floor((CurrentType-28)/16) == (CurrentType-28)/16 then
+	if CurrentType == 8 or CurrentType == 12 or math.floor((CurrentType-28)/16) == (CurrentType-28)/16 then  --- spinner
 		repeat wait() until (tick()-Start) >= (HitObj.Time-500)/1000
 	else
 		if i == 1 then
@@ -6314,9 +6356,14 @@ for i,HitObj in pairs(BeatmapData) do
 			ZIndex -= 1
 
 			local SpinnerTime = (HitObj.SpinTime - HitObj.Time)/1000
-			local RoundRequiredPerSec = 5
+			local RoundRequiredPerSec = 2.5  -- OD 5: 150RPM
 
-			RoundRequiredPerSec = (4 + OverallDifficulty/10*2) /3 -- 100 - 120 RPM
+			
+			if OverallDifficulty < 5 then
+				RoundRequiredPerSec = 2.5 - 1 * (5-OverallDifficulty)/5  -- 90 - 150RPM
+			else
+				RoundRequiredPerSec = 2.5 + 1.25 * (OverallDifficulty-5)/5 -- 150 - 225RPM
+			end
 
 
 			local RoundRequired = SpinnerTime*RoundRequiredPerSec -- 100 RPM avg for 300s, 75 for 100s, 50 for 50s, else = miss
@@ -6377,7 +6424,7 @@ for i,HitObj in pairs(BeatmapData) do
 			end
 
 
-			if Ratio >= 0.5 or SpinnerTime < 0.2 then
+			if Ratio >= 0.25 or SpinnerTime < 0.2 then
 				Accurancy.Combo += 1
 				EstimatedCombo += 1
 				Accurancy.PerfomanceCombo += 1 
@@ -6403,12 +6450,12 @@ for i,HitObj in pairs(BeatmapData) do
 						end
 					end
 				end)
-				if Ratio >= 1 then
+				if Ratio >= 1 or SpinnerTime < 0.05 then
 					Accurancy.h300 += 1
 					--CreateHitResult(4)
 					AddScore(300)
 					AddPerfomanceScore(HitObj.PSValue.Aim,HitObj.PSValue.Stream,1)
-				elseif Ratio >= 0.75 then
+				elseif Spinner.RoundRequired.Value-Spinner.Spinner.RoundSpinned.Value <= 1 then
 					Accurancy.h100 += 1
 					CreateHitResult(3)
 					AddScore(100)
@@ -8482,7 +8529,7 @@ if not Flashlight then
 elseif NoteCompleted > 1000 then
 	--BonusFLMultiplier = 0.7
 end
-BonusFLMultiplier *= (Score/TotalScoreEstimated)
+--BonusFLMultiplier *= (Score/TotalScoreEstimated)
 AccAimPS = RewaredAimPS *  ComboPerfomanceMultiplier * (1+BonusFLMultiplier) * (NoteCompleted/NoteTotal)
 AccStreamPS = RewaredStreamPS * ComboPerfomanceMultiplier * (NoteCompleted/NoteTotal)
 AccOverallPS = RewaredOverallPS * 0.1 * (NoteCompleted/NoteTotal)
@@ -8963,7 +9010,7 @@ end
 
 -->         osu!RoVer       <--
 -- osu!corescript by VtntGaming
--- String size: 328.06KB (V1.43)
+-- String size: 330.27KB (V1.43)
 
 -- Source code used as a backup script, if you're not VtntGaming and see this please use it right :>
 ----------------- End script -----------------
