@@ -1,2 +1,36 @@
 -- Here are the new change in osu!RoVer V1.43
 
+-- Difficulty/PS
+- The difficulty rating and PS calculation has been reworked! Here're the changes:
+- CS and OD will take effect effect to the PS and Diff rating. (EZ and HR will effect the diff rating and PS more).
+- FL difficulty rating is now applied to the difficulty calculating, though it does not effect Acc/Speed/Mod PS but it WILL effect Acc ps.
+- HD with FL is now effect the difficulty rating and will give more PS on Acc ps.
+- Accuracy PS has been changed on how it work, drain more PS if less accuracy.
+
+-- Menu
+- Beatmap listing has been REVAMPED, a brand new Beatmap Listing! The listing is now load way FASTER than ever, more feature: Random, Sorting (Artist, Diff-Rev) and more!
+- Map information is now improved, make it easier to read.
+- Added mouse click/hovering sound effect.
+- Added UpdatedPS on leaderboard detailed display, it will calculate the PS depend on their 300s, 100s, 50s and misses. (Note that it can ONLY calculate on the current speed rate and mods to prevent lag)
+- Added difficulty value detailed on the map information, displaying timings, rpm and more.
+
+-- Settings
+- Settings has some update on animations, ect...
+- Changed the text size/scaling on the settigns options.
+- Added color incicator, and removed [UNRANKED] on some options. (Red for UNRANKED, Yellow for UNRANKED FOR HC in HP)
+- Added mod Indicator on any possible Mod options such as [HR], [SA], ect...
+- CS cap is now set to [0 - 11].
+- HP cap is now set to no limit.
+- Changed some settings description/display text.
+- Song speed (with pitch if Speed pitch enabled) can be changed when changing the speed on the settings.
+
+-- Gameplay
+- On SL mod, the connection is now changed from the start of the slider to the end of the slider.
+- Added screen-frozen prevention, which will froze the progress if your client crashed in a short time.
+- HP is drain more intense per seconds on slider parts (it's mean that I fixed the HP bar would drop it drain/sec on slider parts).
+- Some UI improved/updated.
+- Updated UIs oh the result screen.
+
+-- Fixes
+- Fixed the "1" appear on the middle of the screen
+- Fixed bug that the settings may disappear if you click on some part of it (or it may not disappear if you click outsite of it on some position)
