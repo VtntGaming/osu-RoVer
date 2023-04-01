@@ -10,7 +10,7 @@ We present you... the changelog! Hope you enjoy the update :D
 - Use Replay Manager on the settings to upload and download your replays.
 
 -- Map leaderboard
-- 
+- Left-click the play to see it's detailed information panel, If replay avaiable you can play it or save it.
 
 -- Difficulty/PS
 - The difficulty rating and PS calculation has been reworked! Here're the changes:
