@@ -1,4 +1,16 @@
--- Here are the new change in osu!RoVer V1.43
+osu!RoVer Stable V1.43 has RELEASHED!
+After 4 months of developing, sorting, filtering, ect...
+We present you... the changelog! Hope you enjoy the update :D
+
+-- Replay
+- The new system that you all are waiting for has arrived, it's The Replay system
+- You can either save it on your local device to watch or save on cloud to watch it later! (Note: 4MB max cloud storage)
+- Make a score on a beatmap to update it's replay on the leaderboard.
+- Can't make a Personal Best play but still wanna watch the replay? Don't worry, it will be stay still in your local replay.
+- Use Replay Manager on the settings to upload and download your replays.
+
+-- Map leaderboard
+- 
 
 -- Difficulty/PS
 - The difficulty rating and PS calculation has been reworked! Here're the changes:
@@ -26,11 +38,19 @@
 
 -- Gameplay
 - On SL mod, the connection is now changed from the start of the slider to the end of the slider.
+- SL mod will darker while the cursor holding a slider.
 - Added screen-frozen prevention, which will froze the progress if your client crashed in a short time.
 - HP is drain more intense per seconds on slider parts (it's mean that I fixed the HP bar would drop it drain/sec on slider parts).
-- Some UI improved/updated.
+- ScoreV2 is now start it's score from 0 to 1M, instead of 1M at start and decrease time by time.
+- Made the sliders auto compress it's data points to decrease lag (I make this specially for THAT MAP WHICH HAVING 4 THOUSANDS CURVE POINTS)
 - Updated UIs oh the result screen.
+- Some other UI and animations improved/updated.
+- Fixed some possible bugs.
 
 -- Fixes
 - Fixed the "1" appear on the middle of the screen
 - Fixed bug that the settings may disappear if you click on some part of it (or it may not disappear if you click outsite of it on some position)
+
+
+Version: Stable V1.43
+Pre BetaVersion: Beta V1.43.35
