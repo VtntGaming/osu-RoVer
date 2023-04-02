@@ -1,8 +1,8 @@
 -- osu!RoVer converter
 -- convert raw osu file into readable and excutable lua data
--- V1.43 (Size: 27.77KB)
+-- V1.43 (Size: 29.03KB)
 
-return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isReturnDifficulty,metadataonly,GetPS,IsHR,isFL,IsEZ)
+return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isReturnDifficulty,metadataonly,GetPS,IsHR,isFL,IsEZ,IsHD)
 	local OsuData = Beatmap
 	if FileType == 1 then
 		OsuData = require(Beatmap)
@@ -136,6 +136,21 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 			end
 		end
 	end
+	
+	local function ConvertRaw(FileText)
+		local _,e = string.find(FileText,"content\\")
+		FileText = string.sub(FileText,e+1,#FileText)
+		while true do
+			local s = string.find(FileText,"\\")
+			if s then
+				FileText = string.sub(FileText,1,s-1).."/"..string.sub(FileText,s+1,#FileText)
+			else
+				break
+			end
+		end
+		
+		return "rbxasset://"..FileText
+	end
 
 	local a,_ = pcall(function()
 		if MapData.RobloxData ~= nil  then
@@ -143,7 +158,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 			for _,RawData in pairs(MapData.RobloxData) do
 				for i = 1,#RawData do
 					if string.sub(RawData,i,i) == ":" then
-						RblxData[string.sub(RawData,1,i-1)] = tonumber(string.sub(RawData,i+1,#RawData))
+						RblxData[string.sub(RawData,1,i-1)] = tonumber(string.sub(RawData,i+1,#RawData)) or string.sub(RawData,i+1,#RawData)
 					end
 				end
 			end
@@ -152,8 +167,12 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 
 
 			if RblxData.SoundOffset ~= nil and CustomSongIDEnabled == false then
-				DelayedTime += 100+RblxData.SoundOffset/SongSpeed
+				DelayedTime += 30+RblxData.SoundOffset/SongSpeed
 				ReturningData.OriginalOffset = RblxData.SoundOffset
+			end
+
+			if RblxData.CustomSoundFile then
+				ReturningData.CustomSongFile = ConvertRaw(RblxData.CustomSoundFile)
 			end
 			if RblxData.RblxSoundID ~= nil and CustomSongIDEnabled == false then
 				ReturningData.MapSongId = RblxData.RblxSoundID
@@ -166,6 +185,11 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 				if RblxData.SongPitch then
 					ReturningData.SongPitch = RblxData.SongPitch
 				end
+				
+			end
+			
+			if RblxData.CustomBackgroundFile then
+				ReturningData.CustomBackgroundFile = ConvertRaw(RblxData.CustomBackgroundFile)
 			end
 			if RblxData.BackgroundImageId then
 				ReturningData.ImageId = RblxData.BackgroundImageId
@@ -650,7 +674,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 					if TimeBetween == 0 then TimeBetween = 1 end
 					local DistanceBetween = math.abs((Vector2.new(PrevHitObj.Position.X,PrevHitObj.Position.Y)-Vector2.new(HitPos.X,HitPos.Y)).Magnitude)
 					local CS = ReturningData.Difficulty.CircleSize * ((IsHR and 1.3) or (IsEZ and 0.5) or 1)
-					if CS > 10 then CS = 10 end
+					if CS > 11 then CS = 11 end
 					DistanceBetween *= 32/((54.4 - 4.48 * CS))
 					
 					DistanceBetween -= ((54.4 - 4.48 * CS)*2)
@@ -690,7 +714,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 
 					-- Get acc diff
 					if GetPS then
-						RewardPS.Aim = Difficulty * 1 * 1.3626-- * 1.16
+						RewardPS.Aim =  Difficulty * 1 * 1.3626-- * 1.16
 					end
 					AimDiff[#AimDiff+1] = Difficulty
 					
@@ -901,8 +925,33 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 			local objCount = #DiffList
 			DiffList = {}
 			
+			local CircleApproachTime = 1200
+			
+			local ApproachRate = ReturningData.Difficulty.ApproachRate
+
+			if ApproachRate < 5 then
+				CircleApproachTime = 1200 + 600 * (5 - ApproachRate) / 5
+			elseif ApproachRate > 5 then
+				CircleApproachTime = 1200 - 750 * (ApproachRate - 5) / 5
+			else
+				CircleApproachTime = 1200
+			end
+			
+			-- 750
+			
+			CircleApproachTime /= SongSpeed
+			local Difference = CircleApproachTime - 450
+			local ARFLMultiplier = (1-(Difference/750))
+			
+			
+			local FLMultiplier = 0.0003 + ARFLMultiplier * 0.00005
+			
+			if IsHD then
+				FLMultiplier = 0.00035 + ARFLMultiplier * 0.00005
+			end
+			
 			for i = 1,objCount do
-				DiffList[i] = AimDiff[i] * (1+(objCount*0.00035)) + StreamDiff[i]
+				DiffList[i] = AimDiff[i] * (1+(objCount*FLMultiplier)) + StreamDiff[i]
 			end
 		end
 		
