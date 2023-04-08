@@ -1,0 +1,55 @@
+osu!RoVer V1.43 has RELEASHED
+Here're the changelog!
+
+- Sliders: 
+  + Little change to curve points compression.
+  + New design on circle follow point (big circle), new fade-in and slider hold/release animation.
+  + Circle follow follow point (big and small circle) is now synced in color with the combo color (big circle have the minimum lightness of 75%)
+  + Main circle will start to follow the Circle follow point (You wouldn't really noitce this)
+  
+- Hit result: 300s, 100s, 50s, miss hit now have their new design!
+
+- Difficulty calculation:
+  + Changed OD/CS difficulty/PS calculation. Player with EZ mod will get nerfed more on this update.
+  
+- Modifiers: New mod: TD (TouchDevice)
+  + This mod will auto applied if a player have touch screen enabled and enable Mobile Mode.
+  + Effect: -25% aim PS (-30% if FL applied) and +25% acc PS
+  
+- Gameplay changes:
+  + Added a reminder for computer users who using Vitrual cursor movement.
+  + Early miss (when tapping too early) will start fading instead of insta-fade.
+
+- Fixes:
+  + Fixed bug that make BG may takes age to change.
+  + Fixed bug (probably) that still load the previous map's leaderboard on a new choosen map.
+  + Fixed bug where TD users got their cursor above the actual position.
+  
+- New maps added (22 sets, 95 difficulties):
+  + Mage - The Words I Never Said (Strategas) [1 beatmap]
+  + Eve - GekkaMidare Botan (Nameless Player) [1 beatmap]
+  + Eve - GekkaMidare Botan (ozerplace) [1 beatmap]
+  + Hanatan - Cat Food (Speed Up ver.) (Nattu) [1 beatmap]
+  + DECO27 - Animal feat. Hatsune Miku (daemee) [8 beatmaps]
+  + 44teru-k - F.I (AngelHoney) [5 beatmaps]
+  + Amane - TWEEKER (TicClick) [5 beatmaps]
+  + Ando Hirokazu - Gourmet Race (gary00737) [8 beatmaps]
+  + Ceui - Finest Sky (Shizuku-) [6 beatmaps]
+  + Marc-Andre Hamelin - Circus Galop (Cut Ver.) (Apo11o) [9 beatmaps]
+  + Morgan Page - Fight For You (Culture Code Remix) (PantyDev) [1 beatmap]
+  + S.S.H - Intersect Thunderbolt-Remix (SnowNiNo_) [1 beatmap]
+  + Shiraishi - Shinsekai (AngelHoney) [5 beatmaps]
+  + UKRampage - Replica feat. mami (Amamya) [6 beatmaps]
+  + Yooh - Ice Angel (ktgster) [1 beatmap]
+  + TUYU - Loser Girl (Keqing) [7 beatmaps]
+  + Minstrel - Yotogibanashi no Kamikakushi (Luscent) [8 beatmaps]
+  + Jin Yan Xie - Dancing Kong Fu (bakabaka) [3 beatmaps]
+  + KOTOKO - Wing My Way (Nekomiya Nono) [4 beatmaps]
+  + Xi - Glorious Crown (Bloxi) [7 beatmaps]
+  + Xi - Ascension to Heaven (Kroytz) [6 beatmaps - 1301360]
+  + Xi - Ascension to Heaven (Kroytz) [1 beatmap - 368060] 
+  
+  Version: Stable V1.44
+  Pre-BetaVersion: Beta V1.44.0
+  Updated: 18:00 GMT 08/04/2023 (Apr 8th, 2023)
+  (13+) Join our discord server linked in the game description to see more updates!
