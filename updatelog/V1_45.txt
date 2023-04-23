@@ -1,0 +1,51 @@
+osu!RoVer Stable V1.45 has been RELEASHED
+Let's check it out what's new!
+
+- Difficulty/PS Calculation: (literally took me a week non-stop to remake this o.o)
+  + Nerfed Low CS maps (and EZ)
+  + New strain system, the strain goes up when the notes is stacking difficulty. When it goes up to it's max, it's the difficulty!
+  + The game no longer calculate which note is the hardest to determind the difficulty, instead it will calculate which part have the most strain!
+  + (Yes, alot of 9-11 stars map were drop down to 5-8 stars)
+  + We will start recounting every player in the game (not possible), starting from top 1.
+
+- Settings:
+  + Added new settings: Instafade Circle, Hitkey Overlay, Live Difficulty Display, Display hit300 (All are asynced)
+  + Aynced settings for Circle number scale and Circle number overlaps (This is a bugfix as it's suppose to asynced before)
+  + Added skin settings: Cursor Trail Fadetime [0 - 2] (Seconds)
+  + Cursor Trail Size and Cursor Size changed it's limit from [0.1 - 2] to [0 - 10] (You can just make it invisible if you want)
+  + Numbher scale changed its limit from [0.1 - 2] to [0 - 2] (Make it invisible if you want)
+  
+- Gameplay:
+  + Optimized perfomance no longer insta-fade circles, instead you will have to enable Instafade Circle for it.
+  + Make the game to show the Health drain speed on the health bar on Optimized Perfomance
+  + Score and PS no longer animate in Optimized perfomance, it's now fully insta-change
+  + Made the spinner more sensitive with low framerate devices. (Normally if you spin more than 72 degrees in 1 frame it will count as 18 degrees)
+  + As a calculation for spins more than 90 degree per frame: New degree record = math.max(180 - degrees change in this frame,3.6)
+  + Some more animations and fixes to the spinner.
+  + Added Graph line on Beatmap listing (which can help you know which star rating is the part)
+  + Some more small changes.
+
+- Beatmap listing:
+  + Added side exit hitbox on the left to quick exit (like settings)
+  + Game change to the select map if it's changed already on multiplayer (and the host give you host)
+  
+- Others:
+  + Made global chat synced, and the timeline for it.
+  
+- Bug fixes
+  + [IMPORTANT] Fixed bug lag strike when you dragging your screen on Touch Device (or even computer)
+  + [IMPORTANT] Fixed bug that score on Easy (EZ) DO NOT MULTIPLIED BY 0.5X (which created alot (yes, ALOT!) of EZ abusers)
+  + Fixed the chat which do not register input.
+  
+- Map added: [6 set, 27 beatmaps]
+  + Halozy - Kikoku Doukoku Jigokuraku (Hollow Wings) [1 beatmap]
+  + Halozy - Deconstruction Star (Hollow Wings) [1 beatmap]
+  + AZKi - Fake.Fake.Fake (Luscent) [5 beatmaps]
+  + Foreground Eclipse - Storytellers (Seni) [5 beatmaps]
+  + Kizuna AI - * YOU! (Kawashiro) [8 beatmaps]
+  + Wire - Brazil (Apo11o) [7 beatmaps]
+  
+Version: Stable V1.45
+Pre-BetaVersion: Beta V1.45.2
+Updated: 18:00 GMT 23/04/2023 (Apr 23rd, 2023)
+(13+) Join our discord server linked in the game description to see more updates!
