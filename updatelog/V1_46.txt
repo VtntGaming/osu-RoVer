@@ -1,0 +1,30 @@
+! THIS IS NOT FINAL VERSION !
+! VERSION ONLY AVAIABLE ON BETAPLACE !
+
+- Gameplay:
+  + Changes to HP drain:
+    > [BUFF] Base HP drain (HP below 5) increased from [1 - 1.75] to [3 - 5] [*1]
+    > [BUFF] Base HP drain (HP 5 and above) increase from [1.75 - 3] to [5 - 10] [*1]
+    > [BUFF] HealthDrainMultiplier decay rate decrease from 28.33% to 21.25% [*2]
+    > [NERF] HealthDrainMultiplier gain rate decrease from [0.3/0.1] to [0.15/0.1] [*3]
+  + Changes to Approach algorithm:
+    > Movement changed from TweenSerice tween to RunService.RenderStepped constant update (applied to HD, not applied 100% to SL yet)
+  + Time jump on Replays and AT mod:
+    > Click on the timeline to instantly move into the selected time (backward avaiable, PS and accuracy bug may occur)
+    > Feature CANNOT be used for other purpose (play will be instantly unranked if you do)
+  + Others:
+    > Better song transision.
+    > 
+
+
+
+[*1] Unit: % drain of HP per sec on HP [1 - 5] or [5 - 10]
+[*2] Unit: % drain of HealthDrainMultiplier per sec
+[*3] Unit: HealthDrainMultiplier gain everytime a [Note/SL note] passed [*4]
+
+> Variable explain:
+  - Base HP drain: Calculated %HP drain per second without any Multiplier
+  - HealthDrainMultiplier: Multiplier for Base HP drain
+
+Version: NOT RELEASED
+Betaplace version: Beta V1.46.6
