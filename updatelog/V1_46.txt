@@ -3,10 +3,14 @@
 
 - Gameplay:
   + Changes to HP drain:
+    > General changes: Buffed base HP drain, HP drain on high-stream, making the HP bar not draining so much effecting the gameplay.
+    > Detailed changes: *below*
     > [BUFF] Base HP drain (HP below 5) increased from [1 - 1.75] to [3 - 5] [*1]
-    > [BUFF] Base HP drain (HP 5 and above) increase from [1.75 - 3] to [5 - 10] [*1]
-    > [BUFF] HealthDrainMultiplier decay rate decrease from 28.33% to 21.25% [*2]
-    > [NERF] HealthDrainMultiplier gain rate decrease from [0.3/0.1] to [0.15/0.1] [*3]
+    > [BUFF] Base HP drain (HP 5 and above) increased from [1.75 - 3] to [5 - 10] [*1]
+    > [NERF] HealthDrainMultiplier base decay rate increased from 28.33% to 30.00% of (HealthDrainMultiplier-1)/sec [*2]
+    > [BUFF] HealthDrainMultiplier minimum decay rate decreased from 2.0 to 1.5/sec
+    > [NERF] HealthDrainMultiplier gain rate decreased from [0.3/0.1] to [0.15/0.1] [*3]
+    > [NERF] HealthDrainMultiplier max multiplier changed from UNLIMITED to 5
   + Changes to Approach algorithm:
     > Movement changed from TweenSerice tween to RunService.RenderStepped constant update (applied to HD, not applied 100% to SL yet)
   + Time jump on Replays and AT mod:
@@ -14,7 +18,8 @@
     > Feature CANNOT be used for other purpose (play will be instantly unranked if you do)
   + Others:
     > Better song transision.
-    > 
+`   > Minor changes to the interface.
+    > Added difficulty strike indicator on the Live difficulty display.
 
 
 
@@ -24,7 +29,7 @@
 
 > Variable explain:
   - Base HP drain: Calculated %HP drain per second without any Multiplier
-  - HealthDrainMultiplier: Multiplier for Base HP drain
+  - HealthDrainMultiplier: Multiplier for Base HP drain (base multiplier drain per sec: max(2,21.3% of (HealthDrainMultiplier-1)))
 
 Version: NOT RELEASED
 Betaplace version: Beta V1.46.6
