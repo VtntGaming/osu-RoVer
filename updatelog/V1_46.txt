@@ -25,11 +25,11 @@
 
 [*1] Unit: % drain of HP per sec on HP [1 - 5] or [5 - 10]
 [*2] Unit: % drain of HealthDrainMultiplier per sec
-[*3] Unit: HealthDrainMultiplier gain everytime a [Note/SL note] passed [*4]
+[*3] Unit: HealthDrainMultiplier gain everytime a [Note/SL note] passed
 
 > Variable explain:
   - Base HP drain: Calculated %HP drain per second without any Multiplier
-  - HealthDrainMultiplier: Multiplier for Base HP drain (base multiplier drain per sec: max(2,21.3% of (HealthDrainMultiplier-1)))
+  - HealthDrainMultiplier: Multiplier for Base HP drain
 
 Version: NOT RELEASED
 Betaplace version: Beta V1.46.9
