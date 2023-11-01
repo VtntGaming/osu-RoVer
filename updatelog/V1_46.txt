@@ -32,4 +32,4 @@
   - HealthDrainMultiplier: Multiplier for Base HP drain (base multiplier drain per sec: max(2,21.3% of (HealthDrainMultiplier-1)))
 
 Version: NOT RELEASED
-Betaplace version: Beta V1.46.6
+Betaplace version: Beta V1.46.9
