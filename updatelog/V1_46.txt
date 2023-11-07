@@ -1,7 +1,42 @@
 ! THIS IS NOT FINAL VERSION !
 ! VERSION ONLY AVAIABLE ON BETAPLACE !
 
+- Difficulty/ Perfomance calculation:
+  + [STUDIO TESTING/NOT RELEASHED] Change to Accuracy PS:
+    > [BUFF] AccuracyPS changed 
+        from MaxAccuracyPS * 0.82 ^ (100 - Accuracy) 
+        to math.min(MaxAccuracyPS * 12.87 * 0.9 ^ (100 - Accuracy), MaxAccuracyPS * 0.98 ^ (100 - Accuracy))
+    > AccuracyPS slowly drop from 100% to 54.55% at 70% accuracy and then will start drastically dropping to 7% at 50% accuracy and keep going
+      Example map: Ashrount - AureoLe ~for Triumph~ [FINAL]
+      Accuracy | Stable PP | Raw converted PS | Expected new calculated PS
+      100%     | 2234.05pp | 2748.01ps        | 2748.01ps
+      95%      | 1754.13pp | 2435.02ps        | 2483.98ps
+      90%      | 1440.21pp | 2206.40ps        | 2245.32ps
+      80%      | 1150.88pp | 1972.36ps        | 1834.59ps
+      70%      |  990.53pp | 1829.81ps        | 1499.00ps
+      65%      |  912.54pp | 1756.29ps        |  885.29ps
+      60%      |  835.09pp | 1680.11ps        |  522.75ps
+      50%      |  686.09pp | 1522.87ps        |  182.27ps
+
 - Gameplay:
+  + [BETAPLACE TESTING] Upcomming beta changes for osu!RoVer ScoreV1 calculation: 
+    > Old score calculation:
+      - Total score = base score
+      - Base score adds up = Hit value * (1 + (Combo multiplier * Difficulty multiplier * Mod multiplier / 25))
+    > New score calculation:
+      - Total = base score + accuracy score
+      - Base score adds up = Hit value * (1 + (Combo multiplier * Difficulty multiplier * Mod multiplier / 25 * 0.75))
+      - Accuracy score = math.pow((300s + 100s + 50s)/300, 2.265) * Difficulty multiplier * Mod multiplier * 0.25 
+    > Examples:
+      - 100 300s | Old: 393,600 | New: 302,700 + 50,827 -> 353,527 (89.8%)
+      - 1000 300s | Old: 36,336,000 | New: 27,327,000 + 9,356,023 -> 36,683,023 (100.9%)
+      - 100 100s (33.33% acc) | Old: 131,200 | New: 100,900 + 4,221 -> 105,121 (80.1%)
+
+    Variables:
+    * Hit value: 0, 50, 100, 300
+    * Combo multiplier: math.max(prevCombo - 1, 0)
+    * Difficulty multiplier: 6
+
   + Changes to HP drain:
     > General changes: Buffed base HP drain, HP drain on high-stream, making the HP bar not draining so much effecting the gameplay.
     > Detailed changes: *below*
