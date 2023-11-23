@@ -2,7 +2,12 @@
 ! VERSION ONLY AVAIABLE ON BETAPLACE !
 
 - Difficulty/ Perfomance calculation:
-  + [STUDIO TESTING/NOT RELEASHED] Change to Accuracy PS:
+  + Big change to Overall PS/ Difficulty calculation
+    > CurrentStrain changed from: Adds up from base Aim and Speed difficulty
+      to: Make as a combination of current AimStrain and SpeedStrain (both is separated, also adds up)
+    > [BETAPLACE TESTING] Reworked calculation of both Aim and Speed
+    > [STUDIO TESTING] Added new separated Aim and Speed difficulty. (Go to Console by pressing F9 to view map's Aim/Speed diff)
+  + [BETAPLACE TESTING] Changes to Accuracy PS:
     > [BUFF] AccuracyPS changed 
         from MaxAccuracyPS * 0.82 ^ (100 - Accuracy) 
         to math.min(MaxAccuracyPS * 12.87 * 0.9 ^ (100 - Accuracy), MaxAccuracyPS * 0.98 ^ (100 - Accuracy))
