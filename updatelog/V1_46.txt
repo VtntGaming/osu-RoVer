@@ -1,75 +1,54 @@
-! THIS IS NOT FINAL VERSION !
-! VERSION ONLY AVAIABLE ON BETAPLACE !
+Enough chilling with the old version...
+Because osu!RoVer Stable V1.46 is NOW LIVE! GET READY FOR THE CHAOS!
 
-- Difficulty/ Perfomance calculation:
-  + Big change to Overall PS/ Difficulty calculation
-    > CurrentStrain changed from: Adds up from base Aim and Speed difficulty
-      to: Make as a combination of current AimStrain and SpeedStrain (both is separated, also adds up)
-    > [BETAPLACE TESTING] Reworked calculation of both Aim and Speed
-    > [STUDIO TESTING] Added new separated Aim and Speed difficulty. (Go to Console by pressing F9 to view map's Aim/Speed diff)
-  + [BETAPLACE TESTING] Changes to Accuracy PS:
-    > [BUFF] AccuracyPS changed 
-        from MaxAccuracyPS * 0.82 ^ (100 - Accuracy) 
-        to math.min(MaxAccuracyPS * 12.87 * 0.9 ^ (100 - Accuracy), MaxAccuracyPS * 0.98 ^ (100 - Accuracy))
-    > AccuracyPS slowly drop from 100% to 54.55% at 70% accuracy and then will start drastically dropping to 7% at 50% accuracy and keep going
-      Example map: Ashrount - AureoLe ~for Triumph~ [FINAL]
-      Accuracy | Stable PP | Raw converted PS | Expected new calculated PS
-      100%     | 2234.05pp | 2748.01ps        | 2748.01ps
-      95%      | 1754.13pp | 2435.02ps        | 2483.98ps
-      90%      | 1440.21pp | 2206.40ps        | 2245.32ps
-      80%      | 1150.88pp | 1972.36ps        | 1834.59ps
-      70%      |  990.53pp | 1829.81ps        | 1499.00ps
-      65%      |  912.54pp | 1756.29ps        |  885.29ps
-      60%      |  835.09pp | 1680.11ps        |  522.75ps
-      50%      |  686.09pp | 1522.87ps        |  182.27ps
+Here're what've changed over the past 8 months of progress:
+\- Difficulty/ Perfomance calculation:
+  \+ Big change to Overall PS/ Difficulty calculation
+    \> CurrentStrain changed from: Adds up from base Aim and Speed difficulty
+      to: Make as a combination of current AimStrain and SpeedStrain with a little of extra calculation (both is separated, also adds up)
+  \+ Another BIG change for Perfomacne calculation, this change will CHANGED COMPLETELY on how osu!RoVer PS calculation work
+    \> Make as a expomental calculation based on OverallDifficulty, AimDiff, SpeedDiff and such more.
+    \> All information about ModPS [Includes SA, HD, HR, EZ, FL and such more] will be effect separately depend on which condition
+\- Gameplay:
+  \+ Upcomming beta changes for osu!RoVer ScoreV1 calculation: 
+    \> Old score calculation:
+      \- Total score = base score
+      \- Base score adds up = Hit value * (1 + (Combo multiplier * Difficulty multiplier * Mod multiplier / 25))
+    \> New score calculation:
+      \- Total = base score + accuracy score
+      \- Base score adds up = Hit value * (1 + (Combo multiplier * Difficulty multiplier * Mod multiplier / 25 * 0.75))
+      \- Accuracy score = math.pow((300s + 100s + 50s)/300, 2.265) * Difficulty multiplier * Mod multiplier * 0.25 
+  \+ Changes to HP drain:
+    \> General changes: Buffed base HP drain, HP drain on high-stream, making the HP bar not draining so much effecting the gameplay.
+    \> Detailed changes: *below*
+    \> [BUFF] Base HP drain (HP below 5) increased from [1 - 1.75] to [3 - 5] [*1]
+    \> [BUFF] Base HP drain (HP 5 and above) increased from [1.75 - 3] to [5 - 10] [*1]
+    \> [NERF] HealthDrainMultiplier base decay rate increased from 28.33% to 30.00% of (HealthDrainMultiplier-1)/sec [*2]
+    \> [BUFF] HealthDrainMultiplier minimum decay rate decreased from 2.0 to 1.5/sec
+    \> [NERF] HealthDrainMultiplier gain rate decreased from [0.3/0.1] to [0.15/0.1] [*3]
+    \> [NERF] HealthDrainMultiplier max multiplier changed from UNLIMITED to 3.5
+    \> [BUFF] Nerf HP Recover from Full300 and NoMissOr50s to 1.0% and 0.85%
+  \+ Changes to Approach algorithm:
+    \> Movement changed from TweenSerice tween to RunService.RenderStepped constant update (applied to HD, not applied 100% to SL yet)
+  \+ Added new settings: PS Leaderboard
+    \> Change the sort order from Score to Perfomance score for both menu and in-game
+  \+ Live difficulty display:
+    \> Added LiveAim and LiveSpeed display for the LiveDiffDisplay
+    \> Added Difficulty strike indicator whenever a harder part [Diff 6+] is incomming.
+  \+ Beatmap listing:
+    \> Added searching option: Difficulty Range - Allows you to search beatmaps that can compatible with your skill
+    \> Whenever you search for a map, if there's only exactly ONE beatmap avaiable, that map will instantly be choose for your current map
+  \+ General interface:
+    \> Changed overall display font from TitilliumWeb to Quicksand, willing to make the interface better.
+  \+ Awards:
+    \> Added 3 new badges, more information in the roblox page.
+  \+ Issue fixes:
+    \> Fix some Slider part is not tweened with a correct time (some too slow, some too fast, ...)
+    \> Fixed mobile devices getting crash during play (passive update, somehow)
+  \+ Others:
+    \> Better song transision.
+`   \> Other minor changes to the interface.
 
-- Gameplay:
-  + [BETAPLACE TESTING] Upcomming beta changes for osu!RoVer ScoreV1 calculation: 
-    > Old score calculation:
-      - Total score = base score
-      - Base score adds up = Hit value * (1 + (Combo multiplier * Difficulty multiplier * Mod multiplier / 25))
-    > New score calculation:
-      - Total = base score + accuracy score
-      - Base score adds up = Hit value * (1 + (Combo multiplier * Difficulty multiplier * Mod multiplier / 25 * 0.75))
-      - Accuracy score = math.pow((300s + 100s + 50s)/300, 2.265) * Difficulty multiplier * Mod multiplier * 0.25 
-    > Examples:
-      - 100 300s | Old: 393,600 | New: 302,700 + 50,827 -> 353,527 (89.8%)
-      - 1000 300s | Old: 36,336,000 | New: 27,327,000 + 9,356,023 -> 36,683,023 (100.9%)
-      - 100 100s (33.33% acc) | Old: 131,200 | New: 100,900 + 4,221 -> 105,121 (80.1%)
-
-    Variables:
-    * Hit value: 0, 50, 100, 300
-    * Combo multiplier: math.max(prevCombo - 1, 0)
-    * Difficulty multiplier: 6
-
-  + Changes to HP drain:
-    > General changes: Buffed base HP drain, HP drain on high-stream, making the HP bar not draining so much effecting the gameplay.
-    > Detailed changes: *below*
-    > [BUFF] Base HP drain (HP below 5) increased from [1 - 1.75] to [3 - 5] [*1]
-    > [BUFF] Base HP drain (HP 5 and above) increased from [1.75 - 3] to [5 - 10] [*1]
-    > [NERF] HealthDrainMultiplier base decay rate increased from 28.33% to 30.00% of (HealthDrainMultiplier-1)/sec [*2]
-    > [BUFF] HealthDrainMultiplier minimum decay rate decreased from 2.0 to 1.5/sec
-    > [NERF] HealthDrainMultiplier gain rate decreased from [0.3/0.1] to [0.15/0.1] [*3]
-    > [NERF] HealthDrainMultiplier max multiplier changed from UNLIMITED to 5
-  + Changes to Approach algorithm:
-    > Movement changed from TweenSerice tween to RunService.RenderStepped constant update (applied to HD, not applied 100% to SL yet)
-  + Time jump on Replays and AT mod:
-    > Click on the timeline to instantly move into the selected time (backward avaiable, PS and accuracy bug may occur)
-    > Feature CANNOT be used for other purpose (play will be instantly unranked if you do)
-  + Others:
-    > Better song transision.
-`   > Minor changes to the interface.
-    > Added difficulty strike indicator on the Live difficulty display.
-
-
-
-[*1] Unit: % drain of HP per sec on HP [1 - 5] or [5 - 10]
-[*2] Unit: % drain of HealthDrainMultiplier per sec
-[*3] Unit: HealthDrainMultiplier gain everytime a [Note/SL note] passed
-
-> Variable explain:
-  - Base HP drain: Calculated %HP drain per second without any Multiplier
-  - HealthDrainMultiplier: Multiplier for Base HP drain
-
-Version: NOT RELEASED
-Betaplace version: Beta V1.46.9
+Release date: 00:00 EST+7 27/12/2023
+Version: Stable V1.46
+Betaplace version: Beta V1.46.22
