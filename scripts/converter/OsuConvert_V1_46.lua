@@ -364,9 +364,8 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 	local function GetBPMData(Time)
 		local data = {BPM = 60,SliderMultiplier = 1,LastBPMTiming = 0}
 		local BPMVaild = false
-		local SliderMultiVaild = false
 		for i,TimingData in pairs(TimingPoints) do
-			if TimingData[1] > Time and BPMVaild and SliderMultiVaild then
+			if TimingData[1] > Time and BPMVaild then
 				break
 			end
 			
@@ -380,9 +379,8 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 					data.SliderMultiplier = 1
 				end
 			else	-- slider multiplier
-				if TimingData[1] > Time and SliderMultiVaild then continue end
+				if TimingData[1] > Time then continue end
 				data.SliderMultiplier = 1/((-TimingData[2])/100)
-				SliderMultiVaild = true
 			end
 		end
 		
@@ -471,10 +469,10 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 		CircleApproachTime /= SongSpeed
 		local Difference = CircleApproachTime - 450
 		local ARFLMultiplier = (1-(Difference/750))
-		FLMultiplier = 0.0007 + ARFLMultiplier * 0.0001
+		FLMultiplier = 0.0006 + ARFLMultiplier * 0.0001
 
 		if IsHD then
-			FLMultiplier = 0.0008 + ARFLMultiplier * 0.0001
+			FLMultiplier = 0.0007 + ARFLMultiplier * 0.0001
 		end
 	end
 	
@@ -493,7 +491,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 	-- Difficulty record each 5 seconds
 	GetPS = true
 
-	local DifficultyStrikeRecord = 5000/SongSpeed -- in miliseconds
+	local DifficultyStrikeRecord = 2000/SongSpeed -- in miliseconds
 
 
 	if metadataonly ~= true then -- this would reduce lag
@@ -641,6 +639,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 			end
 
 			local function GetSpeedDiff(Speed)
+				--[[
 				if Speed <= 320 then
 					return 1.15 * Speed / 320 * 0.5
 				elseif Speed <= 640 then
@@ -657,7 +656,9 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 					return 1.85 + (Speed - 6400) / 3840 * 0.405
 				else
 					return 2.255
-				end
+				end]]
+				
+				return math.pow(Speed/1000,0.4)*1.1145
 			end
 			local function GetStreamDiff(TimeBetween,prevTimeBetween,distanceBetween)
 				TimeBetween = math.max(TimeBetween,1)
@@ -868,14 +869,14 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 					-- Calculate current difficulty
 					-- math.pow(HighestAimStrain,0.5)*2.35
 					
-					local CurrentAimStrain = math.pow(CurrentAimStrain,0.6)*1.585
-					local CurrentSpeedStrain = math.pow(CurrentSpeedStrain,0.6)*1.9
+					local CurrentAimStrain = math.pow(CurrentAimStrain,0.75)*1.03
+					local CurrentSpeedStrain = math.pow(CurrentSpeedStrain,0.6)*1.929
 					
 					
 					
-					local CurrentStrain = CurrentAimStrain + CurrentSpeedStrain
+					local CurrentStrain = math.pow(CurrentAimStrain^1.08 + CurrentSpeedStrain^1.08,1/1.08) * 1.5
 					
-					CurrentStrain = CurrentStrain * 1.33
+					--CurrentStrain = CurrentStrain
 					if CurrentStrain > HighestStrain then
 						HighestStrain = CurrentStrain
 					end
@@ -1222,12 +1223,15 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 		
 		BeatmapDifficulty = FinalStrain --HighestStrain -- V1.46 diff calculate
 		--BeatmapDifficulty = math.pow(BeatmapDifficulty,1) * 1.613
-		BeatmapDifficulty = math.floor(BeatmapDifficulty*100+0.5)/100
+		BeatmapDifficulty = math.pow(FinalAimStrain^1.08 + FinalSpeedStrain^1.08,1/1.08) * 1.0977 --math.floor(BeatmapDifficulty*100+0.5)/100
+		if isFL then
+			BeatmapDifficulty = math.pow(((FinalAimStrain/20)^1.08)*20 + FinalSpeedStrain^1.08,1/1.08) * 1.0977
+		end
 		---
 		HighestAimStrain = FinalAimStrain --math.pow(HighestAimStrain,0.6)*1.585
 		HighestSpeedStrain = FinalSpeedStrain --math.pow(HighestSpeedStrain,0.6)*1.9
-		HighestAimStrain = math.floor(HighestAimStrain*100+0.5)/100
-		HighestSpeedStrain = math.floor(HighestSpeedStrain*100+0.5)/100
+		HighestAimStrain = math.round(HighestAimStrain*100)/100
+		HighestSpeedStrain = math.round(HighestSpeedStrain*100)/100
 		--local Combined = HighestAimStrain + HighestSpeedStrain
 		--HighestAimStrain = BeatmapDifficulty*HighestAimStrain/Combined
 		--HighestSpeedStrain = BeatmapDifficulty*HighestSpeedStrain/Combined
