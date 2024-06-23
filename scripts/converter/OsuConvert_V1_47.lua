@@ -1,7 +1,7 @@
 --!native
 -- osu!RoVer converter
 -- convert raw osu file into readable and excutable lua data
--- V1.46 (Size: 41.37KB)
+-- V1.46 (Size: 44.05KB)
 
 return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isReturnDifficulty,metadataonly,GetPS,IsHR,isFL,IsEZ,IsHD)
 	local OsuData = Beatmap
@@ -245,6 +245,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 			ReturningData.Overview.Metadata.SongCreatorUnicode = Metadata.ArtistUnicode
 			ReturningData.Overview.Metadata.DifficultyName = Metadata.Version
 			ReturningData.Overview.Metadata.BeatmapCreator = Metadata.Creator
+			ReturningData.Overview.Metadata.Source = Metadata.Source
 			ReturningData.Overview.Metadata.Tags = Metadata.Tags
 
 			ReturningData.BeatmapSetsData = {BeatmapsetID = Metadata.BeatmapSetID,BeatmapID = Metadata.BeatmapID}
@@ -485,7 +486,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 		OD = 10
 	end
 	
-	local ODMultiplier = 56.5 / ((119.5 - 9 * OD))
+	local ODMultiplier = 1 --115 / ((119.5 - 9 * OD))
 	ODMultiplier = ODMultiplier ^ 0.2
 
 	-- RawDifficulty = {[1] = {<Time>,<Diff>}}
@@ -652,6 +653,17 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 				local slider_multiplier = 1.35
 				local velocity_change_multiplier = 0.75
 				
+				local function nerfDistnaceBetween(distance)
+					local CS = ReturningData.Difficulty.CircleSize * ((IsHR and 1.3) or (IsEZ and 0.5) or 1)
+					local data = distance - ((54.4 - 4.48 * CS)*2)
+					return math.max(0,data)
+				end
+				
+				CrrObj.MoveDistance = nerfDistnaceBetween(CrrObj.MoveDistance)
+				PrevObj.MoveDistance = nerfDistnaceBetween(PrevObj.MoveDistance)
+				PrevPrevObj.MoveDistance = nerfDistnaceBetween(PrevPrevObj.MoveDistance)
+				
+				
 				local crrVelocity = CrrObj.MoveDistance/CrrObj.MoveTime
 				local prevVelocity = PrevObj.MoveDistance/PrevObj.MoveTime
 				
@@ -708,13 +720,22 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 
 				baseAimStrain += math.max(acuteAngleBonus * acute_angle_multiplier, wideAngleBonus * wide_angle_multiplier + velocityChangeBonus * velocity_change_multiplier)
 				
-				return baseAimStrain * 23.55
+				return baseAimStrain * 26.5 --23.55
 			end
 			
 			local function GetStreamDiff(CrrObj, prevObj, nextObj)
 				local single_spacing_threshold = 125
 				local min_speed_bonus = 75
 				local speed_balancing_factor = 40
+				
+				local function nerfDistnaceBetween(distance)
+					local CS = ReturningData.Difficulty.CircleSize * ((IsHR and 1.3) or (IsEZ and 0.5) or 1)
+					local data = distance - ((54.4 - 4.48 * CS)*2)*0.25
+					return math.max(0,data)
+				end
+				
+				CrrObj.MoveDistance = nerfDistnaceBetween(CrrObj.MoveDistance)
+				prevObj.MoveDistance = nerfDistnaceBetween(prevObj.MoveDistance)
 				
 				local strainTime = CrrObj.MoveTime
 				local doubletapness = 1
@@ -741,8 +762,34 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 				local distance = math.min(single_spacing_threshold, travelDistance + CrrObj.MoveDistance)
 				
 				local SpeedDiff = (speedBonus + speedBonus * math.pow(distance/single_spacing_threshold, 3.5)) * doubletapness / strainTime
-				return SpeedDiff * 1375
+				return SpeedDiff * 1500
 			end
+			
+			local function getFlashLightDiff(ObjList)
+				if not isFL then
+					return 0
+				end
+				
+				local maxOpacityBonus = 0.4
+				local HDBonus = 0.2
+				
+				local minVelocity = 0.5
+				local sliderMultiplier = 1 --1.3
+				
+				local minAngleMultiplier = 0.2
+				-------
+				local scalingFactor = 52/(54.4 - 4.48 * ReturningData.Difficulty.CircleSize)
+				local smallDistanceNerf = 1
+				
+				local Result = 0
+				local angleRepeatCount = 0
+				
+				for CrrOrder, SelectedObj in pairs(ObjList) do
+					
+				end
+				
+				
+			end 
 			
 			
 			
@@ -769,10 +816,13 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 					local DistanceBetween = math.abs((Vector2.new(PrevHitObj.Position.X,PrevHitObj.Position.Y)-Vector2.new(HitPos.X,HitPos.Y)).Magnitude)
 					local CS = ReturningData.Difficulty.CircleSize * ((IsHR and 1.3) or (IsEZ and 0.5) or 1)
 					if CS > 11 then CS = 11 end
-					DistanceBetween *= 36.48/((54.4 - 4.48 * CS))
+					
+					local CSMultiplier = 52/((54.4 - 4.48 * CS))
+					DistanceBetween *= CSMultiplier
 					local DistanceBetween_Speed = DistanceBetween
-					DistanceBetween -= ((54.4 - 4.48 * CS)*2) -- only effect aim rating
+					--DistanceBetween -= ((54.4 - 4.48 * CS)*2)*0.75 -- only effect aim rating
 					--------------
+					-- AIM DIFFICULTY CALCULATOR
 					if DistanceBetween < 0 then DistanceBetween = 0 end
 					if DistanceBetween_Speed < 0 then DistanceBetween_Speed = 0 end
 					if isFL then
@@ -785,7 +835,6 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 					local TimePrev = 999999999999999
 					local BonusAngle = 0
 					local VelocityChangeBonus = 1
-					
 					
 					local CrrObjData = {
 						MoveTime = TimeBetween, DeltaTime = math.floor((TimeBetween)/16)*16, MoveDistance = DistanceBetween_Speed,
@@ -805,9 +854,9 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 					local NextObjData
 					
 					local function getAngle(pointA, pointB, pointC) -- in vector2
-						local pointA = Vector2.new(1,7)
-						local pointB = Vector2.new(3,1)
-						local pointC = Vector2.new(9,3)
+						--local pointA = Vector2.new(1,7)
+						--local pointB = Vector2.new(3,1)
+						--local pointC = Vector2.new(9,3)
 						local ab = pointB - pointA
 						local angleA = math.deg(math.atan2(ab.y,ab.x))
 						angleA = math.abs(angleA)
@@ -839,13 +888,13 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 							prevprevObjPos = Vector2.new(ConvertedData[objectID-2].Position.X,ConvertedData[objectID-2].Position.Y)
 							PrevObjData.Angle = getAngle(prevprevObjPos,prevObjPos,crrObjPos)
 							PrevObjData.MoveTime = (Time - prevObjTime)
-							PrevObjData.MoveDistance = math.max(((prevObjPos - crrObjPos).Magnitude * 36.48/((54.4 - 4.48 * CS))),0)
+							PrevObjData.MoveDistance = math.max(((prevObjPos - crrObjPos).Magnitude * CSMultiplier),0)
 							if objectID > 4 then
 								prevprevObjTime = ConvertedData[objectID-3].Time
 								prevprevprevObjPos = Vector2.new(ConvertedData[objectID-4].Position.X,ConvertedData[objectID-4].Position.Y)
 								PrevPrevObjData.Angle = getAngle(prevprevprevObjPos,prevprevObjPos,prevObjPos)
 								PrevPrevObjData.MoveTime = (prevObjTime - prevprevObjTime)
-								PrevPrevObjData.MoveDistance = math.max(((prevprevObjPos - prevObjPos).Magnitude * 36.48/((54.4 - 4.48 * CS))),0)
+								PrevPrevObjData.MoveDistance = math.max(((prevprevObjPos - prevObjPos).Magnitude * CSMultiplier),0)
 							end
 						end
 					end
@@ -894,8 +943,33 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 						RewardPS.Aim =  not isSpinner and Difficulty or 0
 					end
 					
+					-- FLASHLIGHT DIFFICULTY CALCULATOR
 					
-					-- SPEED (STREAM) DIFFICULTY CALCULATE
+					if isFL then
+						local ObjList = {}
+						-- get current + lastest 10 object data
+						for i = 0,10 do
+							local ObjData = ConvertedData[objectID - i]
+							if not ConvertedData then
+								break
+							end
+							
+							local Angle = -1
+							
+							if objectID - i < #ConvertedData and objectID-i-1 >= 1 then
+								local nextObj = ConvertedData[objectID - i + 1]
+								local prevObj = ConvertedData[objectID - i - 1]
+							end
+
+							local CrrData = {
+								
+							}
+						end
+						
+					end
+					
+					
+					-- SPEED (STREAM) DIFFICULTY CALCULATOR
 					local PrevTimeBetween = -1
 					local PrevDistanceBetween = 0
 					
@@ -942,7 +1016,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,CustomSongIDEnabled,isRet
 					end
 
 					local diffCalcPS = ((RewardedAimPS^0.95+RewardedSpeedPS^0.95+RewardedAccPS^0.95)^(1/0.95))
-					local CurrentStrain = 0.023557 * (math.pow(100000 / math.pow(2, 1 / 1.1) * diffCalcPS,1/3) + 4)
+					local CurrentStrain = (1/40.675) * (math.pow(100000 / math.pow(2, 1 / 1.1) * diffCalcPS,1/3) + 4)
 					
 					--[[
 					
@@ -1287,11 +1361,26 @@ BeatmapDifficulty = math.pow(FinalAimStrain^1.08 + FinalSpeedStrain^1.08,1/1.08)
 		local Weight = 1
 		local DecayRate = 0.98
 		
-		for _,a in pairs(StrainData) do
-			FinalStrain += a*Weight*BaseMultiplier
-			Weight *= DecayRate
+		local function Lerp(a,b,rate)
+			return a + (b-a) * rate
 		end
-		Weight = 1 -- reset
+		
+		for i = 1, math.min(#AimStrainData,10) do
+			local Scale = math.log10(Lerp(1,10, math.clamp(i/10,0,1)))
+			--print(string.format("Aim: %.2f > %.2f", AimStrainData[i], AimStrainData[i] * Lerp(0.75, 1, Scale)))
+			AimStrainData[i] *= Lerp(0.75, 1, Scale) 
+		end
+		
+		for i = 1, math.min(#SpeedStrainData,10) do
+			local Scale = math.log10(Lerp(1,10, math.clamp(i/10,0,1)))
+			--print(string.format("Speed: %.2f > %.2f", SpeedStrainData[i], SpeedStrainData[i] * Lerp(0.75, 1, Scale)))
+			AimStrainData[i] *= Lerp(0.75, 1, Scale) 
+		end
+		
+		-- sort again
+		table.sort(AimStrainData, function(a,b) return a>b end)
+		table.sort(SpeedStrainData, function(a,b) return a>b end)
+		
 		for _,a in pairs(AimStrainData) do
 			FinalAimStrain += a*Weight*BaseMultiplier
 			Weight *= DecayRate
@@ -1318,7 +1407,7 @@ BeatmapDifficulty = math.pow(FinalAimStrain^1.08 + FinalSpeedStrain^1.08,1/1.08)
 		if isFL then
 			FLMulti = 1.5
 		end
-		local ODRate = ReturningData.Difficulty.OverallDifficulty * (IsEZ and 0.5 or (IsHR and 1.4 or 1))
+		local ODRate = math.clamp(ReturningData.Difficulty.OverallDifficulty * (IsEZ and 0.5 or (IsHR and 1.4 or 1)),0,10)
 		local LengthBonus = 0.95 + 0.4 * math.min(1,#ConvertedData/2000) + ((#ConvertedData > 2000 and math.log10(#ConvertedData/2000) * 0.5) or 0)
 
 		local RewardedAimPS = FLMulti * math.pow(5 * math.max(1,(HighestAimStrain/FLMulti)/0.0675) - 4, 3) / 100000 * LengthBonus * (0.98 + math.pow(ODRate, 2) / 2500) --math.pow(AimDiff,4)
@@ -1326,7 +1415,7 @@ BeatmapDifficulty = math.pow(FinalAimStrain^1.08 + FinalSpeedStrain^1.08,1/1.08)
 		local RewardedAccPS = math.pow(1.52163,ODRate) * 2.83 * math.min(1.15,math.pow(#ConvertedData/1000,0.3)) / 1.0858--math.pow(BaseDiff,2.21)
 
 		local diffCalcPS = ((RewardedAimPS^0.95+RewardedSpeedPS^0.95+RewardedAccPS^0.95)^(1/0.95))
-		BeatmapDifficulty = 0.023809 * (math.pow(100000 / math.pow(2, 1 / 1.1) * diffCalcPS,1/3) + 4)
+		BeatmapDifficulty = (1/40.675) * (math.pow(100000 / math.pow(2, 1 / 1.1) * diffCalcPS,1/3) + 4)
 	end
 	--warn(tostring(AimDifficulty).."\n"..tostring(StreamDifficulty))
 
@@ -1334,6 +1423,8 @@ BeatmapDifficulty = math.pow(FinalAimStrain^1.08 + FinalSpeedStrain^1.08,1/1.08)
 	ReturningData.Difficulty.BeatmapDifficulty = BeatmapDifficulty
 	ReturningData.Difficulty.AimDifficulty = HighestAimStrain
 	ReturningData.Difficulty.SpeedDifficulty = HighestSpeedStrain
+	--2234.05 -> 12.19
+	--9.15 -> 1.70
 
 
 	if metadataonly ~= true then
