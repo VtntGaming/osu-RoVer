@@ -5,8 +5,17 @@ osuLocalConvert = require(workspace.OsuConvert)
 
 -- Services load
 
-TweenService = game:GetService("TweenService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local wait = require(workspace.WaitModule)
+
+if script.Parent.StartupState.Value == "Waiting" then
+	repeat wait() until script.Parent.StartupState.Value ~= "Waiting"
+end
+
+local StartupState = script.Parent.StartupState.Value
+local StateReady = false
 
 function cloneTable(a)
 	local c = {}
@@ -29,7 +38,8 @@ game.StarterGui:SetCore("ResetButtonCallback",false)
 
 local GameplayFPS = 0
 
-game:GetService("RunService").RenderStepped:Connect(function()
+--RunService.RenderStepped:Connect(function()
+workspace.ClientWaitModule.AccurateEvent.Event:Connect(function()
 	GameplayFPS += 1
 	wait(1)
 	GameplayFPS -= 1
@@ -40,9 +50,9 @@ end)
 BeatmapsList = workspace.Beatmaps
 
 -- just in case I forgot to turn this ^^^ back
-if not game:GetService("RunService"):IsStudio() and BeatmapsList ~= workspace.Beatmaps then
+if not RunService:IsStudio() and BeatmapsList ~= workspace.Beatmaps then
 	BeatmapsList = workspace.Beatmaps
-elseif #workspace.ProcessingBeatmap:GetChildren() > 0 and game:GetService("RunService"):IsStudio() then
+elseif #workspace.ProcessingBeatmap:GetChildren() > 0 and RunService:IsStudio() then
 	BeatmapsList = workspace.ProcessingBeatmap
 	if game.Players.LocalPlayer.PlayerGui:WaitForChild("BeatmapListing"):FindFirstChild("FirstLoad") then
 		require(game.Players.LocalPlayer.PlayerGui:WaitForChild("NotificationPopup").NotificationsPopup.CreateNotification)("Processing beatmap found, switching location.",Color3.new(0, 1, 0))
@@ -183,19 +193,22 @@ end
 
 PlayerMouse = game.Players.LocalPlayer:GetMouse()
 PlayerMouse.Icon = "rbxasset://textures/Cursors/KeyboardMouse"
---game:GetService("UserInputService").MouseIconEnabled = true
+--UserInputService.MouseIconEnabled = true
 game.Players.LocalPlayer.PlayerGui.OsuCursor.Cursor.Visible = true
-game:GetService("UserInputService").MouseBehavior = Enum.MouseBehavior.Default
+UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+--[[
 game.Players.LocalPlayer.PlayerGui.MenuInterface.PlayerListButton.Visible = true
 game.Players.LocalPlayer.PlayerGui.MenuInterface.LeaderboardButton.Visible = true
 game.Players.LocalPlayer.PlayerGui.MenuInterface.ProfileButton.Visible = true
 game.Players.LocalPlayer.PlayerGui.MenuInterface.MultiplayerButton.Visible = true
 game.Players.LocalPlayer.PlayerGui.MenuInterface.UpdateLogButton.Visible = true
-game.Players.LocalPlayer.PlayerGui.MenuInterface.ExpandButton.ExpandButton.Visible = true
+game.Players.LocalPlayer.PlayerGui.MenuInterface.ExpandButton.ExpandButton.Visible = true]]
+game.Players.LocalPlayer.PlayerGui.MenuInterface.DropdownMenu.MenuListAnimate.hiddenRequest:Fire(false)
 --game.Players.LocalPlayer.PlayerGui.MenuInterface.WikiButton.Visible = true
+game.StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All,false)
 game.StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat,true)
 game.Lighting.Blur.Size = 0
-TweenService:Create(game.Players.LocalPlayer.PlayerGui.OverallInterface.ClientStatus,
+TweenService:Create(game.Players.LocalPlayer.PlayerGui.OverallInterface.FPSCounter,
 	TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,1,-40)}
 ):Play()
 
@@ -257,10 +270,10 @@ TouchDeviceDetected = false
 HitKeyOverlay = true
 InstaFadeCircle = false
 LiveDifficultyDisplay = false
-DifficultyAdjustEnabled = false
 Replay_TouchDevice = false
 AimAssist = false
 CursorRipplesEnabled = false
+DifficultyAdjust = {Active = false}
 
 -- PreviewFrameScriptSettings
 PreviewFrameBaseVolume = 0.5
@@ -498,31 +511,26 @@ CurrentModData = {
 	NF = NoFail,
 	HR = HardRock,
 	EZ = EasyMod,
+	DA = DifficultyAdjust.Active,
 	Speed = tonumber(CurrentSetting.MainSettings.Speed.Text) or 1
 }
 
 function LoadMultiplier()
 	local Multiplier = 1
-	local PSMultiplier = 1
 	if CurrentModData.HD then
 		Multiplier *= 1.06
-		PSMultiplier *= 1.04 --1.08
 	end
 	if CurrentModData.HR then
 		Multiplier *= 1.06
-		PSMultiplier *= 1.2 --1.45
 	end
 	if CurrentModData.FL then
 		Multiplier *= 1.12
-		PSMultiplier *= 1.00
 	end
 	if CurrentModData.NF then
 		Multiplier *= 0.5
-		PSMultiplier *= 0.95 --1.11
 	end
 	if CurrentModData.EZ then
 		Multiplier *= 0.5
-		PSMultiplier *= 0.87 --0.75
 	end
 	if CurrentModData.Speed ~= 1 then
 		local Speed = CurrentModData.Speed
@@ -532,31 +540,63 @@ function LoadMultiplier()
 			Multiplier *= Speed^0.28
 		end
 	end
+	if CurrentModData.DA then
+		Multiplier *= 0.5
+	end
+	
 	Multiplier = math.floor((Multiplier*100)+0.5)/100
-	PSMultiplier = math.floor((PSMultiplier*100)+0.5)/100
 	local ExtraScoreMPText = ""
-	local ExtraPSMPText = ""
 	if SliderMode == true then
 		ExtraScoreMPText = " (+?)"
 	end
-	if CurrentModData.Speed > 1 and CurrentModData.HR then
-		ExtraPSMPText = " (+?)"
-	elseif CurrentModData.FL then
-		ExtraPSMPText = " (+?)"
-	elseif CurrentModData.EZ then
-		ExtraPSMPText = " (-?)"
-	elseif CurrentModData.Speed < 1 then
-		ExtraPSMPText = " (-?)"
-	elseif CurrentModData.HR then
-		ExtraPSMPText = " (+?)"
-	end
 	CurrentSetting.MainSettings.ScoreMultiplier.Text = "Score multiplier: "..tostring(Multiplier).."x"..ExtraScoreMPText
-	CurrentSetting.MainSettings.PerfomanceMultiplier.Text = "PS multiplier: "..tostring(PSMultiplier).."x"..ExtraPSMPText
 end
 
 LoadMultiplier()
 
+function checkDifficultyAdjustState()
+	local AR = CurrentSetting.MainSettings.AR
+	local OD = CurrentSetting.MainSettings.OD
+	local CS = CurrentSetting.MainSettings.CS
+	local HP = CurrentSetting.MainSettings.HP
+	
+	local function checkVaild(data)
+		if tonumber(data) and tonumber(data) >= 0 and tonumber(data) <= 11 then
+			return true
+		else
+			return false
+		end
+	end
+	
+	if checkVaild(AR.Text) or checkVaild(CS.Text) or checkVaild(OD.Text) or checkVaild(HP.Text) then
+		CurrentSetting.MainSettings.DifficultyAdjust.Text = "[DA] Difficulty adjust: Enabled"
+		DifficultyAdjust.Active = true
+		DifficultyAdjust.AR = checkVaild(AR.Text) and tonumber(AR.Text) or nil
+		DifficultyAdjust.OD = checkVaild(OD.Text) and tonumber(OD.Text) or nil
+		DifficultyAdjust.CS = checkVaild(CS.Text) and tonumber(CS.Text) or nil
+		DifficultyAdjust.HP = checkVaild(HP.Text) and tonumber(HP.Text) or nil
+	else
+		DifficultyAdjust.Active = false
+		DifficultyAdjust.AR = nil
+		DifficultyAdjust.OD = nil
+		DifficultyAdjust.CS = nil
+		DifficultyAdjust.HP = nil
+		CurrentSetting.MainSettings.DifficultyAdjust.Text = "[DA] Difficulty adjust: Disabled"
+	end
+	
+	
+	CurrentModData.DA = DifficultyAdjust.Active
+	LoadMultiplier()
+end
+
+checkDifficultyAdjustState()
+
 -- Settings change detect
+
+CurrentSetting.MainSettings.AR.FocusLost:Connect(checkDifficultyAdjustState)
+CurrentSetting.MainSettings.CS.FocusLost:Connect(checkDifficultyAdjustState)
+CurrentSetting.MainSettings.OD.FocusLost:Connect(checkDifficultyAdjustState)
+CurrentSetting.MainSettings.HP.FocusLost:Connect(checkDifficultyAdjustState)
 
 CurrentSetting.MainSettings.Flashlight.MouseButton1Click:Connect(function()
 	Flashlight = not Flashlight
@@ -598,7 +638,7 @@ CurrentSetting.MainSettings.CustomMusicID.MouseButton1Click:Connect(function()
 end)
 
 CurrentSetting.MainSettings.CustomBeatmap.MouseButton1Click:Connect(function()
-	if workspace.GamePlaceId == 6983932919 and not game:GetService("RunService"):IsStudio() then
+	if workspace.GamePlaceId == 6983932919 and not RunService:IsStudio() then
 		game.Players.LocalPlayer.PlayerGui.NotificationPopup.NotificationsPopup.ClientCreateNotification:Fire("Custom beatmap is disabled in StablePlace, you can visit BetaPlace to test.",Color3.new(1,0,0))
 		return
 	end
@@ -789,10 +829,10 @@ CurrentSetting.MainSettings.NoFail.MouseButton1Click:Connect(function()
 	CurrentModData.NF = NoFail
 	LoadMultiplier()
 	if NoFail == true then
-		TweenService:Create(CurrentSetting.MainSettings.HP,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{PlaceholderColor3 = Color3.new(0.698039, 0.423529, 0.423529)}):Play()
+		TweenService:Create(CurrentSetting.MainSettings.HP,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{PlaceholderColor3 = Color3.new(0.698039, 0.698039, 0.423529)}):Play()
 		CurrentSetting.MainSettings.NoFail.Text = "[NF] No Fail: Enabled"
 	else
-		TweenService:Create(CurrentSetting.MainSettings.HP,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{PlaceholderColor3 = Color3.new(0.698039, 0.698039, 0.423529)}):Play()
+		TweenService:Create(CurrentSetting.MainSettings.HP,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{PlaceholderColor3 = Color3.new(0.698039, 0.423529, 0.423529)}):Play()
 		CurrentSetting.MainSettings.NoFail.Text = "[NF] No Fail: Disabled"
 	end
 end)
@@ -1040,8 +1080,10 @@ end
 end)]]
 
 function ProcessFunction(Function)
-	script.Parent.FunctionProcess:Fire(Function)
+	script.Parent.GameplayScripts.ProcessFunction.Process:Fire(Function)
 end
+
+local spawn = ProcessFunction
 
 
 -- Leaderboard
@@ -1107,7 +1149,7 @@ function GetModData(Mod,Detailed)
 			ReturnText = ReturnText.."HC"
 		end
 	end
-	
+
 	if Mod.NF == true then
 		ModUsed = true
 		if Mods > 0 then
@@ -1204,7 +1246,7 @@ function FillNumber(Num)
 	end
 end
 
-LBDetailMovementConnection = game:GetService("UserInputService").InputChanged:Connect(function(data)
+LBDetailMovementConnection = UserInputService.InputChanged:Connect(function(data)
 	if data.UserInputType == Enum.UserInputType.MouseMovement then
 		local LeaderboardInterface = game.Players.LocalPlayer.PlayerGui.BG.BeatmapLeaderboard
 		local LBPosition = LeaderboardInterface.AbsolutePosition
@@ -1246,7 +1288,7 @@ function GetUserPlayUpdatedPS(Data)
 	local td = PreviewMapPS.TD
 	local objCount = PreviewMapPS.objCount
 	local MaxPS = 0
-	
+
 	local AimMultiplier = mod.Aim
 	local SpeedMultiplier = mod.Speed
 	local AccMultiplier = mod.Acc
@@ -1259,7 +1301,7 @@ function GetUserPlayUpdatedPS(Data)
 	if Data.Mod.TD then
 		AimMultiplier *= 0.6
 	end
-	
+
 	if not Data.Mod.HC then
 		AimMultiplier *= 0.9
 		SpeedMultiplier *= 0.9
@@ -1325,7 +1367,7 @@ function ShowLeaderboardPlayDetail(Data)
 	local DateDetail = string.format("%.2d/%.2d/%.4d %.2d:%.2d:%2d",PlayedDate.day,PlayedDate.month,PlayedDate.year,PlayedDate.hour,PlayedDate.min,PlayedDate.sec)
 	--local Accuracy = "<font color='#00ffff'>300</font>:"..Data.ExtraAccurancy[1].." <font color='#00ff00'>100</font>:"..Data.ExtraAccurancy[2].." <font color='#ffff00'>50</font>:"..Data.ExtraAccurancy[3].." <font color='#ff0000'>miss</font>:"..Data.ExtraAccurancy[4]
 	local Accuracy = string.format("Statistic: <font color='#00ffff'>%d</font>/<font color='#00ff00'>%d</font>/<font color='#ffff00'>%d</font>/<font color='#ff0000'>%d</font>",Data.ExtraAccurancy[1],Data.ExtraAccurancy[2],Data.ExtraAccurancy[3],Data.ExtraAccurancy[4])
-	
+
 	local FullText = "Played on "..DateDetail.."\n"..Accuracy.."\nAccuracy: "..Data.Accurancy.."%\nMod: "..ModDetail..DisplayPS
 	local LeaderboardDetail = game.Players.LocalPlayer.PlayerGui.BG.BeatmapLeaderboard.LeaderboardDetail
 	LeaderboardDetail.LeaderboardDetail.Text = FullText
@@ -1567,7 +1609,7 @@ function LoadLeaderboard()
 	script.Parent.GameplayData.LeaderboardData.Value = game.HttpService:JSONEncode(SendingData)
 	CurrentPreviewFrame.Overview.LeaderboardDisplay.LBData.Value = game.HttpService:JSONEncode(SendingData)
 
-	if script.Parent:FindFirstChild("GameStarted") or script.Parent:FindFirstChild("_FastRestart") then return end
+	if script.Parent:FindFirstChild("GameStarted") or StartupState == "FastRestart" then return end
 
 	if PSLeaderboard then
 		table.sort(GolbalData,function(plr1,plr2)
@@ -1589,7 +1631,7 @@ function LoadLeaderboard()
 		wait(0.15)
 		TweenService:Create(LeaderboardInterface.UILoad,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{GroupTransparency = 1}):Play()
 	end)
-	
+
 	wait(0.4)
 	--[[
 	Data = {Name,Rank,Score,ExtraData = {Accurancy,MaxCombo,Grade,Date,ExtraAccurancy = {300s,100s,50s,miss}}}
@@ -1628,7 +1670,7 @@ function LoadLeaderboard()
 		end
 		Leaderboard.CanvasSize = UDim2.new(0,0,0,#GolbalData*45)
 		Leaderboard.CanvasPosition = Vector2.new(0,0)
-		
+
 		local Total = #GolbalData + ((PersonalData and PersonalData.Data and tonumber(PersonalData.Data.Score) and 1) or 0)
 		local Loaded = 0
 
@@ -1690,12 +1732,16 @@ function LoadLeaderboard()
 					NewLBFrame.MainFrame.Rank.Text = "#"..tostring(Data.Rank)
 					--NewLBFrame.MainFrame.PlayerImage.Image = Data.ThumbnailId
 					ProcessFunction(function()
+						if not NewLBFrame.Parent then
+							-- posibility of being removed while loading
+							return
+						end
 						if Data.UID == "1241445502" then -- the creator mark
 							NewLBFrame.MainFrame.PlayerName.TextColor3 = Color3.new(0.333333, 1, 0.498039)
 							NewLBFrame.MainFrame.Rank.TextColor3 = Color3.new(0.333333, 1, 0.498039)
 							NewLBFrame.MainFrame.UserName.TextColor3 = Color3.new(0.333333, 1, 0.498039)
 						end
-						
+
 						if Data.Name == game.Players.LocalPlayer.Name then
 							NewLBFrame.MainFrame.PlayerName.TextColor3 = Color3.new(0,1,1)
 							NewLBFrame.MainFrame.Rank.TextColor3 = Color3.new(0,1,1)
@@ -1984,7 +2030,7 @@ end)
 
 
 wait()
-if not script.Parent:FindFirstChild("_FastRestart") then
+if StartupState == "Normal" then
 	spawn(function()
 		ReloadPreviewFrame()
 		LoadLeaderboard()	
@@ -2051,7 +2097,7 @@ if table.find(Administrator,game.Players.LocalPlayer.UserId) then
 		if lbframe:IsA("UIListLayout") then return end
 
 		local function Action()
-			local MouseLocation = game:GetService("UserInputService"):GetMouseLocation()
+			local MouseLocation = UserInputService:GetMouseLocation()
 			local ScreenSize = script.Parent.AbsoluteSize
 			local MouseLocationUdim = MouseLocation/ScreenSize
 
@@ -2180,7 +2226,7 @@ script.Parent.Parent.BG.StartButton.MouseButton1Click:Connect(function()
 		--BGFrame.StartButtonBeatAnimation:Destroy()
 
 		--TweenService:Create(BGFrame.StartButton,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(0,400,0,100),BackgroundTransparency = 1}):Play()
-		
+
 		TweenService:Create(BGFrame.MultiplayerButton,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(0,400,0,100),BackgroundTransparency = 1}):Play()
 		--TweenService:Create(BGFrame.StartButton.UIStroke,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Transparency = 1}):Play()
 		--TweenService:Create(BGFrame.StartButton._Text,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
@@ -2190,7 +2236,7 @@ script.Parent.Parent.BG.StartButton.MouseButton1Click:Connect(function()
 		TweenService:Create(UIPreviewFrame,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{AnchorPoint = Vector2.new(1,0)}):Play()
 		TweenService:Create(BGFrame.BeatmapLeaderboard,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{AnchorPoint = Vector2.new(0,0)}):Play()
 		TweenService:Create(BGFrame.BeatmapCount,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{AnchorPoint = Vector2.new(0,0)}):Play()
-		TweenService:Create(game.Players.LocalPlayer.PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans+0.2}):Play()
+		TweenService:Create(game.Players.LocalPlayer.PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = math.max(0.8,DefaultBackgroundTrans+0.2)}):Play()
 		wait(0.5)
 		script.Parent.StartGame:Fire()
 		while wait(0.5) and not BeatmapStarted do
@@ -2388,8 +2434,13 @@ end)
 
 
 spawn(function()
-	script.Parent:WaitForChild("_FastRestart",math.huge)
-	script.Parent.StartGame:Fire()
+	--script.Parent:WaitForChild("_FastRestart",math.huge)
+	if StartupState == "FastRestart" then
+		if not StateReady then
+			repeat wait() until StateReady
+		end
+		script.Parent.StartGame:Fire()
+	end
 end)
 
 isHost = true
@@ -2408,18 +2459,22 @@ end)
 game.ReplicatedStorage.Gameplay.UpdateStatus:FireServer(1)
 
 Instance.new("BoolValue",script.Parent).Name = "ReadyToStart"
+StateReady = true
 script.Parent.StartGame.Event:Wait() -- The game start from here
 
 if not StartButtonAnimated then
 	AnimateStartButton()
 end
 
+
+game.Players.LocalPlayer.PlayerGui.MenuInterface.DropdownMenu.MenuListAnimate.bindRequest:Fire(false)
+
 TweenService:Create(CurrentPreviewFrame.OverviewSong.EqualizerSoundEffect,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{HighGain = -20,MidGain = -20}):Play()
 
 OnMultiplayer = not game.Players.LocalPlayer.PlayerGui.MenuInterface.MultiplayerPanel.MultiplayerScript.MultiplayerRoom.Disabled  -- Multiplayer
 
 if OnMultiplayer then
-	if (game.PlaceId == 6983932919 and not game:GetService("RunService"):IsStudio()) or (game.Players.LocalPlayer.UserId >= 1 and game.Players.LocalPlayer.UserId ~= 1241445502 and game.Players.LocalPlayer.UserId ~= 1608539863 and game.Players.LocalPlayer.UserId ~= 1447265087) then
+	if (game.PlaceId == 6983932919 and not RunService:IsStudio()) or (game.Players.LocalPlayer.UserId >= 1 and game.Players.LocalPlayer.UserId ~= 1241445502 and game.Players.LocalPlayer.UserId ~= 1608539863 and game.Players.LocalPlayer.UserId ~= 1447265087) then
 		AutoPlay = false
 	end
 	if isHost then
@@ -2449,7 +2504,7 @@ ProcessFunction(function()
 	CurrentPreviewFrame.OverviewSong.Playing = false
 end)
 
-if not script.Parent:FindFirstChild("_FastRestart") then	
+do
 	--TweenService:Create(script.Parent.Interface.BG,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,false),{BackgroundTransparency = 0}):Play()
 	local FileData = require(BeatmapStudio)
 
@@ -2463,8 +2518,12 @@ if not script.Parent:FindFirstChild("_FastRestart") then
 
 	script.Parent.Interface.Background.BackgroundImage.Image = ID
 	script.Parent.Interface.Background.Visible = true
-	TweenService:Create(script.Parent.Interface.Background,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{GroupTransparency = 0}):Play()
-	wait(1)
+	if StartupState == "Normal" then	
+		TweenService:Create(script.Parent.Interface.Background,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{GroupTransparency = 0}):Play()
+		wait(1)
+	else
+		script.Parent.Interface.Background.GroupTransparency = 0
+	end
 end
 
 
@@ -2878,31 +2937,29 @@ end
 
 -- load all the assets
 ContentList = {}
-ContentLoaded = 0
 
-function CheckDupeContent(id)
+function CheckDupeContent(obj)
 	for _,a in pairs(ContentList) do
-		if a == id then
-			return false
+		if a.ClassName == obj.ClassName then
+			if (obj:IsA("ImageLabel") or obj:IsA("ImageButton")) and obj.Image == a.Image then
+				return false
+			elseif obj:IsA("Sound") and obj.SoundId == a.SoundId then
+				return false
+			end
 		end
 	end
 	return true
 end
 for _,obj in pairs(script.Parent:GetDescendants()) do
-	if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-		if not CheckDupeContent(obj.Image) then continue end
-		ContentList[#ContentList+1] = obj.Image
-	elseif obj:IsA("Sound") then
-		if not CheckDupeContent(obj.SoundId) then continue end
-		ContentList[#ContentList+1] = obj.SoundId
-	end
+	if not (obj:IsA("ImageLabel") or obj:IsA("ImageButton") or obj:IsA("Sound")) or not CheckDupeContent(obj) then continue end
+	ContentList[#ContentList+1] = obj
 end
 
 pcall(function()
 	for i = 1,10 do wait() end
 	local ContentLoadingUI = script.Parent.ContentLoadingUI
 	ContentLoadingUI.Visible = true
-	
+
 	local DiffFormat = ReturnData.Difficulty.BeatmapDifficulty
 	if DiffFormat > 10 then DiffFormat = 10 end
 
@@ -2918,22 +2975,35 @@ pcall(function()
 	if DiffFormat >= 6 then
 		ContentLoadingUI.BeatmapDisplay.Difficulty.UIStroke.Enabled = true
 	end
-	
+
 	ContentLoadingUI.BeatmapDisplay.Title.Text = ReturnData.Overview.Metadata.MapName
 	ContentLoadingUI.BeatmapDisplay.Artist.Text = ReturnData.Overview.Metadata.SongCreator
 	ContentLoadingUI.BeatmapDisplay.Difficulty.TextColor3 = Color3.fromHSV(HColor,SColor,VColor)
 	ContentLoadingUI.BeatmapDisplay.Difficulty.Text = string.format("[%.2f] %s",ReturnData.Difficulty.BeatmapDifficulty,ReturnData.Overview.Metadata.DifficultyName)
 
+	
 	TweenService:Create(ContentLoadingUI,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
-		Size = UDim2.new(1,0,0,120),GroupTransparency = 0
+		Size = UDim2.new(1,0,0.25,0),GroupTransparency = 0
 	}):Play()
-	game:GetService("ContentProvider"):PreloadAsync(ContentList,function()
-		ContentLoaded += 1
-		TweenService:Create(ContentLoadingUI.ProgressBar.Progress,TweenInfo.new(0.1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
-			Size = UDim2.new(ContentLoaded/#ContentList,0,1,0)
-		}):Play()
 
-	end)
+	TweenService:Create(ContentLoadingUI.UISizeConstraint,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
+		MaxSize = Vector2.new(math.huge,120)
+	}):Play()
+	for phrase = 1,2 do -- check twice
+		local ContentLoaded = 0 -- default
+		game:GetService("ContentProvider"):PreloadAsync(ContentList,function()
+			ContentLoaded += 1
+			local progress = (ContentLoaded/#ContentList) * 0.9
+			if phrase == 2 then
+				progress = 0.9 + (ContentLoaded/#ContentList) * 0.1
+			end
+			TweenService:Create(ContentLoadingUI.ProgressBar.Progress,TweenInfo.new(0.1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
+				Size = UDim2.new(progress,0,1,0)
+			}):Play()
+
+		end)
+	end
+	
 	ContentLoadingUI.LoadUIDisplay.LoadText.Text = "Ready!"
 	TweenService:Create(ContentLoadingUI.ProgressBar.Progress,TweenInfo.new(0.1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
 		Size = UDim2.new(1,0,1,0)
@@ -2941,7 +3011,11 @@ pcall(function()
 	wait(2)
 	
 	TweenService:Create(ContentLoadingUI,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
-		Size = UDim2.new(1,0,0,80),GroupTransparency = 1
+		Size = UDim2.new(1,0,0.17,0),GroupTransparency = 1
+	}):Play()
+	
+	TweenService:Create(ContentLoadingUI.UISizeConstraint,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
+		MaxSize = Vector2.new(math.huge,80)
 	}):Play()
 
 	if OnMultiplayer then
@@ -2950,16 +3024,17 @@ pcall(function()
 		script.Parent.MultiplayerLeaderboard.MultiplayerData.Value = game.HttpService:JSONEncode(PlayersInMatch)
 		script.Parent.MultiplayerWaitFrame.Visible = false
 	end
+	TweenService:Create(game.Players.LocalPlayer.PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans+0.2}):Play()
 	TweenService:Create(StartButton,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(0.2,0,0.2,0),BackgroundTransparency = 1}):Play()
 	TweenService:Create(StartButton._Text,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{ImageTransparency = 1}):Play()
-	
+
 	spawn(function()
 		wait(1)
 		script.Parent.Parent.BG.StartButtonBeatAnimation:Destroy()
 		StartButton:Destroy()
 		ContentLoadingUI.Visible = false
 	end)
-	
+
 end)
 
 
@@ -2998,7 +3073,7 @@ if isSpectating == false then
 
 	if tonumber(CustomHP) then
 		HPDrain = CustomHP
-		if NoFail then
+		if not NoFail then
 			CustomDiff = true
 		end
 	end
@@ -3039,7 +3114,7 @@ end
 
 local RankedRequirement = {
 	FileType == 1,
-	AutoPlay == false or (game.Players.LocalPlayer.UserId == 1241445502 and game:GetService("RunService"):IsStudio() and false),
+	AutoPlay == false or (game.Players.LocalPlayer.UserId == 1241445502 and RunService:IsStudio() and false),
 	ReplayMode == false,
 	SpeedSync == true,
 	not game.Players.LocalPlayer:FindFirstChild("PlayerUnranked"),
@@ -3056,7 +3131,7 @@ for _,Requirement in pairs(RankedRequirement) do
 	end
 end
 --[[
-game:GetService("UserInputService").InputBegan:Connect(function(input)
+UserInputService.InputBegan:Connect(function(input)
 	if input.KeyCode == Enum.KeyCode.Return and game.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
 		PlayRanked = false
 		if not AutoPlay then
@@ -3173,7 +3248,6 @@ end
 
 
 --------
-local TweenService = game:GetService("TweenService")
 local Tween
 local Start = tick()+2
 local SongStart = tick()+2
@@ -3190,9 +3264,9 @@ ATVC.Position = UDim2.new(0.5,0,1.5,0)
 --[[
 LastCursorPosition = {CursorPosition,tick()}
 CursorTeportViolationCount = 0
-if PlayRanked and not game:GetService("UserInputService").TouchEnabled then
-	game:GetService("RunService").RenderStepped:Connect(function()
-		if PlayRanked and not game:GetService("UserInputService").TouchEnabled and LastCursorPosition[1] ~= CursorPosition then
+if PlayRanked and not UserInputService.TouchEnabled then
+	RunService.RenderStepped:Connect(function()
+		if PlayRanked and not UserInputService.TouchEnabled and LastCursorPosition[1] ~= CursorPosition then
 			local TimeBetweenLastFrame = tick() - LastCursorPosition[2]
 			local DistanceMoved = (LastCursorPosition[1] - CursorPosition).Magnitude
 			local MoveSpeed = DistanceMoved/TimeBetweenLastFrame
@@ -3226,7 +3300,7 @@ end
 
 local LastPosition = UDim2.new(CursorPosition.X/512,0,CursorPosition.Y/384,0)
 
-game:GetService("RunService").RenderStepped:Connect(function()
+RunService.RenderStepped:Connect(function()
 	if CursorPosition ~= LastPosition then
 		Cursor.Position = UDim2.new(CursorPosition.X/512,0,CursorPosition.Y/384,0)
 	end
@@ -3328,7 +3402,7 @@ function GameOver()
 		end
 
 		CursorUnlocked = true
-		game:GetService("UserInputService").MouseBehavior = Enum.MouseBehavior.Default
+		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 		Cursor.Visible = false
 		game.Players.LocalPlayer.PlayerGui.OsuCursor.Cursor.Visible = true
 		script.Parent.FailSound:Play()
@@ -3346,7 +3420,7 @@ function GameOver()
 		BeatmapFailed = true
 		Start = 1e20
 		SongStart = 1e20
-		
+
 		--[[ NEW GAMEOVER ANIMATION
 		for _, TweenObj in pairs(script.Parent.PlayFrame:GetChildren()) do
 			if TweenObj:IsA("GuiObject") then
@@ -3462,7 +3536,7 @@ ProcessFunction(function()
 				HealthDrainMultiplier = 3
 			end
 			local DrainSpeed = 8
-			
+
 			-- base drain: 3 - 5 - 10
 			-- Multiplier: 1 - 3
 
@@ -3476,7 +3550,7 @@ ProcessFunction(function()
 
 			local HealthDrain = (((tick() - LastTick)*DrainSpeed))
 			HealthPoint -= HealthDrain
-			
+
 			if HealthPoint < 10 and DrainSpeed >= 15 and NoFail and ReturnData.Difficulty.BeatmapDifficulty >= 6 and tick() - Start >= 60 then
 				BadgeCondition.CloseOne = true
 			end
@@ -3520,7 +3594,7 @@ function DrainHP(HP)
 			BadgeCondition.AllComboGone = true	
 		end
 	end
-	
+
 	if isSpectating then return end
 	if tick() - ImmortalTime >= 0 then
 		HealthPoint -= HP
@@ -3639,8 +3713,8 @@ spawn(function()
 		local Sec = math.abs(TimeLeft%60)
 		local Min_max = maxTime/60
 		local Sec_max = math.abs(maxTime%60)
-		
-		
+
+
 
 		local StringOutput = string.format("%d:%.2d", Min, Sec)
 		local StringOutput_max = string.format("%d:%.2d", Min_max, Sec_max)
@@ -3658,7 +3732,7 @@ end)
 if AutoPlay == true and ReplayMode ~= true then
 	spawn(function()
 		repeat wait() until (tick()-Start)*1000 >= BeatmapData[1].Time-1000
-		game:GetService("TweenService"):Create(ATVC,TweenInfo.new(0.5,Enum.EasingStyle.Sine),{Position = UDim2.new(0.5,0,0.5,0)}):Play()
+		TweenService:Create(ATVC,TweenInfo.new(0.5,Enum.EasingStyle.Sine),{Position = UDim2.new(0.5,0,0.5,0)}):Play()
 	end)
 end
 
@@ -3670,7 +3744,7 @@ spawn(function()
 	if BeatmapData[1].Time > 4000 then
 		script.Parent.SkipButton.Visible = true
 		TweenService:Create(script.Parent.SkipButton,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0.5,0,0.8,0),GroupTransparency = 0}):Play()
-		if MobileMode and game:GetService("UserInputService").TouchEnabled then
+		if MobileMode and UserInputService.TouchEnabled then
 			script.Parent.SkipButton.SkipButton.Text = "Skip"
 		end
 
@@ -3712,7 +3786,7 @@ spawn(function()
 		end
 
 		Connection = script.Parent.SkipButton.SkipButton.MouseButton1Click:Connect(Trigger)
-		Connection2 = game:GetService("UserInputService").InputBegan:Connect(function(data)
+		Connection2 = UserInputService.InputBegan:Connect(function(data)
 			if data.KeyCode == Enum.KeyCode.Space then
 				Trigger()
 			end
@@ -3766,7 +3840,7 @@ CursorTrail.Image = "http://www.roblox.com/asset/?id="..tostring(CursorTrailId)
 CursorTrail.Size = UDim2.new(0,CursorTrailSize*80,0,CursorTrailSize*80)
 CursorTrail.ImageTransparency = CursorTrailTransparency
 
-local UserInputService =game:GetService("UserInputService")
+local UserInputService =UserInputService
 local RblxNewCursor = game.Players.LocalPlayer.PlayerGui.OsuCursor.Cursor
 --local CursorUnlocked = false -- this will change to true at the end of the play
 
@@ -3782,7 +3856,7 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 	--UserInputService.MouseIconEnabled = false
 	RblxNewCursor.Visible = false
 	local MobileHold = false
-	local UserInputService = game:GetService("UserInputService")
+	local UserInputService = UserInputService
 
 	local isTouchOutsiteHitzone = false
 	local TouchCount = 0
@@ -3997,27 +4071,33 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 		end
 	end
 
-	game:GetService("UserInputService").InputBegan:Connect(function(data)
-		if data.KeyCode == Key1Input and not (MobileMode and game:GetService("UserInputService").TouchEnabled) then
-			MouseHitEvent:Fire(SecurityKey,1)
-		elseif data.KeyCode == Key2Input and not (MobileMode and game:GetService("UserInputService").TouchEnabled) then
-			MouseHitEvent:Fire(SecurityKey,2)
-		elseif data.UserInputType == Enum.UserInputType.MouseButton1 and MouseButtonEnabled == true and not (MobileMode and game:GetService("UserInputService").TouchEnabled) then
-			MouseHitEvent:Fire(SecurityKey,3)
-		elseif data.UserInputType == Enum.UserInputType.MouseButton2 and MouseButtonEnabled == true and not (MobileMode and game:GetService("UserInputService").TouchEnabled) then
-			MouseHitEvent:Fire(SecurityKey,4)
-		end
+	ProcessFunction(function()
+		UserInputService.InputBegan:Connect(function(data)
+			if data.KeyCode == Key1Input and not (MobileMode and UserInputService.TouchEnabled) then
+				MouseHitEvent:Fire(SecurityKey,1)
+			elseif data.KeyCode == Key2Input and not (MobileMode and UserInputService.TouchEnabled) then
+				MouseHitEvent:Fire(SecurityKey,2)
+			elseif data.UserInputType == Enum.UserInputType.MouseButton1 and MouseButtonEnabled == true and not (MobileMode and UserInputService.TouchEnabled) then
+				MouseHitEvent:Fire(SecurityKey,3)
+			elseif data.UserInputType == Enum.UserInputType.MouseButton2 and MouseButtonEnabled == true and not (MobileMode and UserInputService.TouchEnabled) then
+				MouseHitEvent:Fire(SecurityKey,4)
+			end
+		end)
 	end)
-	game:GetService("UserInputService").InputEnded:Connect(function(data)
-		if data.KeyCode == Key1Input then
-			MouseHitEndEvent:Fire(SecurityKey,1)
-		elseif data.KeyCode == Key2Input then
-			MouseHitEndEvent:Fire(SecurityKey,2)
-		elseif data.UserInputType == Enum.UserInputType.MouseButton1 and MouseButtonEnabled == true then
-			MouseHitEndEvent:Fire(SecurityKey,3)
-		elseif data.UserInputType == Enum.UserInputType.MouseButton2 and MouseButtonEnabled == true then
-			MouseHitEndEvent:Fire(SecurityKey,4)
-		end
+
+	ProcessFunction(function()
+		UserInputService.InputEnded:Connect(function(data)
+			if data.KeyCode == Key1Input then
+				MouseHitEndEvent:Fire(SecurityKey,1)
+			elseif data.KeyCode == Key2Input then
+				MouseHitEndEvent:Fire(SecurityKey,2)
+			elseif data.UserInputType == Enum.UserInputType.MouseButton1 and MouseButtonEnabled == true then
+				MouseHitEndEvent:Fire(SecurityKey,3)
+			elseif data.UserInputType == Enum.UserInputType.MouseButton2 and MouseButtonEnabled == true then
+				MouseHitEndEvent:Fire(SecurityKey,4)
+			end
+		end)
+
 	end)
 
 	local function ScanforNearbyObj(Pos)
@@ -4038,54 +4118,57 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 	local HitzoneBlocked = false
 	local LastHitzoneHit = 0
 
-	game:GetService("UserInputService").TouchStarted:Connect(function(data)
-		local TouchPosition = data.Position
-		local InHitzone = isInHitzone(TouchPosition)
-		if InHitzone and not ScanforNearbyObj(TouchPosition) then return end -- won't register if they made their finger into the hitzone
-		TouchCount += 1
-		isTouchOutsiteHitzone = true
-		local NewPos = (Vector2.new(TouchPosition.X-(script.Parent.AbsoluteSize.X-script.Parent.PlayFrame.AbsoluteSize.X)/2,(TouchPosition.Y+36)-(script.Parent.AbsoluteSize.Y-script.Parent.PlayFrame.AbsoluteSize.Y)/2))
-		NewPos = UDim2.new(NewPos.X/script.Parent.PlayFrame.AbsoluteSize.X,0,NewPos.Y/(script.Parent.PlayFrame.AbsoluteSize.Y),0)
-		CursorPosition = Vector2.new(NewPos.X.Scale*512,NewPos.Y.Scale*394)
-		--Cursor.Position = NewPos
+	ProcessFunction(function()
+		UserInputService.TouchStarted:Connect(function(data)
+			local TouchPosition = data.Position
+			local InHitzone = isInHitzone(TouchPosition)
+			if InHitzone and not ScanforNearbyObj(TouchPosition) then return end -- won't register if they made their finger into the hitzone
+			TouchCount += 1
+			isTouchOutsiteHitzone = true
+			local NewPos = (Vector2.new(TouchPosition.X-(script.Parent.AbsoluteSize.X-script.Parent.PlayFrame.AbsoluteSize.X)/2,(TouchPosition.Y+36)-(script.Parent.AbsoluteSize.Y-script.Parent.PlayFrame.AbsoluteSize.Y)/2))
+			NewPos = UDim2.new(NewPos.X/script.Parent.PlayFrame.AbsoluteSize.X,0,NewPos.Y/(script.Parent.PlayFrame.AbsoluteSize.Y),0)
+			CursorPosition = Vector2.new(NewPos.X.Scale*512,NewPos.Y.Scale*394)
+			--Cursor.Position = NewPos
 
-		local HitZone = script.Parent.MobileHit
-		local MaxPosition = HitZone.AbsoluteSize.X
+			local HitZone = script.Parent.MobileHit
+			local MaxPosition = HitZone.AbsoluteSize.X
 
-		if InHitzone and ScanforNearbyObj(TouchPosition) then
-			HitzoneBlocked = true
-		else
-			HitzoneBlocked = false
-		end
+			if InHitzone and ScanforNearbyObj(TouchPosition) then
+				HitzoneBlocked = true
+			else
+				HitzoneBlocked = false
+			end
 
-		--if TouchPosition.X > MaxPosition or not HitZoneEnabled or not MobileMode then -- no more double click
-		MouseHitEvent:Fire(SecurityKey,3)
-		--end
-	end)
-	game:GetService("UserInputService").TouchEnded:Connect(function(data)
-		local TouchPosition = data.Position
-		local InHitzone = isInHitzone(TouchPosition)
-		if InHitzone and not ScanforNearbyObj(TouchPosition) then return end
-		isTouchOutsiteHitzone = false
-		LastHitzoneHit = tick()
-		MouseHitEndEvent:Fire(SecurityKey,3)
-	end)
-	script.Parent.MobileHit.MouseButton1Down:Connect(function()
-		if HitzoneBlocked then return end
-		MobileHold = true
-		LastHitzoneHit = tick()
-		MouseHitEvent:Fire(SecurityKey,4)
-	end)
-	script.Parent.MobileHit.MouseButton1Up:Connect(function()
-		if HitzoneBlocked then return end
-		MobileHold = false
-		MouseHitEndEvent:Fire(SecurityKey,4)
-	end)
-	script.Parent.MobileHit.MouseLeave:Connect(function()
-		if MobileHold == true then
+			--if TouchPosition.X > MaxPosition or not HitZoneEnabled or not MobileMode then -- no more double click
+			MouseHitEvent:Fire(SecurityKey,3)
+			--end
+		end)
+
+		UserInputService.TouchEnded:Connect(function(data)
+			local TouchPosition = data.Position
+			local InHitzone = isInHitzone(TouchPosition)
+			if InHitzone and not ScanforNearbyObj(TouchPosition) then return end
+			isTouchOutsiteHitzone = false
+			LastHitzoneHit = tick()
+			MouseHitEndEvent:Fire(SecurityKey,3)
+		end)
+		script.Parent.MobileHit.MouseButton1Down:Connect(function()
+			if HitzoneBlocked then return end
+			MobileHold = true
+			LastHitzoneHit = tick()
+			MouseHitEvent:Fire(SecurityKey,4)
+		end)
+		script.Parent.MobileHit.MouseButton1Up:Connect(function()
+			if HitzoneBlocked then return end
 			MobileHold = false
 			MouseHitEndEvent:Fire(SecurityKey,4)
-		end
+		end)
+		script.Parent.MobileHit.MouseLeave:Connect(function()
+			if MobileHold == true then
+				MobileHold = false
+				MouseHitEndEvent:Fire(SecurityKey,4)
+			end
+		end)
 	end)
 end
 local K1 = 0
@@ -4101,7 +4184,6 @@ local DownKey = {
 }
 
 spawn(function()
-	local TweenService = game:GetService("TweenService")
 	local KeyTweenInfo = TweenInfo.new(0.1,Enum.EasingStyle.Sine,Enum.EasingDirection.Out)
 	local ChangeIn1 = {--[[Size = UDim2.new(0.18,0,0.18,0),]]BackgroundColor3 = Color3.new(1, 1, 0.72549),BackgroundTransparency = 0}
 	local ChangeIn2 = {--[[Size = UDim2.new(0.18,0,0.18,0),]]BackgroundColor3 = Color3.new(0.862745, 1, 1),BackgroundTransparency = 0}
@@ -4208,7 +4290,7 @@ PC:			0ms	-|-----|----|	125.0ms
 TD:			0ms	--|------|---|	140.0ms
 ]]
 
-if (MobileMode and game:GetService("UserInputService").TouchEnabled) or TouchDeviceDetected or Replay_TouchDevice then
+if (MobileMode and UserInputService.TouchEnabled) or TouchDeviceDetected or Replay_TouchDevice then
 	-- Adjust hit window for TD
 	hit300 = 150 - 12 * OverallDifficulty -- 150 - 30
 	hit100 = 220 - 12.5 * OverallDifficulty -- 220 - 95
@@ -4256,6 +4338,19 @@ local LastCombo = 0
 local LastComboCapture = Instance.new("Frame")
 local _currentfadecomboid = ""
 local ComboVisibleState = false
+local ComboFrameExpandRate = 0
+
+ProcessFunction(function()
+	local lasttick = tick()
+	while wait() do
+		local TimePassed = tick() - lasttick
+		ComboFrameExpandRate -= TimePassed / 0.2
+		ComboFrameExpandRate = math.clamp(ComboFrameExpandRate,0,1.2)
+		local BaseSize = 0.075 + ComboFrameExpandRate * 0.025
+		TweenService:Create(script.Parent.ComboFrameDisplay.ComboFrameDisplay,TweenInfo.new(0.05/SongSpeed,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(BaseSize,0,BaseSize,0)}):Play()
+		lasttick = tick()
+	end
+end)
 script.Parent.ComboDisplay:GetPropertyChangedSignal("Text"):Connect(function()
 	if OptimizedPerfomance then return end
 	local id = game.HttpService:GenerateGUID()
@@ -4264,17 +4359,22 @@ script.Parent.ComboDisplay:GetPropertyChangedSignal("Text"):Connect(function()
 	if (NewCombo > 0) ~= ComboVisibleState then
 		ComboVisibleState = (NewCombo > 0)
 		local DisplayTransparency = ComboVisibleState and 0 or 1
-		TweenService:Create(script.Parent.ComboFrameDisplay,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{GroupTransparency = DisplayTransparency}):Play()
+		local FadeTime = ComboVisibleState and 0.75 or 0.25
+		TweenService:Create(script.Parent.ComboFrameDisplay,TweenInfo.new(FadeTime,Enum.EasingStyle.Linear),{GroupTransparency = DisplayTransparency}):Play()
+		TweenService:Create(script.Parent.ComboFade.ComboFade,TweenInfo.new(FadeTime,Enum.EasingStyle.Linear),{GroupTransparency = DisplayTransparency}):Play()
 	end
-	
+
 	if NewCombo > DisplayCombo then
+		ComboFrameExpandRate += 0.4
+		ComboFrameExpandRate = math.clamp(ComboFrameExpandRate,0,1.2)
+		--[[
 		TweenService:Create(script.Parent.ComboFrameDisplay.ComboFrameDisplay,TweenInfo.new(1/SongSpeed,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(0.09,0,0.09,0)}):Play()
 		ProcessFunction(function()
 			wait(0.05)
 			if _currentfadecomboid ~= id then return end
 			TweenService:Create(script.Parent.ComboFrameDisplay.ComboFrameDisplay,TweenInfo.new(0.1/SongSpeed,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(0.075,0,0.075,0)}):Play()
-		end)
-		script.Parent.ComboFade:ClearAllChildren()
+		end)]]
+		script.Parent.ComboFade.ComboFade:ClearAllChildren()
 		if OldInterface == true then
 			TweenService:Create(script.Parent.ComboDisplay,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextSize = 60}):Play()
 			ProcessFunction(function()
@@ -4283,12 +4383,12 @@ script.Parent.ComboDisplay:GetPropertyChangedSignal("Text"):Connect(function()
 			end)
 			ProcessFunction(function()
 				local NewFadeCombo = script.ComboFade:Clone()
-				NewFadeCombo.Parent = script.Parent.ComboFade
+				NewFadeCombo.Parent = script.Parent.ComboFade.ComboFade
 				NewFadeCombo.Text = tostring(NewCombo).."x"
 				NewFadeCombo.TextSize = script.Parent.ComboDisplay.TextSize
 				NewFadeCombo.TextTransparency = 0.25
 
-				game:GetService("TweenService"):Create(NewFadeCombo,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextSize = script.Parent.ComboDisplay.TextSize*1.5,TextTransparency = 1}):Play()
+				TweenService:Create(NewFadeCombo,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextSize = script.Parent.ComboDisplay.TextSize*1.5,TextTransparency = 1}):Play()
 				wait(0.5)
 				NewFadeCombo:Destroy()
 			end)
@@ -4297,7 +4397,7 @@ script.Parent.ComboDisplay:GetPropertyChangedSignal("Text"):Connect(function()
 		LastComboCapture:Destroy()
 		LastComboCapture = script.Parent.ComboFrameDisplay.ComboFrameDisplay:Clone()
 		local NewFadeCombo = script.Parent.ComboFrameDisplay.ComboFrameDisplay:Clone()
-		NewFadeCombo.Parent = script.Parent.ComboFade
+		NewFadeCombo.Parent = script.Parent.ComboFade.ComboFade
 
 		TweenService:Create(NewFadeCombo,TweenInfo.new(0.5/SongSpeed,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(NewFadeCombo.Size.Y.Scale*1.5,0,NewFadeCombo.Size.Y.Scale*1.5,0)}):Play()
 		for _,obj in pairs(NewFadeCombo:GetChildren()) do
@@ -4322,7 +4422,7 @@ local LastComboDisplay = 0
 
 spawn(function() --Accurancy caculation
 	repeat wait() until tick() - SongStart >= 0
-	
+
 	local WaitTime = 0
 	if OptimizedPerfomance then
 		WaitTime = 0.1
@@ -4382,7 +4482,7 @@ local PrevAcc = 100
 script.Parent.GameplayData.Accuracy.Changed:Connect(function()
 	local Acc = script.Parent.GameplayData.Accuracy.Value/100
 	local AccurancyDisplay = script.Parent.AccurancyFrameDisplay
-	
+
 	if Acc ~= Acc or Acc == math.huge then
 		Acc = 100
 	end
@@ -4493,7 +4593,7 @@ spawn(function()
 			if Score ~= PrevScore or PrevCombo ~= AccuracyData.Combo or PrevHealth ~= HealthPoint or (ScoreV2Enabled and Score/TotalScoreEstimated~=PrevScoreV2) then
 				if ScoreV2Enabled then
 					local ScoreV2AccScore = math.pow((AccuracyData.h300*300+AccuracyData.h100*300+AccuracyData.h50*300+AccuracyData.miss*300)/300,2.265) * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.3
-					local ScoreV2 = math.pow(Score/(TotalScoreEstimated*0.8 + ScoreV2AccScore)*(NoteCompleted/NoteTotal),0.417)*(NoteCompleted/NoteTotal)*1000000
+					local ScoreV2 = math.pow(Score/(TotalScoreEstimated*0.8 + ScoreV2AccScore)*(NoteCompleted/NoteTotal),0.768621)*(NoteCompleted/NoteTotal)*1000000
 					script.Parent.MultiplayerLeaderboard.LocalScoreUpdate:Fire({Score = math.round(ScoreV2),Combo = AccuracyData.Combo,Failed = MultiplayerMatchFailed,HealthPercentage = HealthPoint/MaxHealthPoint},CurrentPerfomance)
 				else
 					script.Parent.MultiplayerLeaderboard.LocalScoreUpdate:Fire({Score = Score,Combo = AccuracyData.Combo,Failed = MultiplayerMatchFailed,HealthPercentage = HealthPoint/MaxHealthPoint},CurrentPerfomance)
@@ -4509,6 +4609,9 @@ spawn(function()
 end)
 
 spawn(function()
+	local ScoreVisibleData = {
+		[-1] = 0
+	}
 	local CurrentScore = script.Parent.GameplayData.Score.Value
 	local CurrentTotalScore = TotalScoreEstimated
 
@@ -4526,7 +4629,7 @@ spawn(function()
 			CurrentScore = Score
 			if ScoreV2Enabled then
 				local ScoreV2AccScore = math.pow((AccuracyData.h300*300+AccuracyData.h100*300+AccuracyData.h50*300+AccuracyData.miss*300)/300,2.265) * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.3
-				local ScoreV2 = math.pow(Score/(TotalScoreEstimated*0.8 + ScoreV2AccScore)*(NoteCompleted/NoteTotal),0.417)*(NoteCompleted/NoteTotal)*1000000
+				local ScoreV2 = math.pow(Score/(TotalScoreEstimated*0.8 + ScoreV2AccScore)*(NoteCompleted/NoteTotal),0.768621)*(NoteCompleted/NoteTotal)*1000000
 
 				if tostring(ScoreV2) == "nan" or tostring(ScoreV2) == "inf" then
 					ScoreV2 = 0
@@ -4556,6 +4659,12 @@ spawn(function()
 				for _,a in pairs(Displayer:GetChildren()) do
 					if a.Name == "Score"..CurrentTextScore then
 						a.Visible = true
+						if ScoreVisibleData[Displayer.LayoutOrder] then
+							a.ImageTransparency = math.clamp(1-(tick() - ScoreVisibleData[Displayer.LayoutOrder])/0.25,0,1)
+						else
+							a.ImageTransparency = 1
+							ScoreVisibleData[Displayer.LayoutOrder] = tick()
+						end
 					else
 						a.Visible = false
 					end
@@ -4907,6 +5016,8 @@ end
 
 --CircleApproachTime = 10000
 
+game.Players.LocalPlayer.PlayerGui.MenuInterface.DropdownMenu.MenuListAnimate.hiddenRequest:Fire(true)
+
 script.Parent.Song.PlaybackSpeed = SongSpeed * ReturnData.SongSpeed
 script.Parent.Song.DefaultPitch.Octave = ReturnData.SongPitch
 if SongSpeed >= 0.5 and SongSpeed <= 2 and not KeepOriginalPitch then
@@ -4938,9 +5049,9 @@ spawn(function()
 					NewObj.TextLabel.TextTransparency = 0.5
 					NewObj.Circle.ImageTransparency = 0.5
 
-					game:GetService("TweenService"):Create(NewObj,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{BackgroundTransparency = 1,Size = UDim2.new(0.214,0,0.214,0)}):Play()
-					game:GetService("TweenService"):Create(NewObj.TextLabel,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 1}):Play()
-					game:GetService("TweenService"):Create(NewObj.Circle,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
+					TweenService:Create(NewObj,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{BackgroundTransparency = 1,Size = UDim2.new(0.214,0,0.214,0)}):Play()
+					TweenService:Create(NewObj.TextLabel,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 1}):Play()
+					TweenService:Create(NewObj.Circle,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
 				end
 			end)
 			spawn(function()
@@ -5028,6 +5139,8 @@ spawn(function()
 		TweenService:Create(script.Parent.HitError,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{AnchorPoint = Vector2.new(0.5,0)}):Play()
 		TweenService:Create(game.Players.LocalPlayer.PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans+0.2}):Play()
 		TweenService:Create(FlashlightFrame,TweenInfo.new(1,Enum.EasingStyle.Linear),{Size = UDim2.new(15,0,15,0),ImageTransparency = 0}):Play()
+		TweenService:Create(script.Parent.ComboFrameDisplay,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{GroupTransparency = 1}):Play()
+		TweenService:Create(script.Parent.ComboFade.ComboFade,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{GroupTransparency = 1}):Play()
 		if BackgroundBlurEnabled == true then
 			TweenService:Create(game.Lighting.Blur,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{Size = 15}):Play()
 		end
@@ -5125,6 +5238,11 @@ spawn(function()
 				end
 			end)
 			local FLSize = (AccuracyData.Combo <= 200 and 8-((AccuracyData.Combo/200)*3)) or 5
+			
+			if AccuracyData.Combo > 0 then
+				TweenService:Create(script.Parent.ComboFrameDisplay,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{GroupTransparency = 0}):Play()
+				TweenService:Create(script.Parent.ComboFade.ComboFade,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{GroupTransparency = 0}):Play()
+			end
 
 			TweenService:Create(FlashlightFrame,TweenInfo.new(2,Enum.EasingStyle.Linear),{Size = UDim2.new(FLSize,0,FLSize,0)}):Play()
 			TweenService:Create(BreakTimeFrame.TimeProgress,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{BackgroundTransparency = 1}):Play()
@@ -5284,27 +5402,43 @@ HitsoundTypeset = {
 	[5] = "slidertick"
 }
 
-function CreateHitSound(HitsoundType,CustomSampleSet)
-	local SelectedSampleSet = CustomSampleSet
-
-	if not SelectedSampleSet or SelectedSampleSet == "0" then
-		SelectedSampleSet = CurrentHitsoundSample
-	else
-		SelectedSampleSet = HitsoundSampleset[tonumber(SelectedSampleSet)]
-	end
-
-	if HitsoundType == 4 and SelectedSampleSet == "drum" then
-		return
-	end
-
-	local HitsoundFilename = SelectedSampleSet.."-"..HitsoundTypeset[HitsoundType]
-	local CurrentHitsound = script.Hitsounds[HitsoundFilename]:Clone()
-	CurrentHitsound.Parent = script.Parent.HitSounds
-
-	CurrentHitsound:Play()
+function CreateHitSound(HitsoundType,CustomSampleSet, AmbientRatio)
 	ProcessFunction(function()
-		wait(0.5)
-		CurrentHitsound:Destroy()
+		if not tonumber(AmbientRatio) or AmbientRatio > 1 or AmbientRatio < 0 then
+			AmbientRatio = 0.5
+		end
+
+		local SelectedSampleSet = CustomSampleSet
+
+		if not SelectedSampleSet or SelectedSampleSet == "0" then
+			SelectedSampleSet = CurrentHitsoundSample
+		else
+			SelectedSampleSet = HitsoundSampleset[tonumber(SelectedSampleSet)]
+		end
+
+		if HitsoundType == 4 and SelectedSampleSet == "drum" then
+			return
+		end
+
+		local HitsoundFilename = SelectedSampleSet.."-"..HitsoundTypeset[HitsoundType]
+		local CurrentHitsound = script.Hitsounds[HitsoundFilename]:Clone()
+		local CurrentHitsound2 = script.Hitsounds[HitsoundFilename]:Clone()
+
+		CurrentHitsound.Volume *= 0.5 + (1-AmbientRatio)*0.5
+		CurrentHitsound2.Volume *= 0.5 + (AmbientRatio)*0.5
+		
+		CurrentHitsound.Parent = workspace.AudioOutput.Audio_L
+		CurrentHitsound2.Parent = workspace.AudioOutput.Audio_R
+		
+		--CurrentHitsound.Parent = script.Parent.HitSounds
+
+		CurrentHitsound:Play()
+		CurrentHitsound2:Play()
+		ProcessFunction(function()
+			wait(0.5)
+			CurrentHitsound:Destroy()
+			CurrentHitsound2:Destroy()
+		end)
 	end)
 end
 
@@ -5427,7 +5561,7 @@ local SpinStart = tick()
 local RPM = 500	
 
 if AutoPlay then
-	game:GetService("RunService").Stepped:Connect(function()
+	RunService.Stepped:Connect(function()
 		local TimeElapsed = tick() - SpinStart
 		local Rotation = (TimeElapsed - math.floor(TimeElapsed))*360*(RPM/60)
 		script.Parent.ATSpinner.SpinPart.Orientation = Vector3.new(0,Rotation,0)
@@ -5505,7 +5639,7 @@ if true then
 
 	MaxPSValue.Aim *= 1 + AimARFactor * DiffValue.LengthBonus
 	MaxPSValue.Speed *= 1 + SpeedARFactor * DiffValue.LengthBonus
-	
+
 	if NoFail then
 		MaxPSValue.Mod.Aim *= 0.9
 		MaxPSValue.Mod.Speed *= 0.9
@@ -5563,25 +5697,25 @@ if PSDisplay == true then
 	script.Parent.PSEarned.Visible = true
 	if DetailedPSDisplay then
 		if workspace.CurrentCamera.ViewportSize.Y >= 470 then
-			TweenService:Create(game.Players.LocalPlayer.PlayerGui.OverallInterface.ClientStatus,
+			TweenService:Create(game.Players.LocalPlayer.PlayerGui.OverallInterface.FPSCounter,
 				TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,1,-95)}
 			):Play()
 		else
-			TweenService:Create(game.Players.LocalPlayer.PlayerGui.OverallInterface.ClientStatus,
+			TweenService:Create(game.Players.LocalPlayer.PlayerGui.OverallInterface.FPSCounter,
 				TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,0.5,-110)}
 			):Play()
 		end
 	else
 		if workspace.CurrentCamera.ViewportSize.Y >= 520 then
-			TweenService:Create(game.Players.LocalPlayer.PlayerGui.OverallInterface.ClientStatus,
+			TweenService:Create(game.Players.LocalPlayer.PlayerGui.OverallInterface.FPSCounter,
 				TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,1,-50)}
 			):Play()
 		else
-			TweenService:Create(game.Players.LocalPlayer.PlayerGui.OverallInterface.ClientStatus,
+			TweenService:Create(game.Players.LocalPlayer.PlayerGui.OverallInterface.FPSCounter,
 				TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,0.5,-110)}
 			):Play()
 		end
-		
+
 	end
 end
 
@@ -5608,7 +5742,7 @@ if LiveDifficultyDisplay then
 		local LiveDiffDisplay = script.Parent.LiveDiffDisplay
 		local DiffStrikeWarning = LiveDiffDisplay.DiffStrikeWarning
 		--local LiveDiffValue = LiveDiffDisplay.LiveDiffValue
-		
+
 		local waittime = 0
 		if OptimizedPerfomance then
 			waittime = 0.1
@@ -5617,7 +5751,7 @@ if LiveDifficultyDisplay then
 			local CalculatedAimDiff = math.pow(CurrentLiveDiffAim, 0.4365) / 3.2541 * math.pow(0.15, tick() - LiveDiffLastHit)
 			local CalculatedSpeedDiff = math.pow(CurrentLiveDiffSpeed, 0.41) / 2.8 * math.pow(0.3, tick() - LiveDiffLastHit)
 			--local CalculatedLiveDiff = math.pow((math.pow(CurrentLiveDiffAim,0.8)*0.94 * math.pow(0.15, tick()  - LiveDiffLastHit))^1.08 + (math.pow(CurrentLiveDiffSpeed,0.6)*1.99 * math.pow(0.3, tick() - LiveDiffLastHit))^1.08, 1/1.08) * 1.5
-			
+
 			local FLMulti = 1
 			if Flashlight then
 				FLMulti = 1.5
@@ -5628,20 +5762,20 @@ if LiveDifficultyDisplay then
 			local RewardedAimPS = FLMulti * math.pow(5 * math.max(1,(CalculatedAimDiff/FLMulti)/0.0675) - 4, 3) / 100000 * LengthBonus * (0.98 + math.pow(ODRate, 2) / 2500) --math.pow(AimDiff,4)
 			local RewardedSpeedPS = math.pow(5.0 * math.max(1, CalculatedSpeedDiff / 0.0675) - 4, 3) / 100000 * LengthBonus * (0.95 + math.pow(ODRate,2)/750) --math.pow(SpeedDiff,3.93)
 			local RewardedAccPS = math.pow(1.52163,ODRate) * 2.83 * math.min(1.15,math.pow(#BeatmapData/1000,0.3)) / 1.0858
-			
+
 			local sum = RewardedAimPS + RewardedSpeedPS
 			if (sum/2) < RewardedAccPS then
 				RewardedAccPS = RewardedAccPS * ((sum/2)/RewardedAccPS)
 			end
-			
+
 			local diffCalcPS = ((RewardedAimPS^0.95+RewardedSpeedPS^0.95+RewardedAccPS^0.95)^(1/0.95))
-			
-			local CalculatedLiveDiff = 0.023557 * (math.pow(100000 / math.pow(2, 1 / 1.1) * diffCalcPS,1/3) + 4) * math.min(1,(RewardedAimPS + RewardedSpeedPS)*10)
+
+			local CalculatedLiveDiff = (1/40.675) * (math.pow(100000 / math.pow(2, 1 / 1.1) * diffCalcPS,1/3) + 4) * math.min(1,(RewardedAimPS + RewardedSpeedPS)*10)
 			--[[
 			if diffCalcPS < 0.001 then
 				CalculatedLiveDiff = 0
 			end]]
-			
+
 			local CurrentGraphNum = math.floor(#DiffGraphList / (BeatmapLength / 1000) * (tick() - Start)) + 1
 			local CurrentGraph = DiffGraphList[CurrentGraphNum] or DiffGraphList[1]
 			local NextGraph = math.max(DiffGraphList[CurrentGraphNum + 1] or 0, DiffGraphList[CurrentGraphNum + 2] or 0)
@@ -5703,9 +5837,9 @@ function AddPerfomanceScore(PSValue)
 	AimPS *= Scaling
 	SpeedPS *= Scaling
 	AccPS *= Scaling
-	
+
 	local ModPS = AimPS * (MaxPSValue.Mod.Aim-1) + SpeedPS * (MaxPSValue.Mod.Speed-1) + AccPS * (MaxPSValue.Mod.Acc-1)
-	
+
 
 	local TotalPS = math.pow(AimPS^0.95 + SpeedPS^0.95 + AccPS^0.95,1/0.95) + ModPS
 	CurrentPerfomance = TotalPS
@@ -5716,7 +5850,7 @@ function AddPerfomanceScore(PSValue)
 	DetailedPSDisplay.Speed.Text = string.format("Speed | %.1fps",SpeedPS)
 	DetailedPSDisplay.Mod.Text = string.format("Mod | %.1fps",ModPS)
 	DetailedPSDisplay.Accuracy.Text = string.format("Acc | %.1fps",AccPS)
-	
+
 	return TotalPS
 end
 
@@ -5772,9 +5906,9 @@ function CreateHitDelay(Color,HitDelay)
 	NewHitDelay.Position = UDim2.new(Pos,0,0.5,0)
 	NewHitDelay.BackgroundColor3 = Color
 	ProcessFunction(function()
-		game:GetService("TweenService"):Create(NewHitDelay,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{Size = UDim2.new(0,2,0.75,0), BackgroundTransparency = 0.1}):Play()
+		TweenService:Create(NewHitDelay,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{Size = UDim2.new(0,2,0.75,0), BackgroundTransparency = 0.1}):Play()
 		wait(0.25)
-		game:GetService("TweenService"):Create(NewHitDelay,TweenInfo.new(9.75,Enum.EasingStyle.Linear),{BackgroundTransparency = 1}):Play()
+		TweenService:Create(NewHitDelay,TweenInfo.new(9.75,Enum.EasingStyle.Linear),{BackgroundTransparency = 1}):Play()
 		wait(9.75)
 		NewHitDelay:Destroy()
 	end)
@@ -5789,7 +5923,7 @@ end
 
 local FramePerSec = 0
 
-game:GetService("RunService").Stepped:Connect(function()
+RunService.Stepped:Connect(function()
 	FramePerSec += 1
 	wait(1)
 	FramePerSec -= 1
@@ -5867,6 +6001,51 @@ Encoded = [[
 ]]
 if not ReplayMode and not isSpectating and not onTutorial then
 
+	--[[function getReplayFormat(P,H,T)
+		local Digit1 = "0" --  [0: Movement only, [1-4]: Key hit, [5-8]: Key release] (1 byte)
+		local Digit2 = "00000000" -- Position of X and Y (8 bytes) (0000 - 4999: NegativePosition) (5000 - 9999:PositivePosition)
+		local DigitOthers = "0" -- Timing in ms (1 - 6 byte)
+		if H then
+			Digit1 = tonumber(H)
+		end
+		local Digit2_1 = tonumber(math.round(5000+P.X.Scale*512))
+		local Digit2_2 = tonumber(math.round(5000+P.Y.Scale*384))
+		--Digit2_1 = string.rep("0",4-#Digit2_1)..Digit2_1
+		--Digit2_2 = string.rep("0",4-#Digit2_2)..Digit2_2
+		local Digit3 = math.round(T)
+		-- local Encoded = Digit1..Digit2_1..Digit2_2..Digit3 --> Version 1
+		local Extended = (Digit2_2*10000+Digit2_1)*9+Digit1
+		local Encoded1 = require(workspace.StringConverter.Int_Char)(Extended,5)
+		local Encoded2 = (Digit3 >= 0 and "+" or "-")..require(workspace.StringConverter.Int_Char)(math.abs(Digit3),4)
+		--local Encoded = string.pack("I4i4",Extended,Digit3) --> Version 2
+		ReplayDataEncoded = ReplayDataEncoded..Encoded1..Encoded2
+		--print(string.len(ReplayDataEncoded))
+	end
+
+	ProcessFunction(function()
+		local PastPosition = UDim2.new(0,0,0,0)
+		local LastRecord = tick()
+		while wait() do
+			--[[
+			if tick() - LastRecord < 1/120 then
+				continue
+			end
+			LastRecord = tick()
+			ProcessFunction(function()
+				local CurrentTime = math.round((tick() - Start)*1000-SongDelay/SongSpeed)
+				local CursorPosition = Cursor.Position
+				if PastPosition ~= CursorPosition then
+					--local DecodedPosition = {X=math.floor(CursorPosition.X.Scale*512+0.5),Y=math.floor(CursorPosition.Y.Scale*384+0.5)}
+
+					--local FullData = {P = DecodedPosition,T = CurrentTime}
+					local FullData = getReplayFormat(CursorPosition,nil,CurrentTime)
+					--UploadReplay(2,FullData,1)
+				end
+				PastPosition = CursorPosition
+			end)
+		end
+	end)]]
+	
 	function getReplayFormat(P,H,T)
 		local Digit1 = "0" -- Hit [0 - false, 1 - true, 2 - nil] (1 byte)
 		local Digit2 = "00000000" -- Position of X and Y (8 bytes) (0000 - 4999: NegativePosition) (5000 - 9999:PositivePosition)
@@ -5938,6 +6117,47 @@ if ReplayMode then
 	local i = 1
 	local Finish = false
 	local count = 0
+	--[[repeat 
+		local Next,_ = string.find(ReplayDataRaw,"\n",i)
+		if not Next and i > #ReplayDataRaw-8 then
+			Finish = true
+			break
+		elseif i == 0 or not tonumber(string.sub(ReplayDataRaw,i,i)) then
+			ProcessReplayData(string.sub(ReplayDataRaw,i,Next-1))
+			i = Next+1
+			continue
+		end
+		if string.find(ReplayDataRaw, "VERSION 2") then
+			local _,s = string.find(ReplayDataRaw,"REPLAY\n")
+			s += 1
+			while s < #ReplayDataRaw-10 do
+				-- for each 8 characters, is a binary byte (each byte is 256 bits of data)
+				-- 4 characters store position XY and the key hit type (in unsigned 4 byte integer)
+				-- 4 other characters store the timing (in signed 4 byte integer)
+				local ExtendedData = require(workspace.StringConverter.Char_Int)(string.sub(ReplayDataRaw,s,s+4))
+				local Timing = require(workspace.StringConverter.Char_Int)(string.sub(ReplayDataRaw,s+6,s+10))
+				Timing = tonumber(string.sub(ReplayDataRaw,i+5,i+5)..tostring(Timing))
+				local KeyPress = ExtendedData%9
+				ExtendedData = math.floor(ExtendedData/8)
+				local PositionX = ExtendedData%10000
+				ExtendedData = math.floor(ExtendedData/10000)
+				local PositionY = ExtendedData
+				s += 10
+				ReplayData[#ReplayData+1] = {Timing,KeyPress,PositionX,PositionY}
+			end
+			break	
+		else
+			local End = Next-1
+			local KeyPress = tonumber(string.sub(ReplayDataRaw,i,i))
+			local PositionX = tonumber(string.sub(ReplayDataRaw,i+1,i+4))
+			local PositionY = tonumber(string.sub(ReplayDataRaw,i+5,i+8))
+			local Timing = tonumber(string.sub(ReplayDataRaw,i+9,End))
+			ReplayData[#ReplayData+1] = {Timing,KeyPress,PositionX,PositionY}
+		end
+		
+		i = Next+1
+	until Finish == true]]
+	
 	repeat 
 		local Next,_ = string.find(ReplayDataRaw,"\n",i)
 		if not Next then
@@ -6099,7 +6319,7 @@ PrevRenderTick = tick()
 LagStrikeEvent = Instance.new("BindableEvent")
 
 if not ReplayMode and not isSpectating and not OnMultiplayer then
-	game:GetService("RunService").Stepped:Connect(function()
+	RunService.Stepped:Connect(function()
 		local DelayPerFrame = tick() - PrevRenderTick
 		if DelayPerFrame > 1/GameplayFPS + 0.1 then
 			Start += DelayPerFrame
@@ -6140,7 +6360,7 @@ function LetTheGameBegin()
 
 		local NoteId = game.HttpService:GenerateGUID()
 
-		function AddHitnoteAnimation(TweenAnimation)
+		local function AddHitnoteAnimation(TweenAnimation)
 			if not TweenAnimation:IsA("Tween") then
 				return TweenAnimation
 			end
@@ -6544,7 +6764,7 @@ function LetTheGameBegin()
 						local CursorTweenTime = math.abs((TimeUntilNoteClicked > 0 and 0) or (TimeUntilNoteClicked > -500 and -TimeUntilNoteClicked) or 500)
 
 						local AvgFrameTime = (1 / FramePerSec) * 1000
-						local Tween = game:GetService("TweenService"):Create(ATVC, TweenInfo.new(CursorTweenTime / 1000, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), { Position = UDim2.new(HitObj.Position.X / 512, 0, HitObj.Position.Y / 384, 0) })
+						local Tween = TweenService:Create(ATVC, TweenInfo.new(CursorTweenTime / 1000, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), { Position = UDim2.new(HitObj.Position.X / 512, 0, HitObj.Position.Y / 384, 0) })
 
 						if CursorTweenTime > AvgFrameTime then
 							Tween:Play()
@@ -6673,12 +6893,12 @@ function LetTheGameBegin()
 							local DisplayTime = (((NextHitObj.Time+100)-HitObj.Time)> 100/SongSpeed and NextHitObj.Time-HitObj.Time) or 100/SongSpeed
 							local TweenTime = (NextHitObj.Time-HitObj.Time > 50/SongSpeed and NextHitObj.Time-HitObj.Time) or 50/SongSpeed
 
-							local ct_ = game:GetService("TweenService"):Create(Connection,TweenInfo.new(TweenTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{BackgroundTransparency = 0.5,Position = Pos,Size = Size})
+							local ct_ = TweenService:Create(Connection,TweenInfo.new(TweenTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{BackgroundTransparency = 0.5,Position = Pos,Size = Size})
 							AddHitnoteAnimation(ct_)
 							ct_:Play()
 							if (tick() - Start)*1000 < NextHitObj.Time-250/SongSpeed then
 								wait((NextHitObj.Time-250/SongSpeed)/1000 - (tick()-Start))
-								local ct_ = game:GetService("TweenService"):Create(Connection,TweenInfo.new(0.25/SongSpeed,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{BackgroundTransparency = 0.5,Position = EndPos,Size = UDim2.new(0,0,0,3)})
+								local ct_ = TweenService:Create(Connection,TweenInfo.new(0.25/SongSpeed,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{BackgroundTransparency = 0.5,Position = EndPos,Size = UDim2.new(0,0,0,3)})
 								AddHitnoteAnimation(ct_)
 								ct_:Play()
 							end
@@ -6729,27 +6949,27 @@ function LetTheGameBegin()
 				]]
 				end
 			--[[ Test
-			local hitcirclet_ = game:GetService("TweenService"):Create(Circle.HitCircle,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 0})
+			local hitcirclet_ = TweenService:Create(Circle.HitCircle,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 0})
 			AddHitnoteAnimation(hitcirclet_)
 			hitcirclet_:Play()
 			for _,Object in pairs(Circle:GetChildren()) do
 				ProcessFunction(function()
 					if Object:IsA("ImageLabel") and Object.Name ~= "Lightning" then
 						if not (HiddenMod and Object.Name == "ApproachCircle" and i ~= 1) then
-							local t_ = game:GetService("TweenService"):Create(Object,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 0})
+							local t_ = TweenService:Create(Object,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 0})
 							AddHitnoteAnimation(t_)
 							t_:Play()
 						end
 					end
 					if Object:IsA("TextLabel") then
-						local t_ = game:GetService("TweenService"):Create(Object,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{TextTransparency = 0,TextStrokeTransparency = 0.9})
+						local t_ = TweenService:Create(Object,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{TextTransparency = 0,TextStrokeTransparency = 0.9})
 						AddHitnoteAnimation(t_)
 						t_:Play()
 					end
 					if Object.Name == "CircleNumber" then
 						for _,a in pairs(Object:GetChildren()) do 
 							if a:IsA("ImageLabel") then
-								AddHitnoteAnimation(game:GetService("TweenService"):Create(a,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 0})):Play()
+								AddHitnoteAnimation(TweenService:Create(a,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 0})):Play()
 							end
 						end
 					end
@@ -6761,25 +6981,25 @@ function LetTheGameBegin()
 					local VisibleTime = FadeInTime
 
 					repeat wait() until tick() - Start >= HitObj.Time/1000 - CircleApproachTime/1000 + VisibleTime
-					local hitcirclet_ = game:GetService("TweenService"):Create(Circle.HitCircle,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 1})
+					local hitcirclet_ = TweenService:Create(Circle.HitCircle,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 1})
 					AddHitnoteAnimation(hitcirclet_)
 					hitcirclet_:Play()
 					for _,Object in pairs(Circle:GetChildren()) do
 						ProcessFunction(function()
 							if Object:IsA("ImageLabel") and Object.Name ~= "Lightning" and Object.Name ~= "ApproachCircle"  then
-								local t_ = game:GetService("TweenService"):Create(Object,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 1})
+								local t_ = TweenService:Create(Object,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 1})
 								AddHitnoteAnimation(t_)
 								t_:Play()
 							end
 							if Object:IsA("TextLabel") then
-								local t_ = game:GetService("TweenService"):Create(Object,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{TextTransparency = 1,TextStrokeTransparency = 1})
+								local t_ = TweenService:Create(Object,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{TextTransparency = 1,TextStrokeTransparency = 1})
 								AddHitnoteAnimation(t_)
 								t_:Play()
 							end
 							if Object.Name == "CircleNumber" then
 								for _,a in pairs(Object:GetChildren()) do 
 									if a:IsA("ImageLabel") then
-										game:GetService("TweenService"):Create(a,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
+										TweenService:Create(a,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
 									end
 								end
 							end
@@ -7459,23 +7679,23 @@ function LetTheGameBegin()
 											wait()
 										until IsHitted == true or Completed
 									end
-									
+
 								end
 							end
 
-							game:GetService("TweenService"):Create(FollowCircle, TweenInfo.new(duration, Enum.EasingStyle.Linear), { Position = UDim2.new(0.5 - (0.5 - positionX / 512) / SLCanvasScale, 0, 0.5 - (0.5 - positionY / 384) / SLCanvasScale, 0) }):Play()
+							TweenService:Create(FollowCircle, TweenInfo.new(duration, Enum.EasingStyle.Linear), { Position = UDim2.new(0.5 - (0.5 - positionX / 512) / SLCanvasScale, 0, 0.5 - (0.5 - positionY / 384) / SLCanvasScale, 0) }):Play()
 							if AimAssist then
 								TweenService:Create(script.Parent.CursorField.AimAssitTarget,TweenInfo.new(duration,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{Position = UDim2.new(0.5 - (0.5 - positionX / 512) / SLCanvasScale, 0, 0.5 - (0.5 - positionY / 384) / SLCanvasScale, 0)}):Play()
 							end
 							if Circle.Parent then
-								game:GetService("TweenService"):Create(Circle, TweenInfo.new(duration, Enum.EasingStyle.Linear), { Position = UDim2.new(0.5 - (0.5 - positionX / 512), 0, 0.5 - (0.5 - positionY / 384), 0) }):Play()
+								TweenService:Create(Circle, TweenInfo.new(duration, Enum.EasingStyle.Linear), { Position = UDim2.new(0.5 - (0.5 - positionX / 512), 0, 0.5 - (0.5 - positionY / 384), 0) }):Play()
 							end
 
 							ProcessFunction(function()
 								waitForHitted()
 
 								if not Completed then
-									game:GetService("TweenService"):Create(ATVC, TweenInfo.new(duration, Enum.EasingStyle.Linear), { Position = UDim2.new(0.5 - (0.5 - positionX / 512) / 1, 0, 0.5 - (0.5 - positionY / 384) / 1, 0) }):Play()
+									TweenService:Create(ATVC, TweenInfo.new(duration, Enum.EasingStyle.Linear), { Position = UDim2.new(0.5 - (0.5 - positionX / 512) / 1, 0, 0.5 - (0.5 - positionY / 384) / 1, 0) }):Play()
 								end
 							end)
 						end
@@ -7503,7 +7723,7 @@ function LetTheGameBegin()
 										local SliderPointDuration = (SliderTime * (SliderPointLength / SliderLength)) / Slides
 
 										TotalDuration = TotalDuration + SliderPointDuration
-										
+
 										createSliderTween(SliderCurvePoints[i].X, SliderCurvePoints[i].Y, SLCanvasScale, SliderPointDuration)
 										if tick() - Start < HitObj.Time / 1000 + TotalDuration then
 											repeat
@@ -7610,20 +7830,20 @@ function LetTheGameBegin()
 											AccuracyData.MaxCombo = AccuracyData.Combo
 										end
 										if i < Slides then
-											CreateHitSound(0,NoteNormalSampleSet)
+											CreateHitSound(0,NoteNormalSampleSet,math.clamp(HitObj.Position.X/512,0,1))
 										else
 											local HitSoundType = tonumber(HitObj.ExtraData[1])
 											CreateHitSound(0,NoteNormalSampleSet) -- normal
 											if HitSoundType == 2 or HitSoundType == 14 or HitSoundType == 6 or HitSoundType == 10 then
-												CreateHitSound(2,NoteAditionSampleSet) -- whistle
+												CreateHitSound(2,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1)) -- whistle
 											end
 											if HitSoundType == 4 or HitSoundType == 14 or HitSoundType == 6 or HitSoundType == 12 then
-												CreateHitSound(1,NoteAditionSampleSet) -- finish
+												CreateHitSound(1,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1)) -- finish
 											end
 											if HitSoundType == 8 or HitSoundType == 14 or HitSoundType == 10 or HitSoundType == 12 then
-												CreateHitSound(3,NoteAditionSampleSet) -- clap
+												CreateHitSound(3,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1)) -- clap
 												if NoteAditionSampleSet ~= "3" then
-													CreateHitSound(4,NoteAditionSampleSet) -- clap2
+													CreateHitSound(4,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1)) -- clap2
 												end
 											end
 										end
@@ -7750,7 +7970,7 @@ function LetTheGameBegin()
 			end]]
 
 				--Circle.ApproachCircle.Size = UDim2.new(ApproachSize,0,ApproachSize,0)
-				--local ApproachCircleTween = game:GetService("TweenService"):Create(Circle.ApproachCircle,TweenInfo.new(FixedApproachTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Size = UDim2.new(1.1,0,1.1,0)})
+				--local ApproachCircleTween = TweenService:Create(Circle.ApproachCircle,TweenInfo.new(FixedApproachTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Size = UDim2.new(1.1,0,1.1,0)})
 				--AddHitnoteAnimation(ApproachCircleTween)
 				--ApproachCircleTween:Play()
 				local function UpdateHitCircleTransparency(Transparency)
@@ -7776,7 +7996,7 @@ function LetTheGameBegin()
 						end
 
 						UpdateHitCircleTransparency(ObjTrans)
-						
+
 						if Circle:FindFirstChild("ApproachCircle") then
 							Circle.ApproachCircle.Size = UDim2.new(Size,0,Size,0)
 						else
@@ -7784,7 +8004,7 @@ function LetTheGameBegin()
 							break
 						end
 
-						game:GetService("RunService").RenderStepped:Wait()
+						RunService.RenderStepped:Wait()
 					end
 				end)
 				ProcessFunction(function()
@@ -7793,10 +8013,12 @@ function LetTheGameBegin()
 						--local FixedApproachTime = -((tick()-Start)*1000 - HitObj.Time)
 						--local ApproachSize = (1-(CircleApproachTime-FixedApproachTime)/CircleApproachTime)*3 + 1.1
 						--Circle.ApproachCircle.Size = UDim2.new(ApproachSize,0,ApproachSize,0)
-						--local ApproachCircleTween = game:GetService("TweenService"):Create(Circle.ApproachCircle,TweenInfo.new(FixedApproachTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Size = UDim2.new(1.1,0,1.1,0)})
+						--local ApproachCircleTween = TweenService:Create(Circle.ApproachCircle,TweenInfo.new(FixedApproachTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Size = UDim2.new(1.1,0,1.1,0)})
 						--AddHitnoteAnimation(ApproachCircleTween)
 						--ApproachCircleTween:Play()
 					end)
+					
+					local ApproachCircleTween
 
 					while not IsHitted do
 						script.Parent.GameplayPause.Event:Wait()
@@ -7806,7 +8028,7 @@ function LetTheGameBegin()
 						local FixedApproachTime = -((tick()-Start)*1000 - HitObj.Time)
 						local ApproachSize = (1-(CircleApproachTime-FixedApproachTime)/CircleApproachTime)*3 + 1.1
 						Circle.ApproachCircle.Size = UDim2.new(ApproachSize,0,ApproachSize,0)
-						local ApproachCircleTween = game:GetService("TweenService"):Create(Circle.ApproachCircle,TweenInfo.new(FixedApproachTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Size = UDim2.new(1.1,0,1.1,0)})
+						ApproachCircleTween = TweenService:Create(Circle.ApproachCircle,TweenInfo.new(FixedApproachTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Size = UDim2.new(1.1,0,1.1,0)})
 						AddHitnoteAnimation(ApproachCircleTween)
 						ApproachCircleTween:Play()
 					end
@@ -7815,7 +8037,7 @@ function LetTheGameBegin()
 
 
 				local CircleHitConnection = false
-				
+
 
 				ProcessFunction(function()
 					if not AimAssist then return end
@@ -7844,21 +8066,21 @@ function LetTheGameBegin()
 							end
 						else
 							ProcessFunction(function()
-								local t2_ = game:GetService("TweenService"):Create(Circle.HitCircle,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1})
+								local t2_ = TweenService:Create(Circle.HitCircle,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1})
 								AddHitnoteAnimation(t2_)
 								t2_:Play()
 								for _,Object in pairs(Circle:GetChildren()) do
 									ProcessFunction(function()
 										if Object:IsA("ImageLabel") and Object.Name ~= "Lightning" then
-											game:GetService("TweenService"):Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
+											TweenService:Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
 										end
 										if Object:IsA("TextLabel") then
-											game:GetService("TweenService"):Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{TextTransparency = 1,TextStrokeTransparency = 1}):Play()
+											TweenService:Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{TextTransparency = 1,TextStrokeTransparency = 1}):Play()
 										end
 										if Object.Name == "CircleNumber" then
 											for _,a in pairs(Object:GetChildren()) do 
 												if a:IsA("ImageLabel") then
-													AddHitnoteAnimation(game:GetService("TweenService"):Create(a,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1})):Play()
+													AddHitnoteAnimation(TweenService:Create(a,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1})):Play()
 												end
 											end
 										end
@@ -7867,7 +8089,7 @@ function LetTheGameBegin()
 							end)
 							ProcessFunction(function()
 								if not OptimizedPerfomance then
-									local t2_ = game:GetService("TweenService"):Create(Circle.HitCircle,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1})
+									local t2_ = TweenService:Create(Circle.HitCircle,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1})
 									AddHitnoteAnimation(t2_)
 									t2_:Play()
 									Circle.HitCircleLightning:Destroy()
@@ -7875,15 +8097,15 @@ function LetTheGameBegin()
 									for _,Object in pairs(Circle:GetChildren()) do
 										ProcessFunction(function()
 											if Object:IsA("ImageLabel") and Object.Name ~= "Lightning" then
-												game:GetService("TweenService"):Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
+												TweenService:Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
 											end
 											if Object:IsA("TextLabel") then
-												game:GetService("TweenService"):Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{TextTransparency = 1,TextStrokeTransparency = 1}):Play()
+												TweenService:Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{TextTransparency = 1,TextStrokeTransparency = 1}):Play()
 											end
 											if Object.Name == "CircleNumber" then
 												for _,a in pairs(Object:GetChildren()) do 
 													if a:IsA("ImageLabel") then
-														game:GetService("TweenService"):Create(a,TweenInfo.new(0.2,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
+														TweenService:Create(a,TweenInfo.new(0.2,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
 													end
 												end
 											end
@@ -7931,7 +8153,7 @@ function LetTheGameBegin()
 							ProcessFunction(function()
 								if not Circle.Parent then return end
 								if not InstaFadeCircle then
-									local t2_ = game:GetService("TweenService"):Create(Circle.HitCircle,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1})
+									local t2_ = TweenService:Create(Circle.HitCircle,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1})
 									AddHitnoteAnimation(t2_)
 									t2_:Play()
 									Circle.HitCircleLightning:Destroy()
@@ -7939,15 +8161,15 @@ function LetTheGameBegin()
 									for _,Object in pairs(Circle:GetChildren()) do
 										ProcessFunction(function()
 											if Object:IsA("ImageLabel") and Object.Name ~= "Lightning" then
-												game:GetService("TweenService"):Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
+												TweenService:Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
 											end
 											if Object:IsA("TextLabel") then
-												game:GetService("TweenService"):Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{TextTransparency = 1,TextStrokeTransparency = 1}):Play()
+												TweenService:Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{TextTransparency = 1,TextStrokeTransparency = 1}):Play()
 											end
 											if Object.Name == "CircleNumber" then
 												for _,a in pairs(Object:GetChildren()) do 
 													if a:IsA("ImageLabel") then
-														game:GetService("TweenService"):Create(a,TweenInfo.new(0.2,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
+														TweenService:Create(a,TweenInfo.new(0.2,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
 													end
 												end
 											end
@@ -8008,11 +8230,12 @@ function LetTheGameBegin()
 				end
 
 				CircleHitConnection = MouseHitEvent.Event:Connect(function(CurrentSecurityKey)
-					if CurrentSecurityKey ~= SecurityKey then
-						return "no"
-					end
-					local CurrentTime = (tick()-Start)*1000
-					local HitDelay = CurrentTime - HitObj.Time
+					ProcessFunction(function()
+						if CurrentSecurityKey ~= SecurityKey then
+							return "no"
+						end
+						local CurrentTime = (tick()-Start)*1000
+						local HitDelay = CurrentTime - HitObj.Time
 				--[[
 				local CurrentHitNotePos = BeatmapData[CurrentHitnote].Position
 				local Distance = math.abs((Vector2.new(CurrentHitNotePos.X,CurrentHitNotePos.Y) - Vector2.new(HitObj.Position.X,HitObj.Position.Y)).Magnitude)
@@ -8032,274 +8255,274 @@ function LetTheGameBegin()
 						Circle.AnchorPoint = Vector2.new(0.5,0.5)
 					end
 				end)]]
-					if IsHitted == false then
-						if osuStableNotelock == true then -- osu!stable notelock
-							if CurrentHitnote ~= HitNoteID then
-								return
-							end
-						else -- osu!lazer notelock
-
-							local isTop = true
-							local PrevNoteExist = false
-
-							for _,data in pairs(DisplayingHitnote) do
-								if data.Id > HitNoteID and isinPosition(data.X,data.Y) and (CurrentTime - data.Time) > -hit50 and not isincircle() then
-									isTop = false
-									break
-								elseif data.Id < HitNoteID and not data.IsHitted then
-									PrevNoteExist = true
-								end
-							end
-
-							if isTop == false then
-								-- this note will auto miss as the newer obj get hitted inside h50 window
-
-								IsHitted = true
-								if AccuracyData.Combo >= 20 then
-									script.Parent.ComboBreak:Play()
-								end
-								AccuracyData.Combo = 0
-								EstimatedCombo += 1
-								AccuracyData.PerfomanceCombo = 0
-								Missed = true
-								if Type ~= 2 or SliderMode == false then
-									AccuracyData.miss += 1
-									MissedInCurrentTime = true
-									AddScore(0)
-									CreateHitResult(1)
-									AddPerfomanceScore(HitObj.PSValue,0)
-								end
-								DrainHP(MissDrain)
-								ComboNoteData.Missor50 = true
-								ComboNoteData.Full300 = false
-								HitMiss = true
-								Circle.ApproachCircle:Destroy()
-								Circle:Destroy()
-
-								TotalNotes -= 1
-
-								DisplayingHitnote[HitNoteID] = nil
-								return
-							else -- If checked, then the game will check if the position that cursor are in have more than 2 notes or not
-								local CanbePressed = true
-								
-								for _,data in pairs(DisplayingHitnote) do
-									if data.Id < HitNoteID and isinPosition(data.X,data.Y) and not data.IsHitted then
-										CanbePressed = false
-										break -- if another note were found inside the position, then check if that note is a previous note. If true, current note can't be processed at current click
-									end
-								end
-								if CanbePressed == false then
-									return 
-								end
-
-								-- Notelock check
-
-								if PrevNoteExist and HitDelay < -hit50 then -- note can't be hit if exist
+						if IsHitted == false then
+							if osuStableNotelock == true then -- osu!stable notelock
+								if CurrentHitnote ~= HitNoteID then
 									return
 								end
+							else -- osu!lazer notelock
+
+								local isTop = true
+								local PrevNoteExist = false
+
+								for _,data in pairs(DisplayingHitnote) do
+									if data.Id > HitNoteID and isinPosition(data.X,data.Y) and (CurrentTime - data.Time) > -hit50 and not isincircle() then
+										isTop = false
+										break
+									elseif data.Id < HitNoteID and not data.IsHitted then
+										PrevNoteExist = true
+									end
+								end
+
+								if isTop == false then
+									-- this note will auto miss as the newer obj get hitted inside h50 window
+
+									IsHitted = true
+									if AccuracyData.Combo >= 20 then
+										script.Parent.ComboBreak:Play()
+									end
+									AccuracyData.Combo = 0
+									EstimatedCombo += 1
+									AccuracyData.PerfomanceCombo = 0
+									Missed = true
+									if Type ~= 2 or SliderMode == false then
+										AccuracyData.miss += 1
+										MissedInCurrentTime = true
+										AddScore(0)
+										CreateHitResult(1)
+										AddPerfomanceScore(HitObj.PSValue,0)
+									end
+									DrainHP(MissDrain)
+									ComboNoteData.Missor50 = true
+									ComboNoteData.Full300 = false
+									HitMiss = true
+									Circle.ApproachCircle:Destroy()
+									Circle:Destroy()
+
+									TotalNotes -= 1
+
+									DisplayingHitnote[HitNoteID] = nil
+									return
+								else -- If checked, then the game will check if the position that cursor are in have more than 2 notes or not
+									local CanbePressed = true
+
+									for _,data in pairs(DisplayingHitnote) do
+										if data.Id < HitNoteID and isinPosition(data.X,data.Y) and not data.IsHitted then
+											CanbePressed = false
+											break -- if another note were found inside the position, then check if that note is a previous note. If true, current note can't be processed at current click
+										end
+									end
+									if CanbePressed == false then
+										return 
+									end
+
+									-- Notelock check
+
+									if PrevNoteExist and HitDelay < -hit50 then -- note can't be hit if exist
+										return
+									end
+								end
 							end
-						end
 
-						if (HitDelay >= -EarlyMiss or isSpectating) and isincircle() then
+							if (HitDelay >= -EarlyMiss or isSpectating) and isincircle() then
 
-							IsHitted = true
-							DisplayingHitnote[HitNoteID].IsHitted = true
-							ProcessFunction(function()
-								wait()
-								DisplayingHitnote[HitNoteID] = nil
-							end)
-
-							CurrentHitnote = HitNoteID + 1
-							if math.abs(HitDelay) > hit50 and not isSpectating then -- Just in case they hit too early or "too late"
-								if AccuracyData.Combo >= 20 then
-									script.Parent.ComboBreak:Play()
-								end
-								AccuracyData.Combo = 0
-								EstimatedCombo += 1
-								AccuracyData.PerfomanceCombo = 0
-								Missed = true
-								DrainHP(MissDrain)
-								CreateHitDelay(Color3.new(1, 0.372549, 0.372549),HitDelay)
-								ComboNoteData.Missor50 = true
-								ComboNoteData.Full300 = false
-								if Type ~= 2 or SliderMode == false then
-									AccuracyData.miss += 1
-									MissedInCurrentTime = true
-									AddScore(0)
-									CreateHitResult(1)
-									AddPerfomanceScore(HitObj.PSValue,0)
-								end
-								HitMiss = true
+								IsHitted = true
+								DisplayingHitnote[HitNoteID].IsHitted = true
 								ProcessFunction(function()
-									if Circle.Parent == nil then return end
+									wait()
+									DisplayingHitnote[HitNoteID] = nil
+								end)
+
+								CurrentHitnote = HitNoteID + 1
+								if math.abs(HitDelay) > hit50 and not isSpectating then -- Just in case they hit too early or "too late"
+									if AccuracyData.Combo >= 20 then
+										script.Parent.ComboBreak:Play()
+									end
+									AccuracyData.Combo = 0
+									EstimatedCombo += 1
+									AccuracyData.PerfomanceCombo = 0
+									Missed = true
+									DrainHP(MissDrain)
+									CreateHitDelay(Color3.new(1, 0.372549, 0.372549),HitDelay)
+									ComboNoteData.Missor50 = true
+									ComboNoteData.Full300 = false
+									if Type ~= 2 or SliderMode == false then
+										AccuracyData.miss += 1
+										MissedInCurrentTime = true
+										AddScore(0)
+										CreateHitResult(1)
+										AddPerfomanceScore(HitObj.PSValue,0)
+									end
+									HitMiss = true
+									ProcessFunction(function()
+										if Circle.Parent == nil then return end
+										if not InstaFadeCircle then
+											local t2_ = TweenService:Create(Circle.HitCircle,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1})
+											AddHitnoteAnimation(t2_)
+											t2_:Play()
+											Circle.HitCircleLightning:Destroy()
+											Circle.Lightning:Destroy()
+											for _,Object in pairs(Circle:GetChildren()) do
+												ProcessFunction(function()
+													if Object:IsA("ImageLabel") and Object.Name ~= "Lightning" then
+														TweenService:Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
+													end
+													if Object:IsA("TextLabel") then
+														TweenService:Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{TextTransparency = 1,TextStrokeTransparency = 1}):Play()
+													end
+													if Object.Name == "CircleNumber" then
+														for _,a in pairs(Object:GetChildren()) do 
+															if a:IsA("ImageLabel") then
+																TweenService:Create(a,TweenInfo.new(0.2,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
+															end
+														end
+													end
+												end)
+											end
+											wait(0.5)
+										end
+										Circle:Destroy()
+									end)
+									if Circle.Parent then
+										Circle.ApproachCircle:Destroy()
+									end
+								else
+									if Circle.Parent then
+										Circle.ApproachCircle:Destroy()
+									end
+
+									AccuracyData.Combo += 1
+									EstimatedCombo += 1
+									TickCollected += 1
+									LastHold = tick()
+
+									if AccuracyData.Combo > AccuracyData.MaxCombo then
+										AccuracyData.MaxCombo = AccuracyData.Combo
+									end
+									ProcessFunction(function()
+										local HitSoundType = tonumber(HitObj.ExtraData[1])
+										CreateHitSound(0,NoteNormalSampleSet,math.clamp(HitObj.Position.X/512,0,1)) -- normal
+										if HitSoundType == 2 or HitSoundType == 14 or HitSoundType == 6 or HitSoundType == 10 then
+											CreateHitSound(2,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1)) -- whistle
+										end
+										if HitSoundType == 4 or HitSoundType == 14 or HitSoundType == 6 or HitSoundType == 12 then
+											CreateHitSound(1,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1)) -- finish
+										end
+										if HitSoundType == 8 or HitSoundType == 14 or HitSoundType == 10 or HitSoundType == 12 then
+											CreateHitSound(3,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1)) -- clap
+											if NoteAditionSampleSet ~= "3" then
+												CreateHitSound(4,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1)) -- clap2
+											end
+										end
+									end)
+									if Type ~= 2 or SliderMode == false then
+										AccuracyData.PerfomanceCombo += 1 
+										if AccuracyData.PerfomanceCombo > AccuracyData.MaxPeromanceCombo then
+											AccuracyData.MaxPeromanceCombo = AccuracyData.PerfomanceCombo
+										end
+										local HitErrorGraph = AccuracyData.HitErrorGraph
+										for i,Data in pairs(HitErrorGraph) do
+											if HitDelay > Data[1] and  HitDelay <= Data[2] then
+												HitErrorGraph[i][3] += 1
+												break
+											end
+										end
+										if math.abs(HitDelay) <= hit300 then
+											if isLastComboNote then
+												if ComboNoteData.Full300 then
+													AddHP(3 + 1)
+												elseif not ComboNoteData.Missor50 then
+													AddHP(3 + 0.85)
+												else
+													AddHP(3)
+												end
+											else
+												AddHP(3)
+											end
+
+											AccuracyData.h300Bonus += hit300 - math.abs(HitDelay)
+											AccuracyData.bonustotal += hit300
+											AccuracyData.h300 += 1
+											CreateHitDelay(Color3.new(0.686275, 1, 1),HitDelay)
+											CreateHitResult(4)
+											AddScore(300)
+											AddPerfomanceScore(HitObj.PSValue,1)
+										elseif math.abs(HitDelay) <= hit100 then
+											if isLastComboNote then
+												if not ComboNoteData.Missor50 then
+													AddHP(1.1 + 0.85)
+												else
+													AddHP(1.1)
+												end
+											else
+												ComboNoteData.Full300 = false
+												AddHP(1.1)
+											end
+											AccuracyData.h100 += 1
+											CreateHitDelay(Color3.new(0.686275, 1, 0.686275),HitDelay)
+											CreateHitResult(3)
+											AddScore(100)
+											AddPerfomanceScore(HitObj.PSValue,1/3)
+										else
+											ComboNoteData.Missor50 = true
+											ComboNoteData.Full300 = false
+											DrainHP(0)
+											AccuracyData.h50 += 1
+											CreateHitDelay(Color3.new(1, 1, 0.686275),HitDelay)
+											CreateHitResult(2)
+											AddScore(50)
+											AddPerfomanceScore(HitObj.PSValue,1/6)
+										end
+									else
+										AddHP(1.1)
+										Score += 30
+										TotalScoreEstimated += 30
+										if math.abs(HitDelay) < hit300 then
+											CreateHitDelay(Color3.new(0.686275, 1, 1),HitDelay)
+										elseif math.abs(HitDelay) < hit100 then
+											CreateHitDelay(Color3.new(0.686275, 1, 0.686275),HitDelay)
+										else
+											CreateHitDelay(Color3.new(1, 1, 0.686275),HitDelay)
+										end
+									end
+
 									if not InstaFadeCircle then
-										local t2_ = game:GetService("TweenService"):Create(Circle.HitCircle,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1})
+										local t_ = TweenService:Create(Circle,TweenInfo.new(0.25,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Size = UDim2.new(CircleSize*1.25/384,0,CircleSize*1.25/384,0)})
+										local t2_ = TweenService:Create(Circle.HitCircle,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{ImageTransparency = 1})
+										AddHitnoteAnimation(t_)
 										AddHitnoteAnimation(t2_)
+										t_:Play()
 										t2_:Play()
 										Circle.HitCircleLightning:Destroy()
 										Circle.Lightning:Destroy()
+
 										for _,Object in pairs(Circle:GetChildren()) do
 											ProcessFunction(function()
 												if Object:IsA("ImageLabel") and Object.Name ~= "Lightning" then
-													game:GetService("TweenService"):Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
+													TweenService:Create(Object,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
 												end
 												if Object:IsA("TextLabel") then
-													game:GetService("TweenService"):Create(Object,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{TextTransparency = 1,TextStrokeTransparency = 1}):Play()
+													TweenService:Create(Object,TweenInfo.new(0,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{TextTransparency = 1,TextStrokeTransparency = 1}):Play()
 												end
 												if Object.Name == "CircleNumber" then
 													for _,a in pairs(Object:GetChildren()) do 
 														if a:IsA("ImageLabel") then
-															game:GetService("TweenService"):Create(a,TweenInfo.new(0.2,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
+															TweenService:Create(a,TweenInfo.new(0,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
 														end
 													end
 												end
 											end)
 										end
-										wait(0.5)
+										wait(0.25)
 									end
 									Circle:Destroy()
-								end)
-								if Circle.Parent then
-									Circle.ApproachCircle:Destroy()
 								end
-							else
-								if Circle.Parent then
-									Circle.ApproachCircle:Destroy()
-								end
-
-								AccuracyData.Combo += 1
-								EstimatedCombo += 1
-								TickCollected += 1
-								LastHold = tick()
-								
-								if AccuracyData.Combo > AccuracyData.MaxCombo then
-									AccuracyData.MaxCombo = AccuracyData.Combo
-								end
-								ProcessFunction(function()
-									local HitSoundType = tonumber(HitObj.ExtraData[1])
-									CreateHitSound(0,NoteNormalSampleSet) -- normal
-									if HitSoundType == 2 or HitSoundType == 14 or HitSoundType == 6 or HitSoundType == 10 then
-										CreateHitSound(2,NoteAditionSampleSet) -- whistle
-									end
-									if HitSoundType == 4 or HitSoundType == 14 or HitSoundType == 6 or HitSoundType == 12 then
-										CreateHitSound(1,NoteAditionSampleSet) -- finish
-									end
-									if HitSoundType == 8 or HitSoundType == 14 or HitSoundType == 10 or HitSoundType == 12 then
-										CreateHitSound(3,NoteAditionSampleSet) -- clap
-										if NoteAditionSampleSet ~= "3" then
-											CreateHitSound(4,NoteAditionSampleSet) -- clap2
-										end
-									end
-								end)
-								if Type ~= 2 or SliderMode == false then
-									AccuracyData.PerfomanceCombo += 1 
-									if AccuracyData.PerfomanceCombo > AccuracyData.MaxPeromanceCombo then
-										AccuracyData.MaxPeromanceCombo = AccuracyData.PerfomanceCombo
-									end
-									local HitErrorGraph = AccuracyData.HitErrorGraph
-									for i,Data in pairs(HitErrorGraph) do
-										if HitDelay > Data[1] and  HitDelay <= Data[2] then
-											HitErrorGraph[i][3] += 1
-											break
-										end
-									end
-									if math.abs(HitDelay) <= hit300 then
-										if isLastComboNote then
-											if ComboNoteData.Full300 then
-												AddHP(3 + 1)
-											elseif not ComboNoteData.Missor50 then
-												AddHP(3 + 0.85)
-											else
-												AddHP(3)
-											end
-										else
-											AddHP(3)
-										end
-
-										AccuracyData.h300Bonus += hit300 - math.abs(HitDelay)
-										AccuracyData.bonustotal += hit300
-										AccuracyData.h300 += 1
-										CreateHitDelay(Color3.new(0.686275, 1, 1),HitDelay)
-										CreateHitResult(4)
-										AddScore(300)
-										AddPerfomanceScore(HitObj.PSValue,1)
-									elseif math.abs(HitDelay) <= hit100 then
-										if isLastComboNote then
-											if not ComboNoteData.Missor50 then
-												AddHP(1.1 + 0.85)
-											else
-												AddHP(1.1)
-											end
-										else
-											ComboNoteData.Full300 = false
-											AddHP(1.1)
-										end
-										AccuracyData.h100 += 1
-										CreateHitDelay(Color3.new(0.686275, 1, 0.686275),HitDelay)
-										CreateHitResult(3)
-										AddScore(100)
-										AddPerfomanceScore(HitObj.PSValue,1/3)
-									else
-										ComboNoteData.Missor50 = true
-										ComboNoteData.Full300 = false
-										DrainHP(0)
-										AccuracyData.h50 += 1
-										CreateHitDelay(Color3.new(1, 1, 0.686275),HitDelay)
-										CreateHitResult(2)
-										AddScore(50)
-										AddPerfomanceScore(HitObj.PSValue,1/6)
-									end
-								else
-									AddHP(1.1)
-									Score += 30
-									TotalScoreEstimated += 30
-									if math.abs(HitDelay) < hit300 then
-										CreateHitDelay(Color3.new(0.686275, 1, 1),HitDelay)
-									elseif math.abs(HitDelay) < hit100 then
-										CreateHitDelay(Color3.new(0.686275, 1, 0.686275),HitDelay)
-									else
-										CreateHitDelay(Color3.new(1, 1, 0.686275),HitDelay)
-									end
-								end
-
-								if not InstaFadeCircle then
-									local t_ = game:GetService("TweenService"):Create(Circle,TweenInfo.new(0.25,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Size = UDim2.new(CircleSize*1.25/384,0,CircleSize*1.25/384,0)})
-									local t2_ = game:GetService("TweenService"):Create(Circle.HitCircle,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{ImageTransparency = 1})
-									AddHitnoteAnimation(t_)
-									AddHitnoteAnimation(t2_)
-									t_:Play()
-									t2_:Play()
-									Circle.HitCircleLightning:Destroy()
-									Circle.Lightning:Destroy()
-
-									for _,Object in pairs(Circle:GetChildren()) do
-										ProcessFunction(function()
-											if Object:IsA("ImageLabel") and Object.Name ~= "Lightning" then
-												game:GetService("TweenService"):Create(Object,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
-											end
-											if Object:IsA("TextLabel") then
-												game:GetService("TweenService"):Create(Object,TweenInfo.new(0,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{TextTransparency = 1,TextStrokeTransparency = 1}):Play()
-											end
-											if Object.Name == "CircleNumber" then
-												for _,a in pairs(Object:GetChildren()) do 
-													if a:IsA("ImageLabel") then
-														game:GetService("TweenService"):Create(a,TweenInfo.new(0,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
-													end
-												end
-											end
-										end)
-									end
-									wait(0.25)
-								end
-								Circle:Destroy()
+								TotalNotes -= 1
 							end
-							TotalNotes -= 1
 						end
-					end
+					end)
 				end)
 			end
-
 		end)
 	end
 	if isIn_GameQuickRestart then
@@ -8326,6 +8549,7 @@ TweenService:Create(game.Players.LocalPlayer.PlayerGui.BG.Background.Background.
 function doAnim()
 	script.Parent.Interface.Background.Visible = true
 	script.Parent.Interface.Background.BackgroundImage.Image = "http://www.roblox.com/asset/?id="..ReturnData.ImageId
+	script.Parent.Interface.Background.BackgroundDim.BackgroundTransparency = 0.4
 	TweenService:Create(script.Parent.Interface.Background,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{GroupTransparency = 0}):Play()
 end
 
@@ -8417,6 +8641,7 @@ spawn(function()
 end)
 --TweenService:Create(script.Parent.Interface.BG,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0}):Play()
 wait(0.25)
+script.Parent.Interface.Background.ReturnButton.Visible = false
 script.Parent.Interface.Background.Visible = false
 
 
@@ -8428,12 +8653,13 @@ RblxNewCursor.Visible = true
 
 
 local ResultFrame = game.Players.LocalPlayer.PlayerGui.BG.ResultFrame.MainFrame.DisplayFrame
+ResultFrame.Visible = true
 ResultFrame.Parent.Parent.Parent.ResultScreenOptions.Visible = true
 TweenService:Create(ResultFrame.Parent.Parent.Parent.ResultScreenOptions,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Position = UDim2.new(0.5,0,0.5,0)}):Play()
 TweenService:Create(ResultFrame.Parent.Parent,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{GroupTransparency = 0}):Play()
 TweenService:Create(ResultFrame.Parent.Parent,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(1,-86,1,-86)}):Play()
 TweenService:Create(ResultFrame.Parent.Parent.UIStroke,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Transparency = 0.4}):Play()
-TweenService:Create(game.Players.LocalPlayer.PlayerGui.OverallInterface.ClientStatus,
+TweenService:Create(game.Players.LocalPlayer.PlayerGui.OverallInterface.FPSCounter,
 	TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,1,-40)}
 ):Play()
 
@@ -8496,6 +8722,8 @@ if GameAccurancy >= 100 then
 	SS = true
 end
 
+ResultFrame.Parent.Parent.ResultFrameAnim.Disabled = false
+
 ProcessFunction(function()
 	local AccuracyValue = 0
 
@@ -8509,11 +8737,11 @@ ProcessFunction(function()
 		AccuracyValue = 0.4 + (percent300s-0.6)/0.4*0.6
 	end
 
-	wait(1)
+	wait(0.5)
 	local AccuracyLine = ResultFrame.AccuracyLine.DisplayLine
 
 	for _,obj in pairs(AccuracyLine:GetChildren()) do
-		TweenService:Create(obj.FullLine.Progress,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(AccuracyValue,0,1,0)}):Play()
+		TweenService:Create(obj.FullLine.Progress,TweenInfo.new(1.75,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Size = UDim2.new(AccuracyValue,0,1,0)}):Play()
 	end
 
 
@@ -8578,7 +8806,7 @@ local Score = Score*0.8 + AccuracyScore -- overwrite the current score
 
 if ScoreV2Enabled then
 	local ScoreV2AccScore = math.pow((AccuracyData.h300*300+AccuracyData.h100*300+AccuracyData.h50*300+AccuracyData.miss*300)/300,2.265) * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.3
-	local ScoreV2 = math.pow(Score/(TotalScoreEstimated*0.8 + ScoreV2AccScore)*(NoteCompleted/NoteTotal),0.417)*(NoteCompleted/NoteTotal)*1000000
+	local ScoreV2 = math.pow(Score/(TotalScoreEstimated*0.8 + ScoreV2AccScore)*(NoteCompleted/NoteTotal),0.768621)*(NoteCompleted/NoteTotal)*1000000
 	ResultFrame.Score.Text = "Score: <b>"..GetNewNum(string.format("%.0f",ScoreV2)).." ["..GetNewNum(tostring(math.floor(Score))).."]</b>"
 else
 	ResultFrame.Score.Text = "Score: <b>"..GetNewNum(tostring(math.floor(Score))).."</b>"	
@@ -8592,7 +8820,7 @@ ProcessFunction(function()
 	GradeFrame.BaseDisplay.Image = RankingDisplayID
 	GradeFrame.EffectDisplay.Image = RankingDisplayID
 
-	wait(1)
+	wait(1.75)
 	TweenService:Create(GradeFrame.BaseDisplay,TweenInfo.new(0.75,Enum.EasingStyle.Exponential,Enum.EasingDirection.In),{Size = UDim2.new(1,0,1,0),ImageTransparency = 0}):Play()
 	wait(0.75)
 	GradeFrame.EffectDisplay.Visible = true
@@ -8801,6 +9029,10 @@ for _,a in pairs(AccuracyData.HitErrorGraph) do
 	Frame.Parent = OffsetFrame.MainFrame.MainFrame
 	local ExtraVerticalSize = math.round(1/99*workspace.Camera.ViewportSize.X*0.728625)-2
 	Frame.Size = UDim2.new(1/99,-2,a[3]/HighestHitErrorClick,ExtraVerticalSize)
+
+	if a[3] <= 0 then
+		Frame.BackgroundColor3 = Color3.new(0.333333, 0.333333, 0.333333)
+	end
 	Frame.LayoutOrder = a[4]
 end
 
@@ -8823,7 +9055,7 @@ end
 ResultFrame.Parent.Parent.Visible = true
 
 if AutoPlay == true and ReplayMode ~= true then
-	--game:GetService("TweenService"):Create(Cursor,TweenInfo.new(1,Enum.EasingStyle.Sine),{Position = UDim2.new(0.5,0,1.5,0)}):Play()
+	--TweenService:Create(Cursor,TweenInfo.new(1,Enum.EasingStyle.Sine),{Position = UDim2.new(0.5,0,1.5,0)}):Play()
 end
 
 local CanbeSubmitted = true
@@ -8832,16 +9064,17 @@ if NoFail and Score < 1000 then
 	CanbeSubmitted = false
 end
 
-if not ReplayMode and not isSpectating and not onTutorial --[[and not game:GetService("RunService"):IsStudio()]] then
+if not ReplayMode and not isSpectating and not onTutorial --[[and not RunService:IsStudio()]] then
 	local function get(format)
 		local BooleanFormat = {["true"] = "1", ["false"] = "0"}
 
 		return BooleanFormat[tostring(format)]
 	end
+	local ReplayVersion = "VERSION 2\n"
 	local PlayerName = "USER "..((not AutoPlay and game.Players.LocalPlayer.Name) or "osu!AT").."\n"
 	local DateFormat = "DATE "..tostring(os.time()).."\n"
 	-- MOD StableNL MobileMode AT NF HD HR EZ SL FL
-	local ModFormat = "MOD "..get(osuStableNotelock)..get(MobileMode and game:GetService("UserInputService").TouchEnabled)
+	local ModFormat = "MOD "..get(osuStableNotelock)..get(MobileMode and UserInputService.TouchEnabled)
 		..get(AutoPlay)..get(NoFail)..get(HiddenMod)..get(HardRock)..get(EasyMod)..get(SliderMode)..get(Flashlight).."\n"
 	local SpeedFormat = "SPEED "..tostring(SongSpeed).."\n"
 	local FilenameForamt = "FILENAME "..Beatmap.Name.."\n"
@@ -8850,7 +9083,7 @@ if not ReplayMode and not isSpectating and not onTutorial --[[and not game:GetSe
 	local PSFormat = "PS "..tostring(math.round(CurrentPerfomance)).."\n"
 	local AccuracyFormat = "ACCURACY "..tostring(AccuracyData.h300).." "..tostring(AccuracyData.h100).." "..tostring(AccuracyData.h50).." "..tostring(AccuracyData.miss).."\n"
 
-	ReplayDataEncoded = "\nOVERALL\n"..PlayerName..DateFormat..ModFormat..SpeedFormat..FilenameForamt..ScoreFormat..MaxcomboFormat..PSFormat..AccuracyFormat.."REPLAY\n"..ReplayDataEncoded
+	ReplayDataEncoded = "\nOVERALL\n"..ReplayVersion..PlayerName..DateFormat..ModFormat..SpeedFormat..FilenameForamt..ScoreFormat..MaxcomboFormat..PSFormat..AccuracyFormat.."REPLAY\n"..ReplayDataEncoded
 
 	game.ReplicatedStorage.ClientCommunication.UpdateLocalReplayData:Invoke(ReplayDataEncoded)
 end
@@ -9029,7 +9262,7 @@ end
 
 -->   2021 - 2024 osu!RoVer   <--
 -- osu!corescript by VtntGaming
--- String size: 329.90KB (V1.47)
+-- String size: 337.86KB (V1.47)
 
 -- Source code used as a backup script, if you're not VtntGaming and see this please use it right :>
 -- Some mathmethic is inspired/taken from osu! and osu!Lazer github source
