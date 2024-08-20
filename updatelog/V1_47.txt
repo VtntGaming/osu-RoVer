@@ -1,2 +1,24 @@
 Time has come, osu!RoVer Stable V1.47 is LIVE!
 Here's the upcomming change to the next version...
+
+
+-> Gameplay
+  - Since the game is likely to get an input lag, I will apply some change to the input register:
+      + Your input will be half of the frame earlier. For example, if you are running on 60fps your input will be 8.3ms earlier.
+
+
+-> Beatmap files:
+  - Fixed "some of the map" huge audio delay
+-> Beatmap listing
+  - Search now support deep searching with different stats
+      + Support index: >, <, >=, =, <=
+      + HP sort: hp, hpdrainrate, healthdrainrate, health
+      + CS sort: cs, circlesize, size
+      + OD sort: od, overalldifficulty, acc,  accuracy
+      + AR sort: ar, approachrate
+      + Difficulty sort: dr, difficultyrating, diff, sr, starrating, star, stars
+      + Support all type of caps, example: this, THIS, This, ThIs, tHiS, ect...
+  - Fixed bug where you cannot search with a specific special characters
+  - You can now Shift + Delete to clear the search box
+  - The song auto will switch to the relevant map you search (unless the current song is in the search result)
+  - Improved UI
