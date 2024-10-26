@@ -8,6 +8,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local wait = require(workspace.WaitModule)
 local ScriptComponent = script.Parent.GameplayScripts.Components
+local ObjectTools = require(ScriptComponent.Gameplay.CircleObject)
 
 if script.Parent.StartupState.Value == "Waiting" then
 	repeat wait() until script.Parent.StartupState.Value ~= "Waiting"
@@ -519,6 +520,10 @@ CurrentModData = {
 	Speed = tonumber(CurrentSetting.MainSettings.Speed.Text) or 1
 }
 
+-- blank function to prevent warnings and errors
+function ReloadPreviewFrame() end
+function LoadLeaderboard() end
+
 function LoadMultiplier()
 	local Multiplier = 1
 	local isRankable = true
@@ -549,13 +554,13 @@ function LoadMultiplier()
 		Multiplier *= 0.5
 		isRankable = false
 	end
-	
+
 	Multiplier = math.floor((Multiplier*100)+0.5)/100
 	local ExtraScoreMPText = ""
 	if SliderMode == true then
 		ExtraScoreMPText = " (+?)"
 	end
-	
+
 	CurrentSetting.MainSettings.ScoreMultiplier.Raw.Value = Multiplier
 	CurrentSetting.MainSettings.ScoreMultiplier.Rankable.Value = isRankable
 	--CurrentSetting.MainSettings.ScoreMultiplier.Text = "Score multiplier: "..tostring(Multiplier).."x"..ExtraScoreMPText
@@ -568,7 +573,7 @@ function checkDifficultyAdjustState()
 	local OD = CurrentSetting.MainSettings.OD
 	local CS = CurrentSetting.MainSettings.CS
 	local HP = CurrentSetting.MainSettings.HP
-	
+
 	local function checkVaild(data)
 		if tonumber(data) and tonumber(data) >= 0 and tonumber(data) <= 11 then
 			return true
@@ -576,7 +581,7 @@ function checkDifficultyAdjustState()
 			return false
 		end
 	end
-	
+
 	if checkVaild(AR.Text) or checkVaild(CS.Text) or checkVaild(OD.Text) or checkVaild(HP.Text) then
 		CurrentSetting.MainSettings.DifficultyAdjust.Text = "[DA] Difficulty adjust: Enabled"
 		DifficultyAdjust.Active = true
@@ -592,8 +597,8 @@ function checkDifficultyAdjustState()
 		DifficultyAdjust.HP = nil
 		CurrentSetting.MainSettings.DifficultyAdjust.Text = "[DA] Difficulty adjust: Disabled"
 	end
-	
-	
+
+
 	CurrentModData.DA = DifficultyAdjust.Active
 	LoadMultiplier()
 end
@@ -845,6 +850,7 @@ CurrentSetting.MainSettings.NoFail.MouseButton1Click:Connect(function()
 		TweenService:Create(CurrentSetting.MainSettings.HP,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{PlaceholderColor3 = Color3.new(0.698039, 0.423529, 0.423529)}):Play()
 		CurrentSetting.MainSettings.NoFail.Text = "[NF] No Fail: Disabled"
 	end
+	ReloadPreviewFrame()
 end)
 
 CurrentSetting.MainSettings.Hidden.MouseButton1Click:Connect(function()
@@ -1442,7 +1448,7 @@ local DisplayLBInformationValue = {
 function updateLBStaistic()
 	local LbInformation = game.Players.LocalPlayer.PlayerGui.BG.BeatmapLeaderboard.UserPlayInformation
 	local MainFrame = LbInformation.MainFrame
-	
+
 	local Score = DisplayLBInformationValue.Score.Value
 	local MaxCombo = DisplayLBInformationValue.MaxCombo.Value
 	local h300 = DisplayLBInformationValue.h300.Value
@@ -1520,11 +1526,11 @@ function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
 	LeaderboardFrame.DevButton.MouseButton1Click:Connect(function()
 		local LbInformation = game.Players.LocalPlayer.PlayerGui.BG.BeatmapLeaderboard.UserPlayInformation
 		local MainFrame = LbInformation.MainFrame
-		
+
 		local function add(obj, value)
 			TweenService:Create(obj, TweenInfo.new(0.75, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Value = value}):Play()
 		end
-		
+
 		add(DisplayLBInformationValue.Score, Score)
 		add(DisplayLBInformationValue.MaxCombo, Data.MaxCombo)
 		add(DisplayLBInformationValue.h300, Data.ExtraAccurancy[1])
@@ -1535,48 +1541,6 @@ function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
 		local UpdatedPS,MaxPS = GetUserPlayUpdatedPS(Data)
 		add(DisplayLBInformationValue.calculatedBasePS, UpdatedPS)
 		add(DisplayLBInformationValue.calculatedMaxPS, MaxPS)
---[[
-		MainFrame.ScoreDisplay.Text = string.format("Score: %s (%dx)",GetScore(Score),Data.MaxCombo)
-		MainFrame.AccuracyDisplay.Text = string.format('Statistics: <font color = "#00ffff">%d</font>/<font color = "#55ff00">%d</font>/<font color = "#ffff00">%d</font>/<font color = "#ff0000">%d</font>',Data.ExtraAccurancy[1],Data.ExtraAccurancy[2],Data.ExtraAccurancy[3],Data.ExtraAccurancy[4])
-		local Total = (Data.ExtraAccurancy[1]+Data.ExtraAccurancy[2]+Data.ExtraAccurancy[3]+Data.ExtraAccurancy[4])
-		local Acc = (Data.ExtraAccurancy[1]*3+Data.ExtraAccurancy[2]+Data.ExtraAccurancy[3]*0.5)/(Total*3)*100
-		local GameplayRank = "D"
-
-		local RankColor = {
-			SS = Color3.fromRGB(255, 255, 0),
-			S = Color3.fromRGB(255, 255, 0),
-			A = Color3.fromRGB(0, 255, 0),
-			B = Color3.fromRGB(0, 85, 255),
-			C = Color3.fromRGB(170, 0, 127),
-			D = Color3.fromRGB(255, 0, 0)
-		}
-
-		local percent300s = Data.ExtraAccurancy[1]/Total
-		local percent50s = Data.ExtraAccurancy[3]/Total
-		local misstotal = Data.ExtraAccurancy[4]
-
-
-		if percent300s >= 0.6 then
-			GameplayRank = "C"
-		end
-		if (percent300s >= 0.7 and misstotal <= 0) or percent300s >= 0.8 then
-			GameplayRank = "B"
-		end
-		if (percent300s >= 0.8 and misstotal <= 0) or percent300s >= 0.9 then
-			GameplayRank = "A"
-		end
-		if percent300s >= 0.9 and misstotal <= 0 and percent50s < 0.01 then
-			GameplayRank = "S"
-		end
-		if percent300s >= 1 then
-			GameplayRank = "SS"
-		end
-
-		MainFrame.GradeDisplay.Text = string.format('Accuracy: %.2f%% [<font color = "#%s">%s</font>]',Acc,RankColor[GameplayRank]:ToHex(),GameplayRank)
-		MainFrame.PSDisplay.Text = string.format("Ranked Perfomance: %.2fps",Data.PS or 0)
-		local UpdatedPS,MaxPS = GetUserPlayUpdatedPS(Data)
-		MainFrame.UpdatedPSDisplay.Text = string.format("Updated Perfomance: %.2f/%.2fps",UpdatedPS,MaxPS)]]
-
 		local crrID = game.HttpService:GenerateGUID()
 		UserPlayInformationAnimateID = crrID
 		local ReplayOption = MainFrame.ReplayOption
@@ -1661,7 +1625,7 @@ ProcessFunction(function()
 end)
 
 
-function LoadLeaderboard()
+LoadLeaderboard = function()
 	local LeaderboardInterface = game.Players.LocalPlayer.PlayerGui.BG.BeatmapLeaderboard
 	local ThisLBSession = game.HttpService:GenerateGUID()
 	CurrentLeaderboardSession = ThisLBSession
@@ -1743,9 +1707,6 @@ function LoadLeaderboard()
 	end)
 
 	wait(0.4)
-	--[[
-	Data = {Name,Rank,Score,ExtraData = {Accurancy,MaxCombo,Grade,Date,ExtraAccurancy = {300s,100s,50s,miss}}}
-	]]
 	if not script.Parent:FindFirstChild("GameStarted") then
 
 		local function GetScore(CurrentScore)
@@ -1764,7 +1725,7 @@ function LoadLeaderboard()
 		end
 
 		local function GetDate(CurrentDate)
-			local PlayedTime = os.time() - tonumber(CurrentDate)
+			local PlayedTime = os.time() - (tonumber(CurrentDate) or 0)
 
 			if PlayedTime < 3600 then
 				return tostring(math.floor(PlayedTime/60)).."mi"
@@ -1836,7 +1797,7 @@ function LoadLeaderboard()
 						NewLBFrame.MainFrame.PSEarned.Text = "-"
 					end
 					if tostring(Data.Rank) == "100" then
-						Top100Score = tonumber(Data.Score)+1
+						Top100Score = (tonumber(Data.Score) or 0)+1
 					end
 					NewLBFrame.MainFrame.Score.Text = "Score: "..GetScore(Data.Score)..MaxComboText
 					NewLBFrame.MainFrame.Rank.Text = "#"..tostring(Data.Rank)
@@ -2062,26 +2023,6 @@ script.Parent.MultiplayerData.RuleChanged.Event:Connect(function(Rule)
 	SliderMode = Rule.Slider
 	--osuStableNotelock = Rule.StableNL
 	ScoreV2Enabled = Rule.ScoreV2
-
-	--[[
-	if SliderMode == true then
-		CurrentSetting.MainSettings.SliderMode.Text = "Sliders: Enabled"
-	else
-		CurrentSetting.MainSettings.SliderMode.Text = "Sliders: Disabled"
-	end
-	
-	if ScoreV2Enabled == true then
-		CurrentSetting.MainSettings.ScoreV2.Text = "ScoreV2: Enabled"
-	else
-		CurrentSetting.MainSettings.ScoreV2.Text = "ScoreV2: Disabled"
-	end]]
-
-	--[[
-	if osuStableNotelock == true then
-		CurrentSetting.MainSettings.StableNotelock.Text = "In-game notelock: Stable"
-	else
-		CurrentSetting.MainSettings.StableNotelock.Text = "In-game notelock: Lazer"
-	end]]
 end)
 
 CurrentSetting.MainSettings.SliderMode:GetPropertyChangedSignal("Text"):Connect(UpdateRule)
@@ -2115,10 +2056,10 @@ PreviewMapPS = {
 	Aim = 0, Speed = 0, Mod = 0, AimFL = 0, Acc = 0, objCount = 0
 }
 
-function ReloadPreviewFrame()
+ReloadPreviewFrame = function()
 	local _1,_2,_3,_4,_5,_6 = script.Parent.GameplayScripts.ReloadPreviewFrame.LoadPreviewFrame:Invoke(
 		CurrentPreviewFrame,CurrentSetting,FileType,CurrentModData,BeatmapStudio,CurrentKey,BeatmapKey
-		,PreviewFrameBaseVolume,SongVolume,KeepOriginalPitch,PreviewBeatmapset,not SliderMode,HardRock,Flashlight,EasyMod,HiddenMod
+		,PreviewFrameBaseVolume,SongVolume,KeepOriginalPitch,PreviewBeatmapset, NoFail,not SliderMode,HardRock,Flashlight,EasyMod,HiddenMod
 	)
 	CurrentModData = _1
 	CurrentKey = _2
@@ -3093,7 +3034,7 @@ pcall(function()
 	ContentLoadingUI.BeatmapDisplay.Difficulty.TextColor3 = Color3.fromHSV(HColor,SColor,VColor)
 	ContentLoadingUI.BeatmapDisplay.Difficulty.Text = string.format("[%.2f] %s",ReturnData.Difficulty.BeatmapDifficulty,ReturnData.Overview.Metadata.DifficultyName)
 
-	
+
 	TweenService:Create(ContentLoadingUI,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
 		Size = UDim2.new(1,0,0.25,0),GroupTransparency = 0
 	}):Play()
@@ -3115,17 +3056,17 @@ pcall(function()
 
 		end)
 	end
-	
+
 	ContentLoadingUI.LoadUIDisplay.LoadText.Text = "Ready!"
 	TweenService:Create(ContentLoadingUI.ProgressBar.Progress,TweenInfo.new(0.1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
 		Size = UDim2.new(1,0,1,0)
 	}):Play()
 	wait(2)
-	
+
 	TweenService:Create(ContentLoadingUI,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
 		Size = UDim2.new(1,0,0.17,0),GroupTransparency = 1
 	}):Play()
-	
+
 	TweenService:Create(ContentLoadingUI.UISizeConstraint,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
 		MaxSize = Vector2.new(math.huge,80)
 	}):Play()
@@ -3374,36 +3315,6 @@ local CursorPosition = Vector2.new(256,576)
 local ATVC = Instance.new("Frame") -- AutoPlay Virtual Cursor
 ATVC.Position = UDim2.new(0.5,0,1.5,0)
 
---[[
-LastCursorPosition = {CursorPosition,tick()}
-CursorTeportViolationCount = 0
-if PlayRanked and not UserInputService.TouchEnabled then
-	RunService.RenderStepped:Connect(function()
-		if PlayRanked and not UserInputService.TouchEnabled and LastCursorPosition[1] ~= CursorPosition then
-			local TimeBetweenLastFrame = tick() - LastCursorPosition[2]
-			local DistanceMoved = (LastCursorPosition[1] - CursorPosition).Magnitude
-			local MoveSpeed = DistanceMoved/TimeBetweenLastFrame
-			if MoveSpeed > 60000 then
-				CursorTeportViolationCount += 1
-				if CursorTeportViolationCount <= 10 then
-					require(game.Players.LocalPlayer.PlayerGui:WaitForChild("NotificationPopup").NotificationsPopup.CreateNotification)("You're moving the cursor too fast, slow down!",Color3.new(1 ,0 ,0))
-				elseif CursorTeportViolationCount <= 14 then
-					require(game.Players.LocalPlayer.PlayerGui:WaitForChild("NotificationPopup").NotificationsPopup.CreateNotification)("You have "..tostring(16 - CursorTeportViolationCount).." more chance to stop cursor teleporting.",Color3.new(1 ,0 ,0))
-				elseif CursorTeportViolationCount <= 15 then
-					require(game.Players.LocalPlayer.PlayerGui:WaitForChild("NotificationPopup").NotificationsPopup.CreateNotification)("This your last chance to stop cursor teleporting.",Color3.new(1 ,0 ,0))
-				else
-					require(game.Players.LocalPlayer.PlayerGui:WaitForChild("NotificationPopup").NotificationsPopup.CreateNotification)("This play is unranked.",Color3.new(1 ,0 ,0))
-					
-					PlayRanked = false
-					game.Players.LocalPlayer.PlayerGui.BG.UnrankedSign.Visible = true
-				end
-			end
-		end
-
-		LastCursorPosition = {CursorPosition,tick()}
-	end)
-end]]
-
 if AutoPlay == true then
 	local ATCursor = ATVC
 	ATCursor.Changed:Connect(function()
@@ -3420,13 +3331,6 @@ RunService.RenderStepped:Connect(function()
 	LastPosition = CursorPosition
 end)
 
---[[
-Cursor.Changed:Connect(function()
-	DisplayingCursor.Visible = Cursor.Visible
-	DisplayingCursor.Position = Cursor.Position
-	DisplayingCursor.Size = Cursor.Size
-	DisplayingCursor.Image = Cursor.Image
-end)]]
 
 if isSpectating == true then
 	Start = tick()+2
@@ -3489,7 +3393,7 @@ script.Parent.HealthBar.Visible = showHealthBar
 if not SliderMode then
 	for _,HitObjData in pairs(BeatmapData) do
 		TotalNote += 1
-		if HitObjData.Type == 2 or HitObjData.Type == 6 or math.floor((HitObjData.Type-22)/16) == (HitObjData.Type-22)/16 then
+		if ObjectTools.GetObjectProperties(HitObjData.Type).isSlider then
 			TotalSliders += tonumber(HitObjData.ExtraData[3])
 		end
 	end
@@ -3626,6 +3530,7 @@ DrainSpeed = 1.75
 CurrentDrainSpeed = 0
 HealthDrainMultiplier = 1
 
+
 ProcessFunction(function()
 	local LastTick = tick()
 
@@ -3639,8 +3544,10 @@ ProcessFunction(function()
 	end]]
 	if HPDrain < 5 then
 		DrainSpeed = (5 - 2 * (5 - HPDrain) / 5) * HealthDrainMultiplier
+
 	else
 		DrainSpeed = (5 + 5 * (HPDrain - 5) / 5) * HealthDrainMultiplier
+
 	end
 	DrainSpeed*= SongSpeed
 	while wait() do
@@ -3690,7 +3597,7 @@ end)
 
 function AddHP(HP)
 	if isSpectating then return end
-	HealthPoint += HP
+	HealthPoint += HP * 100
 	if HealthPoint > MaxHealthPoint*(EZModCheckpoint/3) then
 		HealthPoint = MaxHealthPoint*(EZModCheckpoint/3)
 	end
@@ -3698,7 +3605,7 @@ end
 
 local ImmortalTime = 0
 
-function DrainHP(HP)
+function DrainHP(min, mid, max)
 	if not ConditionFailed.AllComboGone and BeatmapData[#BeatmapData].Time > 120000 and ReturnData.Difficulty.BeatmapDifficulty >= 5 then
 		local Progress = (tick() - SongStart) / (BeatmapData[#BeatmapData].Time/1000)
 		if Progress < 0.9 and AccuracyData.miss > 1 then
@@ -3710,7 +3617,16 @@ function DrainHP(HP)
 
 	if isSpectating then return end
 	if tick() - ImmortalTime >= 0 then
-		HealthPoint -= HP
+		local scale = (HPDrain - 5) / 5
+		local HPLose = mid
+
+		if (HPDrain > 5) then
+			HPLose = mid + (max - mid) * scale
+		elseif (HPDrain < 5) then
+			HPLose=  mid + (mid - min) * scale
+		end
+		-- increasing the negative value
+		HealthPoint += HPLose * 100
 	end
 	if EasyMod then
 		if HealthPoint < MaxHealthPoint * ((EZModCheckpoint-1)/3) and EZModCheckpoint > 1 then
@@ -4303,7 +4219,7 @@ spawn(function()
 	while wait() do
 		local Passed = tick() - LastTick
 		LastTick = tick()
-		
+
 		for _, obj in pairs(KeyHistory:GetDescendants()) do
 			if obj.Name == "Released" then
 				obj.Position -= UDim2.new(Passed, 0, 0, 0)
@@ -4342,7 +4258,7 @@ spawn(function()
 			new.BackgroundColor3 = Color3.new(0.666667, 1, 1)
 		end
 		TweenService:Create(new, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {BackgroundTransparency = 0}):Play()
-		
+
 		local keyName = {
 			"K1", "K2", "M1", "M2"
 		}
@@ -4355,7 +4271,7 @@ spawn(function()
 			TweenService:Create(script.Parent.HitKey[crrName],KeyTweenInfo,ChangeIn1):Play()
 			TweenService:Create(script.Parent.HitKey[crrName].GlowEffect,KeyTweenInfo,{ImageTransparency = 0}):Play()
 		end
-		
+
 		--[[
 		
 		if data == 1 then
@@ -4392,7 +4308,7 @@ spawn(function()
 	MouseHitEndEvent.Event:Connect(function(CurrentSecurityKey,data)
 		local CrrPosFrame = KeyHistory["Pos"..data]
 		clearOldCurrentHistory(CrrPosFrame)
-		
+
 		local keyName = {
 			"K1", "K2", "M1", "M2"
 		}
@@ -4403,29 +4319,6 @@ spawn(function()
 			TweenService:Create(script.Parent.HitKey[crrName],KeyTweenInfo,ChangeOut):Play()
 			TweenService:Create(script.Parent.HitKey[crrName].GlowEffect,KeyTweenInfo,{ImageTransparency = 1}):Play()
 		end
-		
-		--[[
-		if data == 1 then
-			DownKey.K1 = false
-			TweenService:Create(script.Parent.HitKey.K1.Keycount,KeyTweenInfo,{TextColor3 = Color3.new(1,1,1)}):Play()
-			TweenService:Create(script.Parent.HitKey.K1,KeyTweenInfo,ChangeOut):Play()
-			TweenService:Create(script.Parent.HitKey.K1.GlowEffect,KeyTweenInfo,{ImageTransparency = 1}):Play()
-		elseif data == 2 then
-			DownKey.K2 = false
-			TweenService:Create(script.Parent.HitKey.K2.Keycount,KeyTweenInfo,{TextColor3 = Color3.new(1,1,1)}):Play()
-			TweenService:Create(script.Parent.HitKey.K2,KeyTweenInfo,ChangeOut):Play()
-			TweenService:Create(script.Parent.HitKey.K2.GlowEffect,KeyTweenInfo,{ImageTransparency = 1}):Play()
-		elseif data == 3 then
-			DownKey.M1 = false
-			TweenService:Create(script.Parent.HitKey.M1.Keycount,KeyTweenInfo,{TextColor3 = Color3.new(1,1,1)}):Play()
-			TweenService:Create(script.Parent.HitKey.M1,KeyTweenInfo,ChangeOut):Play()
-			TweenService:Create(script.Parent.HitKey.M1.GlowEffect,KeyTweenInfo,{ImageTransparency = 1}):Play()
-		elseif data == 4 then
-			DownKey.M2 = false
-			TweenService:Create(script.Parent.HitKey.M2.Keycount,KeyTweenInfo,{TextColor3 = Color3.new(1,1,1)}):Play()
-			TweenService:Create(script.Parent.HitKey.M2,KeyTweenInfo,ChangeOut):Play()
-			TweenService:Create(script.Parent.HitKey.M2.GlowEffect,KeyTweenInfo,{ImageTransparency = 1}):Play()
-		end]]
 		script.Parent.KeyDown.Value = DownKey.K1 or DownKey.K2 or DownKey.M1 or DownKey.M2
 	end)
 end)
@@ -4451,7 +4344,7 @@ local ZIndex = 999999999
 local hit300 = (100 - 8 * OverallDifficulty) / SongSpeed -- 100 - 20
 local hit100 = (175 - 10 * OverallDifficulty) / SongSpeed -- 175 - 75
 local hit50  = (250 - 12.5 * OverallDifficulty) / SongSpeed -- 200 - 125
-local EarlyMiss = (350 + 2 * OverallDifficulty ) / SongSpeed
+local EarlyMiss = 425 / SongSpeed
 local HitErrorMulti = 1.5
 
 if ReplayMode or AutoPlay then
@@ -4462,6 +4355,12 @@ end
 Original timing (osu):
 OD0:	80/140/200
 OD10: 	20/60/100
+
+Timing in osu!lazer:
+OD0: 80/140/200
+OD10: 20/60/100
+
+
 OD Compare:
 OD0:			      300     100  50
 Bancho:		0ms -------|-----|-----|			200.0ms
@@ -4479,7 +4378,7 @@ if (MobileMode and UserInputService.TouchEnabled) or TouchDeviceDetected or Repl
 	hit300 = (150 - 12 * OverallDifficulty) / SongSpeed -- 150 - 30
 	hit100 = (220 - 12.5 * OverallDifficulty) / SongSpeed -- 220 - 95
 	hit50  = (275 - 13.5 * OverallDifficulty) / SongSpeed -- 275 - 140
-	EarlyMiss = (375 + 2 * OverallDifficulty) / SongSpeed
+	EarlyMiss = 440 / SongSpeed
 	HitErrorMulti = 1
 	TouchDeviceDetected = true
 end
@@ -4623,8 +4522,8 @@ script.Parent.ComboDisplay:GetPropertyChangedSignal("Text"):Connect(function()
 	DisplayCombo = NewCombo
 end)
 
-local DisplayAccurancy = 10000
-local CurrentAccurancy = 10000
+local DisplayAccuracy = 10000
+local CurrentAccuracy = 10000
 
 local LastComboDisplay = 0
 
@@ -4642,11 +4541,11 @@ spawn(function() --Accurancy caculation
 		local miss = AccuracyData.miss
 		local Total = h300+h100+h50+miss
 		local Acc = math.floor(((h300*300+h100*100+h50*50)/(Total*300))*10000)/100
-		local tostringAcc = string.format("%s%s",string.format("%.2d",Acc),string.sub(string.format("%.2f",Acc%1),2,4))
+		local tostringAcc = string.format("%02d.%02d", math.floor(Acc), (Acc * 100) % 100)
 
 		local NewAcc = math.round(Acc*100)
 		if NewAcc ~= NewAcc then NewAcc = 10000 end
-		DisplayAccurancy = NewAcc
+		DisplayAccuracy = NewAcc
 
 		script.Parent.ComboDisplay.Text = tostring(AccuracyData.Combo).."x"
 
@@ -4678,9 +4577,9 @@ spawn(function()
 	end
 
 	while wait(WaitTime) do
-		if DisplayAccurancy ~= CurrentAccurancy then
-			CurrentAccurancy = DisplayAccurancy
-			TweenService:Create(script.Parent.GameplayData.Accuracy,TweenInfo.new(0.1/SongSpeed,Enum.EasingStyle.Linear),{Value = DisplayAccurancy}):Play()
+		if DisplayAccuracy ~= CurrentAccuracy then
+			CurrentAccuracy = DisplayAccuracy
+			TweenService:Create(script.Parent.GameplayData.Accuracy,TweenInfo.new(0.1/SongSpeed,Enum.EasingStyle.Linear),{Value = DisplayAccuracy}):Play()
 		end
 	end
 end)
@@ -4778,7 +4677,7 @@ function getAccuracyScore()
 	-- penalty for each miss given
 	-- prevent players just "chilling out" and watching the score keep increasing
 	local ExtraAccPoint = math.max(0, ExtraCombo * Accuracy - AccuracyData.miss)
-	
+
 	return math.pow(ExtraAccPoint + (AccuracyData.h300*300+AccuracyData.h100*100+AccuracyData.h50*50)/300,2.265) * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.3
 end
 
@@ -4798,19 +4697,19 @@ function getScoreV2()
 	local ExtraAccPoint = math.max(0, ExtraCombo)
 	local AccScoreMax = math.pow(ExtraAccPoint + (AccuracyData.h300*300+AccuracyData.h100*300+AccuracyData.h50*300)/300,2.265) * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.3
 	local ConsistencyScoreMax = math.pow(AccuracyData.MaxConsistency, 1.17677416) * 1.2255 * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.7
-	
+
 	local ActualAccScore = getAccuracyScore()
 	local ActualConsistencyScore = getConsistencyScore()
-	
+
 	local MaxPossibleScore = AccScoreMax + ConsistencyScoreMax
 	local ActualScore = ActualAccScore + ActualConsistencyScore
-	
+
 	local TotalNote = #BeatmapData
 	local TotalHit = AccuracyData.h300 + AccuracyData.h100 + AccuracyData.h50
 	local ScalingRatio = TotalHit/#BeatmapData
-	
+
 	local ScoreV2 = math.pow(ActualScore/MaxPossibleScore,0.44150110375) * ScalingRatio * 1000000 * ScoreMultiplier.Mod
-	
+
 	-- Spinner score only gives 10% points in ScoreV2
 	return math.round(ScoreV2 + AccuracyData.SpinnerScore * 0.1)
 end
@@ -4835,7 +4734,7 @@ spawn(function()
 	while wait(WaitTime) do
 		local AccuracyScore = getAccuracyScore()
 		local ConsistencyScore = getConsistencyScore()
-		
+
 		local Score = getScoreV1()
 		if Score ~= PrevScore or PrevMaxCombo ~= AccuracyData.MaxCombo then
 
@@ -5027,7 +4926,7 @@ if isSpectating == true then
 	if SpectateRemote then
 		local LastEventData = {Pos = Vector2.new(0,0),Time = tick(),Data = false}
 		local yieldingSpectateAction
-		
+
 		local function QueueSpectateEvent(Data,isSystemCreated)
 			if Data == -1 then
 				require(game.Players.LocalPlayer.PlayerGui:WaitForChild("NotificationPopup").NotificationsPopup.CreateNotification)("Player you spectate has left, waiting for player to start another play...",Color3.new(1,0,0))
@@ -5316,36 +5215,6 @@ local CurrentComboColor = 1
 local LastCirclePos = {X = 0,Y = 0}
 
 --BPM = 1 / BeatLength * 1000 * 60
---[[
-spawn(function()
-	local BPM = 110
-	while wait(60/BPM) do
-		for i,Obj in pairs(script.Parent.PlayFrame:GetChildren()) do
-			local NewObj
-			pcall(function()
-				if Obj.Name == "Circle" then
-					NewObj = Obj:Clone()
-					NewObj.Parent = script.Parent.PlayFrame
-					NewObj.ApproachCircle:Destroy()
-					NewObj.BackgroundTransparency = 0.75
-					NewObj.TextLabel.TextTransparency = 0.5
-					NewObj.Circle.ImageTransparency = 0.5
-
-					TweenService:Create(NewObj,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{BackgroundTransparency = 1,Size = UDim2.new(0.214,0,0.214,0)}):Play()
-					TweenService:Create(NewObj.TextLabel,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 1}):Play()
-					TweenService:Create(NewObj.Circle,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
-				end
-			end)
-			spawn(function()
-				wait(0.2)
-				if Obj.Name == "Circle" then
-					NewObj:Destroy()
-				end
-			end)
-		end
-	end
-end)
-]]
 local CurrentHitnote = 1
 
 
@@ -5520,7 +5389,7 @@ spawn(function()
 				end
 			end)
 			local FLSize = (AccuracyData.Combo <= 200 and 8-((AccuracyData.Combo/200)*3)) or 5
-			
+
 			if AccuracyData.Combo > 0 then
 				TweenService:Create(script.Parent.ComboFrameDisplay,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{GroupTransparency = 0}):Play()
 				TweenService:Create(script.Parent.ComboFade.ComboFade,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{GroupTransparency = 0}):Play()
@@ -5538,7 +5407,7 @@ end)
 
 
 local TotalNotes = 0 
-local NoteDisplayLimit = 1200
+local NoteDisplayLimit = 1200 -- there could possibly no way would a map displaying this much notes at the same time
 local BPM = -1
 local CurrentSliderMultiplier = 1
 local SliderMultiplier = ReturnData.Difficulty.SliderMultiplier
@@ -5712,10 +5581,10 @@ function CreateHitSound(HitsoundType,CustomSampleSet, AmbientRatio)
 
 		CurrentHitsound.Volume *= 0.5 + (1-AmbientRatio)*0.5
 		CurrentHitsound2.Volume *= 0.5 + (AmbientRatio)*0.5
-		
+
 		CurrentHitsound.Parent = workspace.AudioOutput.Audio_L
 		CurrentHitsound2.Parent = workspace.AudioOutput.Audio_R
-		
+
 		--CurrentHitsound.Parent = script.Parent.HitSounds
 
 		CurrentHitsound:Play()
@@ -5835,15 +5704,12 @@ script.Parent.SpinnerScore.Event:Connect(function(SpinnerScore)
 	AccuracyData.SpinnerScore += SpinnerScore
 	Score += SpinnerScore
 	TotalScoreEstimated += SpinnerScore
-	AddHP(DrainSpeed*0.5)
-end)
---[[
-spawn(function()
-	if AutoPlay == true and ReplayMode ~= true then
-		local RPM = 500	
-		TweenService:Create(script.Parent.ATSpinner.SpinPart,TweenInfo.new(1/RPM,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,math.huge),{Orientation = Vector3.new(0,--[[(RPM/60)*2592000360,0)}):Play()
+	if SpinnerScore == 100 then
+		AddHP(0.0085)
+	else
+		AddHP(0.01)
 	end
-end)]]
+end)
 
 local SpinStart = tick()
 local RPM = 500	
@@ -5855,17 +5721,6 @@ if AutoPlay then
 		script.Parent.ATSpinner.SpinPart.Orientation = Vector3.new(0,Rotation,0)
 	end)
 end
-
---[[
-Cursor.Changed:Connect(function()
-	if isSpectating == true or PlayRanked == false then return end
-	if (math.abs(Cursor.Position.X.Scale) > 1000 or math.abs(Cursor.Position.Y.Scale) > 1000 ) and AutoPlay == false then
-		PlayRanked = false
-		game.Players.LocalPlayer.PlayerGui.BG.UnrankedSign.Visible = true
-		require(game.Players.LocalPlayer.PlayerGui:WaitForChild("NotificationPopup").NotificationsPopup.CreateNotification)("Detected some suspicous activity on your play, your account has been unranked. The report has been sent to the developer.",Color3.new(1, 0, 0))
-		Reporter:FireServer(game.Players.LocalPlayer.Name,game.Players.LocalPlayer.UserId,2)
-	end
-end)]]
 
 
 if isSpectating == true then
@@ -6053,15 +5908,15 @@ if LiveDifficultyDisplay then
 		while wait(waittime) do
 			local exRate = 1/2.25
 			local mulRate = 1.44226
-			
+
 			local CalculatedAimDiff = math.pow(CurrentLiveDiffAim, exRate) * mulRate * math.pow(0.15, tick() - LiveDiffLastHit)
 			local CalculatedSpeedDiff = math.pow(CurrentLiveDiffSpeed, exRate) * mulRate * math.pow(0.3, tick() - LiveDiffLastHit)
 			local CalculatedFLDiff = math.pow(CurrentLiveDiffFL, exRate) * mulRate * math.pow(0.15, tick() - LiveDiffLastHit)
-			
+
 			CalculatedAimDiff /= 4.53871
 			CalculatedSpeedDiff /= 4.53871
 			CalculatedFLDiff /= 4.53871
-			
+
 			local RewardedAimPS = basePerfomance(CalculatedAimDiff)
 			local RewardedSpeedPS = basePerfomance(CalculatedSpeedDiff)
 			local RewardedFlashlightPS =  basePerfomance(CalculatedFLDiff)
@@ -6072,7 +5927,7 @@ if LiveDifficultyDisplay then
 			if diffCalcPS < 0.01 then
 				CalculatedLiveDiff = 0
 			end
-			
+
 			local CurrentGraphNum = math.floor(#DiffGraphList / (BeatmapLength / 1000) * (tick() - Start)) + 1
 			local CurrentGraph = DiffGraphList[CurrentGraphNum] or DiffGraphList[1]
 			local NextGraph = math.max(DiffGraphList[CurrentGraphNum + 1] or 0, DiffGraphList[CurrentGraphNum + 2] or 0)
@@ -6124,7 +5979,7 @@ function AddPerfomanceScore(PSValue)
 	local AccPS = MaxPSValue.Acc
 	local Consistency = 1
 	local Scaling = math.min(math.pow(TotalHit, 0.8) / math.pow(#BeatmapData, 0.8), 1.0)
-	
+
 
 
 	if MissCount > 0 then
@@ -6142,16 +5997,16 @@ function AddPerfomanceScore(PSValue)
 	SpeedPS *= math.pow(0.99, (AccuracyData.h50 < TotalHit / 500) and 0 or (AccuracyData.h50 - TotalHit / 500))
 
 	AccPS *= math.pow(BetterAcc, 24)
-	
+
 	-- flashlight (if avaiable)
-	
+
 	FlashlightPS *= 0.5 + Accuracy / 2.0;
 
 	AimPS *= Scaling
 	SpeedPS *= Scaling
 	AccPS *= Scaling
 	FlashlightPS *= Scaling
-	
+
 
 	local ModPS = AimPS * (MaxPSValue.Mod.Aim-1) + SpeedPS * (MaxPSValue.Mod.Speed-1) + AccPS * (MaxPSValue.Mod.Acc-1) + FlashlightPS * (MaxPSValue.Mod.Flashlight-1)
 
@@ -6315,51 +6170,6 @@ Encoded = [[
 ]]
 if not ReplayMode and not isSpectating and not onTutorial then
 
-	--[[function getReplayFormat(P,H,T)
-		local Digit1 = "0" --  [0: Movement only, [1-4]: Key hit, [5-8]: Key release] (1 byte)
-		local Digit2 = "00000000" -- Position of X and Y (8 bytes) (0000 - 4999: NegativePosition) (5000 - 9999:PositivePosition)
-		local DigitOthers = "0" -- Timing in ms (1 - 6 byte)
-		if H then
-			Digit1 = tonumber(H)
-		end
-		local Digit2_1 = tonumber(math.round(5000+P.X.Scale*512))
-		local Digit2_2 = tonumber(math.round(5000+P.Y.Scale*384))
-		--Digit2_1 = string.rep("0",4-#Digit2_1)..Digit2_1
-		--Digit2_2 = string.rep("0",4-#Digit2_2)..Digit2_2
-		local Digit3 = math.round(T)
-		-- local Encoded = Digit1..Digit2_1..Digit2_2..Digit3 --> Version 1
-		local Extended = (Digit2_2*10000+Digit2_1)*9+Digit1
-		local Encoded1 = require(workspace.StringConverter.Int_Char)(Extended,5)
-		local Encoded2 = (Digit3 >= 0 and "+" or "-")..require(workspace.StringConverter.Int_Char)(math.abs(Digit3),4)
-		--local Encoded = string.pack("I4i4",Extended,Digit3) --> Version 2
-		ReplayDataEncoded = ReplayDataEncoded..Encoded1..Encoded2
-		--print(string.len(ReplayDataEncoded))
-	end
-
-	ProcessFunction(function()
-		local PastPosition = UDim2.new(0,0,0,0)
-		local LastRecord = tick()
-		while wait() do
-			--[[
-			if tick() - LastRecord < 1/120 then
-				continue
-			end
-			LastRecord = tick()
-			ProcessFunction(function()
-				local CurrentTime = math.round((tick() - Start)*1000-SongDelay/SongSpeed)
-				local CursorPosition = Cursor.Position
-				if PastPosition ~= CursorPosition then
-					--local DecodedPosition = {X=math.floor(CursorPosition.X.Scale*512+0.5),Y=math.floor(CursorPosition.Y.Scale*384+0.5)}
-
-					--local FullData = {P = DecodedPosition,T = CurrentTime}
-					local FullData = getReplayFormat(CursorPosition,nil,CurrentTime)
-					--UploadReplay(2,FullData,1)
-				end
-				PastPosition = CursorPosition
-			end)
-		end
-	end)]]
-	
 	function getReplayFormat(P,H,T)
 		local Digit1 = "0" -- Hit [0 - false, 1 - true, 2 - nil] (1 byte)
 		local Digit2 = "00000000" -- Position of X and Y (8 bytes) (0000 - 4999: NegativePosition) (5000 - 9999:PositivePosition)
@@ -6446,47 +6256,6 @@ if ReplayMode then
 	local i = 1
 	local Finish = false
 	local count = 0
-	--[[repeat 
-		local Next,_ = string.find(ReplayDataRaw,"\n",i)
-		if not Next and i > #ReplayDataRaw-8 then
-			Finish = true
-			break
-		elseif i == 0 or not tonumber(string.sub(ReplayDataRaw,i,i)) then
-			ProcessReplayData(string.sub(ReplayDataRaw,i,Next-1))
-			i = Next+1
-			continue
-		end
-		if string.find(ReplayDataRaw, "VERSION 2") then
-			local _,s = string.find(ReplayDataRaw,"REPLAY\n")
-			s += 1
-			while s < #ReplayDataRaw-10 do
-				-- for each 8 characters, is a binary byte (each byte is 256 bits of data)
-				-- 4 characters store position XY and the key hit type (in unsigned 4 byte integer)
-				-- 4 other characters store the timing (in signed 4 byte integer)
-				local ExtendedData = require(workspace.StringConverter.Char_Int)(string.sub(ReplayDataRaw,s,s+4))
-				local Timing = require(workspace.StringConverter.Char_Int)(string.sub(ReplayDataRaw,s+6,s+10))
-				Timing = tonumber(string.sub(ReplayDataRaw,i+5,i+5)..tostring(Timing))
-				local KeyPress = ExtendedData%9
-				ExtendedData = math.floor(ExtendedData/8)
-				local PositionX = ExtendedData%10000
-				ExtendedData = math.floor(ExtendedData/10000)
-				local PositionY = ExtendedData
-				s += 10
-				ReplayData[#ReplayData+1] = {Timing,KeyPress,PositionX,PositionY}
-			end
-			break	
-		else
-			local End = Next-1
-			local KeyPress = tonumber(string.sub(ReplayDataRaw,i,i))
-			local PositionX = tonumber(string.sub(ReplayDataRaw,i+1,i+4))
-			local PositionY = tonumber(string.sub(ReplayDataRaw,i+5,i+8))
-			local Timing = tonumber(string.sub(ReplayDataRaw,i+9,End))
-			ReplayData[#ReplayData+1] = {Timing,KeyPress,PositionX,PositionY}
-		end
-		
-		i = Next+1
-	until Finish == true]]
-	
 	repeat 
 		local Next,_ = string.find(ReplayDataRaw,"\n",i)
 		if not Next then
@@ -6567,7 +6336,7 @@ if ReplayMode then
 						end)
 					else
 						-- for non TD mod, we do it instantly
-						
+
 						if data[2] > 0 and data[2] <=4 then
 							MouseHitEvent:Fire(SecurityKey,data[2])
 						elseif data[2] > 0 then
@@ -6674,6 +6443,7 @@ function AddScore(HitValue)
 	TotalScoreEstimated += 300 + (300 * ((((EstimatedCombo > 2 and EstimatedCombo-2) or 0) * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod) / 25))
 end
 
+
 -- Lagstrike Fix
 PrevRenderTick = tick()
 LagStrikeEvent = Instance.new("BindableEvent")
@@ -6723,6 +6493,15 @@ table.sort(BeatmapData, function(obj1,obj2)
 	return false
 end)
 
+function NextComboColorIndex(jumpCount)
+	for i = 1, jumpCount do
+		if CurrentComboColor >= #ComboColor then
+			CurrentComboColor = 1
+		else
+			CurrentComboColor += 1
+		end
+	end
+end
 
 -- HIT OBJ LINE
 function LetTheGameBegin()
@@ -6736,7 +6515,7 @@ function LetTheGameBegin()
 		local SliderATKey = 3
 
 		if HardRock then
-			HitObj.Position = {X = HitObj.Position.X,Y=384-HitObj.Position.Y}
+			HitObj.Position = {X = HitObj.Position.X,Y=384-HitObj.Position.Y} -- swap the note Y-Axis
 		end
 
 		local NoteId = game.HttpService:GenerateGUID()
@@ -6757,17 +6536,22 @@ function LetTheGameBegin()
 		end
 
 		local CurrentType = HitObj.Type
-		if CurrentType == 8 or CurrentType == 12 or math.floor((CurrentType-28)/16) == (CurrentType-28)/16 then  --- spinner
-			repeat wait() until (tick()-Start) >= (HitObj.Time-500)/1000
+		local HitObjProperties = ObjectTools.GetObjectProperties(CurrentType)
+
+		if HitObjProperties.isSpinner then  --- spinner
+			repeat wait() until (tick()-Start) >= (HitObj.Time-1500)/1000
 		else
-			if i == 1 then
-				repeat wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime)/1000
-			elseif (tick()-Start)*1000 < HitObj.Time-CircleApproachTime then
-				repeat wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime)/1000
+			-- Added 1000ms so it can preload
+			if i == 1 then -- the very first note
+				repeat wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime-1000)/1000
+			elseif (tick()-Start)*1000 < HitObj.Time-CircleApproachTime then	-- yield until the next note avaiable
+				repeat wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime-1000)/1000
 			end
-			if TotalNotes > NoteDisplayLimit then
-				repeat wait() until TotalNotes <= NoteDisplayLimit
-			end
+		end
+
+
+		if TotalNotes > NoteDisplayLimit then -- The note count should not exceed the display limit
+			repeat wait() until TotalNotes <= NoteDisplayLimit
 		end
 		NoteCompleted += 1
 
@@ -6775,70 +6559,26 @@ function LetTheGameBegin()
 			wait((HitObj.Time)/1000 - (tick()-Start))
 			NPS += 1 wait(1/SongSpeed) NPS -= 1
 			HealthDrainMultiplier += 0.15
-			--if HealthDrainMultiplier > 20 then
-			--HealthDrainMultiplier = 20
-			--end
-		--[[local DrainMulti = (1+NPS*0.95/5)
-		if DrainMulti > 10 then DrainMulti = 10 end
-		HealthDrainMultiplier = DrainMulti
-		wait(5/SongSpeed)
-		NPS -= 1
-		if DrainMulti > 20 then DrainMulti = 20 end
-		HealthDrainMultiplier = DrainMulti]]
 		end)
 
+		-- Combo here is the Combo is a color group
+		-- Not combo used to calculate point
 
-		local Type = HitObj.Type -- Will be useful
-
-		if Type ~= 1 and Type ~= 2 and Type ~= 8 then
+		if HitObjProperties.isNewCombo then
 			Combo = 1
-			ComboNoteData = {Full300 = true,Missor50 = false,Missed = false}
-			if CurrentComboColor >= #ComboColor then
-				CurrentComboColor = 1
-			else
-				CurrentComboColor += 1
-			end
-			if Type <= 12 then
-				if Type == 5 then Type = 1
-				elseif Type == 6 then Type = 2
-				elseif Type == 12 then Type = 8
-				end
-			else
-				for i = 1,8 do
-					if Type == 21 + 16*(i-1) then
-						Type = 1
-						break
-					elseif Type == 22 + 16*(i-1) then
-						Type = 2
-						break
-					elseif Type == 28 + 16*(i-1) then
-						Type = 8
-						break
-					else
-						if CurrentComboColor >= #ComboColor then
-							CurrentComboColor = 1
-						else
-							CurrentComboColor += 1
-						end
-					end
-				end
-				if CurrentComboColor >= #ComboColor then
-					CurrentComboColor = 1
-				else
-					CurrentComboColor += 1
-				end
-			end
+			ComboNoteData = {Full300 = true,Missor50 = false,Missed = false} -- reset the combo data
+			local ComboJump = 1 + HitObjProperties.ColorSkip
+			NextComboColorIndex(ComboJump)
 		else
 			Combo += 1
 		end
 
-		if Type ~= 8 then
+		if not HitObjProperties.isSpinner then
 			DisplayingHitnote[HitNoteID] = {X = HitObj.Position.X,Y = HitObj.Position.Y, Id = HitNoteID, Time = HitObj.Time}
 		end
 
 		TotalNotes += 1
 		ProcessFunction(function()
-
 			if (isSpectating == true or isOnTimeJump) and tick() - Start > (HitObj.Time+hit50)/1000 then
 				Combo = 1
 				CurrentCursorPos = HitNoteID + 1
@@ -6848,43 +6588,10 @@ function LetTheGameBegin()
 			end
 			if HitObj.Time < -1550 then
 				local Type = HitObj.Type
-				if Type ~= 1 and Type ~= 2 and Type ~= 8 then
+				if HitObjProperties.isNewCombo then
 					Combo = 1
-					if CurrentComboColor >= #ComboColor then
-						CurrentComboColor = 1
-					else
-						CurrentComboColor += 1
-					end
-					if Type <= 12 then
-						if Type == 5 then Type = 1
-						elseif Type == 6 then Type = 2
-						elseif Type == 12 then Type = 8
-						end
-					else
-						for i = 1,8 do
-							if Type == 21 + 16*(i-1) then
-								Type = 1
-								break
-							elseif Type == 22 + 16*(i-1) then
-								Type = 2
-								break
-							elseif Type == 28 + 16*(i-1) then
-								Type = 8
-								break
-							else
-								if CurrentComboColor >= #ComboColor then
-									CurrentComboColor = 1
-								else
-									CurrentComboColor += 1
-								end
-							end
-						end
-						if CurrentComboColor >= #ComboColor then
-							CurrentComboColor = 1
-						else
-							CurrentComboColor += 1
-						end
-					end
+					local ComboJump = 1 + HitObjProperties.ColorSkip
+					NextComboColorIndex(ComboJump)
 				else
 					Combo += 1
 				end
@@ -6904,7 +6611,7 @@ function LetTheGameBegin()
 				NoteNormalSampleSet,NoteAditionSampleSet = string.sub(HitsoundCustomSampleSet,_s1,_e1),string.sub(HitsoundCustomSampleSet,_s2,_e2)
 			end
 
-			if Type == 8 then -- Spinner
+			if HitObjProperties.isSpinner then -- Spinner
 				if AutoPlay == true and ReplayMode ~= true then
 					local SpinKey = 3 -- default
 					ProcessFunction(function() -- auto spin (beta)
@@ -6982,6 +6689,8 @@ function LetTheGameBegin()
 				local RoundRequired = SpinnerTime*RoundRequiredPerSec -- 100 RPM avg for 300s, 75 for 100s, 50 for 50s, else = miss
 				local RoundMaximum = math.ceil(SpinnerTime*MaximumRoundPerSec)
 
+
+				Spinner.SpinEnd.Value = HitObj.SpinTime
 				Spinner.SpinTime.Value = SpinnerTime
 				Spinner.RoundRequired.Value = RoundRequired
 				Spinner.MaxSpin.Value = math.max(RoundRequired+1, RoundMaximum)
@@ -6991,7 +6700,7 @@ function LetTheGameBegin()
 				Spinner.Spinner.SpinnerScript.Disabled = false
 
 
-				wait(SpinnerTime+0.5/SongSpeed)
+				repeat wait() until tick() - Start >= (HitObj.SpinTime)/1000
 
 				local Ratio = Spinner.Spinner.RoundSpinned.Value/Spinner.RoundRequired.Value
 
@@ -7048,7 +6757,7 @@ function LetTheGameBegin()
 				if Ratio >= 0.25 or SpinnerTime < 0.2 then
 					AccuracyData.Combo += 1
 					EstimatedCombo += 1
-					
+
 					AccuracyData.BaseConsistency += AccuracyData.Combo
 					AccuracyData.MaxConsistency += EstimatedCombo
 					AccuracyData.PerfomanceCombo += 1 
@@ -7078,17 +6787,20 @@ function LetTheGameBegin()
 						AccuracyData.h300 += 1
 						CreateHitResult(4)
 						AddScore(300)
-						AddPerfomanceScore(HitObj.PSValue,1)
+						AddHP(0.03 + 0.07)
+						AddPerfomanceScore(HitObj.PSValue)
 					elseif Spinner.RoundRequired.Value-Spinner.Spinner.RoundSpinned.Value <= 1 then
 						AccuracyData.h100 += 1
 						CreateHitResult(3)
 						AddScore(100)
-						AddPerfomanceScore(HitObj.PSValue,1/3)
+						AddHP(0.011 + 0.05)
+						AddPerfomanceScore(HitObj.PSValue)
 					else
 						AccuracyData.h50 += 1
 						CreateHitResult(2)
 						AddScore(50)
-						AddPerfomanceScore(HitObj.PSValue,1/6)
+						AddHP(0.002 + 0.03)
+						AddPerfomanceScore(HitObj.PSValue)
 					end
 				else
 					if AccuracyData.Combo >= 20 then
@@ -7099,10 +6811,11 @@ function LetTheGameBegin()
 					AccuracyData.MaxConsistency += EstimatedCombo
 					AccuracyData.PerfomanceCombo = 0
 					Missed = true
-					AddPerfomanceScore(HitObj.PSValue,0)
+					AddPerfomanceScore(HitObj.PSValue)
 					AccuracyData.miss += 1
 					MissedInCurrentTime = true
 					AddScore(0)
+					DrainHP(-0.03, -0.125, -0.2)
 					CreateHitResult(1)
 					HitMiss = true
 				end
@@ -7174,7 +6887,7 @@ function LetTheGameBegin()
 
 						CurrentNoteId = NoteId
 
-						if Type ~= 2 or not SliderMode then
+						if not HitObjProperties.isSlider or not SliderMode then
 							AutoClick()
 						else
 							if tick() - LastClick > 0.25 then
@@ -7200,7 +6913,7 @@ function LetTheGameBegin()
 							end
 						end
 
-						if Type ~= 2 or SliderMode == false then
+						if not HitObjProperties.isSlider or SliderMode == false then
 							CurrentCursorPos = HitNoteID + 1
 						end
 					end)
@@ -7218,7 +6931,7 @@ function LetTheGameBegin()
 						local NextHitObj = BeatmapData[i+1]
 						local HitObjPos = Vector2.new(HitObj.Position.X,HitObj.Position.Y)
 
-						if SliderMode and Type == 2 then
+						if SliderMode and HitObjProperties.isSlider then
 							repeat wait() until SLEndPos
 							if HardRock then
 								HitObjPos = Vector2.new(SLEndPos.X,384-SLEndPos.Y)
@@ -7228,7 +6941,8 @@ function LetTheGameBegin()
 						end
 
 						local NextHitObjPos
-						if HardRock and not (SliderMode and Type == 2) then
+
+						if HardRock and not (SliderMode and HitObjProperties.isSlider) then
 							NextHitObjPos = Vector2.new(NextHitObj.Position.X,384-NextHitObj.Position.Y)
 						else
 							NextHitObjPos = Vector2.new(NextHitObj.Position.X,NextHitObj.Position.Y)
@@ -7278,12 +6992,16 @@ function LetTheGameBegin()
 							end)
 
 
+
 							local DisplayTime = (((NextHitObj.Time+100)-HitObj.Time)> 100/SongSpeed and NextHitObj.Time-HitObj.Time) or 100/SongSpeed
 							local TweenTime = (NextHitObj.Time-HitObj.Time > 50/SongSpeed and NextHitObj.Time-HitObj.Time) or 50/SongSpeed
 
-							local ct_ = TweenService:Create(Connection,TweenInfo.new(TweenTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{BackgroundTransparency = 0.5,Position = Pos,Size = Size})
-							AddHitnoteAnimation(ct_)
-							ct_:Play()
+							ProcessFunction(function()
+								repeat wait() until tick() - Start >= (HitObj.Time - CircleApproachTime)/1000
+								local ct_ = TweenService:Create(Connection,TweenInfo.new(TweenTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{BackgroundTransparency = 0.5,Position = Pos,Size = Size})
+								AddHitnoteAnimation(ct_)
+								ct_:Play()
+							end)
 							if (tick() - Start)*1000 < NextHitObj.Time-250/SongSpeed then
 								wait((NextHitObj.Time-250/SongSpeed)/1000 - (tick()-Start))
 								local ct_ = TweenService:Create(Connection,TweenInfo.new(0.25/SongSpeed,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{BackgroundTransparency = 0.5,Position = EndPos,Size = UDim2.new(0,0,0,3)})
@@ -7315,6 +7033,13 @@ function LetTheGameBegin()
 				Circle.HitCircle.ImageColor3 = ComboColor[CurrentComboColor]
 				Circle.ApproachCircle.ImageColor3= ComboColor[CurrentComboColor]
 				HitObj.ComboColor = ComboColor[CurrentComboColor]
+				if tick() - Start < (HitObj.Time - CircleApproachTime)/1000 then
+					ProcessFunction(function()
+						Circle.Visible = false
+						repeat wait() until tick() - Start >= (HitObj.Time - CircleApproachTime)/1000
+						Circle.Visible = true
+					end)
+				end
 				local FadeInTime = 0.8
 				if ApproachRate < 5 then
 					FadeInTime = (800 + 400 * (5 - ApproachRate) / 5)/1000
@@ -7328,73 +7053,7 @@ function LetTheGameBegin()
 				if HiddenMod then
 					FadeInTime = (CircleApproachTime - (CircleApproachTime*1/6))/2000
 				else
-				--[[
-				local CurrentTrans = script.Parent.BPMTick.CurrentTrans.Value
-				Circle.Lightning.Transparency = CurrentTrans
-				local FullFadeTime = 1/script.Parent.BPMTick.BPM.Value - 0.1
-				local FadeTime = FullFadeTime * ((1-CurrentTrans)*10)
-				TweenService:Create(Circle.Lightning,TweenInfo.new(FadeTime,Enum.EasingStyle.Linear),{BackgroundTransparecy = 1}):Play()
-				]]
 				end
-			--[[ Test
-			local hitcirclet_ = TweenService:Create(Circle.HitCircle,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 0})
-			AddHitnoteAnimation(hitcirclet_)
-			hitcirclet_:Play()
-			for _,Object in pairs(Circle:GetChildren()) do
-				ProcessFunction(function()
-					if Object:IsA("ImageLabel") and Object.Name ~= "Lightning" then
-						if not (HiddenMod and Object.Name == "ApproachCircle" and i ~= 1) then
-							local t_ = TweenService:Create(Object,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 0})
-							AddHitnoteAnimation(t_)
-							t_:Play()
-						end
-					end
-					if Object:IsA("TextLabel") then
-						local t_ = TweenService:Create(Object,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{TextTransparency = 0,TextStrokeTransparency = 0.9})
-						AddHitnoteAnimation(t_)
-						t_:Play()
-					end
-					if Object.Name == "CircleNumber" then
-						for _,a in pairs(Object:GetChildren()) do 
-							if a:IsA("ImageLabel") then
-								AddHitnoteAnimation(TweenService:Create(a,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 0})):Play()
-							end
-						end
-					end
-				end)
-			end
-
-			ProcessFunction(function()
-				if HiddenMod then
-					local VisibleTime = FadeInTime
-
-					repeat wait() until tick() - Start >= HitObj.Time/1000 - CircleApproachTime/1000 + VisibleTime
-					local hitcirclet_ = TweenService:Create(Circle.HitCircle,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 1})
-					AddHitnoteAnimation(hitcirclet_)
-					hitcirclet_:Play()
-					for _,Object in pairs(Circle:GetChildren()) do
-						ProcessFunction(function()
-							if Object:IsA("ImageLabel") and Object.Name ~= "Lightning" and Object.Name ~= "ApproachCircle"  then
-								local t_ = TweenService:Create(Object,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 1})
-								AddHitnoteAnimation(t_)
-								t_:Play()
-							end
-							if Object:IsA("TextLabel") then
-								local t_ = TweenService:Create(Object,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{TextTransparency = 1,TextStrokeTransparency = 1})
-								AddHitnoteAnimation(t_)
-								t_:Play()
-							end
-							if Object.Name == "CircleNumber" then
-								for _,a in pairs(Object:GetChildren()) do 
-									if a:IsA("ImageLabel") then
-										TweenService:Create(a,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
-									end
-								end
-							end
-						end)
-					end
-				end
-			end)]]
 
 				-------------------- Hit result -------------------------------
 
@@ -7506,7 +7165,7 @@ function LetTheGameBegin()
 				local LastHold = 0
 
 
-				if Type == 2 and SliderMode == true then
+				if HitObjProperties.isSlider and SliderMode == true then
 					local FollowCircleZIndex = ZIndex
 					local SliderFolder = Instance.new("CanvasGroup",script.Parent.PlayFrame)
 					SliderFolder.Name = "Slider"
@@ -7532,90 +7191,10 @@ function LetTheGameBegin()
 					local DefaultSliderMultiplier = SliderMultiplier
 					local LastBPMTiming = HitObj.HitObjBPMData.LastBPMTiming
 
-				--[[
-
-
-
-				local LoadedData = {
-					BPMLoaded = false,MultiLoaded = false,FirstBPM = false,FirstSliderMulti = true
-				}
-
-
-				for order,TimingData in pairs(TimingPoints) do
-					local BeatLength =  TimingData[2]
-					local Positive = BeatLength/math.abs(BeatLength)
-					if TimingData[1] > HitObj.Time+1 and LoadedData.FirstBPM and LoadedData.FirstSliderMulti then
-						-- some moment it coult be mis-calculated
-						break
-					end
-					if Positive > 0 then -- there's no way Positive = 0
-						local BPM = (1 / BeatLength * 1000 * 60)*SongSpeed
-						if not LoadedData.FirstBPM then
-							LoadedData.FirstBPM = true
-							CurrentBPM = BPM
-							LastBPMTiming = TimingData[1]
-						end
-						if TimingData[1] <= HitObj.Time then
-							CurrentBPM = BPM
-							LastBPMTiming = TimingData[1]
-						end
-					else
-						local SliderMulti = 1/((-BeatLength)/100)
-						if TimingData[1] <= HitObj.Time then
-							CurrentSliderMulti = SliderMulti
-						end
-					end
-				end
-
-				SliderTickOffset = (HitObj.Time-LastBPMTiming)%(60000/CurrentBPM)/1000
-				if math.abs((60/CurrentBPM) - SliderTickOffset) < SliderTickOffset then
-					SliderTickOffset = -((60/CurrentBPM) - SliderTickOffset)
-				end
-
-
-
-
-				local SliderMulti = CurrentSliderMulti * DefaultSliderMultiplier
-				if CurrentSliderMulti < 0.1 then
-					CurrentSliderMulti = 0.1
-				end
-				local Delayed = (tick() - Start) - HitObj.Time/1000
-				local LengthPerBeat = CurrentSliderMulti*100
-				local LengthPerSec = LengthPerBeat*(CurrentBPM/60)
-
-				SliderTime = (((tonumber(ExtraData[4])*Slides)/LengthPerSec)/DefaultSliderMultiplier)
-
-]]
 					if i >= #BeatmapData then
 						LastNoteData = {Slider = true,SliderTime = SliderTime}
 					end
 
-				--[[
-				ProcessFunction(function()
-					wait(HitObj.Time/1000 - (tick() - Start))
-
-					local CurrentBPM = BPM
-					local CurrentSliderMulti = CurrentSliderMultiplier
-
-					for i = 1,20 do
-						if NextBPM[i] and NextBPM[i].Time <= HitObj.Time then
-							CurrentBPM = NextBPM.Value
-						end
-						if NextSliderMulti[i] and NextSliderMulti[i].Time <= HitObj.Time then
-							CurrentSliderMulti = NextSliderMulti.Value
-						end
-					end
-
-					local SliderMulti = SliderMultiplier*CurrentSliderMultiplier
-
-					local LengthPerBeat = SliderMulti*100
-					local LengthPerSec = LengthPerBeat*(BPM/60)
-
-					local Delayed = (tick() - Start) - HitObj.Time/1000
-
-					-- due to wait() is sometime delayed, this will help the slider less delay
-					SliderTime = (((ExtraData[4]*Slides)/LengthPerSec)/SongSpeed) - Delayed
-				end)]]
 					local CurrentPos = 3
 					local CurveData = HitObj.ExtraData[2]
 					-- Follow circle
@@ -7633,28 +7212,13 @@ function LetTheGameBegin()
 
 
 					SliderCurvePoints[1] = HitObj.Position
-					for i = 3,#CurveData do
-						if string.sub(CurveData,i,i) == "|" or i == #CurveData then
-							for a = CurrentPos,i-1 do
-								if string.sub(CurveData,a,a) == ":" then
-									if i ~= #CurveData then
-										SliderCurvePoints[#SliderCurvePoints+1] = {
-											X = tonumber(string.sub(CurveData,CurrentPos,a-1)),
-											Y = tonumber(string.sub(CurveData,a+1,i-1))
-										}
-									else
-										SliderCurvePoints[#SliderCurvePoints+1] = {
-											X = tonumber(string.sub(CurveData,CurrentPos,a-1)),
-											Y = tonumber(string.sub(CurveData,a+1,i))
-										}
-									end
-									break
-								end
-							end
-							CurrentPos = i+1
-						end
-					end
+					local raw = string.split(CurveData, "|")
+					for i, crrPos in pairs(raw) do
+						if i == 1 then continue end -- this is the curve type, pass it
 
+						local posData = string.split(crrPos, ":")
+						SliderCurvePoints[#SliderCurvePoints+1] = {X = tonumber(posData[1]), Y = tonumber(posData[2])} --Vector2.new(tonumber(posData[1], tonumber(posData[2])))
+					end
 					if Slides % 2 == 0 then
 						SLEndPos = SliderCurvePoints[1]
 					else
@@ -7772,38 +7336,6 @@ function LetTheGameBegin()
 							SliderCurvePoints = NewCurvePoints
 						end
 					end
-
-					--[[local function calculateCircleCurve(pointA, pointB, pointC)
-						local numPoints = 20
-						local curvePoints = {}
-
-						local lengthAB = (pointB - pointA).Magnitude
-						local lengthBC = (pointC - pointB).Magnitude
-						local maxRadius = lengthAB + lengthBC
-
-						local angleAB = math.atan2(pointB.Y - pointA.Y, pointB.X - pointA.X)
-						local angleBC = math.atan2(pointC.Y - pointB.Y, pointC.X - pointB.X)
-
-						local direction = 1
-
-						for i = 1, numPoints do
-							local t = i / numPoints
-							local angle = angleAB + direction * t * math.abs(angleBC - angleAB)
-
-							local radius = maxRadius * t
-							if radius > maxRadius then
-								radius = maxRadius
-							end
-
-							local x = math.cos(angle) * radius + pointA.X
-							local y = math.sin(angle) * radius + pointA.Y
-
-							table.insert(curvePoints, {X = x, Y = y})
-						end
-
-						return curvePoints
-					end]]
-					
 					local function calculateCircleCurve(pointA, pointB, pointC, numPoints)
 						numPoints = numPoints or 20  -- Default to 20 if not provided
 						local curvePoints = {}
@@ -8019,7 +7551,9 @@ function LetTheGameBegin()
 						end)
 					end
 
-
+					-- We're just creating the slider base, not running it yet
+					-- Wait until it's ready to run
+					repeat wait() until tick() - Start >= (HitObj.Time - CircleApproachTime)/1000
 					TweenService:Create(SliderFolder,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{GroupTransparency = 0.2}):Play()
 					if HiddenMod then
 						ProcessFunction(function()
@@ -8081,7 +7615,7 @@ function LetTheGameBegin()
 										AccuracyData.BaseConsistency += AccuracyData.Combo
 										AccuracyData.MaxConsistency += EstimatedCombo
 										TickCollected += 1
-										AddHP(0.5)
+										AddHP(0.015)
 										if AccuracyData.Combo > AccuracyData.MaxCombo then
 											AccuracyData.MaxCombo = AccuracyData.Combo
 										end
@@ -8095,7 +7629,7 @@ function LetTheGameBegin()
 										AccuracyData.MaxConsistency += EstimatedCombo
 										AccuracyData.PerfomanceCombo = 0
 										Missed = true
-										DrainHP(MissDrain/4)
+										DrainHP(-0.02, -0.075, -0.14)
 									end
 								end
 							end
@@ -8257,7 +7791,7 @@ function LetTheGameBegin()
 										AccuracyData.BaseConsistency += AccuracyData.Combo
 										AccuracyData.MaxConsistency += EstimatedCombo
 										TickCollected += 1
-										AddHP(1.1)
+										AddHP(0.02)
 										if AccuracyData.Combo > AccuracyData.MaxCombo then
 											AccuracyData.MaxCombo = AccuracyData.Combo
 										end
@@ -8280,7 +7814,7 @@ function LetTheGameBegin()
 											end
 										end
 									else
-										DrainHP(MissDrain/2)
+										DrainHP(-0.02, -0.075, -0.14)
 									end
 								elseif i < Slides then
 									if AccuracyData.Combo >= 20 then
@@ -8291,8 +7825,8 @@ function LetTheGameBegin()
 									AccuracyData.MaxConsistency += EstimatedCombo
 									AccuracyData.PerfomanceCombo = 0
 									Missed = true
-									AddPerfomanceScore(HitObj.PSValue,0)
-									DrainHP(MissDrain/2)
+									AddPerfomanceScore(HitObj.PSValue)
+									DrainHP(-0.02, -0.075, -0.14)
 								end
 							end
 							-----------------
@@ -8300,17 +7834,18 @@ function LetTheGameBegin()
 							local HitResultPosition = Slides%2 == 1 and SliderCurvePoints[#SliderCurvePoints] or SliderCurvePoints[1]
 
 							HealthDrainMultiplier += 0.1
+
 							if TickCollected >= TickRequired then
 								if isLastComboNote then
 									if ComboNoteData.Full300 then
-										AddHP(3 + 1)
+										AddHP(0.03 + 0.07)
 									elseif not ComboNoteData.Missor50 then
-										AddHP(3 + 0.85)
+										AddHP(0.03 + 0.05)
 									else
-										AddHP(3)
+										AddHP(0.03 + 0.03)
 									end
 								else
-									AddHP(3)
+									AddHP(0.03)
 								end
 								AccuracyData.PerfomanceCombo += 1 
 								if AccuracyData.PerfomanceCombo > AccuracyData.MaxPeromanceCombo then
@@ -8318,42 +7853,46 @@ function LetTheGameBegin()
 								end
 								AccuracyData.h300 += 1
 								AddScore(300)
-								AddPerfomanceScore(HitObj.PSValue,1)
+								AddPerfomanceScore(HitObj.PSValue)
 								CreateSliderHitResult(4,SliderCurvePoints[#SliderCurvePoints])
 							elseif TickCollected/TickRequired >= 0.5 then
 								if isLastComboNote then
 									if not ComboNoteData.Missor50 then
-										AddHP(1.1 + 0.85)
+										AddHP(0.011 + 0.05)
 									else
-										AddHP(1.1)
+										AddHP(0.011)
 									end
 								else
 									ComboNoteData.Full300 = false
-									AddHP(1.1)
+									AddHP(0.011)
 								end
 								AccuracyData.h100 += 1
 								AddScore(100)
 								CreateSliderHitResult(3,SliderCurvePoints[#SliderCurvePoints])
-								AddPerfomanceScore(HitObj.PSValue,1/3)
+								AddPerfomanceScore(HitObj.PSValue)
 							elseif TickCollected > 0 then
 								AccuracyData.h50 += 1
 								AddScore(50)
-								DrainHP(0)
+								if isLastComboNote then
+									AddHP(0.002 + 0.03)
+								else
+									AddHP(0.002)
+								end
 								CreateSliderHitResult(2,SliderCurvePoints[#SliderCurvePoints])
-								AddPerfomanceScore(HitObj.PSValue,1/6)
+								AddPerfomanceScore(HitObj.PSValue)
 							else
 								AccuracyData.PerfomanceCombo = 0
 								AccuracyData.miss += 1
 								MissedInCurrentTime = true
 								AddScore(0)
-								DrainHP(MissDrain/2)
+								DrainHP(-0.03, -0.125, -0.2)
 								CreateSliderHitResult(1,SliderCurvePoints[#SliderCurvePoints])
 								AccuracyData.Combo = 0
 								EstimatedCombo += 1
 								AccuracyData.MaxConsistency += EstimatedCombo
 								AccuracyData.PerfomanceCombo = 0
 								Missed = true
-								AddPerfomanceScore(HitObj.PSValue,0)
+								AddPerfomanceScore(HitObj.PSValue)
 								if AccuracyData.Combo >= 20 then
 									script.Parent.ComboBreak:Play()
 								end
@@ -8387,26 +7926,6 @@ function LetTheGameBegin()
 				---------------------------------------------------------------------------------------------------------
 
 
-
-			--[[
-
-			local FixedApproachTime = -((tick()-Start)*1000 - HitObj.Time)
-			if FixedApproachTime < 0 then
-				FixedApproachTime = 0
-			end
-			if FixedApproachTime >= 10000 then
-				repeat wait() FixedApproachTime = -((tick()-Start)*1000 - HitObj.Time) until FixedApproachTime < 10000
-			end
-			local ApproachSize = (1-(CircleApproachTime-FixedApproachTime)/CircleApproachTime)*3 + 1.1
-
-			if ApproachSize > 4.1 then
-				ApproachSize = 4.1
-			end]]
-
-				--Circle.ApproachCircle.Size = UDim2.new(ApproachSize,0,ApproachSize,0)
-				--local ApproachCircleTween = TweenService:Create(Circle.ApproachCircle,TweenInfo.new(FixedApproachTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Size = UDim2.new(1.1,0,1.1,0)})
-				--AddHitnoteAnimation(ApproachCircleTween)
-				--ApproachCircleTween:Play()
 				local function UpdateHitCircleTransparency(Transparency)
 					for _,obj in pairs(Circle:GetDescendants()) do
 						if obj:IsA("ImageLabel") then
@@ -8451,7 +7970,7 @@ function LetTheGameBegin()
 						--AddHitnoteAnimation(ApproachCircleTween)
 						--ApproachCircleTween:Play()
 					end)
-					
+
 					local ApproachCircleTween
 
 					while not IsHitted do
@@ -8491,7 +8010,7 @@ function LetTheGameBegin()
 					end
 					if IsHitted == false and not BeatmapFailed then
 						Circle.ApproachCircle.Visible = false
-						if Type ~= 2 or not SliderMode then
+						if not HitObjProperties.isSlider or not SliderMode then
 							if ((HitObj.Time+hit50)/1000) - (tick()-Start) > 0 then
 								wait(((HitObj.Time+hit50)/1000) - (tick()-Start))
 								if tick() - Start < 10000 then
@@ -8572,13 +8091,13 @@ function LetTheGameBegin()
 							AccuracyData.MaxConsistency += EstimatedCombo
 							AccuracyData.PerfomanceCombo = 0
 							Missed = true
-							DrainHP(MissDrain)
+							DrainHP(-0.03, -0.125, -0.2)
 							ComboNoteData.Missor50 = true
 							ComboNoteData.Full300 = false
 							AddPerfomanceScore(HitObj.PSValue)
 							CurrentHitnote = HitNoteID + 1
 							TotalNotes -= 1
-							if Type ~= 2 or SliderMode == false then
+							if not HitObjProperties.isSlider or SliderMode == false then
 								AccuracyData.miss += 1
 								MissedInCurrentTime = true
 								AddScore(0)
@@ -8679,26 +8198,6 @@ function LetTheGameBegin()
 						end
 						local CurrentTime = (tick()-Start)*1000 - FramerateFix
 						local HitDelay = CurrentTime - HitObj.Time
-						
-				--[[
-				local CurrentHitNotePos = BeatmapData[CurrentHitnote].Position
-				local Distance = math.abs((Vector2.new(CurrentHitNotePos.X,CurrentHitNotePos.Y) - Vector2.new(HitObj.Position.X,HitObj.Position.Y)).Magnitude)
-				spawn(function()
-					if isincircle() and IsHitted == false and ((CurrentHitnote ~= HitNoteID and Distance > CircleSize) or HitDelay < -EarlyMiss) then -- rip notelock
-						local ShakeValue = Instance.new("NumberValue",script.Parent.PlayFrame)
-						ShakeValue.Value = 5
-						TweenService:Create(ShakeValue,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{Value = 0}):Play()
-						local PositiveValue = 1
-						local Connection = ShakeValue.Changed:Connect(function()
-							PositiveValue *= -1
-							Circle.AnchorPoint = Vector2.new(0.5+(PositiveValue*ShakeValue.Value*0.01),0.5)
-						end)
-						wait(0.25)
-						Connection:Disconnect()
-						ShakeValue:Destroy()
-						Circle.AnchorPoint = Vector2.new(0.5,0.5)
-					end
-				end)]]
 						if IsHitted == false then
 							local spectatingRetryCount = 10
 
@@ -8739,14 +8238,14 @@ function LetTheGameBegin()
 									AccuracyData.MaxConsistency += EstimatedCombo
 									AccuracyData.PerfomanceCombo = 0
 									Missed = true
-									if Type ~= 2 or SliderMode == false then
+									if not HitObjProperties.isSlider or SliderMode == false then
 										AccuracyData.miss += 1
 										MissedInCurrentTime = true
 										AddScore(0)
 										CreateHitResult(1)
-										AddPerfomanceScore(HitObj.PSValue,0)
+										AddPerfomanceScore(HitObj.PSValue)
 									end
-									DrainHP(MissDrain)
+									DrainHP(-0.03, -0.125, -0.2)
 									ComboNoteData.Missor50 = true
 									ComboNoteData.Full300 = false
 									HitMiss = true
@@ -8777,8 +8276,8 @@ function LetTheGameBegin()
 									end
 								end
 							end
-							
-							
+
+
 							if (HitDelay >= -EarlyMiss or isSpectating) and isincircle() then
 
 								IsHitted = true
@@ -8798,16 +8297,16 @@ function LetTheGameBegin()
 									AccuracyData.MaxConsistency += EstimatedCombo
 									AccuracyData.PerfomanceCombo = 0
 									Missed = true
-									DrainHP(MissDrain)
+									DrainHP(-0.03, -0.125, -0.2)
 									CreateHitDelay(Color3.new(1, 0.372549, 0.372549),HitDelay)
 									ComboNoteData.Missor50 = true
 									ComboNoteData.Full300 = false
-									if Type ~= 2 or SliderMode == false then
+									if not HitObjProperties.isSlider or SliderMode == false then
 										AccuracyData.miss += 1
 										MissedInCurrentTime = true
 										AddScore(0)
 										CreateHitResult(1)
-										AddPerfomanceScore(HitObj.PSValue,0)
+										AddPerfomanceScore(HitObj.PSValue)
 									end
 									HitMiss = true
 									ProcessFunction(function()
@@ -8873,7 +8372,7 @@ function LetTheGameBegin()
 											end
 										end
 									end)
-									if Type ~= 2 or SliderMode == false then
+									if not HitObjProperties.isSlider or SliderMode == false then
 										AccuracyData.PerfomanceCombo += 1 
 										if AccuracyData.PerfomanceCombo > AccuracyData.MaxPeromanceCombo then
 											AccuracyData.MaxPeromanceCombo = AccuracyData.PerfomanceCombo
@@ -8888,14 +8387,14 @@ function LetTheGameBegin()
 										if math.abs(HitDelay) <= hit300 then
 											if isLastComboNote then
 												if ComboNoteData.Full300 then
-													AddHP(3 + 1)
+													AddHP(0.03 + 0.07)
 												elseif not ComboNoteData.Missor50 then
-													AddHP(3 + 0.85)
+													AddHP(0.03 + 0.05)
 												else
-													AddHP(3)
+													AddHP(0.03 + 0.03)
 												end
 											else
-												AddHP(3)
+												AddHP(0.03)
 											end
 
 											AccuracyData.h300Bonus += hit300 - math.abs(HitDelay)
@@ -8904,35 +8403,39 @@ function LetTheGameBegin()
 											CreateHitDelay(Color3.new(0.686275, 1, 1),HitDelay)
 											CreateHitResult(4)
 											AddScore(300)
-											AddPerfomanceScore(HitObj.PSValue,1)
+											AddPerfomanceScore(HitObj.PSValue)
 										elseif math.abs(HitDelay) <= hit100 then
 											if isLastComboNote then
 												if not ComboNoteData.Missor50 then
-													AddHP(1.1 + 0.85)
+													AddHP(0.011 + 0.05)
 												else
-													AddHP(1.1)
+													AddHP(0.011 + 0.03)
 												end
 											else
 												ComboNoteData.Full300 = false
-												AddHP(1.1)
+												AddHP(0.011 + 0.03)
 											end
 											AccuracyData.h100 += 1
 											CreateHitDelay(Color3.new(0.686275, 1, 0.686275),HitDelay)
 											CreateHitResult(3)
 											AddScore(100)
-											AddPerfomanceScore(HitObj.PSValue,1/3)
+											AddPerfomanceScore(HitObj.PSValue)
 										else
 											ComboNoteData.Missor50 = true
 											ComboNoteData.Full300 = false
-											DrainHP(0)
+											if isLastComboNote then
+												AddHP(0.002 + 0.03)
+											else
+												AddHP(0.002)
+											end
 											AccuracyData.h50 += 1
 											CreateHitDelay(Color3.new(1, 1, 0.686275),HitDelay)
 											CreateHitResult(2)
 											AddScore(50)
-											AddPerfomanceScore(HitObj.PSValue,1/6)
+											AddPerfomanceScore(HitObj.PSValue)
 										end
 									else
-										AddHP(1.1)
+										AddHP(0.02)
 										Score += 30
 										TotalScoreEstimated += 30
 										if math.abs(HitDelay) < hit300 then
@@ -9026,7 +8529,7 @@ if isSpectating == false then
 	local Type = BeatmapData[#BeatmapData].Type
 
 
-	if Type == 8 or Type == 12 or math.floor((Type-28)/16) == (Type-28)/161 then
+	if ObjectTools.GetObjectProperties(Type).isSpinner then
 		repeat wait() until (tick()-Start) >= BeatmapData[#BeatmapData].SpinTime/1000
 		spawn(function()
 			TweenService:Create(script.Parent.ProgressBar,TweenInfo.new(1,Enum.EasingStyle.Quint,Enum.EasingDirection.In),{Size = UDim2.new(0,4,0,4)}):Play()
@@ -9413,10 +8916,6 @@ for i,ChartFrame in pairs(FrameList) do
 				end
 			end
 		end)
-		--[[
-		ChartFrame.ConnectionFrame.Position = UDim2.new(0.5,0,AvgPos)
-		ChartFrame.ConnectionFrame.Size = UDim2.new(0,ConnectionLength+2,0,2)
-		ChartFrame.ConnectionFrame.Rotation = Rotation]]
 	end
 end
 
@@ -9485,10 +8984,6 @@ for i,ChartFrame in pairs(PerfomanceFrameList) do
 				end
 			end
 		end)
-		--[[
-		ChartFrame.ConnectionFrame.Position = UDim2.new(0.5,0,AvgPos)
-		ChartFrame.ConnectionFrame.Size = UDim2.new(0,ConnectionLength+2,0,2)
-		ChartFrame.ConnectionFrame.Rotation = Rotation]]
 	end
 end
 HighestHitErrorClick = 1
@@ -9738,7 +9233,7 @@ end
 
 -->   2021 - 2024 osu!RoVer   <--
 -- osu!corescript by VtntGaming
--- String size: 354.961KB (V1.47)
+-- String size: 335.963KB (V1.47)
 
 -- Source code used as a backup script, if you're not VtntGaming and see this please use it right :>
 -- Some mathmethic is inspired/taken from osu! and osu!Lazer github source
