@@ -4,15 +4,15 @@ osuLocalConvert = require(workspace.OsuConvert)
 
 -- Services instance load
 
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
-local StarterGui = game.StarterGui
-local ScriptComponent = script.Parent.GameplayScripts.Components
-local ObjectTools = require(ScriptComponent.Gameplay.CircleObject)
-local LocalPlayer = game.Players.LocalPlayer
-local PlayerGui = LocalPlayer.PlayerGui
+TweenService = game:GetService("TweenService")
+UserInputService = game:GetService("UserInputService")
+RunService = game:GetService("RunService")
+HttpService = game:GetService("HttpService")
+StarterGui = game.StarterGui
+ScriptComponent = script.Parent.GameplayScripts.Components
+ObjectTools = require(ScriptComponent.Gameplay.CircleObject)
+LocalPlayer = game.Players.LocalPlayer
+PlayerGui = LocalPlayer.PlayerGui
 local wait = require(workspace.WaitModule)
 
 if script.Parent.StartupState.Value == "Waiting" then
@@ -86,106 +86,6 @@ else
 	local AdvancedOption = {
 		NotelockStyle = {["true"] = "Stable",["false"] = "Lazer"}
 	}
-
-	if tonumber(AsyncedSetting.Offset) and tonumber(AsyncedSetting.Offset) ~= 0 then
-		local Value = AsyncedSetting.Offset
-		if Value ~= 0 then
-			CurrentSetting.Offset.ResetButton.Frame1.BackgroundTransparency = 0
-			CurrentSetting.Offset.ResetButton.GlowEffect.BackgroundTransparency = 0
-			CurrentSetting.Offset.ResetButton.GlowEffect.Size = UDim2.new(1,0,1,0)
-		end
-		CurrentSetting.Offset.DraggingZone.DragButton.Position = UDim2.new((Value+1000)/2000,0,0.5,0)
-		CurrentSetting.Offset.DraggingZone.DragButton.Text = tostring(Value).."ms"
-		CurrentSetting.Offset.Hint.Value = tostring(Value).."ms"
-		CurrentSetting.Parent.VirtualSettings.InstantSettings.Offset.Value = Value
-	end
-	if tonumber(AsyncedSetting.CursorSensitivity) and tonumber(AsyncedSetting.CursorSensitivity) ~= 1 then
-		local Value = AsyncedSetting.CursorSensitivity*100
-		if Value ~= 100 then
-			CurrentSetting.CursorSensitivity.ResetButton.Frame1.BackgroundTransparency = 0
-			CurrentSetting.CursorSensitivity.ResetButton.GlowEffect.BackgroundTransparency = 0
-			CurrentSetting.CursorSensitivity.ResetButton.GlowEffect.Size = UDim2.new(1,0,1,0)
-		end
-		CurrentSetting.CursorSensitivity.DraggingZone.DragButton.Position = UDim2.new(Value/300,0,0.5,0)
-		CurrentSetting.CursorSensitivity.DraggingZone.Frame.Frame.Size = UDim2.new(Value/300,0,1,0)
-		CurrentSetting.CursorSensitivity.DraggingZone.DragButton.Text =string.format("%.2fx",Value/100)
-		CurrentSetting.CursorSensitivity.Hint.Value = tostring(Value/100).."x"
-		CurrentSetting.Parent.VirtualSettings.InstantSettings.Sensitivity.Value = Value
-	end
-	if tonumber(AsyncedSetting.BackgroundDimTrans) and tonumber(AsyncedSetting.BackgroundDimTrans) ~= 0.2 then
-		local Value = AsyncedSetting.BackgroundDimTrans
-		if Value ~= 0.2 then
-			CurrentSetting.BackgroundDimTrans.ResetButton.Frame1.BackgroundTransparency = 0
-			CurrentSetting.BackgroundDimTrans.ResetButton.GlowEffect.BackgroundTransparency = 0
-			CurrentSetting.BackgroundDimTrans.ResetButton.GlowEffect.Size = UDim2.new(1,0,1,0)
-		end
-		Value *= 100
-		CurrentSetting.BackgroundDimTrans.DraggingZone.DragButton.Position = UDim2.new(Value/100,0,0.5,0)
-		CurrentSetting.BackgroundDimTrans.DraggingZone.DragButton.Text = tostring(Value).."%"
-		CurrentSetting.BackgroundDimTrans.Hint.Value = tostring(Value).."%"
-		CurrentSetting.Parent.VirtualSettings.InstantSettings.BackgroundDim.Value = Value
-	end
-
-	if tonumber(AsyncedSetting.SongVolume) and tonumber(AsyncedSetting.SongVolume) ~= 1 then
-		local Value = AsyncedSetting.SongVolume
-		if Value ~= 50 then
-			CurrentSetting.SongVolume.ResetButton.Frame1.BackgroundTransparency = 0
-			CurrentSetting.SongVolume.ResetButton.GlowEffect.BackgroundTransparency = 0
-			CurrentSetting.SongVolume.ResetButton.GlowEffect.Size = UDim2.new(1,0,1,0)
-		end
-		CurrentSetting.SongVolume.DraggingZone.DragButton.Position = UDim2.new(Value/200,0,0.5,0)
-		CurrentSetting.SongVolume.DraggingZone.DragButton.Text = tostring(Value).."%"
-		CurrentSetting.SongVolume.Hint.Value = tostring(Value).."%"
-		CurrentSetting.Parent.VirtualSettings.InstantSettings.SongVolume.Value = Value
-	end
-
-
-	if tonumber(AsyncedSetting.EffectVolume) and tonumber(AsyncedSetting.EffectVolume) ~= 1 then
-		local Value = AsyncedSetting.EffectVolume
-		if Value ~= 50 then
-			CurrentSetting.EffectVolume.ResetButton.Frame1.BackgroundTransparency = 0
-			CurrentSetting.EffectVolume.ResetButton.GlowEffect.BackgroundTransparency = 0
-			CurrentSetting.EffectVolume.ResetButton.GlowEffect.Size = UDim2.new(1,0,1,0)
-		end
-		SongVolume = Value
-		CurrentSetting.EffectVolume.DraggingZone.DragButton.Position = UDim2.new(Value/200,0,0.5,0)
-		CurrentSetting.EffectVolume.DraggingZone.DragButton.Text = tostring(Value).."%"
-		CurrentSetting.EffectVolume.Hint.Value = tostring(Value).."%"
-		CurrentSetting.Parent.VirtualSettings.InstantSettings.EffectVolume.Value = Value
-	end
-	CurrentSetting.K1.KeyInput.Text = tostring(AsyncedSetting.K1)
-	CurrentSetting.K2.KeyInput.Text = tostring(AsyncedSetting.K2)
-	CurrentSetting.LightningEnabled.Text = "Circle lighting effect: "..Option[tostring(AsyncedSetting.Lightning)]
-	CurrentSetting.CursorTrailEnabled.Text = "Cursor trail: "..Option[tostring(AsyncedSetting.CursorTrail)]
-	CurrentSetting.Parent.VirtualSettings.CursorImageID.Value = tonumber(AsyncedSetting.Skin.CursorId)
-	CurrentSetting.Parent.VirtualSettings.CursorSize.Value = tonumber(AsyncedSetting.Skin.CursorSize)
-	CurrentSetting.Parent.VirtualSettings.CursorTrailImageID.Value = tonumber(AsyncedSetting.Skin.CursorTrailId) or -1
-	CurrentSetting.Parent.VirtualSettings.CircleImageId.Value = tonumber(AsyncedSetting.Skin.CircleImageId) or -1
-	CurrentSetting.Parent.VirtualSettings.CircleOverlayImageId.Value = tonumber(AsyncedSetting.Skin.CircleOverlayImageId) or -1
-	CurrentSetting.Parent.VirtualSettings.ApproachCircleImageId.Value = tonumber(AsyncedSetting.Skin.ApproachCircleImageId) or -1
-	CurrentSetting.Parent.VirtualSettings.CursorTrailSize.Value = tonumber(AsyncedSetting.Skin.CursorTrailSize) or 1
-	CurrentSetting.Parent.VirtualSettings.CursorTrailFadeTime.Value = tonumber(AsyncedSetting.Skin.CursorTrailFadeTime) or 0.25
-	CurrentSetting.Parent.VirtualSettings.CursorTrailTransparency.Value = tonumber(AsyncedSetting.Skin.CursorTrailTransparency) or 0.5
-	CurrentSetting.Parent.VirtualSettings.CustomComboColor.Value = AsyncedSetting.CustomComboColorData or "[]"
-	CurrentSetting.Parent.VirtualSettings.CircleNumberData.Value = AsyncedSetting.CircleNumberData or "[]"
-	CurrentSetting.Parent.VirtualSettings.CircleConfigData.Value = AsyncedSetting.CircleConfigData or "[]"
-	CurrentSetting.MobileModeEnabled.Text = "Mobile mode: "..Option[tostring(AsyncedSetting.MobileHit)]
-	CurrentSetting.MouseButtonEnabled.Text = "Mouse button: "..Option[tostring(AsyncedSetting.MouseButton)]
-	CurrentSetting.OldCursorMovement.Text = "Virtual cursor movement: "..Option[tostring(not AsyncedSetting.OldCursorMovement)]
-	--CurrentSetting.NewCircleOverlay.Text = "New circle overlay: "..Option[tostring(AsyncedSetting.NewCircleOverlay)]
-	CurrentSetting.OldScoreInterface.Text = "Old score interface: "..Option[tostring(AsyncedSetting.OldScoreInterface)]
-	CurrentSetting.StableNotelock.Text = "In-game notelock: ".. AdvancedOption.NotelockStyle[tostring(AsyncedSetting.osuStableNotelock)]
-	CurrentSetting.DisplayPS.Text = "Display PS: "..Option[tostring(AsyncedSetting.PerfomanceDisplay)]
-	CurrentSetting.RightHitzone.Text = "Right side hitzone: "..Option[tostring(AsyncedSetting.RightHitZone)]
-	CurrentSetting.DisableChatInGame.Text = "Disable chat in-game: "..Option[tostring(AsyncedSetting.InGameChatDisabled)]
-	CurrentSetting.DisplayInGameLB.Text = "In-game leaderboard: "..Option[tostring(AsyncedSetting.DisplayInGameLB)]
-	CurrentSetting.HitZoneEnabled.Text = "Hit zone: "..Option[tostring(AsyncedSetting.HitZone)]
-	CurrentSetting.CustomComboColor.Text = "Custom combo color: "..Option[tostring(AsyncedSetting.CustomComboColor)]
-	CurrentSetting.DisplayDetailedPS.Text = "Detailed PS: "..Option[tostring(AsyncedSetting.DetailedPSDisplay)]
-	CurrentSetting.DisplayFramerate.Text = "Show FPS: "..Option[tostring(AsyncedSetting.DisplayFPS)]
-	CurrentSetting.OptimizedPerfomance.Text = "Optimized perfomance: "..Option[tostring(AsyncedSetting.OptimizedPerfomance)]
-	CurrentSetting.LiveDiffDisplay.Text = "Live difficulty display: "..Option[tostring(AsyncedSetting.LiveDifficultyDisplay)]
-	CurrentSetting.Display300s.Text = "Display hit300: "..Option[tostring(AsyncedSetting.Display300s)]
 end
 if PlayerGui.SavedSettings:FindFirstChild("PreviewFrame") then
 	PlayerGui.BG.PreviewFrame:Destroy()
@@ -215,7 +115,7 @@ TweenService:Create(PlayerGui.OverallInterface.FPSCounter,
 	TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,1,-40)}
 ):Play()
 
-
+GameSettingManage = game.Players.LocalPlayer.PlayerGui.Settings.SettingFrame.BaseFrame.MainLayer.SettingsManage
 CurrentSetting = PlayerGui.BG.SettingsFrame
 
 Instance.new("IntValue",CurrentSetting.Parent).Name = "SettingsLoaded"
@@ -225,12 +125,10 @@ PlayerGui.LoadUI.Scripts.EndloadScript.Disabled = false
 -- Those settings can be change multiply times before the game start
 FileType = 1
 AutoPlay = false
-CustomMusicID = false
 IngamebeatmapID = CurrentSetting.VirtualSettings.IngameBeatmapID
 PrevBeatmapID = CurrentSetting.VirtualSettings.PrevBeatmapID
-LightningEnabled = true
 CursorTrailEnabled = true
-MobileMode = true -- Touch screen enabled only
+EnableTouchDevice = true -- Touch screen enabled only
 SpeedSync = true
 UIPreviewFrame = PlayerGui.BG.PreviewFrame
 CurrentPreviewFrame = UIPreviewFrame.PreviewFrame
@@ -242,10 +140,8 @@ OldInterface = false
 Flashlight = false
 PSDisplay = false
 DetailedPSDisplay = false
-osuStableNotelock = true -- If enabled, it will use osu!stable notelock system, else it will use osu!lazer system
 HitErrorEnabled = true
 OverallInterfaceEnabled = true
-NewPerfomanceDisplay = false
 FreePlay = false
 DefaultBackgroundTrans = 0.2
 MobileModeRightHitZone = false
@@ -258,14 +154,13 @@ HiddenMod = false
 EasyMod = false
 InGameLeaderboard = true
 HitZoneEnabled = true
-SongVolume = CurrentSetting.VirtualSettings.InstantSettings.SongVolume.Value
 HardRock = false
 CustomComboColorEnabled = false
 OnMultiplayer = false
 MultiplayerMatchFailed = false
 OptimizedPerfomance = false
+MPScoreV2Enabled = false
 ScoreV2Enabled = false
-PSLeaderboard = false
 ReplayMode = false
 ExclusiveEffects = false
 Hit300Display = false
@@ -344,49 +239,8 @@ if CursorRipplesEnabled then
 	end)
 end
 
-if CurrentSetting.MainSettings.CustomMusicID.Text == "Custom music: Enabled" then
-	CustomMusicID = true
-	CurrentSetting.MainSettings.SoundID.TextEditable = true
-else
-	CustomMusicID = false
-	CurrentSetting.MainSettings.SoundID.TextEditable = false
-end
-
-if CurrentSetting.MainSettings.CustomBeatmap.Text == "Custom beatmap: Disabled" then
-	PlayerGui.BG.BeatmapChooseButton.Visible = true
-	CurrentPreviewFrame.PreviewButton.Visible = false
-	CurrentSetting.MainSettings.CustomBeatmap.Barrier.Visible = true
-	PlayerGui.BG.BeatmapLeaderboard.Visible = true
-else
-	PlayerGui.BG.BeatmapChooseButton.Visible = false
-	CurrentSetting.MainSettings.CustomBeatmap.Barrier.Visible = false
-	CurrentPreviewFrame.PreviewButton.Visible = true
-	PlayerGui.BG.BeatmapLeaderboard.Visible = false
-end
-
-if CurrentSetting.MainSettings.CustomBeatmap.Text == "Custom beatmap: Direct" then
-	FileType = 2
-elseif CurrentSetting.MainSettings.CustomBeatmap.Text == "Custom beatmap: Roblox module" then
-	FileType = 3
-else
-	CurrentSetting.MainSettings.CustomBeatmap.Text = "Custom beatmap: Disabled" --Just in case bug happen and make the text isn't like this
-	FileType = 1
-end
-
 if CurrentSetting.MainSettings.AutoPlay.Text == "[AT] Auto play: Enabled" then
 	AutoPlay = true
-end
-
-if CurrentSetting.MainSettings.LightningEnabled.Text == "Circle lighting effect: Disabled" then
-	LightningEnabled = false
-end
-
-if CurrentSetting.MainSettings.CursorTrailEnabled.Text == "Cursor trail: Disabled" then
-	CursorTrailEnabled = false
-end
-
-if CurrentSetting.MainSettings.MobileModeEnabled.Text == "Mobile mode: Disabled" then
-	MobileMode = false
 end
 
 if CurrentSetting.MainSettings.SpeedSync.Text == "[ST] Sync approach time: Disabled" then
@@ -397,53 +251,8 @@ if CurrentSetting.MainSettings.Flashlight.Text == "[FL] Flashlight: Enabled" the
 	Flashlight = true
 end
 
-if CurrentSetting.MainSettings.MouseButtonEnabled.Text == "Mouse button: Disabled" then
-	MouseButtonEnabled = false
-end
-
 if CurrentSetting.MainSettings.SliderMode.Text == "[SL] Sliders: Enabled" then
 	SliderMode = true
-end
-
-if CurrentSetting.MainSettings.OldCursorMovement.Text == "Virtual cursor movement: Disabled" then
-	OldCursorMovement = true
-end
-
-
-if CurrentSetting.MainSettings.DisplayPS.Text == "Display PS: Enabled" then
-	PSDisplay = true
-end
-
-if CurrentSetting.MainSettings.OldScoreInterface.Text == "Old score interface: Enabled" then
-	OldInterface = true
-end
-
-if CurrentSetting.MainSettings.StableNotelock.Text == "In-game notelock: Lazer" then
-	osuStableNotelock = false
-end
-
-if CurrentSetting.MainSettings.HitErrorInterface.Text == "Hit error display: Disabled" then
-	HitErrorEnabled = false
-end
-
-if CurrentSetting.MainSettings.OverallInterface.Text == "Overall interface: Disabled" then
-	OverallInterfaceEnabled = false
-end
-
-if CurrentSetting.MainSettings.PSLeaderboard.Text == "PS Leaderboard: Enabled" then
-	PSLeaderboard = true
-end
-
-if CurrentSetting.MainSettings.RightHitzone.Text == "Right side hitzone: Enabled" then
-	MobileModeRightHitZone = true
-end
-
-if CurrentSetting.MainSettings.DisableChatInGame.Text == "Disable chat in-game: Enabled" then
-	DisableChatInGame = true
-end
-
-if CurrentSetting.MainSettings.KeepOriginalPitch.Text == "Speed pitch: Enabled" then
-	KeepOriginalPitch = true
 end
 
 if CurrentSetting.MainSettings.NoFail.Text == "[NF] No Fail: Enabled" then
@@ -455,57 +264,12 @@ if CurrentSetting.MainSettings.Hidden.Text == "[HD] Hidden: Enabled" then
 	HiddenMod = true
 end
 
-if CurrentSetting.MainSettings.DisplayInGameLB.Text == "In-game leaderboard: Disabled" then
-	InGameLeaderboard = false
-end
-
-if CurrentSetting.MainSettings.HitZoneEnabled.Text == "Hit zone: Disabled" then
-	HitZoneEnabled = false
-end
-
 if CurrentSetting.MainSettings.HardRock.Text == "[HR] Hard Rock: Enabled" then
 	HardRock = true
 end
 
 if CurrentSetting.MainSettings.Easy.Text == "[EZ] Easy: Enabled" then
 	EasyMod = true
-end
-
-if CurrentSetting.MainSettings.CustomComboColor.Text == "Custom combo color: Enabled" then
-	CustomComboColorEnabled = true
-end
-
-if CurrentSetting.MainSettings.OptimizedPerfomance.Text == "Optimized perfomance: Enabled" then
-	OptimizedPerfomance = true
-end
-
-if CurrentSetting.MainSettings.ScoreV2.Text == "[V2] ScoreV2: Enabled" then
-	ScoreV2Enabled = true
-end
-
-if CurrentSetting.MainSettings.DisplayDetailedPS.Text == "Detailed PS: Enabled" then
-	DetailedPSDisplay = true
-end
-
-if CurrentSetting.MainSettings.ExclusiveEffects.Text == "[Beta] Exclusive effects: Enabled" then
-	ExclusiveEffects = true
-end
-
-if CurrentSetting.MainSettings.InstafadeCircle.Text == "Insta-fade circle: Enabled" then
-	InstaFadeCircle = true
-end
-
-if CurrentSetting.MainSettings.HitKeyOverlay.Text == "Hit key overlay: Disabled" then
-	HitKeyOverlay = false
-end
-
-
-if CurrentSetting.MainSettings.LiveDiffDisplay.Text == "Live difficulty display: Enabled" then
-	LiveDifficultyDisplay = true
-end
-
-if CurrentSetting.MainSettings.Display300s.Text == "Display hit300: Enabled" then
-	Hit300Display = true
 end
 
 CurrentModData = {
@@ -624,58 +388,9 @@ CurrentSetting.MainSettings.Flashlight.MouseButton1Click:Connect(function()
 	ReloadPreviewFrame()
 end)
 
-CurrentSetting.MainSettings.DisplayPS.MouseButton1Click:Connect(function()
-	PSDisplay = not PSDisplay
-	if PSDisplay == true then 
-		CurrentSetting.MainSettings.DisplayPS.Text = 'Display PS: Enabled'
-	else 
-		CurrentSetting.MainSettings.DisplayPS.Text = 'Display PS: Disabled'
-	end
-end)
-
 script.Parent.Parent.BG.ResultFrame:GetPropertyChangedSignal('Visible'):Connect(function()
 	gameEnded = true
 	script.Parent.PlayFrame.Flashlight.Visible = false
-end)
-
-CurrentSetting.MainSettings.CustomMusicID.MouseButton1Click:Connect(function()
-	CustomMusicID = not CustomMusicID
-	if CustomMusicID == true then
-		CurrentSetting.MainSettings.CustomMusicID.Text = "Custom music: Enabled"
-		CurrentSetting.MainSettings.SoundID.TextEditable = true
-	else
-		CurrentSetting.MainSettings.CustomMusicID.Text = "Custom music: Disabled"
-		CurrentSetting.MainSettings.SoundID.TextEditable = false
-	end
-end)
-
-CurrentSetting.MainSettings.CustomBeatmap.MouseButton1Click:Connect(function()
-	if workspace.GamePlaceId == 6983932919 and not RunService:IsStudio() then
-		PlayerGui.NotificationPopup.NotificationsPopup.ClientCreateNotification:Fire("Custom beatmap is disabled in StablePlace, you can visit BetaPlace to test.",Color3.new(1,0,0))
-		return
-	end
-	FileType += 1
-	if FileType ~= 1 then
-		PlayerGui.BG.BeatmapChooseButton.Visible = false
-		PlayerGui.BG.BeatmapLeaderboard.Visible = false
-		CurrentPreviewFrame.PreviewButton.Visible = true
-		CurrentSetting.MainSettings.CustomBeatmap.Barrier.Visible = false
-	end
-	if FileType == 2 then
-		CurrentSetting.MainSettings.BeatmapFile.TextEditable = true
-		CurrentSetting.MainSettings.CustomBeatmap.Text = "Custom beatmap: Direct"
-	elseif FileType == 3 then
-		CurrentSetting.MainSettings.BeatmapFile.TextEditable = true
-		CurrentSetting.MainSettings.CustomBeatmap.Text = "Custom beatmap: Roblox module"
-	else
-		FileType = 1
-		PlayerGui.BG.BeatmapChooseButton.Visible = true
-		CurrentPreviewFrame.PreviewButton.Visible = false
-		CurrentSetting.MainSettings.BeatmapFile.TextEditable = false
-		PlayerGui.BG.BeatmapLeaderboard.Visible = true
-		CurrentSetting.MainSettings.CustomBeatmap.Barrier.Visible = true
-		CurrentSetting.MainSettings.CustomBeatmap.Text = "Custom beatmap: Disabled"
-	end
 end)
 
 CurrentSetting.MainSettings.AutoPlay.MouseButton1Click:Connect(function()
@@ -688,48 +403,12 @@ CurrentSetting.MainSettings.AutoPlay.MouseButton1Click:Connect(function()
 end)
 
 
-CurrentSetting.MainSettings.LightningEnabled.MouseButton1Click:Connect(function()
-	LightningEnabled = not LightningEnabled
-	if LightningEnabled == true then
-		CurrentSetting.MainSettings.LightningEnabled.Text = "Circle lighting effect: Enabled"
-	else
-		CurrentSetting.MainSettings.LightningEnabled.Text = "Circle lighting effect: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.CursorTrailEnabled.MouseButton1Click:Connect(function()
-	CursorTrailEnabled = not CursorTrailEnabled
-	if CursorTrailEnabled == true then
-		CurrentSetting.MainSettings.CursorTrailEnabled.Text = "Cursor trail: Enabled"
-	else
-		CurrentSetting.MainSettings.CursorTrailEnabled.Text = "Cursor trail: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.MobileModeEnabled.MouseButton1Click:Connect(function()
-	MobileMode = not MobileMode
-	if MobileMode == true then
-		CurrentSetting.MainSettings.MobileModeEnabled.Text = "Mobile mode: Enabled"
-	else
-		CurrentSetting.MainSettings.MobileModeEnabled.Text = "Mobile mode: Disabled"
-	end
-end)
-
 CurrentSetting.MainSettings.SpeedSync.MouseButton1Click:Connect(function()
 	SpeedSync = not SpeedSync
 	if SpeedSync == true then
 		CurrentSetting.MainSettings.SpeedSync.Text = "[ST] Sync approach time: Enabled"
 	else
 		CurrentSetting.MainSettings.SpeedSync.Text = "[ST] Sync approach time: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.MouseButtonEnabled.MouseButton1Click:Connect(function()
-	MouseButtonEnabled = not MouseButtonEnabled
-	if MouseButtonEnabled == true then
-		CurrentSetting.MainSettings.MouseButtonEnabled.Text = "Mouse button: Enabled"
-	else
-		CurrentSetting.MainSettings.MouseButtonEnabled.Text = "Mouse button: Disabled"
 	end
 end)
 
@@ -742,98 +421,6 @@ CurrentSetting.MainSettings.SliderMode.MouseButton1Click:Connect(function()
 	end
 
 	LoadMultiplier()
-	ReloadPreviewFrame()
-end)
-
-
-
-CurrentSetting.MainSettings.OldCursorMovement.MouseButton1Click:Connect(function()
-	OldCursorMovement = not OldCursorMovement
-	if OldCursorMovement == true then
-		CurrentSetting.MainSettings.OldCursorMovement.Text = "Virtual cursor movement: Disabled"
-	else
-		CurrentSetting.MainSettings.OldCursorMovement.Text = "Virtual cursor movement: Enabled"
-	end
-end)
-
-
-CurrentSetting.MainSettings.OldScoreInterface.MouseButton1Click:Connect(function()
-	OldInterface = not OldInterface
-	if OldInterface == true then
-		CurrentSetting.MainSettings.OldScoreInterface.Text = "Old score interface: Enabled"
-	else
-		CurrentSetting.MainSettings.OldScoreInterface.Text = "Old score interface: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.StableNotelock.MouseButton1Click:Connect(function()
-	osuStableNotelock = not osuStableNotelock
-	if osuStableNotelock == true then
-		CurrentSetting.MainSettings.StableNotelock.Text = "In-game notelock: Stable"
-	else
-		CurrentSetting.MainSettings.StableNotelock.Text = "In-game notelock: Lazer"
-	end
-end)
-
-
-CurrentSetting.MainSettings.HitErrorInterface.MouseButton1Click:Connect(function()
-	HitErrorEnabled = not HitErrorEnabled
-	if HitErrorEnabled == true then
-		CurrentSetting.MainSettings.HitErrorInterface.Text = "Hit error display: Enabled"
-	else
-		CurrentSetting.MainSettings.HitErrorInterface.Text = "Hit error display: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.OverallInterface.MouseButton1Click:Connect(function()
-	OverallInterfaceEnabled = not OverallInterfaceEnabled
-	if OverallInterfaceEnabled == true then
-		CurrentSetting.MainSettings.OverallInterface.Text = "Overall interface: Enabled"
-	else
-		CurrentSetting.MainSettings.OverallInterface.Text = "Overall interface: Disabled"
-	end
-end)
-
-
-CurrentSetting.MainSettings.PSLeaderboard.MouseButton1Click:Connect(function()
-	PSLeaderboard = not PSLeaderboard
-	if PSLeaderboard == true then
-		CurrentSetting.MainSettings.PSLeaderboard.Text = "PS Leaderboard: Enabled"
-	else
-		CurrentSetting.MainSettings.PSLeaderboard.Text = "PS Leaderboard: Disabled"
-	end
-	LoadLeaderboard()
-end)
-
-
-CurrentSetting.MainSettings.RightHitzone.MouseButton1Click:Connect(function()
-	MobileModeRightHitZone = not MobileModeRightHitZone
-	if MobileModeRightHitZone == true then
-		CurrentSetting.MainSettings.RightHitzone.Text = "Right side hitzone: Enabled"
-	else
-		CurrentSetting.MainSettings.RightHitzone.Text = "Right side hitzone: Disabled"
-	end
-end)
-
-
-CurrentSetting.MainSettings.DisableChatInGame.MouseButton1Click:Connect(function()
-	DisableChatInGame = not DisableChatInGame
-	if DisableChatInGame == true then
-		CurrentSetting.MainSettings.DisableChatInGame.Text = "Disable chat in-game: Enabled"
-	else
-		CurrentSetting.MainSettings.DisableChatInGame.Text = "Disable chat in-game: Disabled"
-	end
-end)
-
-
-CurrentSetting.MainSettings.KeepOriginalPitch.MouseButton1Click:Connect(function()
-	KeepOriginalPitch = not KeepOriginalPitch
-	if KeepOriginalPitch == true then
-		CurrentSetting.MainSettings.KeepOriginalPitch.Text = "Speed pitch: Enabled"
-	else
-		CurrentSetting.MainSettings.KeepOriginalPitch.Text = "Speed pitch: Disabled"
-	end
-
 	ReloadPreviewFrame()
 end)
 
@@ -865,31 +452,8 @@ CurrentSetting.MainSettings.Hidden.MouseButton1Click:Connect(function()
 	ReloadPreviewFrame()
 end)
 
-CurrentSetting.MainSettings.DisplayInGameLB.MouseButton1Click:Connect(function()
-	InGameLeaderboard = not InGameLeaderboard
-	if InGameLeaderboard == true then
-		CurrentSetting.MainSettings.DisplayInGameLB.Text = "In-game leaderboard: Enabled"
-	else
-		CurrentSetting.MainSettings.DisplayInGameLB.Text = "In-game leaderboard: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.HitZoneEnabled.MouseButton1Click:Connect(function()
-	HitZoneEnabled = not HitZoneEnabled
-	if HitZoneEnabled == true then
-		CurrentSetting.MainSettings.HitZoneEnabled.Text = "Hit zone: Enabled"
-	else
-		CurrentSetting.MainSettings.HitZoneEnabled.Text = "Hit zone: Disabled"
-	end
-end)
-
-CurrentSetting:WaitForChild("VirtualSettings").InstantSettings.SongVolume.Changed:Connect(function()
-	SongVolume = CurrentSetting.VirtualSettings.InstantSettings.SongVolume.Value
-	TweenService:Create(CurrentPreviewFrame.OverviewSong,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{Volume = PreviewFrameBaseVolume*(SongVolume*0.02)}):Play()
-end)
-
-CurrentSetting:WaitForChild("VirtualSettings").InstantSettings.EffectVolume.Changed:Connect(function()
-	EffectVolume = CurrentSetting.VirtualSettings.InstantSettings.EffectVolume.Value
+GameSettingManage.SubscribeSettingChange:Fire("MusicVolume", script, function(value)
+	TweenService:Create(CurrentPreviewFrame.OverviewSong,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{Volume = PreviewFrameBaseVolume*(value*0.01)}):Play()
 end)
 
 CurrentSetting.MainSettings.HardRock.MouseButton1Click:Connect(function()
@@ -924,169 +488,6 @@ CurrentSetting.MainSettings.Easy.MouseButton1Click:Connect(function()
 	LoadMultiplier()
 	ReloadPreviewFrame()
 end)
-
-CurrentSetting.MainSettings.CustomComboColor.MouseButton1Click:Connect(function()
-	CustomComboColorEnabled = not CustomComboColorEnabled
-	if CustomComboColorEnabled == true then
-		CurrentSetting.MainSettings.CustomComboColor.Text = "Custom combo color: Enabled"
-	else
-		CurrentSetting.MainSettings.CustomComboColor.Text = "Custom combo color: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.OptimizedPerfomance.MouseButton1Click:Connect(function()
-	OptimizedPerfomance = not OptimizedPerfomance
-	if OptimizedPerfomance == true then
-		CurrentSetting.MainSettings.OptimizedPerfomance.Text = "Optimized perfomance: Enabled"
-	else
-		CurrentSetting.MainSettings.OptimizedPerfomance.Text = "Optimized perfomance: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.ScoreV2.MouseButton1Click:Connect(function()
-	ScoreV2Enabled = not ScoreV2Enabled
-	if ScoreV2Enabled == true then
-		CurrentSetting.MainSettings.ScoreV2.Text = "[V2] ScoreV2: Enabled"
-	else
-		CurrentSetting.MainSettings.ScoreV2.Text = "[V2] ScoreV2: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.DisplayDetailedPS.MouseButton1Click:Connect(function()
-	DetailedPSDisplay = not DetailedPSDisplay
-	if DetailedPSDisplay == true then
-		CurrentSetting.MainSettings.DisplayDetailedPS.Text = "Detailed PS: Enabled"
-	else
-		CurrentSetting.MainSettings.DisplayDetailedPS.Text = "Detailed PS: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.ExclusiveEffects.MouseButton1Click:Connect(function()
-	ExclusiveEffects = not ExclusiveEffects
-	if ExclusiveEffects == true then
-		CurrentSetting.MainSettings.ExclusiveEffects.Text = "[Beta] Exclusive effects: Enabled"
-	else
-		CurrentSetting.MainSettings.ExclusiveEffects.Text = "[Beta] Exclusive effects: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.InstafadeCircle.MouseButton1Click:Connect(function()
-	InstaFadeCircle = not InstaFadeCircle
-	if InstaFadeCircle == true then
-		CurrentSetting.MainSettings.InstafadeCircle.Text = "Insta-fade circle: Enabled"
-	else
-		CurrentSetting.MainSettings.InstafadeCircle.Text = "Insta-fade circle: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.HitKeyOverlay.MouseButton1Click:Connect(function()
-	HitKeyOverlay = not HitKeyOverlay
-	if HitKeyOverlay == true then
-		CurrentSetting.MainSettings.HitKeyOverlay.Text = "Hit key overlay: Enabled"
-	else
-		CurrentSetting.MainSettings.HitKeyOverlay.Text = "Hit key overlay: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.LiveDiffDisplay.MouseButton1Click:Connect(function()
-	LiveDifficultyDisplay = not LiveDifficultyDisplay
-	if LiveDifficultyDisplay == true then
-		CurrentSetting.MainSettings.LiveDiffDisplay.Text = "Live difficulty display: Enabled"
-	else
-		CurrentSetting.MainSettings.LiveDiffDisplay.Text = "Live difficulty display: Disabled"
-	end
-end)
-
-CurrentSetting.MainSettings.Display300s.MouseButton1Click:Connect(function()
-	Hit300Display = not Hit300Display
-	if Hit300Display == true then
-		CurrentSetting.MainSettings.Display300s.Text = "Display hit300: Enabled"
-	else
-		CurrentSetting.MainSettings.Display300s.Text = "Display hit300: Disabled"
-	end
-end)
-
-DisplayFPS = false
-
--- Save settings
-function SaveGameSettings()
-	spawn(function()
-		local Settings = CurrentSetting.MainSettings
-		SongDelay = Settings.Parent.VirtualSettings.InstantSettings.Offset.Value
-		CursorSensitivity= Settings.Parent.VirtualSettings.InstantSettings.Sensitivity.Value*0.01
-		CursorID = Settings.Parent.VirtualSettings.CursorImageID.Value
-		CursorSize = Settings.Parent.VirtualSettings.CursorSize.Value
-		CursorTrailId = Settings.Parent.VirtualSettings.CursorTrailImageID.Value
-		CursorTrailSize = Settings.Parent.VirtualSettings.CursorTrailSize.Value
-		CursorTrailFadeTime = Settings.Parent.VirtualSettings.CursorTrailFadeTime.Value
-		CursorTrailTransparency = Settings.Parent.VirtualSettings.CursorTrailTransparency.Value
-		CircleImageId = Settings.Parent.VirtualSettings.CircleImageId.Value
-		CircleOverlayImageId = Settings.Parent.VirtualSettings.CircleOverlayImageId.Value
-		ApproachCircleImageId = Settings.Parent.VirtualSettings.ApproachCircleImageId.Value
-		EffectVolume = Settings.Parent.VirtualSettings.InstantSettings.EffectVolume.Value
-		CircleNumberData = Settings.Parent.VirtualSettings.CircleNumberData.Value
-		CircleConfigData = Settings.Parent.VirtualSettings.CircleConfigData.Value
-		DisplayFPS = Settings.DisplayFramerate.isEnabled.Value
-
-		local Key1Input = Enum.KeyCode.X
-		local Key2Input = Enum.KeyCode.Z
-		pcall(function()
-			if Settings.K1.KeyInput.Text == "Press a key" or Settings.K2.KeyInput.Text == "Press a key" then
-				repeat wait() until Settings.K1.KeyInput.Text ~= "Press a key" and Settings.K2.KeyInput.Text ~= "Press a key"
-			end
-			Key1Input = Enum.KeyCode[Settings.K1.KeyInput.Text] or Enum.KeyCode.X
-			Key2Input = Enum.KeyCode[Settings.K2.KeyInput.Text] or Enum.KeyCode.Z
-		end)
-
-		-- Save settings
-		local ClientSettings = {
-			Offset = SongDelay,
-			CursorSensitivity= CursorSensitivity,
-			SongVolume = SongVolume,
-			EffectVolume = EffectVolume,
-			BackgroundDimTrans = DefaultBackgroundTrans,
-			K1 = string.sub(tostring(Key1Input),14,#tostring(Key1Input)),
-			K2 = string.sub(tostring(Key2Input),14,#tostring(Key2Input)),
-			Lightning = LightningEnabled,
-			CursorTrail = CursorTrailEnabled,
-			MobileHit = MobileMode,
-			MouseButton = MouseButtonEnabled,
-			NewCircleOverlay = NewCircelOverlay,
-			OldScoreInterface = OldInterface,
-			osuStableNotelock = osuStableNotelock,
-			PerfomanceDisplay = PSDisplay,
-			OldCursorMovement = OldCursorMovement,
-			DisplayInGameLB = InGameLeaderboard,
-			HitZone = HitZoneEnabled,
-			CustomComboColor = CustomComboColorEnabled,
-			CustomComboColorData = Settings.Parent.VirtualSettings.CustomComboColor.Value,
-			CircleNumberData = CircleNumberData,
-			CircleConfigData = CircleConfigData, 
-			RightHitZone = MobileModeRightHitZone,
-			InGameChatDisabled = DisableChatInGame,
-			DetailedPSDisplay = DetailedPSDisplay,
-			OptimizedPerfomance = OptimizedPerfomance,
-			DisplayFPS = DisplayFPS,
-			Display300s = Hit300Display,
-			LiveDifficultyDisplay = LiveDifficultyDisplay,
-			Skin = {
-				CursorId = CursorID,
-				CursorSize = CursorSize,
-				CursorTrailId = CursorTrailId,
-				CursorTrailSize = CursorTrailSize,
-				CursorTrailFadeTime = CursorTrailFadeTime,
-				CursorTrailTransparency = CursorTrailTransparency,
-				CircleImageId = CircleImageId,
-				CircleOverlayImageId = CircleOverlayImageId,
-				ApproachCircleImageId = ApproachCircleImageId
-			}
-		}
-
-
-		game.ReplicatedStorage.GetSettings:InvokeServer(ClientSettings)
-	end)
-end
-
 -- Process function [Loop function]
 
 --[[script.Parent.FunctionProcess.Event:Connect(function(Function)
@@ -1622,8 +1023,10 @@ ProcessFunction(function()
 	end
 end)
 
+PSLeaderboard = false
 
 LoadLeaderboard = function()
+	local OptimizedPerfomance = GameSettingManage.getSettings:Invoke("OptimizedPerfomance")
 	local LeaderboardInterface = PlayerGui.BG.BeatmapLeaderboard
 	local ThisLBSession = HttpService:GenerateGUID()
 	CurrentLeaderboardSession = ThisLBSession
@@ -2001,6 +1404,11 @@ LoadLeaderboard = function()
 	end
 end
 
+GameSettingManage.SubscribeSettingChange:Fire("UsePSLeaderboard", script, function(value)
+	PSLeaderboard = value
+	LoadLeaderboard()
+end)
+
 
 
 --Overview 
@@ -2012,19 +1420,18 @@ BeatmapId = 0
 function UpdateRule()
 	script.Parent.MultiplayerData.ChangeRule:Fire({
 		SL = SliderMode,
-		--StableNL = osuStableNotelock,
-		ScoreV2 = ScoreV2Enabled
+		ScoreV2 = MPScoreV2Enabled
 	})
 end
 
 script.Parent.MultiplayerData.RuleChanged.Event:Connect(function(Rule)
 	SliderMode = Rule.Slider
 	--osuStableNotelock = Rule.StableNL
-	ScoreV2Enabled = Rule.ScoreV2
+	MPScoreV2Enabled = Rule.ScoreV2
 end)
 
-CurrentSetting.MainSettings.SliderMode:GetPropertyChangedSignal("Text"):Connect(UpdateRule)
-CurrentSetting.MainSettings.ScoreV2:GetPropertyChangedSignal("Text"):Connect(UpdateRule)
+--CurrentSetting.MainSettings.SliderMode:GetPropertyChangedSignal("Text"):Connect(UpdateRule)
+--CurrentSetting.MainSettings.ScoreV2:GetPropertyChangedSignal("Text"):Connect(UpdateRule)
 
 script.Parent.GetMapData.OnInvoke = function()
 	local SongSpeed = tonumber(CurrentSetting.MainSettings.Speed.Text)
@@ -2057,7 +1464,7 @@ PreviewMapPS = {
 ReloadPreviewFrame = function()
 	local _1,_2,_3,_4,_5,_6 = script.Parent.GameplayScripts.ReloadPreviewFrame.LoadPreviewFrame:Invoke(
 		CurrentPreviewFrame,CurrentSetting,FileType,CurrentModData,BeatmapStudio,CurrentKey,BeatmapKey
-		,PreviewFrameBaseVolume,SongVolume,KeepOriginalPitch,PreviewBeatmapset, NoFail,not SliderMode,HardRock,Flashlight,EasyMod,HiddenMod
+		,PreviewFrameBaseVolume,PreviewBeatmapset, NoFail,not SliderMode,HardRock,Flashlight,EasyMod,HiddenMod
 	)
 	CurrentModData = _1
 	CurrentKey = _2
@@ -2077,7 +1484,9 @@ script.Parent.MultiplayerData.ChangeMap.Event:Connect(function(MapFile,Speed)
 	LoadLeaderboard()
 end)
 
-
+GameSettingManage.SubscribeSettingChange:Fire("EnableSpeedPitch", script, function()
+	ReloadPreviewFrame()
+end)
 
 wait()
 if StartupState == "Normal" then
@@ -2260,7 +1669,7 @@ end
 
 script.Parent.Parent.BG.StartButton.MouseButton1Click:Connect(function()
 	if PlaybuttonTriggered == false then
-
+		local DefaultBackgroundTrans = 1-GameSettingManage.getSettings:Invoke("BGDim")*0.01
 		if not PlayerGui.MenuInterface.MultiplayerPanel.MultiplayerScript.MultiplayerRoom.Disabled then
 			local GameAlreadyStarted = PlayerGui.MenuInterface.MultiplayerPanel.MultiplayerScript.MultiplayerRoom.MultiplayerFolder.Value.IsMatchInProgress:InvokeServer()
 			if GameAlreadyStarted then
@@ -2410,7 +1819,7 @@ function ProcessReplayData(stringdata)
 	elseif string.find(stringdata,"MOD") then
 		local ModFormatString = string.sub(stringdata,5,#stringdata)
 		local BitBoolean = {["0"]=false,["1"]=true}
-		-- MOD StableNL MobileMode AT HC HD HR EZ SL FL
+		-- MOD StableNL EnableTouchDevice AT HC HD HR EZ SL FL
 
 		local ModFormat = {
 			"--osuStableNotelock",
@@ -2512,6 +1921,8 @@ Instance.new("BoolValue",script.Parent).Name = "ReadyToStart"
 StateReady = true
 script.Parent.StartGame.Event:Wait() -- The game start from here
 
+local SavedGameSettings = game.Players.LocalPlayer.PlayerGui.Settings.SettingFrame.BaseFrame.MainLayer.SettingsManage.getSettings:Invoke("All")
+
 if not StartButtonAnimated then
 	AnimateStartButton()
 end
@@ -2588,10 +1999,8 @@ CurrentSetting.AnchorPoint = Vector2.new(1,0)
 UIPreviewFrame.Parent = PlayerGui.SavedSettings
 UIPreviewFrame.AnchorPoint = Vector2.new(0,0)
 script.Parent.Parent.BG.BeatmapChooseButton.Visible = false
---script.Circle.Lightning.Visible = LightningEnabled
---script.Circle.HitCircleLightning.Visible = LightningEnabled
 script.Parent.Cursor.TrailEnabled.Value = CursorTrailEnabled
-script.Parent.Cursor.FadeTime.Value = CurrentSetting.VirtualSettings.CursorTrailFadeTime.Value
+script.Parent.Cursor.FadeTime.Value = SavedGameSettings.CursorTrailDuration
 script.Parent.Parent.BG.BeatmapCount.Visible = false
 script.Parent.Parent.BG.BeatmapLeaderboard.Visible = false
 script.Parent.Parent.BG.GameVersion.Visible = false
@@ -2641,18 +2050,6 @@ end
 Instance.new("BoolValue",script.Parent).Name = "GameStarted"
 
 local Settings = CurrentSetting.MainSettings
-
-
-local Key1Input = Enum.KeyCode.X
-local Key2Input = Enum.KeyCode.Z
-pcall(function()
-	if Settings.K1.KeyInput.Text == "Press a key" or Settings.K2.KeyInput.Text == "Press a key" then
-		repeat wait() until Settings.K1.KeyInput.Text ~= "Press a key" and Settings.K2.KeyInput.Text ~= "Press a key"
-	end
-	Key1Input = Enum.KeyCode[Settings.K1.KeyInput.Text]
-	Key2Input = Enum.KeyCode[Settings.K2.KeyInput.Text]
-end)
-
 --
 local CS = 5
 local ApproachRate = 5
@@ -2662,26 +2059,83 @@ local OverallDifficulty = 5
 -- Load settings from Object data into Script data
 
 SongSpeed = tonumber(Settings.Speed.Text)
-SongDelay = Settings.Parent.VirtualSettings.InstantSettings.Offset.Value
+SongDelay = SavedGameSettings.AudioOffset
 Beatmap = Settings.BeatmapFile.Text
-SongId = Settings.SoundID.Text
-CursorSensitivity= Settings.Parent.VirtualSettings.InstantSettings.Sensitivity.Value*0.01
-CursorID = Settings.Parent.VirtualSettings.CursorImageID.Value
+CursorSensitivity = SavedGameSettings.VirtualCursorSensitivity
+CursorID = SavedGameSettings.CursorID
 DefaultCursorID = 6979941273
-CursorSize = Settings.Parent.VirtualSettings.CursorSize.Value
+CursorSize = SavedGameSettings.CursorSize
 CustomDiff = false
-CursorTrailId = Settings.Parent.VirtualSettings.CursorTrailImageID.Value
-CursorTrailSize = Settings.Parent.VirtualSettings.CursorTrailSize.Value
-CursorTrailFadeTime = Settings.Parent.VirtualSettings.CursorTrailFadeTime.Value
-CursorTrailTransparency = Settings.Parent.VirtualSettings.CursorTrailTransparency.Value
-CircleImageId = Settings.Parent.VirtualSettings.CircleImageId.Value
-CircleOverlayImageId = Settings.Parent.VirtualSettings.CircleOverlayImageId.Value
-ApproachCircleImageId = Settings.Parent.VirtualSettings.ApproachCircleImageId.Value
-EffectVolume = Settings.Parent.VirtualSettings.InstantSettings.EffectVolume.Value
-HitZoneArea = Settings.Parent.VirtualSettings.InstantSettings.MobileHitArea.Value*0.01
+CursorTrailId = SavedGameSettings.CursorTrailID
+CursorTrailSize = SavedGameSettings.CursorTrailSize
+CursorTrailFadeTime = SavedGameSettings.CursorTrailDuration
+CursorTrailTransparency = 1-(SavedGameSettings.CursorTrailOpacity)*0.01
+CircleImageId = SavedGameSettings.BaseCircleID
+CircleOverlayImageId = SavedGameSettings.CircleOverlayID
+ApproachCircleImageId = SavedGameSettings.ApproachCircleID
+EffectVolume = SavedGameSettings.EffectVolume
+HitZoneArea = SavedGameSettings.HitzoneArea
+SongVolume = SavedGameSettings.SongVolume
+ClassicNotelock = SavedGameSettings.ClassicNotelock -- If enabled, it will use osu!stable notelock system, else it will use osu!lazer system
+PSLeaderboard = SavedGameSettings.UsePSLeaderboard
+CursorTrailEnabled = SavedGameSettings.CursorTrail
+EnableTouchDevice = SavedGameSettings.EnableTouchDevice
+MouseButtonEnabled = SavedGameSettings.MouseButton
+OldCursorMovement = not SavedGameSettings.VirtualCursor
+PSDisplay = SavedGameSettings.PerfomanceOverlay
+OldInterface = SavedGameSettings.LegacyOverlay
+HitErrorEnabled = SavedGameSettings.HitError
+OverallInterfaceEnabled = SavedGameSettings.ScoreOverlay
+MobileModeRightHitZone = SavedGameSettings.RightSizeHitzone
+DisableChatInGame = SavedGameSettings.DisableChatIngame
+KeepOriginalPitch = SavedGameSettings.EnableSpeedPitch
+InGameLeaderboard = true--SavedGameSettings.
+HitZoneEnabled = SavedGameSettings.EnableHitzone
+CustomComboColorEnabled = SavedGameSettings.CustomComboColor
+OptimizedPerfomance = SavedGameSettings.OptimizedPerfomance
+DetailedPSDisplay = SavedGameSettings.DetailedPerformance
+ExclusiveEffects = false--SavedGameSettings.
+InstaFadeCircle = SavedGameSettings.InstaFadeCircle
+ScoreV2Enabled = SavedGameSettings.ScoreV2
+HitKeyOverlay = SavedGameSettings.KeyOverlay
+LiveDifficultyDisplay = SavedGameSettings.LiveDifficultyOverlay
+Hit300Display = SavedGameSettings.ShowHit300
+Key1Input = Enum.KeyCode:FromName(SavedGameSettings.LeftKey)
+Key2Input = Enum.KeyCode:FromName(SavedGameSettings.RightKey)
+DefaultBackgroundTrans = 1-(SavedGameSettings.BGDim * 0.01)
 
-CircleNumberData = HttpService:JSONDecode(Settings.Parent.VirtualSettings.CircleNumberData.Value)
-CircleConfigData = HttpService:JSONDecode(Settings.Parent.VirtualSettings.CircleConfigData.Value)
+if OnMultiplayer then
+	ScoreV2Enabled = MPScoreV2Enabled
+end
+
+
+function ToggleDirectChange(settingName, callback)
+	GameSettingManage.SubscribeSettingChange(settingName, script, callback)
+end
+
+ToggleDirectChange()
+
+
+CircleConfigData = {
+	Overlap = SavedGameSettings.NumberOverlaps,
+	NumberScale = SavedGameSettings.NumberDisplaySize
+}
+
+CircleNumberData = {
+	["0"] = SavedGameSettings.Number0,
+	["1"] = SavedGameSettings.Number1,
+	["2"] = SavedGameSettings.Number2,
+	["3"] = SavedGameSettings.Number3,
+	["4"] = SavedGameSettings.Number4,
+	["5"] = SavedGameSettings.Number5,
+	["6"] = SavedGameSettings.Number6,
+	["7"] = SavedGameSettings.Number7,
+	["8"] = SavedGameSettings.Number8,
+	["9"] = SavedGameSettings.Number9
+}
+
+--CircleNumberData = HttpService:JSONDecode(Settings.Parent.VirtualSettings.CircleNumberData.Value)
+--CircleConfigData = HttpService:JSONDecode(Settings.Parent.VirtualSettings.CircleConfigData.Value)
 
 DefaultCircleId = {
 	Overlap = -0.5,
@@ -2705,21 +2159,6 @@ CircleNumberScale = CircleConfigData.NumberScale or DefaultCircleId.NumberScale
 script.Circle.CircleNumber.Size = UDim2.new(CircleNumberScale,0,CircleNumberScale,0)
 script.Circle.CircleNumber.UIListLayout.Padding = UDim.new(CircleConfigData.Overlap or DefaultCircleId.Overlap,0)
 
-DefaultBackgroundTrans = Settings.Parent.VirtualSettings.InstantSettings.BackgroundDim.Value*0.01
-if tonumber(SongId) == nil then
-	SongId = "0"
-end
-
-if CustomMusicID == true then
-
-	SongId = (string.sub(SongId,1,13) == "rbxassetid://" and SongId) or "rbxassetid://"..SongId
-	if SongId == "rbxassetid://0" then
-		SongId = "rbxassetid://9177125646"
-	end
-
-	script.Parent.Song.SoundId = SongId 
-
-end
 -- Error check
 
 if Key1Input == nil then
@@ -2780,49 +2219,6 @@ else
 	HardRock = SavedSpectateData.HR
 	TouchDeviceDetected = SavedSpectateData.TD
 end
-
-
-
-spawn(function()
-	if true then
-		SaveGameSettings()
-		return
-	end
-	-- Save settings
-	local ClientSettings = {
-		Offset = SongDelay,
-		CursorSensitivity= CursorSensitivity,
-		SongVolume = SongVolume,
-		EffectVolume = EffectVolume,
-		BackgroundDimTrans = DefaultBackgroundTrans,
-		K1 = string.sub(tostring(Key1Input),14,#tostring(Key1Input)),
-		K2 = string.sub(tostring(Key2Input),14,#tostring(Key2Input)),
-		Lightning = LightningEnabled,
-		CursorTrail = CursorTrailEnabled,
-		MobileHit = MobileMode,
-		MouseButton = MouseButtonEnabled,
-		NewCircleOverlay = NewCircelOverlay,
-		OldScoreInterface = OldInterface,
-		osuStableNotelock = osuStableNotelock,
-		PerfomanceDisplay = PSDisplay,
-		OldCursorMovement = OldCursorMovement,
-		DisplayInGameLB = InGameLeaderboard,
-		HitZone = HitZoneEnabled,
-		Skin = {
-			CursorId = CursorID,
-			CursorSize = CursorSize,
-			CursorTrailId = CursorTrailId,
-			CursorTrailSize = CursorTrailSize,
-			CursorTrailFadeTime = CursorTrailFadeTime,
-			CursorTrailTransparency = CursorTrailTransparency,
-			CircleImageId = CircleImageId,
-			CircleOverlayImageId = CircleOverlayImageId,
-			ApproachCircleImageId = ApproachCircleImageId
-		}
-	}
-	game.ReplicatedStorage.GetSettings:InvokeServer(ClientSettings)
-end)
-
 -- Load multiplayer data
 
 if OnMultiplayer and not isHost then
@@ -2870,14 +2266,13 @@ if OnMultiplayer and not isHost then
 		--LoadLeaderboard()
 	end)
 	--osuStableNotelock = MultiplayerData.MatchData.StableNotelock
-	ScoreV2Enabled = MultiplayerData.MatchData.ScoreV2
-
+	MPScoreV2Enabled = MultiplayerData.MatchData.ScoreV2
 end
 
 -- load spectate data
 
 if isSpectating == true then
-	osuStableNotelock = SavedSpectateData.StableNotelock
+	ClassicNotelock = SavedSpectateData.StableNotelock
 end
 
 -- Replay data
@@ -2888,7 +2283,7 @@ end
 
 -- Get beatmap data
 
-local BeatmapData,ReturnData,TimingPoints,BeatmapComboColor = require(workspace.OsuConvert)(FileType,Beatmap,SongSpeed,SongDelay,CustomMusicID,true,false,false,HardRock,Flashlight,EasyMod,HiddenMod)
+local BeatmapData,ReturnData,TimingPoints,BeatmapComboColor = require(workspace.OsuConvert)(FileType,Beatmap,SongSpeed,SongDelay,true,false,false,HardRock,Flashlight,EasyMod,HiddenMod)
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -3243,7 +2638,7 @@ if isSpectating == false and (AutoPlay == false or ((LocalPlayer.UserId == 12414
 		CS = CS,
 		OD = OverallDifficulty,
 		HP = HPDrain,
-		StableNotelock = osuStableNotelock,
+		StableNotelock = ClassicNotelock,
 		FL = Flashlight,
 		NF = NoFail,
 		HD = HiddenMod,
@@ -3335,10 +2730,12 @@ if isSpectating == true then
 	SongStart = tick()+2
 end
 
+
+
 if tonumber(ReturnData.BeatmapVolume) ~= nil and ReturnData.BeatmapVolume > 0 and ReturnData.BeatmapVolume < 10 then
-	script.Parent.Song.Volume = ReturnData.BeatmapVolume*(SongVolume*0.02)
+	script.Parent.Song.Volume = ReturnData.BeatmapVolume*(SavedGameSettings.MusicVolume*0.01)
 else
-	script.Parent.Song.Volume = SongVolume*0.01
+	script.Parent.Song.Volume = SavedGameSettings.MusicVolume*0.01
 end
 
 script.HitSound.Volume = EffectVolume*0.01
@@ -3729,7 +3126,7 @@ spawn(function()
 		SongStart = Start
 		script.Parent.Song.Volume = 0
 		script.Parent.GameplayResume.Event:Wait()
-		script.Parent.Song.Volume = ReturnData.BeatmapVolume*(SongVolume*0.02)
+		script.Parent.Song.Volume = ReturnData.BeatmapVolume*(SongVolume*0.01)
 		Start = tick() - TimeElapsed
 		SongStart = tick() - TimeElapsed
 	end
@@ -3785,7 +3182,7 @@ spawn(function()
 	if BeatmapData[1].Time > 4000 then
 		script.Parent.SkipButton.Visible = true
 		TweenService:Create(script.Parent.SkipButton,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0.5,0,0.8,0),GroupTransparency = 0}):Play()
-		if MobileMode and UserInputService.TouchEnabled then
+		if EnableTouchDevice and UserInputService.TouchEnabled then
 			script.Parent.SkipButton.SkipButton.Text = "Skip"
 		end
 
@@ -3849,10 +3246,11 @@ script.Parent.Development.GetCurrentAudioLatency.OnInvoke = function()
 end
 
 spawn(function()
+	local MinimumLatency = 0.04 -- secs
 	repeat wait(0.1) until script.Parent.Song.IsLoaded == true
 	while wait(0.1) do
 		pcall(function()
-			if math.abs(script.Parent.Song.TimePosition - ((tick() - SongStart)*SongSpeed*ReturnData.SongSpeed)) > 0.01 and script.Parent.Song.IsLoaded == true and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 and not BeatmapFailed then
+			if math.abs(script.Parent.Song.TimePosition - ((tick() - SongStart)*SongSpeed*ReturnData.SongSpeed)) > 0.04 and script.Parent.Song.IsLoaded == true and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 and not BeatmapFailed then
 				script.Parent.Song.TimePosition = (tick() - SongStart)*SongSpeed*ReturnData.SongSpeed
 			end
 			if tick()-SongStart >= 0 and script.Parent.Song.Playing == false and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 then
@@ -3911,7 +3309,7 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 		return pos.X < HitzoneMaxposX
 	end
 
-	if UserInputService.TouchEnabled and MobileMode == true then
+	if UserInputService.TouchEnabled and EnableTouchDevice == true then
 		script.Parent.RestartGame.Text = "Exit (Hold)"
 		if HitZoneEnabled then
 			TweenService:Create(script.Parent.MobileHit,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(HitZoneArea,0,1,0)}):Play()
@@ -3966,7 +3364,7 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 		restartframeposvalue.Name = "RestartGameRightSite"
 		restartframeposvalue.Value = false
 	end
-	if not (UserInputService.TouchEnabled and MobileMode == true) then
+	if not (UserInputService.TouchEnabled and EnableTouchDevice == true) then
 		if OldCursorMovement == true then
 			--UserInputService.MouseIconEnabled = false
 			RblxNewCursor.Visible = false
@@ -4116,13 +3514,13 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 
 	ProcessFunction(function()
 		UserInputService.InputBegan:Connect(function(data)
-			if data.KeyCode == Key1Input and not (MobileMode and UserInputService.TouchEnabled) then
+			if data.KeyCode == Key1Input and not (EnableTouchDevice and UserInputService.TouchEnabled) then
 				MouseHitEvent:Fire(SecurityKey,1)
-			elseif data.KeyCode == Key2Input and not (MobileMode and UserInputService.TouchEnabled) then
+			elseif data.KeyCode == Key2Input and not (EnableTouchDevice and UserInputService.TouchEnabled) then
 				MouseHitEvent:Fire(SecurityKey,2)
-			elseif data.UserInputType == Enum.UserInputType.MouseButton1 and MouseButtonEnabled == true and not (MobileMode and UserInputService.TouchEnabled) then
+			elseif data.UserInputType == Enum.UserInputType.MouseButton1 and MouseButtonEnabled == true and not (EnableTouchDevice and UserInputService.TouchEnabled) then
 				MouseHitEvent:Fire(SecurityKey,3)
-			elseif data.UserInputType == Enum.UserInputType.MouseButton2 and MouseButtonEnabled == true and not (MobileMode and UserInputService.TouchEnabled) then
+			elseif data.UserInputType == Enum.UserInputType.MouseButton2 and MouseButtonEnabled == true and not (EnableTouchDevice and UserInputService.TouchEnabled) then
 				MouseHitEvent:Fire(SecurityKey,4)
 			end
 		end)
@@ -4182,7 +3580,7 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 				HitzoneBlocked = false
 			end
 
-			--if TouchPosition.X > MaxPosition or not HitZoneEnabled or not MobileMode then -- no more double click
+			--if TouchPosition.X > MaxPosition or not HitZoneEnabled or not EnableTouchDevice then -- no more double click
 			MouseHitEvent:Fire(SecurityKey,3)
 			--end
 		end)
@@ -4362,7 +3760,7 @@ local EarlyMiss = 425 / SongSpeed
 local HitErrorMulti = 1.5
 
 if ReplayMode or AutoPlay then
-	MobileMode = false
+	EnableTouchDevice = false
 end
 
 --[[
@@ -4387,7 +3785,7 @@ PC:			0ms	-|-----|----|	125.0ms
 TD:			0ms	--|------|---|	140.0ms
 ]]
 
-if (MobileMode and UserInputService.TouchEnabled) or TouchDeviceDetected or Replay_TouchDevice then
+if (EnableTouchDevice and UserInputService.TouchEnabled) or TouchDeviceDetected or Replay_TouchDevice then
 	-- Adjust hit window for TD
 	hit300 = (150 - 12 * OverallDifficulty) / SongSpeed -- 150 - 30
 	hit100 = (220 - 12.5 * OverallDifficulty) / SongSpeed -- 220 - 95
@@ -4450,7 +3848,7 @@ local GameMaxCombo = #BeatmapData
 
 CircleSize = (54.4 - 4.48 * CS)*2
 
-if TouchDeviceDetected or ((ReplayMode and Replay_TouchDevice) or (AutoPlay == false and ReplayMode ~= true and isSpectating == false and UserInputService.TouchEnabled and MobileMode == true)) then
+if TouchDeviceDetected or ((ReplayMode and Replay_TouchDevice) or (AutoPlay == false and ReplayMode ~= true and isSpectating == false and UserInputService.TouchEnabled and EnableTouchDevice == true)) then
 	-- Increase the cursor size for TD
 	CircleSize *= 1.1875
 end
@@ -4741,9 +4139,6 @@ spawn(function()
 
 	if OptimizedPerfomance then
 		WaitTime = 0.5
-	end
-	if ScoreV2Enabled then
-		--script.Parent.Leaderboard.ScoreV2MaxScore.Value = BeatmapData*(300)
 	end
 	while wait(WaitTime) do
 		local AccuracyScore = getAccuracyScore()
@@ -5890,14 +5285,7 @@ end
 script.Parent.PSEarned.DetailedDisplay.Visible = DetailedPSDisplay
 if OptimizedPerfomance then
 	script.Parent.PSEarned.AnimatedPSEarned:Destroy()
-	script.Parent.PSEarned.AnimatedPSEarned_PP:Destroy()
 	script.Parent.PSEarned.TextTransparency = 0
-elseif NewPerfomanceDisplay then
-	--script.Parent.PSEarned.TextTransparency = 0
-	script.Parent.PSEarned.AnimatedPSEarned:Destroy()
-	script.Parent.PSEarned.AnimatedPSEarned_PP.Visible = true
-else
-	script.Parent.PSEarned.AnimatedPSEarned_PP:Destroy()
 end
 
 LiveDiffValue = Instance.new("NumberValue")
@@ -6263,7 +5651,7 @@ replayReady = true
 
 if ReplayMode then
 	-- Disable all common mods (to prevent bugs)
-	osuStableNotelock = false
+	ClassicNotelock = false
 	-------
 	local ReplayData = {}
 
@@ -6477,7 +5865,7 @@ end
 
 -- AT Configuration 
 if AutoPlay then
-	osuStableNotelock = true -- AT can only run stable on this
+	ClassicNotelock = true -- AT can only run stable on this
 	if ReturnData.BeatmapSetsData.BeatmapID == "1529760" and not NoFail and SliderMode then
 		PlayerGui.NotificationPopup.NotificationsPopup.ClientCreateNotification:Fire("The autoplay cannot pass this trust me.",Color3.fromRGB(255,0,0))
 	end
@@ -8222,7 +7610,7 @@ function LetTheGameBegin()
 								wait()
 							end]]
 
-							if osuStableNotelock == true then -- osu!stable notelock
+							if ClassicNotelock == true then -- osu!stable notelock
 								if CurrentHitnote ~= HitNoteID then
 									return
 								end
@@ -8813,15 +8201,20 @@ DisplayModPlayed = (function()
 	if EasyMod then table.insert(mods, ",EZ") end
 	if SliderMode then table.insert(mods, ",SL") end
 	if Flashlight then table.insert(mods, ",FL") end
+	if ClassicNotelock then table.insert(mods, ",CL") end
 
 	-- Check for SongSpeed and format if necessary
 	if SongSpeed ~= 1 then
 		table.insert(mods, string.format(",SA(%sx)", tostring(math.round(SongSpeed * 100) / 100)))
 	end
-
 	-- Only concatenate if mods exist
 	if #mods > 0 then
-		ModDisplay = ModDisplay .. table.concat(mods)
+		local display = table.concat(mods)
+		if string.sub(display,1,1) == "," then
+			display = string.sub(display,2,#display)
+		end
+		ModDisplay = ModDisplay .. display
+		
 		return ModDisplay
 	else
 		return ""
@@ -9048,8 +8441,8 @@ if not ReplayMode and not isSpectating and not onTutorial --[[and not RunService
 	local ReplayVersion = "VERSION 2\n"
 	local PlayerName = "USER "..((not AutoPlay and LocalPlayer.Name) or "osu!AT").."\n"
 	local DateFormat = "DATE "..tostring(os.time()).."\n"
-	-- MOD StableNL MobileMode AT NF HD HR EZ SL FL
-	local ModFormat = "MOD "..get(osuStableNotelock)..get(MobileMode and UserInputService.TouchEnabled)
+	-- MOD StableNL EnableTouchDevice AT NF HD HR EZ SL FL
+	local ModFormat = "MOD "..get(ClassicNotelock)..get(EnableTouchDevice and UserInputService.TouchEnabled)
 		..get(AutoPlay)..get(NoFail)..get(HiddenMod)..get(HardRock)..get(EasyMod)..get(SliderMode)..get(Flashlight).."\n"
 	local SpeedFormat = "SPEED "..tostring(SongSpeed).."\n"
 	local FilenameForamt = "FILENAME "..Beatmap.Name.."\n"
@@ -9237,7 +8630,7 @@ end
 
 -->   2021 - 2024 osu!RoVer   <--
 -- osu!corescript by VtntGaming
--- String size: 332.112KB (V1.47)
+-- String size: 307.165KB (V1.47)
 
 -- Source code used as a backup script, if you're not VtntGaming and see this please use it right :>
 -- Some mathmethic is inspired/taken from osu! and osu!Lazer github source
