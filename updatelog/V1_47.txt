@@ -26,8 +26,10 @@ Here's the upcomming change to the next version...
       > hit100 = (175 - 10 * OverallDifficulty) / SongSpeed       |  TDhit100 = (220 - 12.5 * OverallDifficulty) / SongSpeed
       > hit50  = (250 - 12.5 * OverallDifficulty) / SongSpeed     |  TDhit50  = (275 - 13.5 * OverallDifficulty) / SongSpeed
       > EarlyMiss = (350 + 2 * OverallDifficulty ) / SongSpeed    |  TDEarlyMiss = (375 + 2 * OverallDifficulty) / SongSpeed
-
-
+  - Game now support up to 2 overlaps song, make it more compatible with 7-14 minute songs
+  - Note now can be preloaded within 0.5 seconds before it's actual appear time, help decrease latency for some users
+  - Game now support stack leniency, based on the map settings.
+  
 -> Beatmap files:
   - Fixed "some of the map" huge audio delay
 -> Beatmap listing
@@ -43,20 +45,20 @@ Here's the upcomming change to the next version...
   - You can now Shift + Delete to clear the search box
   - The song auto will switch to the relevant map you search (unless the current song is in the search result)
   - Improved UI
-
--> New mod selection panel
-  - Mod selection will be moved from the legacy settings to the new panel
-  - "Settings" button will be replaced with "Mods" button, make it easier to configure
+  - Small design fix
 
 -> Gameplay settings revamped
   - New modern and improved accessibility interface
-  - Settings toggle button now moved to dropdown menu, can be known as "|||" button
-  - Settings toggle now support Ctrl + S
+  - Settings toggle button now moved to dropdown menu, can be seen in the hamburger dropdown
+  - Settings toggle now support Ctrl + O
   - New advanced tab inside the settings, for deeper configuration
   - Keybinds configuration now moved to advanced tab
     + New keybinds: Quick exit (hold) and Quick restart (hold)
     + Added "Clear" option while binding to remove entirely the input of that option
-    + Key now can only be applied once per keybind
+    + Key now cannot be applied if it's duplicated with another related key
+  - Some in-game settings can now be be applied instantly, while some other require restarting a play
+  - The old settings will remove most of it's features, only Modifiers are avaiable and will wait for another revamp
+  
 
 -> Preview tab
   - Note count now revamped with a graph that shows object count in the map
