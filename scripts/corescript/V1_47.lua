@@ -13,6 +13,8 @@ ScriptComponent = script.Parent.GameplayScripts.Components
 ObjectTools = require(ScriptComponent.Gameplay.CircleObject)
 LocalPlayer = game.Players.LocalPlayer
 PlayerGui = LocalPlayer.PlayerGui
+ObjectManagement_Actor = game.Players.LocalPlayer.PlayerScripts.ObjectManagement_Actor
+ExternalFunction_Actor = game.Players.LocalPlayer.PlayerScripts.ExternalFunction_Actor
 local wait = require(workspace.WaitModule)
 
 if script.Parent.StartupState.Value == "Waiting" then
@@ -1061,7 +1063,9 @@ LoadLeaderboard = function()
 	LeaderboardInterface.PersonalBest.NoRecord.Visible = false
 	LeaderboardInterface.PersonalBestTitle.TextTransparency = 1
 
+	-- Get map lb data from the server
 	local GolbalData,PersonalData,SessionChanged = game.ReplicatedStorage.BeatmapLeaderboard:InvokeServer(1,{DatastoreName = CurrentKey})
+	-- prevent duplicating request
 	if SessionChanged == true or CurrentLeaderboardSession ~= ThisLBSession then return end
 
 	local Leaderboard = LeaderboardInterface.GolbalLeaderboard
@@ -1080,9 +1084,11 @@ LoadLeaderboard = function()
 		Local = PersonalData,
 		PSLeaderboard = PSLeaderboard
 	}
+	
 
-	script.Parent.GameplayData.LeaderboardData.Value = HttpService:JSONEncode(SendingData)
-	CurrentPreviewFrame.Overview.LeaderboardDisplay.LBData.Value = HttpService:JSONEncode(SendingData)
+	script.Parent.GameplayData.LbStateAvaiable.LbDataProcess.Update:Fire(SendingData)
+	--script.Parent.GameplayData.LeaderboardData.Value = HttpService:JSONEncode(SendingData)
+	--CurrentPreviewFrame.Overview.LeaderboardDisplay.LBData.Value = HttpService:JSONEncode(SendingData)
 
 	if script.Parent:FindFirstChild("GameStarted") or StartupState == "FastRestart" then return end
 	
@@ -1092,7 +1098,7 @@ LoadLeaderboard = function()
 
 	if PSLeaderboard then
 		table.sort(GolbalData,function(plr1,plr2)
-			return  getps(plr1) > getps(plr2) or (getps(plr1) == getps(plr2) and plr1.Rank < plr2.Rank)
+			return getps(plr1) > getps(plr2) or (getps(plr1) == getps(plr2) and plr1.Rank < plr2.Rank)
 		end)
 
 		for newrank,plr in pairs(GolbalData) do
@@ -1109,7 +1115,6 @@ LoadLeaderboard = function()
 
 	wait(0.4)
 	if not script.Parent:FindFirstChild("GameStarted") then
-
 		local function GetScore(CurrentScore)
 			CurrentScore = tostring(CurrentScore)
 			local NewScore = ""
@@ -1931,6 +1936,9 @@ end
 PlayerGui.MenuInterface.DropdownMenu.MenuListAnimate.bindRequest:Fire(false)
 
 TweenService:Create(CurrentPreviewFrame.OverviewSong.EqualizerSoundEffect,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{HighGain = -20,MidGain = -20}):Play()
+if CurrentPreviewFrame:FindFirstChild("OverviewSong2") then
+	TweenService:Create(CurrentPreviewFrame.OverviewSong2.EqualizerSoundEffect,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{HighGain = -20,MidGain = -20}):Play()
+end
 
 OnMultiplayer = not PlayerGui.MenuInterface.MultiplayerPanel.MultiplayerScript.MultiplayerRoom.Disabled  -- Multiplayer
 
@@ -1959,10 +1967,18 @@ ProcessFunction(function()
 	--TweenService:Create(script.Parent.Interface.BG,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,false),{BackgroundTransparency = 1}):Play()
 	TweenService:Create(CurrentPreviewFrame.OverviewSong.EqualizerSoundEffect,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{HighGain = 0,MidGain = 0}):Play()
 	TweenService:Create(CurrentPreviewFrame.OverviewSong,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{Volume = 0}):Play()
+	
+	if CurrentPreviewFrame:FindFirstChild("OverviewSong2") then
+		TweenService:Create(CurrentPreviewFrame.OverviewSong2.EqualizerSoundEffect,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{HighGain = 0,MidGain = 0}):Play()
+		TweenService:Create(CurrentPreviewFrame.OverviewSong2,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{Volume = 0}):Play()
+	end
 	TweenService:Create(script.Parent.Interface.Background,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{GroupTransparency = 1}):Play()
 	wait(0.25)
 	script.Parent.Interface.Background.Visible = false
 	CurrentPreviewFrame.OverviewSong.Playing = false
+	if CurrentPreviewFrame:FindFirstChild("OverviewSong2") then
+		CurrentPreviewFrame.OverviewSong2.Playing = false
+	end
 end)
 
 do
@@ -1987,31 +2003,6 @@ do
 	end
 end
 
-
-script.Parent.Parent.BG.OutlineStuff:Destroy()
-script.Parent.Parent.BG.MultiplayerButton:Destroy()
-script.Parent.Parent.BG.SettingsButton:Destroy()
-
-PlayerGui.SavedSettings:ClearAllChildren()
-CurrentSetting.Parent = PlayerGui.SavedSettings
-CurrentSetting.AnchorPoint = Vector2.new(1,0)
---CurrentSetting.GroupTransparency = 1
-UIPreviewFrame.Parent = PlayerGui.SavedSettings
-UIPreviewFrame.AnchorPoint = Vector2.new(0,0)
-script.Parent.Parent.BG.BeatmapChooseButton.Visible = false
-script.Parent.Cursor.TrailEnabled.Value = CursorTrailEnabled
-script.Parent.Cursor.FadeTime.Value = SavedGameSettings.CursorTrailDuration
-script.Parent.Parent.BG.BeatmapCount.Visible = false
-script.Parent.Parent.BG.BeatmapLeaderboard.Visible = false
-script.Parent.Parent.BG.GameVersion.Visible = false
-PlayerGui.MenuInterface.PlayerListButton.Visible = false
-PlayerGui.MenuInterface.LeaderboardButton.Visible = false
-PlayerGui.MenuInterface.ProfileButton.Visible = false
-PlayerGui.MenuInterface.MultiplayerButton.Visible = false
-PlayerGui.MenuInterface.UpdateLogButton.Visible = false
-PlayerGui.MenuInterface.ExpandButton.ExpandButton.Visible = false
-PlayerGui.MenuInterface.WikiButton.Visible = false
-script.Parent.Parent.BG.BeatmapLeaderboard.GolbalLeaderboard:ClearAllChildren()
 
 
 if OnMultiplayer then
@@ -2063,20 +2054,18 @@ SongDelay = SavedGameSettings.AudioOffset
 Beatmap = Settings.BeatmapFile.Text
 CursorSensitivity = SavedGameSettings.VirtualCursorSensitivity
 CursorID = SavedGameSettings.CursorID
-DefaultCursorID = 6979941273
 CursorSize = SavedGameSettings.CursorSize
 CustomDiff = false
 CursorTrailId = SavedGameSettings.CursorTrailID
 CursorTrailSize = SavedGameSettings.CursorTrailSize
-CursorTrailFadeTime = SavedGameSettings.CursorTrailDuration
 CursorTrailTransparency = 1-(SavedGameSettings.CursorTrailOpacity)*0.01
 CircleImageId = SavedGameSettings.BaseCircleID
 CircleOverlayImageId = SavedGameSettings.CircleOverlayID
 ApproachCircleImageId = SavedGameSettings.ApproachCircleID
 EffectVolume = SavedGameSettings.EffectVolume
-HitZoneArea = SavedGameSettings.HitzoneArea
+HitZoneArea = SavedGameSettings.HitzoneArea * 0.01
 SongVolume = SavedGameSettings.SongVolume
-ClassicNotelock = SavedGameSettings.ClassicNotelock -- If enabled, it will use osu!stable notelock system, else it will use osu!lazer system
+ClassicNotelock = not AutoPlay and SavedGameSettings.ClassicNotelock or true -- If enabled, it will use osu!stable notelock system, else it will use osu!lazer system
 PSLeaderboard = SavedGameSettings.UsePSLeaderboard
 CursorTrailEnabled = SavedGameSettings.CursorTrail
 EnableTouchDevice = SavedGameSettings.EnableTouchDevice
@@ -2089,7 +2078,7 @@ OverallInterfaceEnabled = SavedGameSettings.ScoreOverlay
 MobileModeRightHitZone = SavedGameSettings.RightSizeHitzone
 DisableChatInGame = SavedGameSettings.DisableChatIngame
 KeepOriginalPitch = SavedGameSettings.EnableSpeedPitch
-InGameLeaderboard = true--SavedGameSettings.
+InGameLeaderboard = SavedGameSettings.ShowInGameLeaderboard
 HitZoneEnabled = SavedGameSettings.EnableHitzone
 CustomComboColorEnabled = SavedGameSettings.CustomComboColor
 OptimizedPerfomance = SavedGameSettings.OptimizedPerfomance
@@ -2103,17 +2092,115 @@ Hit300Display = SavedGameSettings.ShowHit300
 Key1Input = Enum.KeyCode:FromName(SavedGameSettings.LeftKey)
 Key2Input = Enum.KeyCode:FromName(SavedGameSettings.RightKey)
 DefaultBackgroundTrans = 1-(SavedGameSettings.BGDim * 0.01)
+EnableSliderShadow = SavedGameSettings.EnableSliderShadow
 
 if OnMultiplayer then
 	ScoreV2Enabled = MPScoreV2Enabled
 end
 
-
-function ToggleDirectChange(settingName, callback)
-	GameSettingManage.SubscribeSettingChange(settingName, script, callback)
+function checkFPSCounterPos()
+	if PSDisplay then
+		if DetailedPSDisplay then
+			if workspace.CurrentCamera.ViewportSize.Y >= 470 then
+				TweenService:Create(PlayerGui.OverallInterface.FPSCounter,
+					TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,1,-95)}
+				):Play()
+			else
+				TweenService:Create(PlayerGui.OverallInterface.FPSCounter,
+					TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,0.5,-110)}
+				):Play()
+			end
+		else
+			if workspace.CurrentCamera.ViewportSize.Y >= 520 then
+				TweenService:Create(PlayerGui.OverallInterface.FPSCounter,
+					TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,1,-50)}
+				):Play()
+			else
+				TweenService:Create(PlayerGui.OverallInterface.FPSCounter,
+					TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,0.5,-110)}
+				):Play()
+			end
+		end
+	else
+		TweenService:Create(PlayerGui.OverallInterface.FPSCounter,
+			TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,1,-40)}
+		):Play()
+	end
 end
 
-ToggleDirectChange()
+function updateLbState(state)
+	script.Parent.Leaderboard.StateEnabled.Value = state
+	script.Parent.MultiplayerLeaderboard.StateEnabled.Value = state
+	script.Parent.Leaderboard.LbTrigger:Fire(state)
+	script.Parent.MultiplayerLeaderboard.LbTrigger:Fire(state)
+end
+
+function toggleScoreOverlay()
+	-- Old score interface
+	script.Parent.AccurancyDisplay.Visible = OverallInterfaceEnabled and OldInterface
+	script.Parent.ComboDisplay.Visible = OverallInterfaceEnabled and OldInterface
+	script.Parent.ScoreDisplay.Visible = OverallInterfaceEnabled and OldInterface
+	-- New score interface
+	script.Parent.ScoreFrameDisplay.Visible = OverallInterfaceEnabled and not OldInterface
+	script.Parent.AccurancyFrameDisplay.Visible = OverallInterfaceEnabled and not OldInterface
+	script.Parent.ComboFrameDisplay.Visible = OverallInterfaceEnabled and not OldInterface
+end
+toggleScoreOverlay()
+updateLbState(InGameLeaderboard)
+
+workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(checkFPSCounterPos)
+
+checkFPSCounterPos()
+
+function ToggleDirectChange(settingName, callback)
+	GameSettingManage.SubscribeSettingChange:Fire(settingName, script, callback)
+end
+
+ToggleDirectChange("InstaFadeCircle", function(value) InstaFadeCircle = value end)
+ToggleDirectChange("OptimizedPerfomance", function(value)
+	OptimizedPerfomance = value
+	script.Parent.PSEarned.AnimatedPSEarned.Visible = not value
+	script.Parent.PSEarned.TextTransparency = value and 0 or 1
+end)
+ToggleDirectChange("ShowHit300", function(value) Hit300Display = value end)
+ToggleDirectChange("ScoreV2", function(value) ScoreV2Enabled = value end)
+ToggleDirectChange("BGDim", function(value)
+	DefaultBackgroundTrans = 1-(value * 0.01)
+	TweenService:Create(PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans}):Play()
+end)
+ToggleDirectChange("LiveDifficultyOverlay", function(value) LiveDifficultyDisplay = value end)
+ToggleDirectChange("PerfomanceOverlay", function(value)
+	PSDisplay = value
+	script.Parent.PSEarned.Visible = value
+
+	checkFPSCounterPos()
+end)
+ToggleDirectChange("DetailedPerformance", function(value)
+	DetailedPSDisplay = value
+	script.Parent.PSEarned.DetailedDisplay.Visible = value
+
+	checkFPSCounterPos()
+end)
+ToggleDirectChange("EnableSliderShadow", function(value) EnableSliderShadow = value end)
+ToggleDirectChange("ShowInGameLeaderboard", function(value)
+	InGameLeaderboard = value
+	updateLbState(value)
+end)
+ToggleDirectChange("CursorTrail", function(value)
+	script.Parent.Cursor.TrailEnabled.Value = value
+end)
+ToggleDirectChange("CursorTrailDuration", function(value)
+	script.Parent.Cursor.FadeTime.Value = value
+end)
+ToggleDirectChange("LegacyOverlay", function(value)
+	OldInterface = value
+	toggleScoreOverlay()
+end)
+ToggleDirectChange("ScoreOverlay", function(value)
+	OverallInterfaceEnabled = value
+	toggleScoreOverlay()
+end)
+
 
 
 CircleConfigData = {
@@ -2158,6 +2245,32 @@ end
 CircleNumberScale = CircleConfigData.NumberScale or DefaultCircleId.NumberScale
 script.Circle.CircleNumber.Size = UDim2.new(CircleNumberScale,0,CircleNumberScale,0)
 script.Circle.CircleNumber.UIListLayout.Padding = UDim.new(CircleConfigData.Overlap or DefaultCircleId.Overlap,0)
+-- Apply settings
+
+script.Parent.Parent.BG.OutlineStuff:Destroy()
+script.Parent.Parent.BG.MultiplayerButton:Destroy()
+script.Parent.Parent.BG.SettingsButton:Destroy()
+
+PlayerGui.SavedSettings:ClearAllChildren()
+CurrentSetting.Parent = PlayerGui.SavedSettings
+CurrentSetting.AnchorPoint = Vector2.new(1,0)
+--CurrentSetting.GroupTransparency = 1
+UIPreviewFrame.Parent = PlayerGui.SavedSettings
+UIPreviewFrame.AnchorPoint = Vector2.new(0,0)
+script.Parent.Parent.BG.BeatmapChooseButton.Visible = false
+script.Parent.Cursor.TrailEnabled.Value = CursorTrailEnabled
+script.Parent.Cursor.FadeTime.Value = SavedGameSettings.CursorTrailDuration
+script.Parent.Parent.BG.BeatmapCount.Visible = false
+script.Parent.Parent.BG.BeatmapLeaderboard.Visible = false
+script.Parent.Parent.BG.GameVersion.Visible = false
+PlayerGui.MenuInterface.PlayerListButton.Visible = false
+PlayerGui.MenuInterface.LeaderboardButton.Visible = false
+PlayerGui.MenuInterface.ProfileButton.Visible = false
+PlayerGui.MenuInterface.MultiplayerButton.Visible = false
+PlayerGui.MenuInterface.UpdateLogButton.Visible = false
+PlayerGui.MenuInterface.ExpandButton.ExpandButton.Visible = false
+PlayerGui.MenuInterface.WikiButton.Visible = false
+script.Parent.Parent.BG.BeatmapLeaderboard.GolbalLeaderboard:ClearAllChildren()
 
 -- Error check
 
@@ -2325,14 +2438,6 @@ end
 
 script.Parent.HitError.Visible = HitErrorEnabled
 
--- Old score interface
-script.Parent.AccurancyDisplay.Visible = OverallInterfaceEnabled and OldInterface
-script.Parent.ComboDisplay.Visible = OverallInterfaceEnabled and OldInterface
-script.Parent.ScoreDisplay.Visible = OverallInterfaceEnabled and OldInterface
--- New score interface
-script.Parent.ScoreFrameDisplay.Visible = OverallInterfaceEnabled and not OldInterface
-script.Parent.AccurancyFrameDisplay.Visible = OverallInterfaceEnabled and not OldInterface
-script.Parent.ComboFrameDisplay.Visible = OverallInterfaceEnabled and not OldInterface
 -----------
 PlayerGui.BG.GameTitle.Visible = false
 script.Parent.HitKey.Visible = HitKeyOverlay
@@ -2377,8 +2482,12 @@ end
 -----
 
 local HPDrain = 5
+-- indicate if the map have 2 song
+-- this is mostly possible on 7+ minute song length
+ExistSecondSong = (ReturnData.MapSongId2 ~= nil)
 if ReturnData.MapSongId or ReturnData.CustomSongFile then
 	script.Parent.Song.SoundId = ReturnData.CustomSongFile or "rbxassetid://"..tostring(ReturnData.MapSongId)
+	script.Parent.Song2.SoundId = ExistSecondSong and "rbxassetid://"..tostring(ReturnData.MapSongId2) or ""
 end
 
 -- load all the assets
@@ -2570,11 +2679,17 @@ local RankedRequirement = {
 	onTutorial == false
 }
 
-for _,Requirement in pairs(RankedRequirement) do
-	if not Requirement then
-		PlayRanked = false
+ProcessFunction(function()
+	wait(2)
+	for _,Requirement in pairs(RankedRequirement) do
+		if not Requirement then
+			PlayRanked = false
+			break
+		end
 	end
-end
+
+	script.Parent.UnrankedSign.Visible = not PlayRanked
+end)
 --[[
 UserInputService.InputBegan:Connect(function(input)
 	if input.KeyCode == Enum.KeyCode.Return and game.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
@@ -2598,7 +2713,6 @@ if FileType ~= 1 or AutoPlay == true or SliderMode == true or script.Parent.Temp
 	PlayRanked = false
 end]]
 
-script.Parent.UnrankedSign.Visible = not PlayRanked
 
 if isSpectating == true or ReplayMode == true then
 	script.Parent.UnrankedSign.Text = "SPECTATING"
@@ -2734,8 +2848,10 @@ end
 
 if tonumber(ReturnData.BeatmapVolume) ~= nil and ReturnData.BeatmapVolume > 0 and ReturnData.BeatmapVolume < 10 then
 	script.Parent.Song.Volume = ReturnData.BeatmapVolume*(SavedGameSettings.MusicVolume*0.01)
+	script.Parent.Song2.Volume = ReturnData.BeatmapVolume*(SavedGameSettings.MusicVolume*0.01)
 else
 	script.Parent.Song.Volume = SavedGameSettings.MusicVolume*0.01
+	script.Parent.Song2.Volume = SavedGameSettings.MusicVolume*0.01
 end
 
 script.HitSound.Volume = EffectVolume*0.01
@@ -3125,8 +3241,10 @@ spawn(function()
 		Start = Start + 100000
 		SongStart = Start
 		script.Parent.Song.Volume = 0
+		script.Parent.Song2.Volume = 0
 		script.Parent.GameplayResume.Event:Wait()
 		script.Parent.Song.Volume = ReturnData.BeatmapVolume*(SongVolume*0.01)
+		script.Parent.Song2.Volume = ReturnData.BeatmapVolume*(SongVolume*0.01)
 		Start = tick() - TimeElapsed
 		SongStart = tick() - TimeElapsed
 	end
@@ -3245,19 +3363,37 @@ script.Parent.Development.GetCurrentAudioLatency.OnInvoke = function()
 	return ((tick() - SongStart)*SongSpeed*ReturnData.SongSpeed - script.Parent.Song.TimePosition) * 1000
 end
 
+-- align the song with the time
 spawn(function()
 	local MinimumLatency = 0.04 -- secs
 	repeat wait(0.1) until script.Parent.Song.IsLoaded == true
 	while wait(0.1) do
 		pcall(function()
-			if math.abs(script.Parent.Song.TimePosition - ((tick() - SongStart)*SongSpeed*ReturnData.SongSpeed)) > 0.04 and script.Parent.Song.IsLoaded == true and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 and not BeatmapFailed then
-				script.Parent.Song.TimePosition = (tick() - SongStart)*SongSpeed*ReturnData.SongSpeed
+			local checkingSongObj = script.Parent.Song
+			local ExtraLength = 0
+			if ExistSecondSong and ((tick() - SongStart)*SongSpeed*ReturnData.SongSpeed > script.Parent.Song.TimeLength) then
+				ExtraLength = script.Parent.Song.TimeLength
+				checkingSongObj = script.Parent.Song2
+				if script.Parent.Song.Playing then
+					script.Parent.Song.Playing = false
+					script.Parent.Song2:Play()
+					-- the first song must stop
+				end
+			elseif script.Parent.Song2.Playing then
+				script.Parent.Song2.Playing = false
 			end
-			if tick()-SongStart >= 0 and script.Parent.Song.Playing == false and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 then
-				script.Parent.Song.Playing = true
+			if math.abs((checkingSongObj.TimePosition + ExtraLength) - ((tick() - SongStart)*SongSpeed*ReturnData.SongSpeed)) > 0.04 and script.Parent.Song.IsLoaded == true and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 and not BeatmapFailed then
+				checkingSongObj.TimePosition = (tick() - SongStart)*SongSpeed*ReturnData.SongSpeed - ExtraLength
+			end
+			if tick()-SongStart >= 0 and checkingSongObj.Playing == false and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 then
+				checkingSongObj.Playing = true
 			end
 			if CurrentPreviewFrame.OverviewSong.Playing == true and tick()-SongStart >= 0.5 then
 				CurrentPreviewFrame.OverviewSong.Playing = false
+			end
+			
+			if CurrentPreviewFrame:FindFirstChild("OverviewSong2") and CurrentPreviewFrame.OverviewSong2.Playing == true and tick()-SongStart >= 0.5 then
+				CurrentPreviewFrame.OverviewSong2.Playing = false
 			end
 		end)
 		if not isSpectating then
@@ -3628,7 +3764,15 @@ local KeyHistory = script.Parent.HitKey.KeyHistory
 
 spawn(function()
 	local LastTick = tick()
+	local count = 0
 	while wait() do
+		if OptimizedPerfomance then
+			count += 1
+			if count < 2 then
+				continue -- on OptmimizedPerfomance, it only update 1 per 3 frame
+			end
+			count = 0
+		end
 		local Passed = tick() - LastTick
 		LastTick = tick()
 
@@ -3917,6 +4061,7 @@ script.Parent.ComboDisplay:GetPropertyChangedSignal("Text"):Connect(function()
 		LastComboCapture = script.Parent.ComboFrameDisplay.ComboFrameDisplay:Clone()
 		local NewFadeCombo = script.Parent.ComboFrameDisplay.ComboFrameDisplay:Clone()
 		NewFadeCombo.Parent = script.Parent.ComboFade.ComboFade
+		NewFadeCombo.Visible = OverallInterfaceEnabled and not OldInterface
 
 		TweenService:Create(NewFadeCombo,TweenInfo.new(0.5/SongSpeed,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(NewFadeCombo.Size.Y.Scale*1.5,0,NewFadeCombo.Size.Y.Scale*1.5,0)}):Play()
 		for _,obj in pairs(NewFadeCombo:GetChildren()) do
@@ -3947,6 +4092,11 @@ spawn(function() --Accurancy caculation
 		WaitTime = 0.1
 	end
 	while wait(WaitTime) do
+		if OptimizedPerfomance and WaitTime == 0 then
+			WaitTime = 0.1
+		elseif not OptimizedPerfomance and WaitTime == 0.1 then
+			WaitTime = 0
+		end
 		local h300 = AccuracyData.h300
 		local h100 = AccuracyData.h100
 		local h50 = AccuracyData.h50
@@ -3989,6 +4139,11 @@ spawn(function()
 	end
 
 	while wait(WaitTime) do
+		if OptimizedPerfomance and WaitTime == 0 then
+			WaitTime = 0.25
+		elseif not OptimizedPerfomance and WaitTime == 0.25 then
+			WaitTime = 0
+		end
 		if DisplayAccuracy ~= CurrentAccuracy then
 			CurrentAccuracy = DisplayAccuracy
 			TweenService:Create(script.Parent.GameplayData.Accuracy,TweenInfo.new(0.1/SongSpeed,Enum.EasingStyle.Linear),{Value = DisplayAccuracy}):Play()
@@ -3997,8 +4152,12 @@ spawn(function()
 end)
 
 local PrevAcc = 100
+AccFrameLastUpdate = 0
 
-script.Parent.GameplayData.Accuracy.Changed:Connect(function()
+script.Parent.GameplayData.Accuracy:GetPropertyChangedSignal("Value"):Connect(function()
+	if OptimizedPerfomance and (tick() - AccFrameLastUpdate < 0.04) then return end
+	AccFrameLastUpdate = tick()
+	
 	local Acc = script.Parent.GameplayData.Accuracy.Value/100
 	local AccurancyDisplay = script.Parent.AccurancyFrameDisplay
 
@@ -4107,8 +4266,8 @@ end
 function getScoreV2()
 	local ExtraCombo = EstimatedCombo-#BeatmapData
 	local ExtraAccPoint = math.max(0, ExtraCombo)
-	local AccScoreMax = math.pow(ExtraAccPoint + (AccuracyData.h300*300+AccuracyData.h100*300+AccuracyData.h50*300)/300,2.265) * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.3
-	local ConsistencyScoreMax = math.pow(AccuracyData.MaxConsistency, 1.17677416) * 1.2255 * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.7
+	local AccScoreMax = math.pow(ExtraAccPoint + (AccuracyData.h300*300+AccuracyData.h100*300+AccuracyData.h50*300+AccuracyData.miss*300)/300,2.265) * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.3
+	local ConsistencyScoreMax = math.pow(AccuracyData.MaxConsistency, 1.1704417) * 1.2255 * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.7
 
 	local ActualAccScore = getAccuracyScore()
 	local ActualConsistencyScore = getConsistencyScore()
@@ -4141,6 +4300,11 @@ spawn(function()
 		WaitTime = 0.5
 	end
 	while wait(WaitTime) do
+		if OptimizedPerfomance and WaitTime == 0 then
+			WaitTime = 0.5
+		elseif not OptimizedPerfomance and WaitTime == 0.5 then
+			WaitTime = 0
+		end
 		local AccuracyScore = getAccuracyScore()
 		local ConsistencyScore = getConsistencyScore()
 
@@ -4187,6 +4351,13 @@ spawn(function()
 		TweenTimeMultiplier = 0
 	end
 	while wait(WaitTime) do
+		if OptimizedPerfomance and WaitTime == 0 then
+			WaitTime = 0.04
+			TweenTimeMultiplier = 0
+		elseif not OptimizedPerfomance and WaitTime == 0.04 then
+			WaitTime = 0
+			TweenTimeMultiplier = 1
+		end
 		if Score ~= CurrentScore or (ScoreV2Enabled and CurrentTotalScore~=TotalScoreEstimated) then
 			local AccuracyScore = getAccuracyScore()
 			local ConsistencyScore = getConsistencyScore()
@@ -5258,102 +5429,86 @@ local Missed = false -- If turn on, pp based on combo will enabled
 
 if PSDisplay == true then
 	script.Parent.PSEarned.Visible = true
-	if DetailedPSDisplay then
-		if workspace.CurrentCamera.ViewportSize.Y >= 470 then
-			TweenService:Create(PlayerGui.OverallInterface.FPSCounter,
-				TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,1,-95)}
-			):Play()
-		else
-			TweenService:Create(PlayerGui.OverallInterface.FPSCounter,
-				TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,0.5,-110)}
-			):Play()
-		end
-	else
-		if workspace.CurrentCamera.ViewportSize.Y >= 520 then
-			TweenService:Create(PlayerGui.OverallInterface.FPSCounter,
-				TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,1,-50)}
-			):Play()
-		else
-			TweenService:Create(PlayerGui.OverallInterface.FPSCounter,
-				TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,0.5,-110)}
-			):Play()
-		end
-
-	end
 end
 
 script.Parent.PSEarned.DetailedDisplay.Visible = DetailedPSDisplay
 if OptimizedPerfomance then
-	script.Parent.PSEarned.AnimatedPSEarned:Destroy()
+	script.Parent.PSEarned.AnimatedPSEarned.Visible = false
 	script.Parent.PSEarned.TextTransparency = 0
 end
 
 LiveDiffValue = Instance.new("NumberValue")
 DiffGraphList = ReturnData.Difficulty.DifficultyStrike.List
 StrikeLock = false
-if LiveDifficultyDisplay then
-	script.Parent.LiveDiffDisplay.Visible = true
-	if not Flashlight then
-		script.Parent.LiveDiffDisplay.Flashlight.Visible = false
-	end
-
-	ProcessFunction(function()
-		local LiveDiffDisplay = script.Parent.LiveDiffDisplay
-		local DiffStrikeWarning = LiveDiffDisplay.DiffStrikeWarning
-		local basePerfomance = require(workspace.PerfomanceCalculator.BasePerfomance)
-		--local LiveDiffValue = LiveDiffDisplay.LiveDiffValue
-
-		local waittime = 0
-		if OptimizedPerfomance then
-			waittime = 0.1
-		end
-		while wait(waittime) do
-			local exRate = 1/2.25
-			local mulRate = 1.44226
-
-			local CalculatedAimDiff = math.pow(CurrentLiveDiffAim, exRate) * mulRate * math.pow(0.15, tick() - LiveDiffLastHit)
-			local CalculatedSpeedDiff = math.pow(CurrentLiveDiffSpeed, exRate) * mulRate * math.pow(0.3, tick() - LiveDiffLastHit)
-			local CalculatedFLDiff = math.pow(CurrentLiveDiffFL, exRate) * mulRate * math.pow(0.15, tick() - LiveDiffLastHit)
-
-			CalculatedAimDiff /= 4.53871
-			CalculatedSpeedDiff /= 4.53871
-			CalculatedFLDiff /= 4.53871
-
-			local RewardedAimPS = basePerfomance(CalculatedAimDiff)
-			local RewardedSpeedPS = basePerfomance(CalculatedSpeedDiff)
-			local RewardedFlashlightPS =  basePerfomance(CalculatedFLDiff)
-
-			local diffCalcPS = ((RewardedAimPS^1.1+RewardedSpeedPS^1.1 +RewardedFlashlightPS^1.1)^(1/1.1))
-
-			local CalculatedLiveDiff = 0.027 * math.pow(1.15, 1/3) * (math.pow(100000 / math.pow(2, 1 / 1.1) * diffCalcPS ,1/3) + 4)
-			if diffCalcPS < 0.01 then
-				CalculatedLiveDiff = 0
-			end
-
-			local CurrentGraphNum = math.floor(#DiffGraphList / (BeatmapLength / 1000) * (tick() - Start)) + 1
-			local CurrentGraph = DiffGraphList[CurrentGraphNum] or DiffGraphList[1]
-			local NextGraph = math.max(DiffGraphList[CurrentGraphNum + 1] or 0, DiffGraphList[CurrentGraphNum + 2] or 0)
-
-			if NextGraph and NextGraph >= 60 and NextGraph >= ReturnData.Difficulty.BeatmapDifficulty - 40 and NextGraph >= CurrentGraph + 10 then
-				DiffStrikeWarning.Visible = true
-				StrikeLock = true
-			elseif not StrikeLock or CalculatedLiveDiff * 10 >= DiffGraphList[CurrentGraphNum - 1] or 0 + 7.5 then
-				StrikeLock = false
-				DiffStrikeWarning.Visible = false
-			end
-
-			TweenService:Create(LiveDiffValue, TweenInfo.new(0.2, Enum.EasingStyle.Linear), {Value = CalculatedLiveDiff}):Play()
-
-			local CurrentDiff = LiveDiffValue.Value
-			local ActualDiff = CalculatedLiveDiff
-			LiveDiffDisplay.Text = string.format("DR: %.2f",math.max(ActualDiff))
-			LiveDiffDisplay.Aim.Text = string.format("%.2f",math.max(CalculatedAimDiff))
-			LiveDiffDisplay.Speed.Text = string.format("%.2f",math.max(CalculatedSpeedDiff))
-			LiveDiffDisplay.Flashlight.Text = string.format("%.2f",math.max(CalculatedFLDiff))
-		end
-	end)
+if not Flashlight then
+	script.Parent.LiveDiffDisplay.Flashlight.Visible = false
 end
 
+ProcessFunction(function()
+	local LiveDiffDisplay = script.Parent.LiveDiffDisplay
+	local DiffStrikeWarning = LiveDiffDisplay.DiffStrikeWarning
+	local basePerfomance = require(workspace.PerfomanceCalculator.BasePerfomance)
+	--local LiveDiffValue = LiveDiffDisplay.LiveDiffValue
+
+	local waittime = 0
+	if OptimizedPerfomance then
+		waittime = 0.1
+	end
+	while wait(waittime) do
+		script.Parent.LiveDiffDisplay.Visible = LiveDifficultyDisplay
+		if not LiveDifficultyDisplay then
+			wait(1)
+			continue
+		end
+		if OptimizedPerfomance and waittime == 0 then
+			waittime = 0.1
+		elseif not OptimizedPerfomance and waittime == 0.1 then
+			waittime = 0
+		end
+		local exRate = 1/2.25
+		local mulRate = 1.44226
+
+		local CalculatedAimDiff = math.pow(CurrentLiveDiffAim, exRate) * mulRate * math.pow(0.15, tick() - LiveDiffLastHit)
+		local CalculatedSpeedDiff = math.pow(CurrentLiveDiffSpeed, exRate) * mulRate * math.pow(0.3, tick() - LiveDiffLastHit)
+		local CalculatedFLDiff = math.pow(CurrentLiveDiffFL, exRate) * mulRate * math.pow(0.15, tick() - LiveDiffLastHit)
+
+		CalculatedAimDiff /= 4.53871
+		CalculatedSpeedDiff /= 4.53871
+		CalculatedFLDiff /= 4.53871
+
+		local RewardedAimPS = basePerfomance(CalculatedAimDiff)
+		local RewardedSpeedPS = basePerfomance(CalculatedSpeedDiff)
+		local RewardedFlashlightPS =  basePerfomance(CalculatedFLDiff)
+
+		local diffCalcPS = ((RewardedAimPS^1.1+RewardedSpeedPS^1.1 +RewardedFlashlightPS^1.1)^(1/1.1))
+
+		local CalculatedLiveDiff = 0.027 * math.pow(1.15, 1/3) * (math.pow(100000 / math.pow(2, 1 / 1.1) * diffCalcPS ,1/3) + 4)
+		if diffCalcPS < 0.01 then
+			CalculatedLiveDiff = 0
+		end
+
+		local CurrentGraphNum = math.floor(#DiffGraphList / (BeatmapLength / 1000) * (tick() - Start)) + 1
+		local CurrentGraph = DiffGraphList[CurrentGraphNum] or DiffGraphList[1]
+		local NextGraph = math.max(DiffGraphList[CurrentGraphNum + 1] or 0, DiffGraphList[CurrentGraphNum + 2] or 0)
+
+		if NextGraph and NextGraph >= 60 and NextGraph >= ReturnData.Difficulty.BeatmapDifficulty - 40 and NextGraph >= CurrentGraph + 10 then
+			DiffStrikeWarning.Visible = true
+			StrikeLock = true
+		elseif not StrikeLock or CalculatedLiveDiff * 10 >= DiffGraphList[CurrentGraphNum - 1] or 0 + 7.5 then
+			StrikeLock = false
+			DiffStrikeWarning.Visible = false
+		end
+
+		TweenService:Create(LiveDiffValue, TweenInfo.new(0.2, Enum.EasingStyle.Linear), {Value = CalculatedLiveDiff}):Play()
+
+		local CurrentDiff = LiveDiffValue.Value
+		local ActualDiff = CalculatedLiveDiff
+		LiveDiffDisplay.Text = string.format("DR: %.2f",math.max(ActualDiff))
+		LiveDiffDisplay.Aim.Text = string.format("%.2f",math.max(CalculatedAimDiff))
+		LiveDiffDisplay.Speed.Text = string.format("%.2f",math.max(CalculatedSpeedDiff))
+		LiveDiffDisplay.Flashlight.Text = string.format("%.2f",math.max(CalculatedFLDiff))
+	end
+end)
 if not Flashlight then
 	script.Parent.PSEarned.DetailedDisplay.Flashlight.Visible = false
 end
@@ -5770,12 +5925,12 @@ end
 LastNoteData = "NotLoaded"
 CurrentNoteId = ""
 
-
+--[[
 local EstimatedTotalScore = 0
 
 for i = 1,#BeatmapData do
 	EstimatedTotalScore += 300 + (300 * ((((i > 2 and i-2) or 0) * ScoreMultiplier.Difficulty * 1) / 25))
-end
+end]]
 
 --[[
 	local Score = 0
@@ -5905,6 +6060,15 @@ function NextComboColorIndex(jumpCount)
 	end
 end
 
+NoteBasePreloadTime = 500 -- Time in ms for the circle to preload, help decrease latency
+StackLeniency = ReturnData.StackLeniency
+StackVector = 0
+do
+	local CSRate = ReturnData.Difficulty.CircleSize * ((HardRock and 1.3) or (EasyMod and 0.5) or 1)
+	local ObjectRadius = 54.4 - 4.48 * CSRate
+	StackVector = ObjectRadius / 10
+end
+
 -- HIT OBJ LINE
 function LetTheGameBegin()
 	for i,HitObj in pairs(BeatmapData) do
@@ -5943,11 +6107,10 @@ function LetTheGameBegin()
 		if HitObjProperties.isSpinner then  --- spinner
 			repeat wait() until (tick()-Start) >= (HitObj.Time-1500)/1000
 		else
-			-- Added 1000ms so it can preload
 			if i == 1 then -- the very first note
-				repeat wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime-1000)/1000
+				repeat wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime-NoteBasePreloadTime)/1000
 			elseif (tick()-Start)*1000 < HitObj.Time-CircleApproachTime then	-- yield until the next note avaiable
-				repeat wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime-1000)/1000
+				repeat wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime-NoteBasePreloadTime)/1000
 			end
 		end
 
@@ -6232,6 +6395,8 @@ function LetTheGameBegin()
 						wait()
 					end
 				end
+				
+				-- Process autoplay of the hit circle
 				if AutoPlay == true and ReplayMode ~= true then
 					ProcessFunction(function()
 						local EarlyRequired = false
@@ -6321,14 +6486,12 @@ function LetTheGameBegin()
 					end)
 				end
 
-
-
-
 				local Connection
 				local SLEndPos
 
 
 				ProcessFunction(function()
+					-- processing the circle connection
 					if BeatmapData[i+1] ~= nil and (BeatmapData[i+1].Type == 1 or BeatmapData[i+1].Type == 2) then
 						local NextHitObj = BeatmapData[i+1]
 						local HitObjPos = Vector2.new(HitObj.Position.X,HitObj.Position.Y)
@@ -6614,6 +6777,11 @@ function LetTheGameBegin()
 
 
 					SliderCurvePoints[1] = HitObj.Position
+					if StackLeniency > 0 and HitObj.StackCount > 0 then
+						-- we set it back to default
+						SliderCurvePoints[1].X += HitObj.StackCount * StackVector
+						SliderCurvePoints[1].Y += HitObj.StackCount * StackVector
+					end
 					local raw = string.split(CurveData, "|")
 					for i, crrPos in pairs(raw) do
 						if i == 1 then continue end -- this is the curve type, pass it
@@ -6636,45 +6804,10 @@ function LetTheGameBegin()
 					end
 
 					if #SliderCurvePoints > 400 then -- I will have to decrease the points count to make it less lag
-						local CompressRate = math.ceil(#SliderCurvePoints/200)
-						local NewTable = {}
-						NewTable[1] = SliderCurvePoints[1] -- the first point must be the same
-
-						for i = 2,(#SliderCurvePoints/CompressRate)*CompressRate,CompressRate do
-							local BaseData = {X = 0,Y = 0,ExtraLength = 0}
-							local PrevPosition = {X = 0,Y = 0}
-
-							local Max = math.min(i+CompressRate-1,#SliderCurvePoints)
-
-							for a = i,Max do
-								local Data = SliderCurvePoints[a]
-
-								if tostring(math.abs(Data.X+Data.Y)) == "inf" or tostring(math.abs(Data.X+Data.Y)) == "nan" then
-									continue
-								end
-
-								BaseData.X += Data.X/math.min(CompressRate,Max-i)
-								BaseData.Y += Data.Y/math.min(CompressRate,Max-i)
-
-								if a ~= i then
-									BaseData.ExtraLength += Vector2.new(Data.X-PrevPosition.X,Data.Y-PrevPosition.Y).Magnitude
-								end
-
-								PrevPosition = Data
-							end
-
-							NewTable[#NewTable+1] = BaseData
-						end
-
-						for i = #NewTable,1,-1 do
-							local Data = NewTable[i]
-							if Data.X == math.huge or Data.Y == math.huge then
-								table.remove(NewTable,i)
-							end
-						end
-
-
-						SliderCurvePoints = NewTable
+						local env = ExternalFunction_Actor.ProcessCommand:Invoke("Core_OsuGame_ProcessLargeSliderPoints",{
+							SliderCurvePoints = SliderCurvePoints
+						})
+						SliderCurvePoints = env.SliderCurvePoints
 					end
 
 					local resultpos = string.find(CurveData,"|")
@@ -6683,60 +6816,12 @@ function LetTheGameBegin()
 
 					local Alvaiable = false
 
-					if SliderCurveType == "B" or SliderCurveType == "P"  then
-						local NumberOfPoints = 20
-						local NewCurvePoints = {}
-						local isLinear = false
-
-						local function lerp(a, b, c)
-							return a + (b - a) * c
-						end
-
-						for i = 1,#SliderCurvePoints-1 do
-							local a = SliderCurvePoints[i]
-							local b = SliderCurvePoints[i+1]
-							if Vector2.new(a.X,a.Y) == Vector2.new(b.X,b.Y) then
-								isLinear = true
-								break
-							end
-						end
-						if not isLinear then
-							local function GetBenzierPosition(t)
-								local PointData = {}
-								for _,a in pairs(SliderCurvePoints) do
-									PointData[#PointData+1] = Vector2.new(a.X,a.Y)
-								end
-								local PointsLeft = #PointData
-								for i = PointsLeft+1,3,-1 do
-									local PointDataNew = {}
-									for a = 1,PointsLeft-1 do
-										PointDataNew[#PointDataNew+1] = Vector2.new(lerp(PointData[a].X,PointData[a+1].X,t),lerp(PointData[a].Y,PointData[a+1].Y,t))
-									end
-									PointData = PointDataNew
-									PointsLeft-=1
-								end
-								return {X=PointData[1].X,Y=PointData[1].Y}
-							end
-
-							for i = 1,NumberOfPoints do
-								NewCurvePoints[#NewCurvePoints+1] = GetBenzierPosition((i-1)/(NumberOfPoints-1))
-							end
-							SliderCurvePoints = NewCurvePoints
-						else
-							for i = 1,#SliderCurvePoints do
-								local a = SliderCurvePoints[i]
-								if i <= 1 then
-									NewCurvePoints[#NewCurvePoints+1] = a
-								else
-									local b =  SliderCurvePoints[i-1]
-									if a.X ~= b.X or a.Y ~= b.Y then
-										NewCurvePoints[#NewCurvePoints+1] = a
-									end
-								end
-							end
-
-							SliderCurvePoints = NewCurvePoints
-						end
+					if SliderCurveType == "B" or SliderCurveType == "P" then
+						local env = ExternalFunction_Actor.ProcessCommand:Invoke("Core_OsuGame_ProcessSliderCurveType",{
+							SliderCurvePoints = SliderCurvePoints
+						})
+						
+						SliderCurvePoints = env.SliderCurvePoints
 					end
 					local function calculateCircleCurve(pointA, pointB, pointC, numPoints)
 						numPoints = numPoints or 20  -- Default to 20 if not provided
@@ -6790,11 +6875,19 @@ function LetTheGameBegin()
 							SliderCurvePoints = NewPoints
 						end
 					end
+					
+					if StackLeniency > 0 and HitObj.StackCount > 0 then
+						-- set the curve point to adjust with the stack leniency
+						for _, vector in pairs(SliderCurvePoints) do
+							vector.X -= HitObj.StackCount * StackVector
+							vector.Y -= HitObj.StackCount * StackVector
+						end
+					end
 
 					local ReverseArrowData = {}
 					local ReverseArrowObject = {}
 
-					-- Caculate reverse arrow position
+					-- Caclculate reverse arrow position
 
 					local CurvePointPos_1 = SliderCurvePoints[1]
 					local CurvePointPos_2 = SliderCurvePoints[2]
@@ -6814,7 +6907,7 @@ function LetTheGameBegin()
 						ReverseArrow.Parent = SliderFolder
 						local Data = (i/2 - math.floor(i/2) == 0.5 and ReverseArrowData[2]) or ReverseArrowData[1]
 
-						ReverseArrow.ZIndex = ZIndex
+						ReverseArrow.ZIndex = ZIndex+1
 						ReverseArrow.Size = UDim2.new((CircleSize*0.6)/384/SLCanvasScale,0,(CircleSize*0.6)/384/SLCanvasScale,0)
 						ReverseArrow.Position = UDim2.new(0.5-(0.5-Data[1].X/512)/SLCanvasScale,0,0.5-(0.5-Data[1].Y/384)/SLCanvasScale,0)
 						ReverseArrow.Rotation = Data[2]+180
@@ -6827,33 +6920,21 @@ function LetTheGameBegin()
 					local SliderLength = 0
 					local SliderConnections = {}
 					local LengthData = {0}
-
-					for i,a in pairs(SliderCurvePoints) do
-						if i ~= #SliderCurvePoints then
-							local NextCurvePointPos = SliderCurvePoints[i+1]
-							local Point1st = Vector2.new(a.X,a.Y)
-							local Point2nd = Vector2.new(NextCurvePointPos.X,NextCurvePointPos.Y)
-							local Point3rd = Vector2.new(a.Y,NextCurvePointPos.X)
-							local Length = (Point1st-Point2nd).magnitude + (a.ExtraLength or 0)
-							local ConnectionTimingStart = SliderLength
-							local ConnectionTimingEnd = SliderLength + Length
-							SliderLength = SliderLength + Length
-							LengthData[i+1] = SliderLength
-							local Length3rd = (Point2nd-Point3rd).magnitude
-							local Point = Point2nd-Point1st
-							local Rotation = math.deg(math.atan2(Point.Y,Point.X))
-							--local Rotation = math.deg(math.asin(Length3rd/Length))
-
-
-
-
-
-							SliderConnections[#SliderConnections+1] = {Length = Length,ExtraLength = (a.ExtraLength or 0),Rotation = Rotation,Pos = (Point1st+Point2nd)/2,LengthStart = ConnectionTimingStart,LengthStop = ConnectionTimingEnd}
-						end
-
-						GolbalSliderConnections = SliderConnections
-					end
-
+					
+					local env = ExternalFunction_Actor.ProcessCommand:Invoke("Core_OsuGame_ProcessSliderConnection", {
+						SliderLength = SliderLength,
+						SliderConnections = SliderConnections,
+						LengthData = LengthData,
+						SliderCurvePoints = SliderCurvePoints,
+						GolbalSliderConnections = GolbalSliderConnections
+					}) 
+					
+					SliderLength = env.SliderLength
+					SliderConnections = env.SliderConnections
+					LengthData = env.LengthData
+					SliderCurvePoints = env.SliderCurvePoints
+					GolbalSliderConnections = env.GolbalSliderConnections
+					
 					-- Evaculate timing and position of the slider tick
 					-- SliderTickOffset
 
@@ -6895,26 +6976,56 @@ function LetTheGameBegin()
 
 
 
+					-- Draw slider shadow
+					-- This feature is still working on progress
+					-- Might cause lag for mid-end and low-end device
+					local function lerp(a,b,rate)
+						return a + (b-a)*rate
+					end
+					local ShadowCount = 15
+					local ShadowSizeMax = 1
+					local ShadowSizeMin = 0.1
+					local ColorValueMin = 0
+					local ColorValueMax = 0.1
+					if OptimizedPerfomance then
+						ShadowCount = 5
+					end
+
+
 					for i,Data in pairs(SliderConnections) do
-						local HoldCircle = script.HoldCircle:Clone()
-						HoldCircle.Name = tostring((i/#SliderConnections)*0.25)
-						HoldCircle.Parent = SliderFolder
-						HoldCircle.Position = UDim2.new(0.5-(0.5-Data.Pos.X/512)/SLCanvasScale,0,0.5-(0.5-Data.Pos.Y/384)/SLCanvasScale,0)
-						HoldCircle.Rotation = Data.Rotation
-						HoldCircle.Size = UDim2.new(((Data.Length-Data.ExtraLength)/512/SLCanvasScale),0,(CircleSize/384)*0.85/SLCanvasScale,0)
-						HoldCircle.BackgroundColor3 = Color3.new(0,0,0)
-						HoldCircle.ZIndex = ZIndex-2
+						local HoldCircle = ObjectManagement_Actor.ToggleCloneObject:Invoke(script.HoldCircle, SliderFolder, {
+							Name = tostring((i/#SliderConnections)*0.25),
+							Position = UDim2.new(0.5-(0.5-Data.Pos.X/512)/SLCanvasScale,0,0.5-(0.5-Data.Pos.Y/384)/SLCanvasScale,0),
+							Rotation = Data.Rotation,
+							Size = UDim2.new(((Data.Length-Data.ExtraLength)/512/SLCanvasScale),0,(CircleSize/384)*0.85/SLCanvasScale,0),
+							BackgroundColor3 = Color3.new(0.0392157, 0.0392157, 0.0392157),
+							ZIndex = ZIndex-ShadowCount-2
+						})
 						HoldCircle.UICorner:Destroy()
-						--TweenService:Create(HoldCircle,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.new(0.133333, 0.133333, 0.133333)}):Play()
-						local Outline = HoldCircle:Clone()
-						Outline.Name = tostring((i/#SliderConnections)*0.25)
-						Outline.Size = UDim2.new(((Data.Length-Data.ExtraLength)/512/SLCanvasScale),0,CircleSize/384/SLCanvasScale,0)
-						Outline.Parent = SliderFolder
-						Outline.ZIndex = ZIndex-3
-						Outline.BackgroundColor3 = Color3.new(0,0,0)
-						--TweenService:Create(Outline,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.new(0.584314, 0.584314, 0.584314)}):Play()
-						HoldCircle.BackgroundColor3 = Color3.new(0.0392157, 0.0392157, 0.0392157)
-						Outline.BackgroundColor3 = Color3.new(1, 1, 1)
+						local Outline = ObjectManagement_Actor.ToggleCloneObject:Invoke(HoldCircle, SliderFolder, {
+							Name = tostring((i/#SliderConnections)*0.25),
+							Size = UDim2.new(((Data.Length-Data.ExtraLength)/512/SLCanvasScale),0,CircleSize/384/SLCanvasScale,0),
+							ZIndex = ZIndex-ShadowCount-3,
+							BackgroundColor3 = Color3.new(1, 1, 1),
+						})
+						if EnableSliderShadow then
+							-- drawing shadows
+							for i = ShadowCount-1,0,-1 do
+								local SizeRate = lerp(ShadowSizeMin, ShadowSizeMax, i/ShadowCount)
+								local HoldCircle = ObjectManagement_Actor.ToggleCloneObject:Invoke(script.HoldCircle, SliderFolder, 
+									{
+										Name = tostring((i/#SliderConnections)*0.25),
+										Position = UDim2.new(0.5-(0.5-Data.Pos.X/512)/SLCanvasScale,0,0.5-(0.5-Data.Pos.Y/384)/SLCanvasScale,0),
+										Rotation = Data.Rotation,
+										Size = UDim2.new(((Data.Length-Data.ExtraLength)/512/SLCanvasScale),0,(CircleSize/384)*SizeRate*0.85/SLCanvasScale,0),
+										BackgroundColor3 = Color3.fromHSV(0,0,lerp(ColorValueMax,ColorValueMin,i/ShadowCount)),
+										ZIndex = ZIndex-i,
+									}
+								)
+
+								HoldCircle.UICorner:Destroy()
+							end
+						end
 					end
 
 					local ReverseSliderConnection = {}
@@ -6924,33 +7035,36 @@ function LetTheGameBegin()
 					end
 
 					for i,SliderPoint in pairs(SliderCurvePoints) do
-						local HoldCircle = script.HoldCircle:Clone()
-						HoldCircle.Name = tostring((i/#SliderCurvePoints)*0.25)
-						HoldCircle.BackgroundColor3 = Color3.new(0,0,0)
-						HoldCircle.Parent = SliderFolder
-						HoldCircle.Position = UDim2.new(0.5-(0.5-SliderPoint.X/512)/SLCanvasScale,0,0.5-(0.5-SliderPoint.Y/384)/SLCanvasScale,0)
-						HoldCircle.Size = UDim2.new((CircleSize/384)*0.85/SLCanvasScale,0,(CircleSize/384)*0.85/SLCanvasScale,0)
-						HoldCircle.SizeConstraint = Enum.SizeConstraint.RelativeYY
-						HoldCircle.ZIndex = ZIndex-1
-						--TweenService:Create(HoldCircle,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.new(0.133333, 0.133333, 0.133333)}):Play()
-						local Outline = HoldCircle:Clone()
-						Outline.Name = tostring((i/#SliderCurvePoints)*0.25)
-						Outline.Size = UDim2.new((CircleSize/384)/SLCanvasScale,0,(CircleSize/384)/SLCanvasScale,0)
-						Outline.Parent = SliderFolder
-						Outline.ZIndex = ZIndex-3
-						Outline.BackgroundColor3 = Color3.new(0,0,0)
-						--TweenService:Create(Outline,TweenInfo.new(FadeInTime,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.new(0.584314, 0.584314, 0.584314)}):Play()
-						HoldCircle.BackgroundColor3 = Color3.new(0.0392157, 0.0392157, 0.0392157)
-						Outline.BackgroundColor3 = Color3.new(1, 1, 1)
-						ProcessFunction(function()
-							if true then return end
-							HoldCircle.Visible = false
-							Outline.Visible = false
-							local LengthData = LengthData[i]
-							repeat wait() until (tick() - Start)*1000 >=  HitObj.Time - ((SliderLength-LengthData)/SliderLength*CircleApproachTime*0.5 + CircleApproachTime*0.5)
-							HoldCircle.Visible = true
-							Outline.Visible = true
-						end)
+						local HoldCircle = ObjectManagement_Actor.ToggleCloneObject:Invoke(script.HoldCircle, SliderFolder, {
+							Name = tostring((i/#SliderCurvePoints)*0.25),
+							BackgroundColor3 = Color3.new(0.0392157, 0.0392157, 0.0392157),
+							Position = UDim2.new(0.5-(0.5-SliderPoint.X/512)/SLCanvasScale,0,0.5-(0.5-SliderPoint.Y/384)/SLCanvasScale,0),
+							Size = UDim2.new((CircleSize/384)*0.85/SLCanvasScale,0,(CircleSize/384)*0.85/SLCanvasScale,0),
+							SizeConstraint = Enum.SizeConstraint.RelativeYY,
+							ZIndex = ZIndex-ShadowCount-1
+						})
+						local Outline = ObjectManagement_Actor.ToggleCloneObject:Invoke(HoldCircle, SliderFolder, {
+							Name = tostring((i/#SliderCurvePoints)*0.25),
+							Size = UDim2.new((CircleSize/384)/SLCanvasScale,0,(CircleSize/384)/SLCanvasScale,0),
+							ZIndex = ZIndex-ShadowCount-3,
+							BackgroundColor3 = Color3.new(1, 1, 1)
+						})
+
+						if EnableSliderShadow then
+							-- drawing shadows
+							for i = ShadowCount-1,0,-1 do
+								local SizeRate = lerp(ShadowSizeMin, ShadowSizeMax, i/ShadowCount)
+								local HoldCircle = ObjectManagement_Actor.ToggleCloneObject:Invoke(script.HoldCircle, SliderFolder, 
+									{
+										Name = tostring((i/#SliderCurvePoints)*0.25),
+										BackgroundColor3 = Color3.fromHSV(0,0,lerp(ColorValueMax,ColorValueMin,i/ShadowCount)),
+										Position = UDim2.new(0.5-(0.5-SliderPoint.X/512)/SLCanvasScale,0,0.5-(0.5-SliderPoint.Y/384)/SLCanvasScale,0),
+										Size = UDim2.new((CircleSize/384)*SizeRate*0.85/SLCanvasScale,0,(CircleSize/384)*SizeRate*0.85/SLCanvasScale,0),
+										SizeConstraint = Enum.SizeConstraint.RelativeYY,
+										ZIndex = ZIndex-i
+									})
+							end
+						end
 					end
 
 					-- We're just creating the slider base, not running it yet
@@ -7611,6 +7725,7 @@ function LetTheGameBegin()
 							end]]
 
 							if ClassicNotelock == true then -- osu!stable notelock
+								-- Prevent players from hitting note without clearing previous note
 								if CurrentHitnote ~= HitNoteID then
 									return
 								end
@@ -8011,9 +8126,7 @@ TweenService:Create(ResultFrame.Parent.Parent.Parent.ResultScreenOptions,TweenIn
 TweenService:Create(ResultFrame.Parent.Parent,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{GroupTransparency = 0}):Play()
 TweenService:Create(ResultFrame.Parent.Parent,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(1,-86,1,-86)}):Play()
 TweenService:Create(ResultFrame.Parent.Parent.UIStroke,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Transparency = 0.4}):Play()
-TweenService:Create(PlayerGui.OverallInterface.FPSCounter,
-	TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,1,-40)}
-):Play()
+
 
 ProcessFunction(function()
 	wait(1.1)
@@ -8630,7 +8743,7 @@ end
 
 -->   2021 - 2024 osu!RoVer   <--
 -- osu!corescript by VtntGaming
--- String size: 307.165KB (V1.47)
+-- String size: 311.909KB (V1.47)
 
 -- Source code used as a backup script, if you're not VtntGaming and see this please use it right :>
 -- Some mathmethic is inspired/taken from osu! and osu!Lazer github source
