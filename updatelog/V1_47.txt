@@ -10,6 +10,14 @@ Here's the upcomming change to the next version...
   - Change to AccuracyPS: Removed base multiplier on SpeedAdjust (SA) mod on AccPS (Before change: AccMultiplier = AccMultiplier * Speed | Due to Timing value adjust)
   
 -> Gameplay
+  - Sliders update:
+    + Update slider tick mechanism, it's now specified which timing will be appear
+    + Updated slider drawing calculation for those large slider point maps (god-ish, der wald, ...)
+  - ScoreV2 update:
+    + Players now can view other player's ScoreV2 score
+    + ScoreV2 now seperate Consistency and Accuracy score into 2 different part, Consistency have the maximum score of 700000 and Accuracy have the maximum score of 300000
+    + Spinner score will directly add into ScoreV2 with a multiplier of 0.1
+    + Multipliers can directly effect on ScoreV2
   - Timing value now can be changed based on the speed you adjust
     + Based on the changed Hit300 after speed, the OD rate will be changed, which will effect the difficulty and PS more likely.
   - Since the game is likely to get an input lag, I will apply some change to the input register:
