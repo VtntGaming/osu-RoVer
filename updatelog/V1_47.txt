@@ -1,3 +1,5 @@
+!THIS UPDATE LOG IS NOT FINAL, CHANGES CAN BE MADE IN THE FUTURE!
+
 Time has come, osu!RoVer Stable V1.47 is LIVE!
 Here's the upcomming change to the next version...
 
@@ -6,22 +8,30 @@ Here's the upcomming change to the next version...
     + FL mod calculation now worked individually, used it's own calculation to determine the flashlight diff and flashlight PS
     (Before change: FL mod directly effect aimPS based on the length of the map)
     + Flashlight Diff now can be avaiable in Live difficulty display
-    + Flashlight PS will have a multiplier of 0.4 on TD
-  - Change to AccuracyPS: Removed base multiplier on SpeedAdjust (SA) mod on AccPS (Before change: AccMultiplier = AccMultiplier * Speed | Due to Timing value adjust)
+    + Flashlight Diff will have the power of 0.8 on TD
+  - Change to TouchDevice mod:
+    + Removed multiplier of 0.6 on Aim and FL, instead we apply a power of 0.8 on those 2, this can significantly decrease the Perfomance Score
+  - Change to AccuracyPS: Removed base multiplier on SpeedAdjust (SA) mod on AccPS (Before change: AccMultiplier = AccMultiplier * Speed | Due to Timing value update)
   
 -> Gameplay
   - Sliders update:
     + Update slider tick mechanism, it's now specified which timing will be appear
     + Updated slider drawing calculation for those large slider point maps (god-ish, der wald, ...)
+    + New slider shadow draw, can be enabled on the settings (WIP/can decrease perfomance on low-mid end devices)
   - ScoreV2 update:
     + Players now can view other player's ScoreV2 score
     + ScoreV2 now seperate Consistency and Accuracy score into 2 different part, Consistency have the maximum score of 700000 and Accuracy have the maximum score of 300000
     + Spinner score will directly add into ScoreV2 with a multiplier of 0.1
     + Multipliers can directly effect on ScoreV2
-  - Timing value now can be changed based on the speed you adjust
-    + Based on the changed Hit300 after speed, the OD rate will be changed, which will effect the difficulty and PS more likely.
+    + New multiplier: Miss penalty -> Decrease score when miss (more forgiving on high note count map, minimum multiplier is 0.75)
+  - ScoreV1 update:
+    + Adjusted accuracy score so when FC + SS Accuracy score is approximately equal to (TotalScore - SpinnerScore) * 0.3
+    + Accuracy and score value will not effect the Consistency Score
+    + New multiplier: Miss penalty -> Decrease score when miss (more forgiving on high note count map, minimum multiplier is 0.75)
+  - Timing value now can be changed by the SpeedAdjust mod
+    + Based on the changed Hit300 timing value after speed, the OD rate will be changed, which will effect the difficulty and PS more likely.
   - Since the game is likely to get an input lag, I will apply some change to the input register:
-      + Your input will be half of the frame earlier. For example, if you are running on 60fps your input will be 8.3ms earlier.
+      + Your input will be half of the frame earlier. For example, if you are running on 60fps the game will register input as 8.3ms earlier.
   - Change to hit windows in overall:
     + Before:
       > hit300 = 119.5 - 9 * OverallDifficulty     |  TDhit300 = 159.5 - 12 * OverallDifficulty
@@ -33,11 +43,19 @@ Here's the upcomming change to the next version...
       > hit300 = (100 - 8 * OverallDifficulty) / SongSpeed        |  TDhit300 = (150 - 12 * OverallDifficulty) / SongSpeed
       > hit100 = (175 - 10 * OverallDifficulty) / SongSpeed       |  TDhit100 = (220 - 12.5 * OverallDifficulty) / SongSpeed
       > hit50  = (250 - 12.5 * OverallDifficulty) / SongSpeed     |  TDhit50  = (275 - 13.5 * OverallDifficulty) / SongSpeed
-      > EarlyMiss = (350 + 2 * OverallDifficulty ) / SongSpeed    |  TDEarlyMiss = (375 + 2 * OverallDifficulty) / SongSpeed
+      > EarlyMiss = 425 / SongSpeed    |  TDEarlyMiss = 440 / SongSpeed
   - Game now support up to 2 overlaps song, make it more compatible with 7-14 minute songs
-  - Note now can be preloaded within 0.5 seconds before it's actual appear time, help decrease latency for some users
-  - Game now support stack leniency, based on the map settings.
-  
+  - Note now can be preloaded within 0.5 seconds before it's actual appear time, help decrease latency for players.
+  - Game now support stack leniency, based on the map configruation, make it easier to read, specially HD mod
+  - Fixed partially lag strike when entering the game.
+  - Fixed key register issue on replay that having TD mod
+
+-> Game menu:
+  - Made the difficulty timeline draw smoother
+  - Improved UI
+  - Map leaderboard: Small fixes, improved UIs
+  - Replay manager: improved UIs
+
 -> Beatmap files:
   - Fixed "some of the map" huge audio delay
 -> Beatmap listing
@@ -45,7 +63,7 @@ Here's the upcomming change to the next version...
       + Support index: >, <, >=, =, <=
       + HP sort: hp, hpdrainrate, healthdrainrate, health
       + CS sort: cs, circlesize, size
-      + OD sort: od, overalldifficulty, acc,  accuracy
+      + OD sort: od, overalldifficulty, acc, accuracy
       + AR sort: ar, approachrate
       + Difficulty sort: dr, difficultyrating, diff, sr, starrating, star, stars
       + Support all type of caps, example: this, THIS, This, ThIs, tHiS, ect...
@@ -58,7 +76,7 @@ Here's the upcomming change to the next version...
 -> Gameplay settings revamped
   - New modern and improved accessibility interface
   - Settings toggle button now moved to dropdown menu, can be seen in the hamburger dropdown
-  - Settings toggle now support Ctrl + O
+  - Settings toggle now support Ctrl + O (WIP)
   - New advanced tab inside the settings, for deeper configuration
   - Keybinds configuration now moved to advanced tab
     + New keybinds: Quick exit (hold) and Quick restart (hold)
@@ -66,7 +84,6 @@ Here's the upcomming change to the next version...
     + Key now cannot be applied if it's duplicated with another related key
   - Some in-game settings can now be be applied instantly, while some other require restarting a play
   - The old settings will remove most of it's features, only Modifiers are avaiable and will wait for another revamp
-  
 
 -> Preview tab
   - Note count now revamped with a graph that shows object count in the map
