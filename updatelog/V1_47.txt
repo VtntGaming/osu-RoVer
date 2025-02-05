@@ -10,7 +10,7 @@ Here's the upcomming change to the next version...
     + Flashlight Diff now can be avaiable in Live difficulty display
     + Flashlight Diff will have the power of 0.8 on TD
   - Change to TouchDevice mod:
-    + Removed multiplier of 0.6 on Aim and FL, instead we apply a power of 0.8 on those 2, this can significantly decrease the Perfomance Score
+    + Removed multiplier of 0.6 on Aim and FL perfomance, instead we apply a power of 0.8 on the Aim and FL difficulty, this can significantly decrease the Perfomance Score
   - Change to AccuracyPS: Removed base multiplier on SpeedAdjust (SA) mod on AccPS (Before change: AccMultiplier = AccMultiplier * Speed | Due to Timing value update)
   
 -> Gameplay
