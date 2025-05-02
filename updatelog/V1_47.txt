@@ -9,11 +9,16 @@ Here's the upcomming change to the next version...
     (Before change: FL mod directly effect aimPS based on the length of the map)
     + Flashlight Diff now can be avaiable in Live difficulty display
     + Flashlight Diff will have the power of 0.8 on TD
+    + Apply combo scaling to FL
   - Change to TouchDevice mod:
     + Removed multiplier of 0.6 on Aim and FL perfomance, instead we apply a power of 0.8 on the Aim and FL difficulty, this can significantly decrease the Perfomance Score
   - Change to AccuracyPS: Removed base multiplier on SpeedAdjust (SA) mod on AccPS (Before change: AccMultiplier = AccMultiplier * Speed | Due to Timing value update)
   
 -> Gameplay
+  - Modifiers:
+    + Removed Sync approach time mod [ST]
+    + Approach rate [AR] range for Difficulty Adjust changed to [-10 - 11]
+    + Small rename for the mods
   - Sliders update:
     + Update slider tick mechanism, it's now specified which timing will be appear
     + Updated slider drawing calculation for those large slider point maps (god-ish, der wald, ...)
@@ -34,16 +39,18 @@ Here's the upcomming change to the next version...
       + Your input will be half of the frame earlier. For example, if you are running on 60fps the game will register input as 8.3ms earlier.
   - Change to hit windows in overall:
     + Before:
-      > hit300 = 119.5 - 9 * OverallDifficulty     |  TDhit300 = 159.5 - 12 * OverallDifficulty
-      > hit100 = 219.5 - 12 * OverallDifficulty    |  TDhit100 = 279.5 - 16 * OverallDifficulty
-      > hit50  = 299.5 - 15 * OverallDifficulty    |  TDhit50  = 399.5 - 20 * OverallDifficulty
-      > EarlyMiss = 400                            |  TDEarlyMiss = 500
+      > hit300 = 119.5 - 9 * OD     |  TDhit300 = 159.5 - 12 * OD
+      > hit100 = 219.5 - 12 * OD    |  TDhit100 = 279.5 - 16 * OD
+      > hit50  = 299.5 - 15 * OD    |  TDhit50  = 399.5 - 20 * OD
+      > EarlyMiss = 400             |  TDEarlyMiss = 500
 
     + After: 
-      > hit300 = (100 - 8 * OverallDifficulty) / SongSpeed        |  TDhit300 = (150 - 12 * OverallDifficulty) / SongSpeed
-      > hit100 = (175 - 10 * OverallDifficulty) / SongSpeed       |  TDhit100 = (220 - 12.5 * OverallDifficulty) / SongSpeed
-      > hit50  = (250 - 12.5 * OverallDifficulty) / SongSpeed     |  TDhit50  = (275 - 13.5 * OverallDifficulty) / SongSpeed
-      > EarlyMiss = 425 / SongSpeed    |  TDEarlyMiss = 440 / SongSpeed
+      > hit300 = (100 - 8 * OD) / SongSpeed        |  TDhit300 = (150 - 12 * OD) / SongSpeed
+      > hit100 = (175 - 10 * OD) / SongSpeed       |  TDhit100 = (220 - 12.5 * OD) / SongSpeed
+      > hit50  = (250 - 12.5 * OD) / SongSpeed     |  TDhit50  = (275 - 13.5 * OD) / SongSpeed
+      > EarlyMiss = 425 / SongSpeed                |  TDEarlyMiss = 440 / SongSpeed
+      > The game will never let players miss when clicking on nothing (in case where earlymiss timing is greater than the approach time)
+      > Same as above, also apply to the notelock technique
   - Game now support up to 2 overlaps song, make it more compatible with 7-14 minute songs
   - Note now can be preloaded within 0.5 seconds before it's actual appear time, help decrease latency for players.
   - Game now support stack leniency, based on the map configruation, make it easier to read, specially HD mod
