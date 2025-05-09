@@ -1,11 +1,85 @@
 local basePerformance = require(script.BasePerfomance)
 local basePerformanceFL = require(script.BasePerfomanceFL)
+local utils = require(script.DifficultyCalculationUtils)
+
 function calculateMissPenalty(AccuracyData, diffStrainCount)
 	local missCount = AccuracyData.miss
 	if missCount <= 0 then
 		return 1
 	end
 	return 0.96 / ((missCount / (4 * math.pow(math.log(diffStrainCount), 0.94))) + 1)
+end
+
+function reverseLerp(x, a, b)
+	return math.clamp((x - a) / (b - a), 0, 1)
+end
+
+function Lerp(a,b,x)
+	return a + (b-a)*x
+end
+
+function calculateSpeedDeviation(Hit300Time, Hit100Time, Hit50Time, totalSuccessfulHits, speedNoteCount, hit300, hit100, hit50, missCount)
+	if totalSuccessfulHits == 0 then return nil end
+	local totalHits = hit300 + hit100 + hit50 + missCount
+	
+	speedNoteCount += (totalHits - speedNoteCount) * 0.1
+	local relevantCountMiss = math.min(missCount, speedNoteCount)
+	local relevantCount50 = math.min(hit50, speedNoteCount - relevantCountMiss)
+	local relevantCount100 = math.min(hit100, speedNoteCount - relevantCountMiss - relevantCount50)
+	local relevantCount300 = math.max(0, speedNoteCount - relevantCountMiss - relevantCount50 - relevantCount100)
+	
+	return calculateDeviation(Hit300Time, Hit100Time, Hit50Time, relevantCount300, relevantCount100, relevantCount50, relevantCountMiss)
+end
+
+function calculateDeviation(Hit300Time, Hit100Time, Hit50Time, hit300, hit100, hit50, missCount)
+	if hit300 + hit100 + hit50 < 0 then
+		return nil
+	end
+	
+	local ObjectCount = hit300 + hit100 + hit50 + missCount
+	local n = math.max(1, ObjectCount - missCount - hit50)
+	local z = 2.32634787404
+	local p = hit100 / n
+	
+	local pLowerBound = (n * p + z * z / 2) / (n + z * z) - z / (n + z * z) * math.sqrt(n * p * (1 - p) + z * z / 4)
+	
+	local ErfInv = utils.ErfInv(pLowerBound)
+	if not ErfInv then
+		return nil
+	end
+	
+	local deviation = Hit300Time / (math.sqrt(2) * ErfInv)
+	local randomValue = math.sqrt(2 * math.pi) * Hit100Time * math.exp(-0.5 * math.pow(Hit100Time / deviation, 2)) / (deviation * utils.Erf(Hit100Time / math.sqrt(2) * deviation))
+	
+	deviation *= math.sqrt(1 - randomValue)
+	
+	local limitValue = Hit100Time / math.sqrt(3)
+	if pLowerBound == 0 or randomValue >= 1 or deviation > limitValue then
+		deviation = limitValue
+	end
+	
+	local Hit50Variance = (Hit50Time * Hit50Time + Hit100Time * Hit50Time + Hit100Time * Hit100Time) / 3
+	
+	deviation = math.sqrt(((hit300 + hit100) * math.pow(deviation, 2) + hit50 * Hit50Variance) / (hit300 + hit100 + hit50))
+	
+	return deviation
+end
+
+function calculateSpeedHighDeviationNerf(speedDeviation, SpeedDiff)
+	if not speedDeviation then return 0 end
+	local speedValue = basePerformance(SpeedDiff)
+	local excessSpeedDifficultyCutoff = 100 + 220 * math.pow(22 / speedDeviation, 6.5)
+	if speedValue <= excessSpeedDifficultyCutoff then
+		return 1
+	end
+	
+	local scale = 50
+	local adjustedSpeedValue = scale * (math.log((speedValue - excessSpeedDifficultyCutoff) / scale + 1) + excessSpeedDifficultyCutoff / scale)
+	
+	local lerp = 1 - reverseLerp(speedDeviation.Value, 22.0, 27.0)
+	adjustedSpeedValue = Lerp(adjustedSpeedValue, speedValue, lerp)
+	
+	return adjustedSpeedValue / speedValue
 end
 
 return function(AimValue, SpeedValue, FLValue, ODRate, ARRate, ModData, NoteCount, SongSpeed, Multiplier, MaxOnly, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, AccuracyData)
@@ -31,6 +105,14 @@ return function(AimValue, SpeedValue, FLValue, ODRate, ARRate, ModData, NoteCoun
 	
 	local Hit300Time = 80 - 6 * ODRate
 	Hit300Time /= SongSpeed
+	
+	local Hit100Time = 140 - 8 * ODRate
+	Hit100Time /= SongSpeed
+	
+	local Hit50Time = 200 - 10 * ODRate
+	Hit50Time /= SongSpeed
+	
+
 	ODRate = -(Hit300Time - 80) / 6
 	
 	local ARTime = 1200
@@ -81,6 +163,7 @@ return function(AimValue, SpeedValue, FLValue, ODRate, ARRate, ModData, NoteCoun
 		AimMulti *= SLAimNerf
 		SpeedMulti *= SLSpeedNerf
 	end
+	
 	
 	local LengthBonus = 0.95 + 0.4 * math.min(1,ObjectCount/2000) + ((ObjectCount > 2000 and math.log10(ObjectCount/2000) * 0.5) or 0)
 	local RewardedAimPS = basePerformance(AimValue) * LengthBonus * (0.98 + math.pow(ODRate, 2) / 2500)
@@ -146,9 +229,17 @@ return function(AimValue, SpeedValue, FLValue, ODRate, ARRate, ModData, NoteCoun
 		* AimMulti
 	
 	-- Speed
+	local SpeedDevilationMultiplier = 1
+	local totalSuccessfulHits = AccuracyData.hit300 + AccuracyData.hit100 + AccuracyData.hit50
+	local SpeedDevilation = calculateSpeedDeviation(Hit300Time, Hit100Time, Hit50Time, totalSuccessfulHits, SpeedRelevantNoteCount, AccuracyData.hit300, AccuracyData.hit100, AccuracyData.hit50, AccuracyData.miss)
+	if not SpeedDevilation then
+		SpeedDevilationMultiplier = 0
+	end
+	local speedHighDeviationMultiplier = math.min(1, calculateSpeedHighDeviationNerf(SpeedDevilation, SpeedValue))
+	
 	local NoteCountScaling = (TotalHit + AccuracyData.miss)/ObjectCount
 	SpeedRelevantNoteCount *= NoteCountScaling
-	local relevantTotalDiff = TotalHit - SpeedRelevantNoteCount
+	local relevantTotalDiff = math.max(0, TotalHit - SpeedRelevantNoteCount)
 	local relevantCount300 = math.max(0, AccuracyData.hit300 - relevantTotalDiff) 
 	local relevantCount100 = math.max(0, AccuracyData.hit100 - math.max(0, relevantTotalDiff - AccuracyData.hit300)) 
 	local relevantCount50 = math.max(0, AccuracyData.hit50 - math.max(0, relevantTotalDiff - AccuracyData.hit300 - AccuracyData.hit100)) 
@@ -161,6 +252,8 @@ return function(AimValue, SpeedValue, FLValue, ODRate, ARRate, ModData, NoteCoun
 		* math.pow((Accuracy + RelevantAcc) / 2, (14.5 - ODRate) / 2)
 		* math.pow(0.99, (AccuracyData.hit50 < TotalHit / 500) and 0 or AccuracyData.hit50 - TotalHit / 500)
 		* SpeedMulti
+		* SpeedDevilationMultiplier
+		* speedHighDeviationMultiplier
 	
 	-- Accuracy
 	local betterAccuracyPercentage = ((AccuracyData.hit300 - (TotalHit - AccuracyNoteCount)) * 6 + AccuracyData.hit100 * 2 + AccuracyData.hit50) / (AccuracyNoteCount * 6)
