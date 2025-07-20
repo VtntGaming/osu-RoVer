@@ -9,6 +9,13 @@ local basePerformanceFL = require(workspace.PerfomanceCalculator.BasePerfomanceF
 local calculator = require(workspace.DifficultyCalculator)
 local tool = require(script.converterTools)
 local preprocessing = require(workspace.DifficultyCalculator.Preprocessing)
+local evaculatorContainer = workspace.DifficultyCalculator.DifficultyEvaculator
+local evaculators = {
+	Aim = require(evaculatorContainer.AimEvaculator),
+	Speed = require(evaculatorContainer.SpeedEvaculator),
+	Rhythm = require(evaculatorContainer.RhythmCalculator),
+	Flashlight = require(evaculatorContainer.FLEvaculator)
+}
 
 return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metadataonly,GetPS,IsHR,isFL,IsEZ,IsHD,IsNS)
 	local OsuData = Beatmap
@@ -849,10 +856,10 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 	
 	
 	for objectId, objectData in pairs(ProcessedDifficultyObject) do
-		local AimDiff = calculator.GetAimDiff(objectData)
-		local SpeedDiff = calculator.GetSpeedDiff(objectData)
-		local RhythmDiff = calculator.GetRhythmDiff(objectData)
-		local FLDiff = isFL and calculator.getFlashLightDiff(objectData, IsHD) or 0
+		local AimDiff = evaculators.Aim.GetAimDiff(objectData)
+		local SpeedDiff = evaculators.Speed.GetSpeedDiff(objectData)
+		local RhythmDiff = evaculators.Rhythm.GetRhythmDiff(objectData)
+		local FLDiff = isFL and evaculators.Flashlight.getFlashLightDiff(objectData, IsHD) or 0
 		
 		local AimFLStrainDecay = math.pow(0.15,objectData.DeltaTime/1000)
 		AimStrain *= AimFLStrainDecay
