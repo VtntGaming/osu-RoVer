@@ -30,7 +30,10 @@ function h300window(od)
 	end
 end
 
-function positionOf(vectorTable)
+function positionOf(vectorTable):Vector2
+	if typeof(vectorTable) == "Vector2" then
+		return vectorTable
+	end
 	return Vector2.new(vectorTable.X, vectorTable.Y)
 end
 function toSLPathData(rawData, basePos)
@@ -81,10 +84,40 @@ function SLpositionAt(data, lengthRatio)
 	end
 end
 
-return function(baseList, baseData)
-	local DifficultyObjects = {}
+export type ObjectData = {
+	objID:number,
+	Previous:(index:number) -> (ObjectData),
+	Next:(index:number) -> (ObjectData),
+	getDoubletapness:(nextObj:ObjectData) -> (number),
+	isInvalid:boolean,
+	isSpinner:boolean,
+	isSlider:boolean,
+	Position:Vector2,
+	Time:number,
+	Angle:number,
+	DeltaTime:number,
+	StrainTime:number,
+	LazyJumpDistance:number,
+	MinimumJumpDistance:number,
+	MinimumJumpTime:number,
+	endCursorPosition:number,
+	lazySLTravelTime:number,
+	Hit300Value:number,
+	BaseTravelTime:number,
+	BaseTravelDistance:number,
+	SmallCircleBonus:number,
+	CirclePosition:Vector2,
+	SLTailPosition:Vector2,
+	SLTickData:{},
+	Radius:number,
+	SLRepeatCount:number,
+	lazyTravelDistance:number,
+}
+
+return function(baseList:{any}, baseData)
+	local DifficultyObjects:{ObjectData} = {}
 	for objID, crr in pairs(baseList) do
-		local crrObj = {}
+		local crrObj = {}::ObjectData
 		
 		crrObj.objID = objID
 		crrObj.Previous = function(index)
@@ -260,7 +293,8 @@ return function(baseList, baseData)
 			end
 		end
 		
-		
+		crrObj.SmallCircleBonus = math.max(1, 1 + (30 - radius) / 40)
+		crrObj.Position = positionOf(crr.Position)
 		crrObj.Time = crr.Time
 		crrObj.Angle = angle
 		crrObj.DeltaTime = DeltaTime
@@ -280,8 +314,7 @@ return function(baseList, baseData)
 		crrObj.SLRepeatCount = SLRepeatCount
 		crrObj.lazyTravelDistance = 0 -- I will implement later
 		
-		DifficultyObjects[objID] = crrObj
-		
+		DifficultyObjects[objID] = crrObj::ObjectData	
 	end
 	
 	return DifficultyObjects

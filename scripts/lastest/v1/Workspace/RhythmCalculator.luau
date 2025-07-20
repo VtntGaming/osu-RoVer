@@ -1,4 +1,5 @@
 local rhythmCalculator = {}
+local DifficultyCalculationUtils = require(script.Parent.DifficultyCalculationUtils_Base)
 
 local function getIslandCount(islandList, currentIsland)
 	for i, island in pairs(islandList) do
@@ -15,12 +16,16 @@ local function Logistic(x, midpointOffset, multiplier, maxValue)
 	return maxValue / (1 + math.exp(multiplier * (midpointOffset - x)))
 end
 
+local function truncate(n)
+	return n >= 0 and math.floor(n) or math.ceil(n)
+end
+
 function rhythmCalculator.GetRhythmDiff(CrrObj)
 	-- This is the most complicate section I ever transfer
 
 	local history_time_max = 5000 -- ms
 	local history_obj_max = 32
-	local rhythm_overall_multiplier = 0.95
+	local rhythm_overall_multiplier = 1
 	local rhythm_ratio_multiplier = 12
 	local min_delta_time = 25
 
@@ -90,14 +95,15 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 		local prevDelta = PrevObj.StrainTime
 		local lastDelta = LastObj.StrainTime
 
-		local deltaDifferenceRatio = math.min(prevDelta, currDelta) / math.max(prevDelta, currDelta)
-		local currRatio = 1.0 + rhythm_ratio_multiplier * math.min(0.5, math.pow(math.sin(math.pi / deltaDifferenceRatio), 2))
+		local deltaDifference = math.max(prevDelta, currDelta) / math.min(prevDelta, currDelta)
+		local deltaDifferenceFraction = deltaDifference - truncate(deltaDifference)
+		
+		local currRatio = 1 + rhythm_ratio_multiplier * math.min(0.5, DifficultyCalculationUtils.SmootherstepBellCurve(deltaDifferenceFraction))
 
-		local fraction = math.max(prevDelta / currDelta, currDelta / prevDelta)
-		local fractionMultiplier = math.clamp(2.0 - fraction / 8.0, 0.0, 1.0)
+		local differenceMultiplier = math.clamp(2 - deltaDifferenceEpsilon / 8, 0, 1)
 
 		local windowPenalty = math.min(1, math.max(0, math.abs(prevDelta - currDelta) - deltaDifferenceEpsilon) / deltaDifferenceEpsilon)
-		local effectiveRatio = windowPenalty * currRatio * fractionMultiplier
+		local effectiveRatio = windowPenalty * currRatio * differenceMultiplier
 
 		if firstDeltaSwitch then
 			if math.abs(prevDelta - currDelta) < deltaDifferenceEpsilon then

@@ -76,7 +76,7 @@ function flashlightEvaculator.getFlashLightDiff(CrrObj, IsHD)
 
 	Result += SliderBonus * sliderMultiplier
 
-	return Result * 0.05512
+	return Result
 end
 
 return flashlightEvaculator

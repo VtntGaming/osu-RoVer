@@ -1,7 +1,8 @@
 local Evaculator = require(script.Parent)
+local Preprocessing = require(workspace.DifficultyCalculator.Preprocessing)
 local speedEvaculator = {}
 
-function speedEvaculator.GetSpeedDiff(CrrObj)
+function speedEvaculator.GetSpeedDiff(CrrObj:Preprocessing.ObjectData)
 	if CrrObj.isSpinner then
 		return 0
 	end
@@ -15,7 +16,7 @@ function speedEvaculator.GetSpeedDiff(CrrObj)
 	local single_spacing_threshold = 125
 	local min_speed_bonus = 200
 	local speed_balancing_factor = 40
-	local distance_multiplier = 0.9
+	local distance_multiplier = 0.8
 
 	local strainTime = CrrObj.StrainTime
 	local doubletapness = math.max(0, 1 - (CrrObj.getDoubletapness(nextObj)))
@@ -35,9 +36,11 @@ function speedEvaculator.GetSpeedDiff(CrrObj)
 	travelDistance += CrrObj.MinimumJumpDistance
 	local distance = math.min(single_spacing_threshold, travelDistance)
 	local distanceBonus = math.pow(distance/single_spacing_threshold, 3.95) * distance_multiplier
+	
+	distanceBonus *= math.sqrt(CrrObj.SmallCircleBonus)
 
 	local SpeedDiff = ((1 + speedBonus + distanceBonus) * 1000 / strainTime) * doubletapness
-	return SpeedDiff * 1.46
+	return SpeedDiff
 end
 
 return speedEvaculator

@@ -55,8 +55,8 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 	
 	local DIFFICULTY_VALUE_EXPOMENTAL_RATE = 1/2
 	local DIFFICULTY_VALUE_MULTIPLIER_RATE = 0.0675
-	local DIFFICULTY_VALUE_AIM_MULTIPLIER = 0.85
-	local DIFFICULTY_VALUE_SPEED_MULTIPLIER = 1
+	local DIFFICULTY_VALUE_AIM_MULTIPLIER = 0.85 / 0.42
+	local DIFFICULTY_VALUE_SPEED_MULTIPLIER = 1 / 1.05
 
 	-- Convert string into datatable
 	--[[
@@ -857,17 +857,30 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 	local SpeedStrain = 0
 	local FLStrain = 0
 	
+	-- Skills
+	
+	-- The aim difficulty is the most inaccurate thing to calculate in osu!RoVer
+	-- I need to adjust it back to the original osu! standard
+	local aimAdjustedMultiplier = 0.42
+	local speedAdjustedMultiplier = 1.05
+	local aimSkillMultiplier = 26 * aimAdjustedMultiplier
+	local speedSkillMultiplier = 1.47 * speedAdjustedMultiplier
+	local flashlightSkillMultiplier = 0.05512
+	
+	local AimFLBaseStrainDecay = 0.15
+	local SpeedBaseStrainDecay = 0.3
+	
 	
 	for objectId, objectData in pairs(ProcessedDifficultyObject) do
-		local AimDiff = evaculators.Aim.GetAimDiff(objectData)
-		local SpeedDiff = evaculators.Speed.GetSpeedDiff(objectData)
-		local RhythmDiff = evaculators.Rhythm.GetRhythmDiff(objectData)
+		local AimDiff = evaculators.Aim.GetAimDiff(objectData) * aimSkillMultiplier
+		local SpeedDiff = evaculators.Speed.GetSpeedDiff(objectData) * speedSkillMultiplier
+		local RhythmDiff = evaculators.Rhythm.GetRhythmDiff(objectData) * flashlightSkillMultiplier
 		local FLDiff = isFL and evaculators.Flashlight.getFlashLightDiff(objectData, IsHD) or 0
 		
-		local AimFLStrainDecay = math.pow(0.15,objectData.DeltaTime/1000)
+		local AimFLStrainDecay = math.pow(AimFLBaseStrainDecay,objectData.DeltaTime/1000)
 		AimStrain *= AimFLStrainDecay
 		AimStrain += AimDiff
-		local SpeedStrainDecay = math.pow(0.3,objectData.DeltaTime/1000)
+		local SpeedStrainDecay = math.pow(SpeedBaseStrainDecay,objectData.DeltaTime/1000)
 		
 		SpeedStrain *= SpeedStrainDecay
 		SpeedStrain += SpeedDiff
@@ -890,8 +903,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 		
 		if objectData.isSlider then
 			AimSLStrainData[#AimSLStrainData+1] = AimStrain
-		end
-		
+		end		
 		
 		local multiplierBase = 10
 		

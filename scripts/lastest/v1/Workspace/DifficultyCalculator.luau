@@ -265,8 +265,6 @@ function computeAimRating(aimDifficultyValue:number, modData:ModData, totalHit:n
 		
 	-- Apply the accuracy difficulty to the aim rating
 	ratingMultiplier *= 0.98 + math.pow(math.max(0, OD), 2) / 2500
-	print(ratingMultiplier)
-	
 	return aimRating + math.pow(ratingMultiplier, 1/3)
 end
 
@@ -369,8 +367,6 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 		AimDifficultStrainCount = aimDiffStrainCount,
 		SpeedDifficultStrainCount = speedDiffStrainCount
 	}
-	
-	print(Attributes)
 	
 	return Attributes
 end
