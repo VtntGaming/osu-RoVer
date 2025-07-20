@@ -1,33 +1,32 @@
+--!strict
 -- Credited the osu! team on the github for the difficulty calculator and preprocessing
 -- Even though I have to transfer code from C# to lua all by myself
 -- The calculator might different compare to the original one
 
+local basePerfomance = require(workspace.PerfomanceCalculator.BasePerfomance)
+local basePerfomanceFL = require(workspace.PerfomanceCalculator.BasePerfomanceFL)
+local evaculator = require(script.DifficultyEvaculator)
+
+local perfomance_base_multiplier = 1.14
+local difficulty_multiplier = 0.0675
+local star_rating_multiplier = 0.0265
+
 local calculator = {}
 
-function sortStrain(data)
+function sortStrain(data:{number})
 	table.sort(data,function(a,b) return a>b end)
 end
 
-function lerp(a,b,r)
+function lerp(a:number,b:number,r:number)
 	return a + (b-a)*r
 end
 
-function calculator.DifficultyValue(StrainData, IsgetRelevantNoteCount, isAim, RhythmDiffData)
+function calculator.DifficultyValue(StrainData)
 	local reducedSelectionCount = 10
 	local weight = 1
 	local decayWeight = 0.9
 	local difficulty = 0
 	local ReducedStrainBaseline = 0.75
-	
-	if RhythmDiffData then -- it's for speed difficulty
-		for i, speedStrain in pairs(StrainData) do
-			local rhythmDiff = 1
-			if RhythmDiffData[i] then
-				rhythmDiff = RhythmDiffData[i]
-			end
-			StrainData[i] = speedStrain * rhythmDiff
-		end
-	end
 	
 	sortStrain(StrainData)
 	
@@ -46,18 +45,7 @@ function calculator.DifficultyValue(StrainData, IsgetRelevantNoteCount, isAim, R
 		difficulty += strain * weight
 		weight *= decayWeight
 	end
-	
-	local StrainCount = 0
-	local consistentTopStrain = difficulty/10
-	local SpeedRelevantNoteCount = 0
-	for _,a in pairs(StrainData) do
-		StrainCount += 1.1 / (1 + math.exp(-10 * (a / consistentTopStrain - 0.88)))
-		if IsgetRelevantNoteCount then
-			SpeedRelevantNoteCount += 1 / (1 + math.exp(-(a / StrainData[1] * 12 - 6)))
-		end
-	end
-	
-	return difficulty, StrainCount, SpeedRelevantNoteCount
+	return difficulty
 end
 
 function calculator.DifficultyValueFlashlight(StrainData)
@@ -68,6 +56,323 @@ function calculator.DifficultyValueFlashlight(StrainData)
 		difficulty += strain
 	end
 	return difficulty
+end
+
+function calculator.ComputeAimRating()
+	
+end
+
+function calculator.RelevantNoteCount(strainData:{number})
+	if #strainData == 0 then
+		return 0
+	end	
+	local maxStrain = strainData[1]
+	if maxStrain == 0 then
+		return 0
+	end
+	
+	local relevantNoteCount = 0
+	for _, strain in pairs(strainData) do
+		relevantNoteCount += 1 / (1 + math.exp(-(strain/maxStrain * 12 - 6)))
+	end
+	
+	return relevantNoteCount
+end
+
+function calculator.CountTopWeightedStrains(strainData:{number})
+	if #strainData == 0 then
+		return 0
+	end
+	
+	local consistenTopStrain = calculator.DifficultyValue(strainData) / 10
+	if consistenTopStrain == 0 then
+		return #strainData
+	end
+	
+	local strainCount = 0
+	for _, strain in pairs(strainData) do
+		strainCount += 1.1 / (1 + math.exp(-10 * (strain / consistenTopStrain - 0.88)))
+	end
+	
+	return strainCount
+end
+
+function calculator.getDificultSliders(strainData:{number})
+	if #strainData == 0 then
+		return 0
+	end
+	
+	sortStrain(strainData)
+	local maxSLStrain = strainData[1]
+	
+	if maxSLStrain == 0 then
+		return 0
+	end
+	
+	local strainDiff = 0
+	for _, strain in pairs(strainData) do
+		strainDiff += 1 / (1 + math.exp(-(strain/maxSLStrain * 12 - 6)))
+	end
+	
+	return strainDiff
+end
+
+export type Data = {
+	AimStrain:{number},
+	AimSLStrain:{number},
+	SpeedStrain:{number},
+	FlashlightStrain:{number},
+	DifficultyValue:{
+		CS:number,
+		AR:number,
+		OD:number,
+		HP:number
+	},
+	NoteCount:{
+		Cirlce:number,
+		Slider:number,
+		Spinner:number,
+		Total:number
+	},
+	ModData:ModData
+}
+
+export type ModData = {
+	HD:boolean?,	-- Hidden
+	HR:boolean?,	-- Hardrock
+	EZ:boolean?,	-- Easy
+	NS:boolean?,	-- No sliders
+	SA:number?,		-- Speed adjust
+	FL:boolean?,	-- Flashlight
+	RX:boolean?,	-- Relax
+	AP:boolean?,	-- Autopilot
+	AT:boolean?,	-- Autoplay
+	SO:boolean?,	-- SpunOut
+	V2:boolean?,	-- ScoreV2
+	TD:boolean?,	-- Touchdevice
+	DA:{Active:boolean?, Data:{
+		CS:number?, AR:number?, OD:number?, HP:number?
+	}?}?,			-- Difficulty adjust
+	-- osu!lazer possible mods
+	MG:{
+		Active:boolean?, 
+		Strength:number?
+	}?,				-- Magnetised
+	
+}
+
+export type DifficultyAttributes = {
+	StarRating:number,
+	AimDifficulty:number,
+	AimDifficultySliderCount:number,
+	SpeedDifficulty:number,
+	SpeedNoteCount:number,
+	FlashlightDifficulty:number,
+	AimDifficultStrainCount:number,
+	SpeedDifficultStrainCount:number
+}
+
+function calculateDifficultyRatingBase(value)
+	return math.pow(value , 1/2) * difficulty_multiplier
+end
+
+function calculateStarRating(basePerfomance, multiplier)
+	if basePerfomance <= 0.00001 then
+		return 0
+	end
+	
+	return math.pow(multiplier, 1/3) * star_rating_multiplier * math.pow(100000 / math.pow(2, 1/1.1) * basePerfomance + 4 , 1/3)
+end
+function calculator.CalculateVisibilityBonus(modData:ModData, AR:number, visibilityFactor:number)
+	if not visibilityFactor then
+		visibilityFactor = 1
+	end
+	
+	local isAlwayParticallyVisible = true
+	
+	local readingBonus = 0.04 * (12 - math.max(AR, 5))
+	readingBonus *= visibilityFactor
+
+	if AR < 5 then
+		readingBonus += (isAlwayParticallyVisible and 0.04 or 0.03) * (5 - math.max(AR , 0))
+	end
+	
+	if AR < 0 then
+		readingBonus += (isAlwayParticallyVisible and 0.1 or 0.075) * (1 - math.pow(1.5, AR))
+	end
+	
+	return readingBonus
+end
+
+function calculateAimVisibilityFactor(AR:number, attributes)
+	local ar_factor_end_point = 11.5
+	
+	local mechanicalDifficultyFactor = evaculator.ReverseLerp(attributes.mechanicalDifficultyRating, 5, 10)
+	local arFactorStartingPoint = lerp(9, 10.33, mechanicalDifficultyFactor)
+	
+	return evaculator.ReverseLerp(AR, ar_factor_end_point, arFactorStartingPoint)
+end
+
+function calculateSpeedVisibilityFactor(AR:number, attributes)
+	local ar_factor_end_point = 11.5
+
+	local mechanicalDifficultyFactor = evaculator.ReverseLerp(attributes.mechanicalDifficultyRating, 5, 10)
+	local arFactorStartingPoint = lerp(10, 10.33, mechanicalDifficultyFactor)
+
+	return evaculator.ReverseLerp(AR, ar_factor_end_point, arFactorStartingPoint)
+end
+
+function computeAimRating(aimDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number, attributes)
+	if modData.AP then
+		return 0
+	end
+	
+	local aimRating = calculateDifficultyRatingBase(aimDifficultyValue)
+	
+	if modData.TD then
+		aimRating = math.pow(aimRating, 0.8)
+	end
+	
+	if modData.RX then
+		aimRating *= 0.9
+	end
+	
+	if modData.MG and modData.MG.Active then
+		local magnetisedStrength = modData.MG.Strength or 0
+		aimRating *= 1 - magnetisedStrength
+	end
+	
+	local ratingMultiplier = 1
+	local ARLengthBonus = 0.95 + 0.4 * math.min(1 , totalHit / 2000) + (totalHit > 2000 and math.log10(totalHit/2000) * 0.5 or 0)
+	local ARFactor = 0
+	
+	if AR > 10.33 then
+		ARFactor = 0.3 * (AR - 10.33)
+	elseif AR < 8 then
+		ARFactor = 0.05 * (8 - AR)
+	end
+	
+	if modData.RX then
+		ARFactor = 0
+	end
+	
+	ratingMultiplier *= 1 + ARFactor * ARLengthBonus
+	
+	if modData.HD then
+		local visibilityFactor = calculateAimVisibilityFactor(AR, attributes)
+		ratingMultiplier *= 1 + calculator.CalculateVisibilityBonus(modData, AR, visibilityFactor)
+	end
+		
+	-- Apply the accuracy difficulty to the aim rating
+	ratingMultiplier *= 0.98 + math.pow(math.max(0, OD), 2) / 2500
+	print(ratingMultiplier)
+	
+	return aimRating + math.pow(ratingMultiplier, 1/3)
+end
+
+function computeSpeedRating(speedDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number, attributes)
+	if modData.RX then
+		return 0
+	end
+	local speedRating = calculateDifficultyRatingBase(speedDifficultyValue)
+	if modData.AP then
+		speedRating *= 0.5
+	end
+	
+	if modData.MG then
+		local magnetisedStrength = modData.MG.Strength or 0
+		speedRating *= 1 - magnetisedStrength * 0.3
+	end
+	
+	local ratingMultiplier = 1
+	local ARLengthBonus = 0.95 + 0.4 * math.min(1 , totalHit / 2000) + (totalHit > 2000 and math.log10(totalHit/2000) * 0.5 or 0)
+	local ARFactor = 0
+	
+	if AR > 10.33 then
+		ARFactor = 0.3 * (AR - 10.33)
+	end
+	
+	if modData.AP then
+		ARFactor = 0
+	end
+	
+	ratingMultiplier *= 1 + ARFactor * ARLengthBonus
+	
+	if modData.HD then
+		local visibilityFactor = calculateSpeedVisibilityFactor(AR, attributes)
+		ratingMultiplier *= 1 + calculator.CalculateVisibilityBonus(modData, AR, visibilityFactor)
+	end
+	
+	ratingMultiplier *= 0.95 + math.pow(math.max(0, OD), 2)/750
+	
+	return speedRating * math.pow(ratingMultiplier, 1/3)
+end
+
+function calculateMechanicalDifficultyRating(aimValue, speedValue)
+	local aim = basePerfomance(calculateDifficultyRatingBase(aimValue))
+	local speed = basePerfomance(calculateDifficultyRatingBase(speedValue))
+	
+	local totalValue = math.pow(aimValue ^ 1.1 + speedValue ^ 1.1, 1/1.1)
+	
+	return calculateStarRating(totalValue, perfomance_base_multiplier)
+end
+
+function calculateDifficultyMultiplier(modData:ModData, totalHits:number, spinnerCount:number)
+	local multiplier = perfomance_base_multiplier
+	if modData.SO and totalHits > 0 then
+		multiplier *= 1 - math.pow(spinnerCount / totalHits, 0.85)
+	end
+	
+	return multiplier
+end
+
+function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
+	local speedNotes = calculator.RelevantNoteCount(data.SpeedStrain)
+	
+	local aimDiffStrainCount = calculator.CountTopWeightedStrains(data.AimStrain)
+	local speedDiffStrainCount = calculator.CountTopWeightedStrains(data.SpeedStrain)
+	
+	local difficultSliders = calculator.getDificultSliders(data.AimSLStrain)
+	
+	local ARRate = data.DifficultyValue.AR
+	local ODRate = data.DifficultyValue.OD
+	
+	local TotalHit = data.NoteCount.Total
+	
+	local aimDifficultyValue = calculator.DifficultyValue(data.AimStrain)
+	local speedDifficultyValue = calculator.DifficultyValue(data.SpeedStrain)
+	
+	local mechanicalDifficultyRating = calculateMechanicalDifficultyRating(aimDifficultyValue, speedDifficultyValue)
+	
+	local aimRating = computeAimRating(aimDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
+	local speedRating = computeSpeedRating(speedDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
+	local flashlightRating = 0
+	
+	local aimBasePerfomance = basePerfomance(aimRating)
+	local speedBasePerfomance = basePerfomance(speedRating)
+	local flashlightBasePerfomance = basePerfomanceFL(flashlightRating)
+	
+	local basePerfomance = math.pow(
+		aimBasePerfomance ^ 1.1 + speedBasePerfomance ^ 1.1 + flashlightBasePerfomance ^ 1.1, 1 / 1.1
+	)
+	
+	local multiplier = calculateDifficultyMultiplier(data.ModData, data.NoteCount.Total, data.NoteCount.Spinner)
+	local starRating = calculateStarRating(basePerfomance, multiplier)
+	
+	local Attributes = {
+		StarRating = starRating,
+		AimDifficulty = aimRating,
+		AimDifficultySliderCount = difficultSliders,
+		SpeedDifficulty = speedRating,
+		SpeedNoteCount = speedNotes,
+		FlashlightDifficulty = flashlightRating,
+		AimDifficultStrainCount = aimDiffStrainCount,
+		SpeedDifficultStrainCount = speedDiffStrainCount
+	}
+	
+	print(Attributes)
+	
+	return Attributes
 end
 
 return calculator

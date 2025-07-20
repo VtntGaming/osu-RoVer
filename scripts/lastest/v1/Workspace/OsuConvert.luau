@@ -41,7 +41,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 	ReturningData.OriginalOffset = 0
 	ReturningData.StackLeniency = 0
 	ReturningData.NoteCount = {
-		Circle = 0, Slider = 0, Spinner = 0
+		Circle = 0, Slider = 0, Spinner = 0, Total = 0
 	}
 
 	local MapData = {}
@@ -325,6 +325,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 	local RawDifficulty2 = {}
 	--local StrainData = {}
 	local AimStrainData = {}
+	local AimSLStrainData = {}
 	local SpeedStrainData = {}
 	local RhythmDiffData = {}
 	local FLStrainData = {}
@@ -418,6 +419,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 			local SliderLength = 0 -- default it's length is 0
 			local SpinnerDuration = -1 -- default value for non-spinner
 			local SliderLengthRaw = ExtraData[4]
+			ReturningData.NoteCount.Total += 1
 			if Type == 2 or Type == 6 or math.floor((Type-22)/16) == (Type-22)/16 then
 				ReturningData.NoteCount.Slider += 1
 				isSlider = true
@@ -834,6 +836,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 	-- ignore the old diff data from the above
 	-- this will be changed soon
 	AimStrainData = {}
+	AimSLStrainData = {}
 	SpeedStrainData = {}
 	RhythmDiffData = {}
 	FLStrainData = {}
@@ -884,6 +887,11 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 		SpeedStrainData[#SpeedStrainData+1] = SpeedStrain
 		RhythmDiffData[#RhythmDiffData+1] = RhythmDiff
 		FLStrainData[#FLStrainData+1] = FLStrain
+		
+		if objectData.isSlider then
+			AimSLStrainData[#AimSLStrainData+1] = AimStrain
+		end
+		
 		
 		local multiplierBase = 10
 		
@@ -958,94 +966,47 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 		
 		
 		-- Get difficulty value of Aim, Speed, Flashlight
-		
-		AimDifficulty, AimDiffStrainCount = calculator.DifficultyValue(AimStrainData, false, true)
-		SpeedDifficulty, SpeedDiffStrainCount, SpeedRelevantNoteCount = calculator.DifficultyValue(SpeedStrainData, true, false, RhythmDiffData)
-		
-
-		if isFL then
-			FlashlightDifficulty = calculator.DifficultyValueFlashlight(FLStrainData)
-		end
-
-		local ARRate = math.clamp(ReturningData.Difficulty.ApproachRate * (IsEZ and 0.5 or (IsHR and 1.4 or 1)),0,11)
-		local ModdedARRate = ARRate
-
-		local ARTime = 1200
-		if ARRate < 5 then
-			ARTime = 1200 + 600 * (5 - ARRate) / 5
-		elseif ARRate > 5 then
-			ARTime = 1200 - 750 * (ARRate - 5) / 5
-		else
-			ARTime = 1200
-		end
-
-		ARTime /= SongSpeed
-
-		if ARTime > 1200 then
-			ModdedARRate = 5 - (ARTime - 1200)*5/600
-		else
-			ModdedARRate = 5 + (1200 - ARTime)*5/750
-		end
-
-		local AimARFactor = 0
-		local SpeedARFactor = 0
-
-		if ModdedARRate > 10.33 then
-			AimARFactor = 0.3 * (ModdedARRate - 10.33)
-			SpeedARFactor = 0.3 * (ModdedARRate - 10.33)
-		elseif ModdedARRate < 8 then
-			AimARFactor = 0.05 * (8 - ModdedARRate)
-		end
-
-
-		local ODRate = math.clamp(ReturningData.Difficulty.OverallDifficulty * (IsEZ and 0.5 or (IsHR and 1.4 or 1)),0,11)
-		local Hit300Time = 80 - 6 * ODRate
-		Hit300Time /= SongSpeed
-		ODRate = -(Hit300Time - 80) / 6
-		local LengthBonus = 0.95 + 0.4 * math.min(1,#ConvertedData/2000) + ((#ConvertedData > 2000 and math.log10(#ConvertedData/2000) * 0.5) or 0)
-
-
-		local AimMulti = 1 + AimARFactor * LengthBonus
-		local SpeedMulti = 1 + SpeedARFactor * LengthBonus
-
-		local RewardedAimPS = AimMulti * math.pow(5 * math.max(1,(AimDifficulty)/0.0675) - 4, 3) / 100000 * LengthBonus * (0.98 + math.pow(ODRate, 2) / 2500) --math.pow(AimDiff,4)
-		local RewardedSpeedPS = SpeedMulti * math.pow(5.0 * math.max(1, SpeedDifficulty / 0.0675) - 4, 3) / 100000 * LengthBonus * (0.95 + math.pow(ODRate,2)/750) --math.pow(SpeedDiff,3.93)
-		local RewardedAccPS = math.pow(1.52163,ODRate) * 2.83 * math.min(1.15,math.pow(#ConvertedData/1000,0.3)) / 1.0858--math.pow(BaseDiff,2.21)
-		local RewardedFlashlightPS = 25 * math.pow(FlashlightDifficulty, 2) * (0.7 + 0.2 * math.min(1,#ConvertedData/200)) + (#ConvertedData > 200 and (0.2 * math.min(1, (#ConvertedData-200)/200)) or 0) * (0.98 + math.pow(ODRate,2)/2500)
-
-		local TotalNoteCount = NoteCount.Circle + NoteCount.Slider + NoteCount.Spinner
-		local Ratio = NoteCount.Slider / TotalNoteCount
-
-		-- MaxValue
-		local SLAimBuff = 0.3
-		local SLSpeedBuff = 0.05
-
-		-- Slider count buff
-		RewardedAimPS *= 1 + SLAimBuff * Ratio
-		RewardedSpeedPS *= 1 + SLSpeedBuff * Ratio
-
-		local ModData = {
-			FL = isFL
+		local modData:calculator.ModData = {
+			HD = IsHD,
+			HR = IsHR,
+			EZ = IsEZ,
+			FL = isFL,
+			NS = IsNS,
+			SA = SongSpeed
 		}
-		local ARRate = math.clamp(ReturningData.Difficulty.ApproachRate * (IsEZ and 0.5 or (IsHR and 1.4 or 1)),0,11)
-		local ODRate = math.clamp(ReturningData.Difficulty.OverallDifficulty * (IsEZ and 0.5 or (IsHR and 1.4 or 1)),0,11)
+		
+		local DifficultyValue = {
+			CS = tool.GetDifficultyValueAfterMod.CS(ReturningData.Difficulty.CircleSize, modData),
+			AR = tool.GetDifficultyValueAfterMod.AR(ReturningData.Difficulty.ApproachRate, modData),
+			OD = tool.GetDifficultyValueAfterMod.OD(ReturningData.Difficulty.OverallDifficulty, modData),
+			HP = tool.GetDifficultyValueAfterMod.HP(ReturningData.Difficulty.HPDrain, modData)
+		}
+		local attributeData:calculator.Data = {
+			AimStrain = AimStrainData,
+			AimSLStrain = AimSLStrainData,
+			SpeedStrain = SpeedStrainData,
+			FlashlightStrain = FLStrainData,
+			DifficultyValue = DifficultyValue,
+			ModData = modData,
+			NoteCount = ReturningData.NoteCount
+		}
+		local difficultyAttributes = calculator.GetDifficultyAttributes(attributeData)
+		AimDifficulty = difficultyAttributes.AimDifficulty
+		AimDiffStrainCount = difficultyAttributes.AimDifficultStrainCount
+		SpeedDifficulty = difficultyAttributes.SpeedDifficulty
+		SpeedDiffStrainCount = difficultyAttributes.SpeedDifficultStrainCount
+		SpeedRelevantNoteCount = difficultyAttributes.SpeedNoteCount
+		FlashlightDifficulty = difficultyAttributes.FlashlightDifficulty
+		
+		local ARRate = DifficultyValue.AR
+		local ODRate = DifficultyValue.OD
 		local PSMultiplier = {
 			Aim = 1, Speed = 1, FL = 1, Acc = 1
 		}
 
 		local MaxPSData = PerfomanceCalculator(AimDifficulty, SpeedDifficulty, FlashlightDifficulty, ARRate, ODRate, ModData, ReturningData.NoteCount, SongSpeed, PSMultiplier, true)
-		
 
-		AimDifficulty = math.pow(AimDifficulty, DIFFICULTY_VALUE_EXPOMENTAL_RATE) * DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
-		SpeedDifficulty = math.pow(SpeedDifficulty, DIFFICULTY_VALUE_EXPOMENTAL_RATE) * DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_SPEED_MULTIPLIER
-		FlashlightDifficulty = math.pow(FlashlightDifficulty, DIFFICULTY_VALUE_EXPOMENTAL_RATE) * DIFFICULTY_VALUE_MULTIPLIER_RATE
-		local BaseAim = BasePerfomance(AimDifficulty)
-		local BaseSpeed = BasePerfomance(SpeedDifficulty)
-		local BaseFL = basePerformanceFL(FlashlightDifficulty)
-
-
-		local basePerfomance = ((BaseAim^1.1+BaseSpeed^1.1+BaseFL^1.1)^(1/1.1))
-		BeatmapDifficulty = 0.027 * math.pow(1.15, 1/3) * (math.pow(100000 / math.pow(2, 1 / 1.1) * basePerfomance ,1/3) + 4)
+		BeatmapDifficulty = difficultyAttributes.StarRating
 	end
 	--warn(tostring(AimDifficulty).."\n"..tostring(StreamDifficulty))
 
