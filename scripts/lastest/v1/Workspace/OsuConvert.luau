@@ -10,6 +10,7 @@ local calculator = require(workspace.DifficultyCalculator)
 local tool = require(script.converterTools)
 local preprocessing = require(workspace.DifficultyCalculator.Preprocessing)
 local evaculatorContainer = workspace.DifficultyCalculator.DifficultyEvaculator
+local modData = require(workspace.ModData)
 local evaculators = {
 	Aim = require(evaculatorContainer.AimEvaculator),
 	Speed = require(evaculatorContainer.SpeedEvaculator),
@@ -17,7 +18,9 @@ local evaculators = {
 	Flashlight = require(evaculatorContainer.FLEvaculator)
 }
 
-return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metadataonly,GetPS,IsHR,isFL,IsEZ,IsHD,IsNS)
+export type ModData = modData.ModData
+
+return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,modData:ModData)
 	local OsuData = Beatmap
 	if FileType == 1 then
 		OsuData = require(Beatmap)
@@ -43,6 +46,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 	ReturningData.NoteCount = {
 		Circle = 0, Slider = 0, Spinner = 0, Total = 0
 	}
+	local SongSpeed = modData.SA or 1
 
 	local MapData = {}
 	local MapDataName = {}
@@ -358,7 +362,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 	-- RawDifficulty2 = {[1] = {[1] = <HighestDiff>,[2] = <2nd highest>}}
 	-- DifficultyStrike = {[1] = <Diff>}
 	-- Difficulty record each 5 seconds
-	GetPS = true
+	local GetPS = true
 
 	local DifficultyStrikeRecord = 2000/SongSpeed -- in milisecond
 	
@@ -440,7 +444,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 				HitObjBPMData = bpmdata
 
 				SliderTime = (((tonumber(ExtraData[4])*Slides)/LengthPerSec)/DefaultMulti)
-				if not IsNS then
+				if not modData.NS then
 					SliderLength = tonumber(ExtraData[4] * math.pow(1 + (Slides - 1) / 2.5, 1.0 / 2.5))
 				end
 			elseif Type == 8 or Type == 12 or math.floor((Type-28)/16) == (Type-28)/16 then
@@ -473,8 +477,8 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 					end
 					if TimeBetween == 0 then TimeBetween = 1 end
 					local DistanceBetween = math.abs((Vector2.new(PrevHitObj.Position.X,PrevHitObj.Position.Y)-Vector2.new(HitPos.X,HitPos.Y)).Magnitude)
-					local CS = ReturningData.Difficulty.CircleSize * ((IsHR and 1.3) or (IsEZ and 0.5) or 1)
-					if IsHR or IsEZ then
+					local CS = ReturningData.Difficulty.CircleSize * ((modData.HR and 1.3) or (modData.EZ and 0.5) or 1)
+					if modData.HR or modData.EZ then
 						CS = math.clamp(CS, 0, 11)
 					end
 					
@@ -545,7 +549,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 						end
 					end
 
-					local AimDifficulty = 0--calculator.GetAimDiff(CrrObjData, PrevObjData, PrevPrevObjData, ReturningData.Difficulty.CircleSize, IsHR, IsEZ)
+					local AimDifficulty = 0--calculator.GetAimDiff(CrrObjData, PrevObjData, PrevPrevObjData, ReturningData.Difficulty.CircleSize, modData.HR, modData.EZ)
 
 					local Difficulty = AimDifficulty --GetSpeedDiff(MoveSpeed) * GetDistanceMultiplier(DistanceBetween) * BonusAngle * VelocityChangeBonus
 					--Difficulty *= (1+FLMultiplier*#MapData.HitObjects)
@@ -590,7 +594,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 
 					local FlashlightDifficulty = 0
 
-					if isFL then
+					if modData.FL then
 						local ObjList = {}
 						-- get current + latest 10 object data
 						for crr = 0,10 do
@@ -632,7 +636,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 
 							ObjList[crr] = CrrData
 						end
-						FlashlightDifficulty = 0--calculator.getFlashLightDiff(ObjList, #MapData["HitObjects"], ReturningData.Difficulty.CircleSize, ReturningData.Difficulty.ApproachRate, isFL, IsEZ, IsHR, IsHD, SongSpeed)
+						FlashlightDifficulty = 0--calculator.getFlashLightDiff(ObjList, #MapData["HitObjects"], ReturningData.Difficulty.CircleSize, ReturningData.Difficulty.ApproachRate, modData.FL, modData.EZ, modData.HR, modData.HD, SongSpeed)
 					end
 
 					local FLStrainDecay = math.pow(0.15,TimeBetween/1000)
@@ -658,7 +662,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 						PrevDistanceBetween = (Vector2.new(HitPos.X,HitPos.Y)-Vector2.new(PrevPrevHitObj.X,PrevPrevHitObj.Y)).Magnitude
 					end
 					local TimeBetween = Time-PrevHitObj.Time 
-					local TimingDifficulty = 0--calculator.GetSpeedDiff(CrrObjData, PrevObjData, NextObjData, ReturningData.Difficulty.CircleSize, ReturningData.Difficulty.OverallDifficulty, ReturningData.Difficulty.ApproachRate, IsEZ, IsHR, SongSpeed)
+					local TimingDifficulty = 0--calculator.GetSpeedDiff(CrrObjData, PrevObjData, NextObjData, ReturningData.Difficulty.CircleSize, ReturningData.Difficulty.OverallDifficulty, ReturningData.Difficulty.ApproachRate, modData.EZ, modData.HR, SongSpeed)
 					local bpmdata = tool.GetBPMData(Time, TimingPoints, SongSpeed)
 					local RhythmMultiplier = 1 -- base
 					TimingDifficulty *= RhythmMultiplier
@@ -737,7 +741,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 				end
 			end
 			local HitObjData = {ObjId = objectID,Position = HitPos,Time = Time,Type = Type,ExtraData = ExtraData,SpinTime = SpinTime,SliderTime = SliderTime,HitObjBPMData = HitObjBPMData,PSValue = RewardPS, StackCount = StackCount, isSlider = isSlider, isSpinner = isSpinner, SLTravelDistance = SliderLength, SliderBPM = crrSLBPM,SliderBPMStartTime = crrSLBPMStartTime, SliderTickData = SLTickData, SpinnerDuration = SpinnerDuration, SliderLengthRaw = SliderLengthRaw}			
-			local ARRate = math.clamp(ReturningData.Difficulty.ApproachRate * (IsEZ and 0.5 or (IsHR and 1.4 or 1)),0,11)
+			local ARRate = math.clamp(ReturningData.Difficulty.ApproachRate * (modData.EZ and 0.5 or (modData.HR and 1.4 or 1)),0,11)
 			local ARTime = 1200
 			if ARRate < 5 then
 				ARTime = 1200 + 600 * (5 - ARRate) / 5
@@ -784,7 +788,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 	
 	-- Stack leniency process
 	if ReturningData.StackLeniency > 0 then
-		local CSRate = ReturningData.Difficulty.CircleSize * ((IsHR and 1.3) or (IsEZ and 0.5) or 1)
+		local CSRate = ReturningData.Difficulty.CircleSize * ((modData.HR and 1.3) or (modData.EZ and 0.5) or 1)
 		local ObjectRadius = 54.4 - 4.48 * CSRate
 		local StackVector = ObjectRadius / 10
 		for i, crrObj in pairs(ConvertedData) do
@@ -801,7 +805,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 	local RoundRequiredPerSec = 2.5  -- OD 5: 150RPM
 	local MaximumRoundPerSec = 4.5 -- Maximum 450RPM
 	
-	local ODRateAfterMod = ReturningData.Difficulty.OverallDifficulty * ((IsHR and 1.4) or (IsEZ and 0.5) or 1)
+	local ODRateAfterMod = ReturningData.Difficulty.OverallDifficulty * ((modData.HR and 1.4) or (modData.EZ and 0.5) or 1)
 	if ODRateAfterMod < 5 then
 		RoundRequiredPerSec = 2.5 - 1 * (5-ODRateAfterMod)/5  -- 90 - 150RPM
 	else
@@ -812,7 +816,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 	
 	for _, obj in pairs(ConvertedData) do
 		local NoteCombo = 1
-		if obj.isSlider and not IsNS then
+		if obj.isSlider and not modData.NS then
 			NoteCombo = 1 + #obj.SliderTickData + (tonumber(obj.ExtraData[3]) or 0)
 		end
 		MapMaxCombo += NoteCombo
@@ -842,15 +846,12 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 	FLStrainData = {}
 	
 	local baseData = {
-		AR = math.clamp(ReturningData.Difficulty.ApproachRate * ((IsHR and 1.4) or (IsEZ and 0.5) or 1), 0, 10),
-		CS = math.clamp(ReturningData.Difficulty.CircleSize * ((IsHR and 1.3) or (IsEZ and 0.5) or 1), 0, 10),
-		OD = math.clamp(ReturningData.Difficulty.OverallDifficulty * ((IsHR and 1.3) or (IsEZ and 0.5) or 1), 0, 10),
+		AR = tool.GetDifficultyValueAfterMod.AR(ReturningData.Difficulty.ApproachRate, modData),
+		CS = tool.GetDifficultyValueAfterMod.CS(ReturningData.Difficulty.CircleSize, modData),
+		OD = tool.GetDifficultyValueAfterMod.OD(ReturningData.Difficulty.OverallDifficulty, modData),
 		Speed = SongSpeed,
 		SliderTickRate = ReturningData.Difficulty.SliderTickRate,
-		ModData = {
-			NS = IsNS,
-			HD = IsHD
-		}
+		ModData = modData
 	}
 	local ProcessedDifficultyObject = preprocessing(ConvertedData, baseData)
 	local AimStrain = 0
@@ -875,7 +876,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 		local AimDiff = evaculators.Aim.GetAimDiff(objectData) * aimSkillMultiplier
 		local SpeedDiff = evaculators.Speed.GetSpeedDiff(objectData) * speedSkillMultiplier
 		local RhythmDiff = evaculators.Rhythm.GetRhythmDiff(objectData) * flashlightSkillMultiplier
-		local FLDiff = isFL and evaculators.Flashlight.getFlashLightDiff(objectData, IsHD) or 0
+		local FLDiff = modData.FL and evaculators.Flashlight.getFlashLightDiff(objectData, modData.HD) or 0
 		
 		local AimFLStrainDecay = math.pow(AimFLBaseStrainDecay,objectData.DeltaTime/1000)
 		AimStrain *= AimFLStrainDecay
@@ -966,32 +967,17 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 		}
 		------------
 
-		local ModData = {
-			HR = IsHR,FL = isFL,HD = IsHD,EZ = IsEZ, NS = IsNS,
-			AR = ReturningData.Difficulty.ApproachRate,
-			OD = ReturningData.Difficulty.OverallDifficulty,
-			CS = ReturningData.Difficulty.CircleSize
-		}
-
 		--BeatmapDifficulty = BeatmapDifficulty * 1.3626 -- Old: 1.22
 		
 		
 		
 		-- Get difficulty value of Aim, Speed, Flashlight
-		local modData:calculator.ModData = {
-			HD = IsHD,
-			HR = IsHR,
-			EZ = IsEZ,
-			FL = isFL,
-			NS = IsNS,
-			SA = SongSpeed
-		}
 		
 		local DifficultyValue = {
 			CS = tool.GetDifficultyValueAfterMod.CS(ReturningData.Difficulty.CircleSize, modData),
 			AR = tool.GetDifficultyValueAfterMod.AR(ReturningData.Difficulty.ApproachRate, modData),
 			OD = tool.GetDifficultyValueAfterMod.OD(ReturningData.Difficulty.OverallDifficulty, modData),
-			HP = tool.GetDifficultyValueAfterMod.HP(ReturningData.Difficulty.HPDrain, modData)
+			HP = tool.GetDifficultyValueAfterMod.HP(ReturningData.Difficulty.HPDrainRate, modData)
 		}
 		local attributeData:calculator.Data = {
 			AimStrain = AimStrainData,
@@ -1016,7 +1002,7 @@ return function(FileType,Beatmap,SongSpeed,DelayedTime,isReturnDifficulty,metada
 			Aim = 1, Speed = 1, FL = 1, Acc = 1
 		}
 
-		local MaxPSData = PerfomanceCalculator(AimDifficulty, SpeedDifficulty, FlashlightDifficulty, ARRate, ODRate, ModData, ReturningData.NoteCount, SongSpeed, PSMultiplier, true)
+		local MaxPSData = PerfomanceCalculator(AimDifficulty, SpeedDifficulty, FlashlightDifficulty, ARRate, ODRate, modData, ReturningData.NoteCount, SongSpeed, PSMultiplier, true)
 
 		BeatmapDifficulty = difficultyAttributes.StarRating
 	end

@@ -5,6 +5,8 @@ TweenService = game:GetService("TweenService")
 local wait = require(workspace.WaitModule)
 local PerfomanceCalculator = require(workspace.PerfomanceCalculator)
 local GameSettings = game.Players.LocalPlayer.PlayerGui:WaitForChild("Settings").SettingFrame.BaseFrame.MainLayer.SettingsManage
+local modData = require(workspace.ModData)
+local converterTools = require(workspace.OsuConvert.converterTools)
 
 local event = Instance.new("BindableEvent")
 
@@ -36,19 +38,35 @@ function GenerateSineTimeline(SourceTimeline)
 		if not valueB then
 			break
 		end
-		
+
 		for index = 1, DrawPerTimeline do
 			local t = index/DrawPerTimeline
 			local value = getSineValue(valueA, valueB, t)
 			newTimeline[#newTimeline+1] = value
 		end
 	end
-	
+
 	return newTimeline
 end
 
+function formatNumber(num)
+	return math.round(num*100)/100
+end
+
+function compare(num1, num2)
+	num1 = formatNumber(num1)
+	num2 = formatNumber(num2)
+	if num1 > num2 then
+		return 1
+	elseif num1 < num2 then
+		return -1
+	else
+		return 0
+	end
+end
+
 script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,FileType,CurrentModData,BeatmapStudio
-	,CurrentKey,BeatmapKey,PreviewFrameBaseVolume,PreviewBeatmapset,NoFail,NoSlider,HardRock,FlashLight,EasyMod,HiddenMod
+	,CurrentKey,BeatmapKey,PreviewFrameBaseVolume,PreviewBeatmapset,ModData:modData.ModData
 )
 	local script = script.Parent.Parent.OsuGame
 
@@ -69,6 +87,8 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		SongSpeed = 1
 	end
 
+	ModData.SA = SongSpeed
+
 	script.Parent.MultiplayerData.UploadMap:Fire(BeatmapStudio.Name,SongSpeed)
 
 	CurrentModData.Speed = SongSpeed
@@ -82,48 +102,41 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		CurrentBeatmap = BeatmapStudio
 		CurrentFileType = 1
 	end
-	
+
 	local s = tick()
 	local env = game.Players.LocalPlayer.PlayerScripts.ExternalFunction_Actor.ProcessCommand:Invoke("Core_OsuConvert",
 		{
 			FileType = CurrentFileType,
 			Beatmap = CurrentBeatmap,
-			SongSpeed = SongSpeed,
 			DelayedTime = CurrentSongDelay,
 			isReturnDifficulty = true,
 			metadataonly = false,
 			GetPS = true,
-			IsHR = HardRock,
-			isFL = FlashLight,
-			IsEZ = EasyMod,
-			IsHD = HiddenMod,
-			IsNS = NoSlider
+			ModData = ModData
 		}
 	)
 	local BeatmapData,ReturnData,TimmingPoints,ComboColors
-	
+
 	BeatmapData = env.ConvertedData
 	ReturnData = env.ReturningData
 	TimmingPoints = env.TimingPoints
 	ComboColors = env.BeatmapColor
-	
+
 	local MaxCombo = ReturnData.Difficulty.MaxCombo
 	local NoteCount = #BeatmapData
-	
+
 	local MaxScore, MaxAccScore, MaxConsistencyScore = require(thisScript.Parent.Components.Gameplay.GetMaxScore)(NoteCount, MaxCombo)
 
-	--local BeatmapData,ReturnData,TimmingPoints,ComboColors = require(workspace.OsuConvert)(CurrentFileType,CurrentBeatmap,SongSpeed,CurrentSongDelay,true,false,true,HardRock,FlashLight,EasyMod,HiddenMod)
-	
 	for i = 1,5 do
 		wait()
 	end
-	
+
 	local TotalNotes = #BeatmapData
 	local Notes = 0
 	local Sliders = 0
 	local Spinners = 0
 	local AvgNPS = math.floor(TotalNotes/(tonumber(ReturnData.Overview.MapLength) or 0/1000))
-	
+
 	for i,data in pairs(BeatmapData) do
 		local Type = data.Type
 		if Type ~= 1 and Type ~= 2 and Type ~= 8 then
@@ -177,7 +190,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		Length = Length//1000
 		local Mins = Length//60
 		local Secs = Length%60
-		
+
 		return string.format("%2d:%2d", Mins, Secs)
 	end
 
@@ -188,14 +201,14 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	end
 
 	local ExtraARRate = ""
-	local ExtraDiffModText = (HardRock and "[Mod ⬆]") or (EasyMod and "[Mod ⬇️]") or ""
-	local CSModMulti = ((HardRock and 1.3) or (EasyMod and 0.5) or 1)
-	local DiffModMulti = ((HardRock and 1.4) or (EasyMod and 0.5) or 1)
+	local ExtraDiffModText = (ModData.HR and "[Mod ⬆]") or (ModData.EZ and "[Mod ⬇️]") or ""
+	local CSModMulti = ((ModData.HR and 1.3) or (ModData.EZ and 0.5) or 1)
+	local DiffModMulti = ((ModData.HR and 1.4) or (ModData.EZ and 0.5) or 1)
 
-	local CSRate = math.min(math.max(ReturnData.Difficulty.CircleSize,7),ReturnData.Difficulty.CircleSize*CSModMulti)
-	local HPRate = math.min(math.max(ReturnData.Difficulty.HPDrainRate,10),ReturnData.Difficulty.HPDrainRate*DiffModMulti)
-	local ARRate = math.min(math.max(ReturnData.Difficulty.ApproachRate,10),ReturnData.Difficulty.ApproachRate*DiffModMulti)
-	local ODRate = math.min(math.max(ReturnData.Difficulty.OverallDifficulty,10),ReturnData.Difficulty.OverallDifficulty*DiffModMulti)
+	local CSRate = converterTools.GetDifficultyValueAfterMod.CS(ReturnData.Difficulty.CircleSize, ModData)
+	local HPRate = converterTools.GetDifficultyValueAfterMod.HP(ReturnData.Difficulty.HPDrainRate, ModData)
+	local ARRate = converterTools.GetDifficultyValueAfterMod.AR(ReturnData.Difficulty.ApproachRate, ModData)
+	local ODRate = converterTools.GetDifficultyValueAfterMod.OD(ReturnData.Difficulty.OverallDifficulty, ModData)
 	local SpeedAR = ARRate
 
 
@@ -206,38 +219,38 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 
 
-	if SongSpeed ~= 1 then
-		local CurrentAR = ReturnData.Difficulty.ApproachRate * ((HardRock and 1.4) or (EasyMod and 0.5) or 1)
-		if CurrentAR > 10 then CurrentAR = 10 end
-		local ARTime = 1200
-		if CurrentAR < 5 then
-			ARTime = 1200 + 600 * (5 - CurrentAR) / 5
-		elseif CurrentAR > 5 then
-			ARTime = 1200 - 750 * (CurrentAR - 5) / 5
-		else
-			ARTime = 1200
-		end
-		ARTime /= SongSpeed
+	--if SongSpeed ~= 1 then
+	--	local CurrentAR = ReturnData.Difficulty.ApproachRate * ((ModData.HR and 1.4) or (ModData.EZ and 0.5) or 1)
+	--	if CurrentAR > 10 then CurrentAR = 10 end
+	--	local ARTime = 1200
+	--	if CurrentAR < 5 then
+	--		ARTime = 1200 + 600 * (5 - CurrentAR) / 5
+	--	elseif CurrentAR > 5 then
+	--		ARTime = 1200 - 750 * (CurrentAR - 5) / 5
+	--	else
+	--		ARTime = 1200
+	--	end
+	--	ARTime /= SongSpeed
 
-		local NewAR = CurrentAR
+	--	local NewAR = CurrentAR
 
-		if ARTime == 1200 then
-			NewAR = 5
-		elseif ARTime > 1200 then
-			NewAR = 5 - (ARTime-1200)/120
-		elseif ARTime < 1200 then
-			NewAR = (1200-ARTime)/150 + 5
-		end
+	--	if ARTime == 1200 then
+	--		NewAR = 5
+	--	elseif ARTime > 1200 then
+	--		NewAR = 5 - (ARTime-1200)/120
+	--	elseif ARTime < 1200 then
+	--		NewAR = (1200-ARTime)/150 + 5
+	--	end
 
-		SpeedAR = NewAR
-		NewAR = math.round(NewAR*100)/100
-		ExtraARRate = " ("..tostring(NewAR)..")"
-	end
+	--	SpeedAR = NewAR
+	--	NewAR = math.round(NewAR*100)/100
+	--	ExtraARRate = " ("..tostring(NewAR)..")"
+	--end
 
 	local AimDiffRating = ReturnData.Difficulty.AimDifficulty
 	local SpeedDiffRating = ReturnData.Difficulty.SpeedDifficulty
 	local FlashlightDifficulty = ReturnData.Difficulty.FlashLightDifficulty
-	if not FlashLight then
+	if not ModData.FL then
 		FlashlightDifficulty = 0
 	end
 	local MaxDiff = math.max(AimDiffRating, SpeedDiffRating, FlashlightDifficulty)
@@ -272,7 +285,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		else
 			PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0, 0, 1)
 		end
-		PreviewFrame.Overview.DifficultyInfo.Text = "Length - "..ReturnTime(ReturnData.Overview.MapLength)..SpeedDisplay.." CS: "..tostring(math.round(CSRate*100)/100).." OD: "..tostring(math.round(ODRate*100)/100).." HP: "..tostring(math.round(HPRate*100)/100).." AR: "..tostring(math.round(ARRate*100)/100)..ExtraARRate.."  "..ExtraDiffModText
+		PreviewFrame.Overview.DifficultyInfo.Text = "Length - "..ReturnTime(ReturnData.Overview.MapLength)..SpeedDisplay.." CS: "..tostring(math.round(CSRate*100)/100).." OD: "..tostring(math.round(ODRate*100)/100).." HP: "..tostring(math.round(HPRate*100)/100).." AR: "..tostring(math.round(ARRate*100)/100).."  "..ExtraDiffModText
 		PreviewFrame.Overview.Information.Length.TimeValue.Value = ReturnData.Overview.MapLength//1000
 		PreviewFrame.Overview.BeatmapDifficulty.Text = "<b>Difficulty rating: "..tostring(ReturnData.Difficulty.BeatmapDifficulty).."</b>"
 
@@ -280,9 +293,15 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		local TweenInfo_DiffAnimation = TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out)
 		local InformationFrame = PreviewFrame.Overview.Information
 
+		local baseData = {
+			CS = ReturnData.Difficulty.CircleSize,
+			AR = ReturnData.Difficulty.ApproachRate,
+			HP = ReturnData.Difficulty.HPDrainRate,
+			OD = ReturnData.Difficulty.OverallDifficulty,
+		}
 
-		local function getPropTable(Value,isDiff)
-			local DiffColor
+		local function getPropTable(Value, _type)
+			local DiffColor			
 
 			if Value > 10 then
 				Value = 10
@@ -290,14 +309,17 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 				Value = 0
 			end
 
-			if isDiff then
+			if _type == "Diff" then
 				DiffColor = PreviewFrame.Overview.BeatmapDifficulty.TextColor3
-			elseif EasyMod then
-				DiffColor = Color3.new(0.607843, 1, 1)
-			elseif HardRock then
-				DiffColor = Color3.new(1, 0.607843, 0.607843)
 			else
-				DiffColor = Color3.new(1, 1, 1)
+				local _compare = compare(converterTools.GetDifficultyValueAfterMod[_type](Value, ModData), baseData[_type])
+				if _compare == -1 then
+					DiffColor = Color3.new(0.607843, 1, 1)
+				elseif _compare == 1 then
+					DiffColor = Color3.new(1, 0.607843, 0.607843)
+				else
+					DiffColor = Color3.new(1, 1, 1)
+				end
 			end
 
 			return {Size = UDim2.new(math.min(Value,10)/10,0,1,0),BackgroundColor3 = DiffColor}
@@ -317,20 +339,23 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 			end
 			if isDiff then
 				TweenService:Create(TextObj,TweenInfo_DiffAnimation,{TextColor3 = PreviewFrame.Overview.BeatmapDifficulty.TextColor3}):Play()
-			elseif EasyMod then
-				TweenService:Create(TextObj,TweenInfo_DiffAnimation,{TextColor3 = Color3.new(0.607843, 1, 1)}):Play()
-			elseif HardRock then
-				TweenService:Create(TextObj,TweenInfo_DiffAnimation,{TextColor3 = Color3.new(1, 0.607843, 0.607843)}):Play()
 			else
-				TweenService:Create(TextObj,TweenInfo_DiffAnimation,{TextColor3 = Color3.new(1, 1, 1)}):Play()
+				local _compare = compare(converterTools.GetDifficultyValueAfterMod[Name](Value, ModData), baseData[Name])
+				if _compare == -1 then
+					TweenService:Create(TextObj,TweenInfo_DiffAnimation,{TextColor3 = Color3.new(0.607843, 1, 1)}):Play()
+				elseif _compare == 1 then
+					TweenService:Create(TextObj,TweenInfo_DiffAnimation,{TextColor3 = Color3.new(1, 0.607843, 0.607843)}):Play()
+				else
+					TweenService:Create(TextObj,TweenInfo_DiffAnimation,{TextColor3 = Color3.new(1, 1, 1)}):Play()
+				end
 			end
 		end
 
-		TweenService:Create(getObj("CS"),TweenInfo_DiffAnimation,getPropTable(CSRate)):Play()
-		TweenService:Create(getObj("HP"),TweenInfo_DiffAnimation,getPropTable(HPRate)):Play()
-		TweenService:Create(getObj("OD"),TweenInfo_DiffAnimation,getPropTable(ODRate)):Play()
-		TweenService:Create(getObj("AR"),TweenInfo_DiffAnimation,getPropTable(ARRate)):Play()
-		TweenService:Create(getObj("DR"),TweenInfo_DiffAnimation,getPropTable(ReturnData.Difficulty.BeatmapDifficulty,true)):Play()
+		TweenService:Create(getObj("CS"),TweenInfo_DiffAnimation,getPropTable(CSRate, "CS")):Play()
+		TweenService:Create(getObj("HP"),TweenInfo_DiffAnimation,getPropTable(HPRate, "HP")):Play()
+		TweenService:Create(getObj("OD"),TweenInfo_DiffAnimation,getPropTable(ODRate, "OD")):Play()
+		TweenService:Create(getObj("AR"),TweenInfo_DiffAnimation,getPropTable(ARRate, "AR")):Play()
+		TweenService:Create(getObj("DR"),TweenInfo_DiffAnimation,getPropTable(ReturnData.Difficulty.BeatmapDifficulty, "Diff")):Play()
 
 
 		changeText("CS",CSRate)
@@ -347,7 +372,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		else
 			RPMRequire = 150 + 75 * (ODRate-5)/5 -- 150 - 225RPM
 		end
-		
+
 
 		local DetailARTime = 1200
 		local Detail300Timing = 100 - 8 * ODRate
@@ -363,7 +388,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		else
 			DetailARTime = 1200
 		end
-		
+
 		DetailARTime /= SongSpeed
 		Detail300Timing /= SongSpeed
 		Detail100Timing /= SongSpeed
@@ -378,29 +403,29 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		PreviewFrame.Overview.DifficultyInfo.Text = "Length - "..ReturnTime(ReturnData.Overview.MapLength).." CS: ? OD: ? HP:? AR: ?"
 		PreviewFrame.Overview.BeatmapDifficulty.Text = "<b>Difficulty rating: 0</b>"
 	end
-	
+
 	-- MetaData information frame
 	local MetaDataDetailedFrame = game.Players.LocalPlayer.PlayerGui.BG.DetailedBeatmapInformation.MainFrame.MainFrame.MetaData
 	local MetaData = ReturnData.Overview.Metadata
-	
+
 	MetaDataDetailedFrame.SongTitle.Data.Text = MetaData.MapNameUnicode or ""
 	MetaDataDetailedFrame.SongArtist.Data.Text = MetaData.SongCreatorUnicode or ""
 	MetaDataDetailedFrame.Source.Data.Text = MetaData.Source or ""
 	MetaDataDetailedFrame.MapperName.Data.Text = MetaData.BeatmapCreator or ""
 	MetaDataDetailedFrame.DiffName.Data.Text = MetaData.DifficultyName or ""
 	MetaDataDetailedFrame.Tags.Data.Text = MetaData.Tags or ""
-	
+
 	local soundIDDisplay = ReturnData.MapSongId or ""
 	soundIDDisplay ..= ReturnData.MapSongId2 and ", "..ReturnData.MapSongId2 or ""
-	
+
 	MetaDataDetailedFrame.AudioID.Data.Text = soundIDDisplay
 	MetaDataDetailedFrame.ImageID.Data.Text = ReturnData.ImageId or ""
-	
+
 	-- Web information data
-	
+
 	local crrWebRequestID = game.HttpService:GenerateGUID()
 	webRequestID = crrWebRequestID
-	
+
 	local function getBeatmapData(data, mapID)
 		for _, map in pairs(data) do
 			if tostring(map.id) == tostring(mapID) then
@@ -412,7 +437,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		local BeatmapsetID = ReturnData.BeatmapSetsData.BeatmapsetID
 		local BeatmapID = ReturnData.BeatmapSetsData.BeatmapID
 		local WebDetailedFrame = game.Players.LocalPlayer.PlayerGui.BG.DetailedBeatmapInformation.MainFrame.MainFrame.WebData
-		
+
 		-- Set to default while waiting for data
 		WebDetailedFrame.BeatmapID.Data.Text = "-"
 		WebDetailedFrame.BeatmapsetID.Data.Text = "-"
@@ -421,22 +446,22 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		WebDetailedFrame.WebRankedStatus.Data.Text = "-"
 		WebDetailedFrame.CreationDate.Data.Text = "-"
 		WebDetailedFrame.SuccessRate.Data.Text = "-"
-		
+
 		local webData = game.ReplicatedStorage.GetBeatmapWebInfo:InvokeServer(BeatmapID)
-		
+
 		if webData == nil or webRequestID ~= crrWebRequestID then
 			return
 		end
-		
+
 		local RelatedUsers = {}
 		local mapCreators = {}
-		
+
 		-- insert username into uid
 		for _, user in pairs(webData.related_users) do
 			RelatedUsers[user.id] = user.username
 		end
-		
-		
+
+
 		for _, map in pairs(webData.beatmaps) do
 			local mapOwnerData = map.owners
 			if #mapOwnerData > 1 then
@@ -454,12 +479,12 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 				mapCreators[tostring(map.id)] = mapOwnerData[1].username
 			end
 		end
-		
+
 		mapCreators["set_"..tostring(BeatmapsetID)] = RelatedUsers[webData.user_id]
-		
-		
+
+
 		game.Players.LocalPlayer.PlayerGui.BeatmapListing.MainFrame:WaitForChild("MainFrame").WorkingScript.UpdateRelatedMapper:Fire(mapCreators)
-		
+
 
 		WebDetailedFrame.BeatmapID.Data.Text = tostring(BeatmapID)
 		WebDetailedFrame.BeatmapsetID.Data.Text = tostring(BeatmapsetID)
@@ -470,7 +495,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		pcall(function()
 			creationDate = DateTime.fromIsoDate(webData.submitted_date)
 		end)
-		
+
 		if creationDate then
 			local creationTime = creationDate:ToLocalTime()
 			WebDetailedFrame.CreationDate.Data.Text = string.format("%.2d/%.2d/%.4d", creationTime.Day, creationTime.Month, creationTime.Year)
@@ -491,92 +516,27 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	local BaseDiff = ReturnData.Difficulty.BeatmapDifficulty
 
 	local AddsUp = AimDiff + SpeedDiff
-
-
-
-	--AimDiff = AimDiff/AddsUp*BaseDiff
-	--SpeedDiff = SpeedDiff/AddsUp*BaseDiff
 	
-	local ModdedARRate = ARRate
-	local ActualARValue = PreviewFrame.Overview.DiffListing.AR.ActualValue
-
-	local ModdedODRate = ODRate
-	local ActualODValue = PreviewFrame.Overview.DiffListing.OD.ActualValue
-
-	if SongSpeed ~= 1 then
-		-- Calculate actual AR
-		local ARTime = 1200
-		if ARRate < 5 then
-			ARTime = 1200 + 600 * (5 - ARRate) / 5
-		elseif ARRate > 5 then
-			ARTime = 1200 - 750 * (ARRate - 5) / 5
-		else
-			ARTime = 1200
-		end
-
-		ARTime /= SongSpeed
-
-		if ARTime > 1200 then
-			ModdedARRate = 5 - (ARTime - 1200)*5/600
-		else
-			ModdedARRate = 5 + (1200 - ARTime)*5/750
-		end
-
-		-- Calculate actual OD
-		-- We are using the default hit window
-		local Hit300Time = 80 - 6 * ODRate
-		Hit300Time /= SongSpeed
-		ModdedODRate = -(Hit300Time - 80) / 6
-		
-		--print(ODRate, ModdedODRate)
-
-
-		ActualARValue.Text = "("..tostring(math.round(ModdedARRate*100)/100)..")"
-		ActualODValue.Text = "("..tostring(math.round(ModdedODRate*100)/100)..")"
-		local TweenInfo_DiffAnimation = TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.InOut)
-		if EasyMod or (not HardRock and SongSpeed < 1) then
-			TweenService:Create(ActualODValue,TweenInfo_DiffAnimation,{TextColor3 = Color3.new(0.607843, 1, 1)}):Play()
-			TweenService:Create(ActualARValue,TweenInfo_DiffAnimation,{TextColor3 = Color3.new(0.607843, 1, 1)}):Play()
-		elseif HardRock or (not EasyMod and SongSpeed > 1) then
-			TweenService:Create(ActualODValue,TweenInfo_DiffAnimation,{TextColor3 = Color3.new(1, 0.607843, 0.607843)}):Play()
-			TweenService:Create(ActualARValue,TweenInfo_DiffAnimation,{TextColor3 = Color3.new(1, 0.607843, 0.607843)}):Play()
-		else
-			TweenService:Create(ActualODValue,TweenInfo_DiffAnimation,{TextColor3 = Color3.new(1, 1, 1)}):Play()
-			TweenService:Create(ActualARValue,TweenInfo_DiffAnimation,{TextColor3 = Color3.new(1, 1, 1)}):Play()
-		end
-	else
-		ActualODValue.Text = ""
-		ActualARValue.Text = ""
-	end
-
 	-- Modifier effects
 	local AimMultiplier = 1
 	local SpeedMultiplier = 1
 	local AccMultiplier = 1
 	local FLMultiplier = 1
 
-	local ModData = {
-		NS = NoSlider,
-		NF = NoFail,
-		HD = HiddenMod,
-		FL = FlashLight,
-		TD = false
-	}
-	
 	local NoteCount = {
 		Circle = Notes, Slider = Sliders, Spinner = Spinners
 	}
-	
+
 	local playMultiplier = {
 		Aim = AimMultiplier, Speed = SpeedMultiplier, FlashLight = FLMultiplier, Accuracy = AccMultiplier
 	}
-	
+
 	local MaxPSData = PerfomanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, NoteCount, SongSpeed, playMultiplier, true)
 	local RewardedAimPS = MaxPSData.Aim
 	local RewardedSpeedPS = MaxPSData.Speed
 	local RewardedAccPS = MaxPSData.Acc
 	local RewardedFlashlightPS = MaxPSData.FlashLight
-	
+
 
 	-- Nerf 60% aim PS and 60% flaslight PS on Touch devices
 	local TouchDevicePS = MaxPSData.TouchDevicePS - MaxPSData.MaxTotalPS
@@ -586,7 +546,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	DetailedInterface.Difficulty.Data.Text = string.format("%.2f (%.2fps)",BaseDiff,TotalPS)
 	DetailedInterface.AimDifficulty.Data.Text = string.format("%.2f (%.2fps)",AimDiff,RewardedAimPS)
 	DetailedInterface.SpeedDifficulty.Data.Text = string.format("%.2f (%.2fps)",SpeedDiff,RewardedSpeedPS)
-	if FlashLight then
+	if ModData.FL then
 		DetailedInterface.FlashlightDifficulty.Data.Text = string.format("%.2f (%.2fps)",FLDiff,RewardedFlashlightPS)
 		DetailedInterface.FlashlightDifficulty.Data.TextTransparency = 0
 	else
@@ -619,7 +579,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 	DetailedInterface.ConstantDrainRate.Data.Text = string.format("%.1f - %.1f%%/sec",ConstantHPDrainRate,ConstantHPDrainRate*3)
 	DetailedInterface.MissDrain.Data.Text = string.format("%.1f%%",MissDrain)
-	DetailedInterface.MaxHealth.Data.Text = string.format("%s",EasyMod and "3 x 100%" or "100%")
+	DetailedInterface.MaxHealth.Data.Text = string.format("%s",ModData.EZ and "3 x 100%" or "100%")
 
 	local HitWindowData = {
 		h300 = 100 - 8 * ODRate,
@@ -750,7 +710,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 			a:Destroy()
 		end
 	end)
-	
+
 
 	PreviewFrame.Overview.SL_Warnings.Visible = ReturnData.WeirdSliderAlert == true
 
@@ -816,21 +776,21 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	PreviewFrame.Overview.BeatmapInfo.Text = "Total:"..tostring(TotalNotes).." Note:"..tostring(Notes).." Slider:"..tostring(Sliders).." Spinner:"..tostring(Spinners)
 	if HighestBPM == LowestBPM and LowestBPM == MostlyBPM then
 		PreviewFrame.Overview.BPMCount.Text = "BPM: "..tostring(MostlyBPM)..BPMChangeEmoji
-		
+
 		local Data = {
 			SingleBPM = true, MostlyBPM = MostlyBPM
 		}
-		
+
 		InformationFrame.BPM.Raw.Data.Value = game:GetService("HttpService"):JSONEncode(Data)
 
 		--InformationFrame.BPM.Display.Text = tostring(MostlyBPM)..BPMChangeEmoji
 	else
 		PreviewFrame.Overview.BPMCount.Text = "BPM: "..tostring(LowestBPM).." - "..tostring(HighestBPM).." ("..tostring(MostlyBPM)..BPMChangeEmoji..")"
-		
+
 		local Data = {
 			SingleBPM = false, MostlyBPM = MostlyBPM, MinBPM = LowestBPM, MaxBPM = HighestBPM
 		}
-		
+
 		InformationFrame.BPM.Raw.Data.Value = game:GetService("HttpService"):JSONEncode(Data)
 
 		--InformationFrame.BPM.Display.Text = tostring(LowestBPM).." - "..tostring(HighestBPM).." ("..tostring(MostlyBPM)..BPMChangeEmoji..")"
@@ -849,15 +809,15 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		SongId = "rbxassetid://"..SongId
 		SongId2 = isExistSecondSong and "rbxassetid://"..SongId or ""
 		local Id = PreviewFrame.OverviewSong.Asset
-		
+
 		if isExistSecondSong then
 			if not PreviewFrame:FindFirstChild("OverviewSong2") then return true end
 			local Id2 = PreviewFrame.OverviewSong2.Asset
 			if Id2 ~= SongId2 then return true end
 		end
-		
+
 		if Id ~= SongId then return true end
-		
+
 		return not (PreviewFrame.OverviewSong.IsPlaying or (isExistSecondSong and PreviewFrame.OverviewSong2.IsPlaying))
 	end
 
@@ -893,18 +853,18 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 
 			PreviewFrame.OverviewSong.Asset = ReturnData.CustomSongFile or "rbxassetid://"..tostring(ReturnData.MapSongId)
-			
+
 			repeat wait() until PreviewFrame.OverviewSong.IsReady == true and ((NewSongObj2 and NewSongObj2.IsReady == true) or true)
-			
+
 			local PreviewTime = (ReturnData.Overview.OverviewStartTime/1000)
-			
+
 			if PreviewTime < 0 then PreviewTime = 0 end
 
 			PreviewFrame.OverviewSong.StartTime.Value = PreviewTime
 			if isExistSecondSong then
 				PreviewFrame.OverviewSong2.StartTime.Value = PreviewTime
 			end
-			
+
 			if game.Players.LocalPlayer.PlayerScripts.DataValue.FirstJoinMusic.Value == true then
 				game.Players.LocalPlayer.PlayerScripts.DataValue.FirstJoinMusic.Value = false
 				PreviewTime = 0
@@ -947,7 +907,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 			if not StateReady.Value then
 				repeat wait() until StateReady.Value
 			end
-			
+
 			if PreviewTime > PreviewFrame.OverviewSong.TimeLength and isExistSecondSong then
 				print(PreviewFrame.OverviewSong2.TimePosition)
 				PreviewFrame.OverviewSong2:Play()
@@ -1009,25 +969,25 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		NewBackground.ZIndex = 0
 		NewBackground.Parent = Background
 		NewBackground.Image = "http://www.roblox.com/asset/?id="..ReturnData.ImageId
-		
+
 		NewBackground_Listing = script.BackgroundImage_Listing:Clone()
 		NewBackground_Listing.ZIndex = 0
 		NewBackground_Listing.Parent = Background_Listing
 		NewBackground_Listing.Image = "http://www.roblox.com/asset/?id="..ReturnData.ImageId
-		
-		
+
+
 		for i = 1,2 do
 			game:GetService("ContentProvider"):PreloadAsync({NewBackground, NewBackground_Listing})
 		end
 		if NewBackground and NewBackground.Parent then
 			TweenService:Create(NewBackground,TweenInfo.new(TweenTime,Enum.EasingStyle.Linear),{ImageTransparency = 0}):Play()
 		end
-		
+
 		if NewBackground_Listing and NewBackground_Listing.Parent then
 			TweenService:Create(NewBackground_Listing,TweenInfo.new(TweenTime,Enum.EasingStyle.Linear),{ImageTransparency = 0.3}):Play()
 		end
 	end
-	
+
 	for _,Obj in pairs(Background:GetChildren()) do 
 		if Obj:IsA("ImageLabel") and Obj ~= NewBackground then
 			Obj.ZIndex = 999
@@ -1038,7 +998,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 			end)
 		end
 	end
-	
+
 	for _,Obj in pairs(Background_Listing:GetChildren()) do 
 		if Obj:IsA("ImageLabel") and Obj ~= NewBackground_Listing then
 			Obj.ZIndex = 999
@@ -1061,7 +1021,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 	local CurrentAimStrain = 0
 	local CurrentSpeedStrain = 0
-	
+
 	-- Add all external information of the beatmap to the game (mostly use for leaderboard)
 
 	PreviewMapPS.Aim = RewardedAimPS

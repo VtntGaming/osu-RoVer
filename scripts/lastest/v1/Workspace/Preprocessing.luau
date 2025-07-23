@@ -188,7 +188,7 @@ return function(baseList:{any}, baseData)
 		local DeltaTime = crr.Time - prevobj.Time
 		local minimumDeltaTime = 25
 		local StrainTime = math.max(DeltaTime, minimumDeltaTime)
-		local Hit300Value = 2 * h300window(baseData.OD)/baseData.Speed
+		local Hit300Value = 2 * h300window(baseData.OD)
 		local LazyJumpDistance = prevDiffObj.endCursorPosition and ((positionOf(crr.Position) * scalingFactor - prevDiffObj.endCursorPosition * scalingFactor).Magnitude) or 0
 		local MinimumJumpDistance = LazyJumpDistance
 		local MinimumJumpTime = StrainTime

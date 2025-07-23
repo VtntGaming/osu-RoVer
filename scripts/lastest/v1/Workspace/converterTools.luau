@@ -82,7 +82,9 @@ export type ModData = diffCalculator.ModData
 
 tool.GetDifficultyValueAfterMod = {
 	AR = function(rate:number, modData:ModData)
-		if modData.HR then
+		if modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.AR then
+			rate = modData.DA.Data.AR
+		elseif modData.HR then
 			rate *= 1.4
 		elseif modData.EZ then
 			rate *= 0.5		
@@ -112,7 +114,9 @@ tool.GetDifficultyValueAfterMod = {
 		return rate
 	end,
 	OD = function(rate:number, modData:ModData)
-		if modData.HR then
+		if modData.DA  and modData.DA.Active and modData.DA.Data and modData.DA.Data.OD then
+			rate = modData.DA.Data.OD
+		elseif modData.HR then
 			rate *= 1.4
 		elseif modData.EZ then
 			rate *= 0.5		
@@ -125,7 +129,9 @@ tool.GetDifficultyValueAfterMod = {
 		return rate
 	end,
 	HP = function(rate:number, modData:ModData)
-		if modData.HR then
+		if modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.HP then
+			rate = modData.DA.Data.HP
+		elseif modData.HR then
 			rate *= 1.4
 		elseif modData.EZ then
 			rate *= 0.5		
@@ -134,7 +140,9 @@ tool.GetDifficultyValueAfterMod = {
 		return rate
 	end,
 	CS = function(rate:number, modData:ModData)
-		if modData.HR then
+		if modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.CS then
+			rate = modData.DA.Data.CS
+		elseif modData.HR then
 			rate *= 1.3
 		elseif modData.EZ then
 			rate *= 0.5		

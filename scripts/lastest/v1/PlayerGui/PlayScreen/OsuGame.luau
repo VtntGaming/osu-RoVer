@@ -1,7 +1,4 @@
-osuLocalConvert = require(workspace.OsuConvert) 
-
 -- Services instance load
-
 TweenService = game:GetService("TweenService")
 UserInputService = game:GetService("UserInputService")
 RunService = game:GetService("RunService")
@@ -19,6 +16,7 @@ local _tick = tick
 local tick = os.clock
 PerformanceCalculator = require(workspace.PerfomanceCalculator)
 SliderComponent = require(ScriptComponent.Gameplay.SliderComponent)
+local modData = require(workspace.ModData)
 StreamingLoop = require(ScriptComponent.Perfomance.StreamingCode).create()
 SliderObjManage = require(ScriptComponent.Perfomance.SliderObjManage).init()
 
@@ -180,7 +178,17 @@ LiveDifficultyDisplay = false
 Replay_TouchDevice = false
 AimAssist = false
 CursorRipplesEnabled = false
-DifficultyAdjust = {Active = false}
+type Mod_DA = {
+	Active:boolean?,
+	Data:{
+		CS:number?,
+		AR:number?,
+		OD:number?,
+		HP:number?
+	}?
+}
+
+DifficultyAdjust = {Active = false, Data = {}}::Mod_DA
 
 -- PreviewFrameScriptSettings
 PreviewFrameBaseVolume = 1
@@ -343,7 +351,7 @@ function checkDifficultyAdjustState()
 	local HP = CurrentSetting.MainSettings.HP
 
 	local function checkVaild(data)
-		if tonumber(data) and tonumber(data) >= 0 and tonumber(data) <= 11 then
+		if tonumber(data) and tonumber(data) >= 0 and tonumber(data) <= 12 then
 			return true
 		else
 			return false
@@ -353,22 +361,22 @@ function checkDifficultyAdjustState()
 	if checkVaild(AR.Text) or checkVaild(CS.Text) or checkVaild(OD.Text) or checkVaild(HP.Text) then
 		CurrentSetting.MainSettings.DifficultyAdjust.Text = "[DA] Difficulty adjust: Enabled"
 		DifficultyAdjust.Active = true
-		DifficultyAdjust.AR = checkVaild(AR.Text) and tonumber(AR.Text) or nil
-		DifficultyAdjust.OD = checkVaild(OD.Text) and tonumber(OD.Text) or nil
-		DifficultyAdjust.CS = checkVaild(CS.Text) and tonumber(CS.Text) or nil
-		DifficultyAdjust.HP = checkVaild(HP.Text) and tonumber(HP.Text) or nil
+		DifficultyAdjust.Data.AR = checkVaild(AR.Text) and tonumber(AR.Text) or nil
+		DifficultyAdjust.Data.OD = checkVaild(OD.Text) and tonumber(OD.Text) or nil
+		DifficultyAdjust.Data.CS = checkVaild(CS.Text) and tonumber(CS.Text) or nil
+		DifficultyAdjust.Data.HP = checkVaild(HP.Text) and tonumber(HP.Text) or nil
 	else
 		DifficultyAdjust.Active = false
-		DifficultyAdjust.AR = nil
-		DifficultyAdjust.OD = nil
-		DifficultyAdjust.CS = nil
-		DifficultyAdjust.HP = nil
+		DifficultyAdjust.Data.AR = nil
+		DifficultyAdjust.Data.OD = nil
+		DifficultyAdjust.Data.CS = nil
+		DifficultyAdjust.Data.HP = nil
 		CurrentSetting.MainSettings.DifficultyAdjust.Text = "[DA] Difficulty adjust: Disabled"
 	end
 
-
 	CurrentModData.DA = DifficultyAdjust.Active
 	LoadMultiplier()
+	ReloadPreviewFrame()
 end
 
 checkDifficultyAdjustState()
@@ -904,9 +912,15 @@ function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
 			-- Player're not always set the NM mod to set so
 			local MapFile = PreviewMapPS.MapFile
 			
-			local _, returnData = require(workspace.OsuConvert)(1, MapFile, Data.Speed, 0, true
-				, false, true, Data.Mod.HR, Data.Mod.FL, Data.Mod.EZ, Data.Mod.HD
-			)
+			local ModData = {
+				SA = Data.Speed,
+				HD = Data.Mod.HD,
+				HR = Data.Mod.HR,
+				EZ = Data.Mod.EZ,
+				FL = Data.Mod.FL				
+			}
+			
+			local _, returnData = require(workspace.OsuConvert)(1, MapFile, 0, true, false, ModData)
 			externalData = {
 				AimDiff = returnData.Difficulty.AimDifficulty,
 				SpeedDiff = returnData.Difficulty.SpeedDifficulty,
@@ -1467,9 +1481,24 @@ PreviewMapPS = {
 }
 
 ReloadPreviewFrame = function()
+	local ModData:modData.ModData = {
+		HD = HiddenMod,
+		HR = HardRock,
+		EZ = EasyMod,
+		NF = NoFail,
+		NS = not SliderMode,
+		FL = Flashlight,
+		RX = false,
+		AP = false,
+		AT = AutoPlay,
+		SO = false,
+		V2 = ScoreV2Enabled,
+		TD = false,	-- By deafault it is false
+		DA = DifficultyAdjust
+	}
 	local _1,_2,_3,_4,_5,_6 = script.Parent.GameplayScripts.ReloadPreviewFrame.LoadPreviewFrame:Invoke(
 		CurrentPreviewFrame,CurrentSetting,FileType,CurrentModData,BeatmapStudio,CurrentKey,BeatmapKey
-		,PreviewFrameBaseVolume,PreviewBeatmapset, NoFail,not SliderMode,HardRock,Flashlight,EasyMod,HiddenMod
+		,PreviewFrameBaseVolume,PreviewBeatmapset, ModData
 	)
 	CurrentModData = _1
 	CurrentKey = _2
@@ -2439,8 +2468,15 @@ end
 
 
 -- Get beatmap data
+local ModData = {
+	SA = SongSpeed,
+	HD = HiddenMod,
+	HR = HardRock,
+	EZ = EasyMod,
+	FL = Flashlight			
+}
 
-local BeatmapData,ReturnData,TimingPoints,BeatmapComboColor = require(workspace.OsuConvert)(FileType,Beatmap,SongSpeed,SongDelay,true,false,false,HardRock,Flashlight,EasyMod,HiddenMod)
+local BeatmapData,ReturnData,TimingPoints,BeatmapComboColor = require(workspace.OsuConvert)(FileType,Beatmap,SongDelay,true,false, ModData)
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -5356,10 +5392,6 @@ if isSpectating == true then
 end
 
 --------    Perfomance score - This will effect alot on player's online rank
-
-local PSPunishment = 0 -- Limit: [0,TotalNote*10] Each miss will add 50 point on it, getting 300s will reduce 1 point
-local PSPunishmentLimit = #BeatmapData*10 
-local PSPunishmentMin = 0 -- Each miss will add 5 point on this, this thing CAN NOT be recovered
 
 -- Calculate the maxPS value
 local DiffValue = {
