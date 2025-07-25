@@ -3,11 +3,12 @@
 -- convert raw osu file into readable and excutable lua data
 -- V1.47 (Size: 49.93KB)
 
-local PerfomanceCalculator = require(workspace.PerfomanceCalculator)
-local BasePerfomance = require(workspace.PerfomanceCalculator.BasePerfomance)
-local basePerformanceFL = require(workspace.PerfomanceCalculator.BasePerfomanceFL)
+local PerformanceCalculator = require(workspace.PerformanceCalculator)
+local BasePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
+local basePerformanceFL = require(workspace.PerformanceCalculator.BasePerfomanceFL)
 local calculator = require(workspace.DifficultyCalculator)
 local tool = require(script.converterTools)
+local sliderTools = require(script.sliderTools)
 local preprocessing = require(workspace.DifficultyCalculator.Preprocessing)
 local evaculatorContainer = workspace.DifficultyCalculator.DifficultyEvaculator
 local modData = require(workspace.ModData)
@@ -716,7 +717,13 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			end
 			
 			local SLTickData = {}
+			local SLCurvePoints = {}
 			if isSlider then
+				-- Calculate slider actual curves from raw curve points
+				local beatLength = tonumber(ExtraData[4])
+				local headPosition = Vector2.new(HitPos.X, HitPos.Y)
+				SLCurvePoints = sliderTools.convertToSliderCurve(headPosition, ExtraData[2], beatLength)
+				
 				-- Calculate slider ticks
 				local ObjBPM = crrSLBPM
 				local ObjBPMStartTime = crrSLBPMStartTime
@@ -757,6 +764,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 				SliderBPM = crrSLBPM,
 				SliderBPMStartTime = crrSLBPMStartTime, 
 				SliderTickData = SLTickData, 
+				SliderCurvePoints = SLCurvePoints,
 				SpinnerDuration = SpinnerDuration, 
 				SliderLengthRaw = SliderLengthRaw
 			}			
@@ -1021,7 +1029,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			Aim = 1, Speed = 1, FL = 1, Acc = 1
 		}
 
-		local MaxPSData = PerfomanceCalculator(AimDifficulty, SpeedDifficulty, FlashlightDifficulty, ARRate, ODRate, modData, ReturningData.NoteCount, SongSpeed, PSMultiplier, true)
+		local MaxPSData = PerformanceCalculator(AimDifficulty, SpeedDifficulty, FlashlightDifficulty, ODRate, ARRate, modData, ReturningData.NoteCount, PSMultiplier, true)
 
 		BeatmapDifficulty = difficultyAttributes.StarRating
 	end

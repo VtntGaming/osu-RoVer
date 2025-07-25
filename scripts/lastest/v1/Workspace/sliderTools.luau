@@ -100,7 +100,7 @@ end
 
 function findCircleCenter(A, B, C, SliderLength):Vector2?
 	local function midpoint(p1:Vector2, p2:Vector2)
-		return Vector2.new((p1.X + p2.X) / 2, (p1.Y + p2.Y) / 2)
+		return p1:Lerp(p2, 0.5)
 	end
 
 	local function perpendicularSlope(p1:Vector2, p2:Vector2)
@@ -163,6 +163,7 @@ local function perfectCircle(SliderCurvePoints:{Vector2}, SliderLength:number):{
 	local PointA = SliderCurvePoints[1]
 	local PointB = SliderCurvePoints[2]
 	local PointC = SliderCurvePoints[3]
+	
 
 	local PointCenter = findCircleCenter(PointA, PointB, PointC, SliderLength)
 
@@ -199,12 +200,22 @@ local function perfectCircle(SliderCurvePoints:{Vector2}, SliderLength:number):{
 	return NewCurvePoints
 end
 
+local function linearSlider(rawCurve:{Vector2}, sliderLength:number)
+	local pointA = rawCurve[1]
+	local pointB = rawCurve[2]
+
+	local length = (pointA - pointB).Magnitude
+	pointB = pointA:Lerp(pointB, sliderLength/length)
+	
+	return {pointA, pointB}
+end
 
 -- Main function
 
-function sliderTools.convertToBaseCurve(raw:string)
+function sliderTools.convertToBaseCurve(raw:string, headPosition:Vector2)
 	local curveType
 	local curvePoints = {}
+	curvePoints[1] = headPosition	-- Include the circle position
 	for i, str in pairs(raw:split("|")) do
 		if i == 1 then
 			curveType = str
@@ -216,10 +227,10 @@ function sliderTools.convertToBaseCurve(raw:string)
 end
 
 
-function sliderTools.convertToSliderCurve(raw:string, sliderLength:number)
-	local curveType, rawCurve = sliderTools.convertToBaseCurve(raw)
+function sliderTools.convertToSliderCurve(headPosition:Vector2, raw:string, sliderLength:number)
+	local curveType, rawCurve = sliderTools.convertToBaseCurve(raw, headPosition)
 	local returnPoints = {}
-	if curveType == "B" then
+	if curveType == "B" and #rawCurve > 2 then
 		local function insert(newPoints)
 			for _, point in pairs(newPoints) do
 				-- ensureing there's no more duplicate points
@@ -232,10 +243,9 @@ function sliderTools.convertToSliderCurve(raw:string, sliderLength:number)
 		
 		local PointSections = spiltCurveSection(rawCurve)
 		local CurrentLength = 0
-		local SliderLength = 0
 		
 		for _, section in pairs(PointSections) do
-			if CurrentLength >= SliderLength then
+			if CurrentLength >= sliderLength then
 				break
 			end
 
@@ -246,37 +256,34 @@ function sliderTools.convertToSliderCurve(raw:string, sliderLength:number)
 				local sectionLength = (A-B).Magnitude
 				local nextLength = CurrentLength + sectionLength
 
-				if nextLength <= SliderLength then
+				if nextLength <= sliderLength then
 					insert(section)
-					if nextLength >= SliderLength then
+					if nextLength >= sliderLength then
 						break
 					end
 					CurrentLength = nextLength
 				else
-					local Alpha = math.clamp((SliderLength - nextLength) / sectionLength, 0, 1)
+					local Alpha = math.clamp((sliderLength - nextLength) / sectionLength, 0, 1)
 					section[2] = A:Lerp(B, Alpha)
 					insert(section)
 					CurrentLength = sectionLength
 					break
 				end
 			else
-				local newCurve, newLength = benzier(section, SliderLength, CurrentLength)
+				local newCurve, newLength = benzier(section, sliderLength, CurrentLength)
 				CurrentLength = newLength
 				insert(newCurve)
 			end
 		end		
-	elseif curveType == "P" then
+	elseif curveType == "P" and #rawCurve > 2 then
 		returnPoints = perfectCircle(rawCurve, sliderLength)
 	else	-- "L" - Linear
-		local pointA = rawCurve[1]
-		local pointB = rawCurve[2]
-		
-		local length = (pointA - pointB).Magnitude
-		pointB = pointA:Lerp(pointB, sliderLength/length)
-
-		returnPoints = {pointA, pointB}
+		returnPoints = linearSlider(rawCurve, sliderLength)
 	end
 	
+	if #returnPoints < 2 then
+		returnPoints = linearSlider(rawCurve, sliderLength)
+	end
 	
 	return returnPoints
 end

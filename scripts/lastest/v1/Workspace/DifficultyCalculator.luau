@@ -3,8 +3,8 @@
 -- Even though I have to transfer code from C# to lua all by myself
 -- The calculator might different compare to the original one
 
-local basePerfomance = require(workspace.PerfomanceCalculator.BasePerfomance)
-local basePerfomanceFL = require(workspace.PerfomanceCalculator.BasePerfomanceFL)
+local basePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
+local basePerfomanceFL = require(workspace.PerformanceCalculator.BasePerfomanceFL)
 local evaculator = require(script.DifficultyEvaculator)
 
 local perfomance_base_multiplier = 1.14

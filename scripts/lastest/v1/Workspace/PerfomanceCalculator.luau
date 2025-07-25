@@ -82,7 +82,20 @@ function calculateSpeedHighDeviationNerf(speedDeviation, SpeedDiff)
 	return adjustedSpeedValue / speedValue
 end
 
-return function(AimValue, SpeedValue, FLValue, ODRate, ARRate, ModData:modData.ModData, NoteCount, SongSpeed, Multiplier, MaxOnly, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, AccuracyData)
+return function(
+	AimValue, 
+	SpeedValue, 
+	FLValue, 
+	ODRate, 
+	ARRate, 
+	ModData:modData.ModData, 
+	NoteCount, 
+	Multiplier, 
+	MaxOnly, 
+	AimDiffStrainCount, 
+	SpeedDiffStrainCount, 
+	SpeedRelevantNoteCount, 
+	AccuracyData)
 	-- If MaxOnly is true, the game only want to get the max value to display
 	local AimMulti = Multiplier.Aim or 1
 	local SpeedMulti = Multiplier.Speed or 1
@@ -95,6 +108,8 @@ return function(AimValue, SpeedValue, FLValue, ODRate, ARRate, ModData:modData.M
 	local SPCount = NoteCount.Spinner
 	local ObjectCount = CRCount + SLCount + SPCount
 	local AccuracyNoteCount = CRCount
+	
+	local SongSpeed = ModData.SA
 	
 	-- We doesn't know if the player is playing in TD mod or not (because they can just disable TD option)
 	-- The TD mod only recieve when player is playing
@@ -292,6 +307,8 @@ return function(AimValue, SpeedValue, FLValue, ODRate, ARRate, ModData:modData.M
 		FlashLight = ActualFlashlightPS,
 		ModEffects = ActualTotalPS - ActualTotalPS_AfterMod
 	}
+	
+	print(ActualPSData, MaxPSData)
 	
 	return ActualPSData, MaxPSData -- return both the actual perfomance and max perfomance
 end

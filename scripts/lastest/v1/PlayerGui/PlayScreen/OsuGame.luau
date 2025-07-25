@@ -14,7 +14,7 @@ ParallelProcessingFolder = game.Players.LocalPlayer.PlayerScripts.ParallelProces
 local wait = task.wait--require(workspace.WaitModule)
 local _tick = tick
 local tick = os.clock
-PerformanceCalculator = require(workspace.PerfomanceCalculator)
+PerformanceCalculator = require(workspace.PerformanceCalculator)
 SliderComponent = require(ScriptComponent.Gameplay.SliderComponent)
 local modData = require(workspace.ModData)
 StreamingLoop = require(ScriptComponent.Perfomance.StreamingCode).create()
@@ -717,7 +717,8 @@ function GetUserPlayUpdatedPS(Data, externalData)
 	local CurrentSpeed = PreviewMapPS.CurrentSpeed
 	
 	
-	local ModData = Data.Mod
+	local ModData:modData.ModData = Data.Mod
+	ModData.SA = CurrentSpeed
 	local Multiplier = {
 		Aim = 1, Speed = 1, Flashlight = 1
 	}
@@ -726,7 +727,7 @@ function GetUserPlayUpdatedPS(Data, externalData)
 		hit300 = h300, hit100 = h100, hit50 = h50, miss = MissCount
 	}
  
-	local ActualPS,MaxPSData = PerformanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, objCount, CurrentSpeed, Multiplier, false, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, AccuracyData)
+	local ActualPS,MaxPSData = PerformanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, objCount, Multiplier, false, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, AccuracyData)
 	
 	--print(ActualPS, AimDiff, SpeedDiff, externalData~=nil)
 	return ActualPS.ActualTotalPS,MaxPSData.MaxTotalPS, mapMaxCombo
@@ -2468,12 +2469,21 @@ end
 
 
 -- Get beatmap data
-local ModData = {
-	SA = SongSpeed,
+local ModData:modData.ModData = {
 	HD = HiddenMod,
 	HR = HardRock,
 	EZ = EasyMod,
-	FL = Flashlight			
+	NF = NoFail,
+	NS = not SliderMode,
+	FL = Flashlight,
+	RX = false,
+	AP = false,
+	AT = AutoPlay,
+	SO = false,
+	V2 = ScoreV2Enabled,
+	TD = TouchDeviceDetected,
+	DA = DifficultyAdjust,
+	SA = SongSpeed
 }
 
 local BeatmapData,ReturnData,TimingPoints,BeatmapComboColor = require(workspace.OsuConvert)(FileType,Beatmap,SongDelay,true,false, ModData)
@@ -5537,7 +5547,7 @@ end
 task.spawn(function()
 	local LiveDiffDisplay = script.Parent.LiveDiffDisplay
 	local DiffStrikeWarning = LiveDiffDisplay.DiffStrikeWarning
-	local basePerfomance = require(workspace.PerfomanceCalculator.BasePerfomance)
+	local basePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
 	--local LiveDiffValue = LiveDiffDisplay.LiveDiffValue
 
 	local waittime = 0
@@ -5770,12 +5780,21 @@ function AddPerfomanceScore(PSValue)
 	local FLValue = ReturnData.Difficulty.FlashLightDifficulty
 	local ODRate = ReturnData.Difficulty.OverallDifficulty
 	local ARRate = ReturnData.Difficulty.ApproachRate
-	local ModData = {
-		TD = TouchDeviceDetected,
-		FL = Flashlight,
-		NF = NoFail,
+	local ModData:modData.ModData = {
 		HD = HiddenMod,
-		NS = not SliderMode
+		HR = HardRock,
+		EZ = EasyMod,
+		NF = NoFail,
+		NS = not SliderMode,
+		FL = Flashlight,
+		RX = false,
+		AP = false,
+		AT = AutoPlay,
+		SO = false,
+		V2 = ScoreV2Enabled,
+		TD = TouchDeviceDetected,
+		DA = DifficultyAdjust,
+		SA = SongSpeed
 	}
 	local NoteCount = ReturnData.NoteCount
 	local Multiplier = {
@@ -5793,8 +5812,20 @@ function AddPerfomanceScore(PSValue)
 	}
 	
 	
-	--local PSData, MaxPSData = PerformanceCalculator(AimValue, SpeedValue, FLValue, ODRate, ARRate, ModData, NoteCount, SongSpeed, Multiplier, MaxOnly, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, AccData)
-	local PSData, MaxPSData = PerformanceCalculator(LiveDiffData.AimFinal, LiveDiffData.SpeedFinal, LiveDiffData.FLFinal, ODRate, ARRate, ModData, NoteCount, SongSpeed, Multiplier, MaxOnly, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, AccData)
+	local PSData, MaxPSData = PerformanceCalculator(
+		LiveDiffData.AimFinal, 
+		LiveDiffData.SpeedFinal, 
+		LiveDiffData.FLFinal, 
+		ODRate, ARRate, 
+		ModData, 
+		NoteCount,
+		Multiplier, 
+		MaxOnly, 
+		AimDiffStrainCount, 
+		SpeedDiffStrainCount, 
+		SpeedRelevantNoteCount, 
+		AccData
+	)
 	
 	local TotalPS = PSData.ActualTotalPS
 	local AimPS = PSData.Aim
@@ -7086,7 +7117,7 @@ function LetTheGameBegin()
 
 						--(BPM*SliderMulti)*SliderLength*10000
 						local ExtraData = HitObj.ExtraData
-						local SliderCurvePoints = {}
+						local SliderCurvePoints = HitObj.SliderCurvePoints
 						local Slides = tonumber(ExtraData[3])
 
 
@@ -7100,65 +7131,9 @@ function LetTheGameBegin()
 						end
 
 						local CurrentPos = 3
-						local CurveData = HitObj.ExtraData[2]
 						local H,S,V = HitObj.ComboColor:ToHSV()
 						if V < 0.75 then
 							V = 0.75
-						end
-
-
-						SliderCurvePoints[1] = HitObj.Position
-						if StackLeniency > 0 and HitObj.StackCount > 0 then
-							-- we set it back to default
-							SliderCurvePoints[1].X += HitObj.StackCount * StackVector
-							SliderCurvePoints[1].Y += HitObj.StackCount * StackVector
-						end
-						local raw = string.split(CurveData, "|")
-						for i, crrPos in pairs(raw) do
-							if i == 1 then continue end -- this is the curve type, pass it
-
-							local posData = string.split(crrPos, ":")
-							SliderCurvePoints[#SliderCurvePoints+1] = {X = tonumber(posData[1]), Y = tonumber(posData[2])} --Vector2.new(tonumber(posData[1], tonumber(posData[2])))
-						end
-
-
-						if HardRock then
-							for i,a in pairs(SliderCurvePoints) do
-								if i~=1 then
-									SliderCurvePoints[i] = {X = a.X,Y=384-a.Y}
-								end
-							end
-						end
-
-
-						local resultpos = string.find(CurveData,"|")
-						local SliderCurveType = string.sub(CurveData,resultpos-1,resultpos-1)
-
-
-						local Alvaiable = false
-						if #SliderCurvePoints > 2 then
-							if SliderCurveType == "B" then
-								local env = ExternalFunction_Actor.ProcessCommand:Invoke("Core_OsuGame_ProcessBezierCurve",{
-									SliderCurvePoints = SliderCurvePoints,
-									SliderLengthRaw = HitObj.SliderLengthRaw
-								})
-
-								SliderCurvePoints = env.SliderCurvePoints
-							end
-
-							if SliderCurveType == "P" then
-								local env = ExternalFunction_Actor.ProcessCommand:Invoke("Core_OsuGame_ProcessPerfectCircleCurve",{
-									SliderCurvePoints = SliderCurvePoints,
-									SliderLengthRaw = HitObj.SliderLengthRaw
-								})
-
-								SliderCurvePoints = env.SliderCurvePoints
-							end
-						end					
-						if Slides % 2 == 0 then
-							SLEndPos = SliderCurvePoints[1]
-						else
-							SLEndPos = SliderCurvePoints[#SliderCurvePoints]
 						end
 						
 						local ExtraLengthData
@@ -7173,17 +7148,22 @@ function LetTheGameBegin()
 
 						if StackLeniency > 0 and HitObj.StackCount > 0 then
 							-- set the curve point to adjust with the stack leniency
-							for _, vector in pairs(SliderCurvePoints) do
-								vector.X -= HitObj.StackCount * StackVector
-								vector.Y -= HitObj.StackCount * StackVector
+							for i, vector in pairs(SliderCurvePoints) do
+								SliderCurvePoints[i] -= Vector2.new(StackVector, StackVector) * HitObj.StackCount
+								if HardRock then
+									SliderCurvePoints[i] = Vector2.new(vector.X, 384 - vector.Y)
+								end
 							end
+						end
+						
+						if Slides % 2 == 0 then
+							SLEndPos = SliderCurvePoints[1]
+						else
+							SLEndPos = SliderCurvePoints[#SliderCurvePoints]
 						end
 
 						-- Draw the slider
-						local newCurvePoint = {}
-						for _, curvePoint in pairs(SliderCurvePoints) do
-							newCurvePoint[#newCurvePoint+1] = Vector2.new(curvePoint.X, curvePoint.Y)
-						end
+						local newCurvePoint = SliderCurvePoints
 
 						local SliderObject = SliderComponent.new(newCurvePoint, Slides, CircleSize, ExtraLengthData, SliderObjManage)
 						SliderObject.SliderBase.ZIndex = NoteZIndex-3
