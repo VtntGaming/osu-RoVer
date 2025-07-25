@@ -740,7 +740,26 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 					i += 1
 				end
 			end
-			local HitObjData = {ObjId = objectID,Position = HitPos,Time = Time,Type = Type,ExtraData = ExtraData,SpinTime = SpinTime,SliderTime = SliderTime,HitObjBPMData = HitObjBPMData,PSValue = RewardPS, StackCount = StackCount, isSlider = isSlider, isSpinner = isSpinner, SLTravelDistance = SliderLength, SliderBPM = crrSLBPM,SliderBPMStartTime = crrSLBPMStartTime, SliderTickData = SLTickData, SpinnerDuration = SpinnerDuration, SliderLengthRaw = SliderLengthRaw}			
+			local HitObjData = {
+				ObjId = objectID,
+				Position = HitPos,
+				Time = Time,
+				Type = Type,
+				ExtraData = ExtraData,
+				SpinTime = SpinTime,
+				SliderTime = SliderTime,
+				HitObjBPMData = HitObjBPMData,
+				PSValue = RewardPS, 
+				StackCount = StackCount, 
+				isSlider = isSlider, 
+				isSpinner = isSpinner, 
+				SLTravelDistance = SliderLength, 
+				SliderBPM = crrSLBPM,
+				SliderBPMStartTime = crrSLBPMStartTime, 
+				SliderTickData = SLTickData, 
+				SpinnerDuration = SpinnerDuration, 
+				SliderLengthRaw = SliderLengthRaw
+			}			
 			local ARRate = math.clamp(ReturningData.Difficulty.ApproachRate * (modData.EZ and 0.5 or (modData.HR and 1.4 or 1)),0,11)
 			local ARTime = 1200
 			if ARRate < 5 then
@@ -788,7 +807,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	
 	-- Stack leniency process
 	if ReturningData.StackLeniency > 0 then
-		local CSRate = ReturningData.Difficulty.CircleSize * ((modData.HR and 1.3) or (modData.EZ and 0.5) or 1)
+		local CSRate = tool.GetDifficultyValueAfterMod.CS(ReturningData.Difficulty.CircleSize, modData)
 		local ObjectRadius = 54.4 - 4.48 * CSRate
 		local StackVector = ObjectRadius / 10
 		for i, crrObj in pairs(ConvertedData) do

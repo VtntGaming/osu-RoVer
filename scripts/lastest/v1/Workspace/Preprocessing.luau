@@ -114,6 +114,16 @@ export type ObjectData = {
 	lazyTravelDistance:number,
 }
 
+local NORMALISED_RADIUS = 50
+local NORMALISED_DIAMETER = NORMALISED_RADIUS * 2
+local MIN_DELTA_TIME = 25
+local Maximum_Slider_Radius = NORMALISED_RADIUS * 2.4
+local Assumed_Slider_Radius = NORMALISED_RADIUS * 1.8
+
+function getTickListing()
+	
+end
+
 return function(baseList:{any}, baseData)
 	local DifficultyObjects:{ObjectData} = {}
 	for objID, crr in pairs(baseList) do
@@ -131,6 +141,7 @@ return function(baseList:{any}, baseData)
 			crrObj.isSpinner = true
 		end
 		
+		-- It's a spinner, or it's previous is a spinner
 		
 		if objID < 2 or crr.isSpinner or crrObj.Previous(1).isSpinner then
 			crrObj.getDoubletapness = function() return 0 end
@@ -211,15 +222,17 @@ return function(baseList:{any}, baseData)
 		local SLTickData = {}
 		local SLRepeatCount = 0
 		
+		-- Set distances
+		
 		if crr.isSlider and not baseData.ModData.NS then
 			crrObj.isSlider = true
-			--local lazyTravelDistance = tonumber(crr.ExtraData[4])
 			local SliderTime = crr.SliderTime * 1000
+			-- Compute slider cursor position
+			local Tail_Leniency = -36
 			local trackingEndTime = math.max(
-				crr.Time + SliderTime - 36, crr.Time + SliderTime/2
+				crr.Time + SliderTime + Tail_Leniency, crr.Time + SliderTime/2
 			)
-			
-			
+						
 			lazySLTravelTime = trackingEndTime - crr.Time
 			local SliderPathData, SLActualTotalLength = toSLPathData(crr.ExtraData[2], positionOf(crr.Position))
 			local slidesCount = tonumber(crr.ExtraData[3])
@@ -242,10 +255,13 @@ return function(baseList:{any}, baseData)
 				SLTailPosition = SLpositionAt(SliderPathData, endTimeMin)
 			end
 			
+			
+			--
+			
 			BaseTravelTime = math.max(lazySLTravelTime, minDeltaTime)
-			local LazyDistance = (positionOf(crr.Position) * scalingFactor - endCursorPosition * scalingFactor).Magnitude - radius
+			local LazyTravelDistance = (positionOf(crr.Position) * scalingFactor - endCursorPosition * scalingFactor).Magnitude - radius
 
-			BaseTravelDistance = math.max(0,LazyDistance * math.pow(1 + (slidesCount-1) / 2.5, 1.0 / 2.5))
+			BaseTravelDistance = math.max(0,LazyTravelDistance * math.pow(1 + (slidesCount-1) / 2.5, 1.0 / 2.5))
 		end
 		
 		if prevDiffObj.isSlider then
@@ -257,9 +273,7 @@ return function(baseList:{any}, baseData)
 			MinimumJumpDistance = math.max(0, math.min(JumpDistance, tailJumpDistance - maxSLRadius))
 		end
 		
-
-		
-		crrObj.getDoubletapness = function(nextObj)
+		crrObj.getDoubletapness = function(nextObj:ObjectData)
 			if nextObj and not nextObj.isSpinner then
 				local crrDeltaTime = math.max(1, DeltaTime)
 				local nextDeltaTime = math.max(1, nextObj.DeltaTime)
@@ -272,7 +286,7 @@ return function(baseList:{any}, baseData)
 			return 0
 		end
 		
-		crrObj.OpacityAt = function(t)
+		crrObj.OpacityAt = function(t:number)
 			if t > crr.Time then
 				return 0
 			end
