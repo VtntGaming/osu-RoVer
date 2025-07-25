@@ -108,6 +108,7 @@ function aimEvaculator.GetAimDiff(CrrObj:preprocessing.ObjectData)
 		velocityChangeBonus *= math.pow(math.min(CrrObj.StrainTime, PrevObj.StrainTime)/ math.max(CrrObj.StrainTime,PrevObj.StrainTime),2)
 	end
 
+	baseAimStrain *= CrrObj.SmallCircleBonus
 
 	if PrevObj.isSlider then
 		SliderBonus = PrevObj.BaseTravelDistance/PrevObj.BaseTravelTime
@@ -118,8 +119,6 @@ function aimEvaculator.GetAimDiff(CrrObj:preprocessing.ObjectData)
 	baseAimStrain += velocityChangeBonus * velocity_change_multiplier
 	baseAimStrain += math.max(acuteAngleBonus * acute_angle_multiplier, wideAngleBonus * wide_angle_multiplier)
 	
-	baseAimStrain *= CrrObj.SmallCircleBonus
-
 	return baseAimStrain
 end
 
