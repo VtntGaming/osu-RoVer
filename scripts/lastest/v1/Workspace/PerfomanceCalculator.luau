@@ -1,6 +1,7 @@
 local basePerformance = require(script.BasePerfomance)
 local basePerformanceFL = require(script.BasePerfomanceFL)
 local utils = require(script.DifficultyCalculationUtils)
+local modData = require(workspace.ModData)
 
 function calculateMissPenalty(AccuracyData, diffStrainCount)
 	local missCount = AccuracyData.miss
@@ -81,7 +82,7 @@ function calculateSpeedHighDeviationNerf(speedDeviation, SpeedDiff)
 	return adjustedSpeedValue / speedValue
 end
 
-return function(AimValue, SpeedValue, FLValue, ODRate, ARRate, ModData, NoteCount, SongSpeed, Multiplier, MaxOnly, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, AccuracyData)
+return function(AimValue, SpeedValue, FLValue, ODRate, ARRate, ModData:modData.ModData, NoteCount, SongSpeed, Multiplier, MaxOnly, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, AccuracyData)
 	-- If MaxOnly is true, the game only want to get the max value to display
 	local AimMulti = Multiplier.Aim or 1
 	local SpeedMulti = Multiplier.Speed or 1

@@ -194,11 +194,11 @@ function calculator.CalculateVisibilityBonus(modData:ModData, AR:number, visibil
 	readingBonus *= visibilityFactor
 
 	if AR < 5 then
-		readingBonus += (isAlwayParticallyVisible and 0.04 or 0.03) * (5 - math.max(AR , 0))
+		readingBonus += (isAlwayParticallyVisible and 0.03 or 0.04) * (5 - math.max(AR , 0))
 	end
 	
 	if AR < 0 then
-		readingBonus += (isAlwayParticallyVisible and 0.1 or 0.075) * (1 - math.pow(1.5, AR))
+		readingBonus += (isAlwayParticallyVisible and 0.075 or 0.1) * (1 - math.pow(1.5, AR))
 	end
 	
 	return readingBonus
