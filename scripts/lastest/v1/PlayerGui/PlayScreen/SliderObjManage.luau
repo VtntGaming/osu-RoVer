@@ -1,7 +1,7 @@
 local obj = {}
 
 local MaxObject = 100
-local PoolingEnabled = true
+local PoolingEnabled = false
 
 function obj.init()
 	warn("Slider pooling enabled: ", PoolingEnabled)

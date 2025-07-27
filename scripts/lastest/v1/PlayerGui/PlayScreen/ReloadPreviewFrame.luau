@@ -3,7 +3,7 @@ local BasePreviewBeatmapset = ""
 TweenService = game:GetService("TweenService")
 
 local wait = require(workspace.WaitModule)
-local PerfomanceCalculator = require(workspace.PerfomanceCalculator)
+local PerformanceCalculator = require(workspace.PerformanceCalculator)
 local GameSettings = game.Players.LocalPlayer.PlayerGui:WaitForChild("Settings").SettingFrame.BaseFrame.MainLayer.SettingsManage
 local modData = require(workspace.ModData)
 local converterTools = require(workspace.OsuConvert.converterTools)
@@ -530,8 +530,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	local playMultiplier = {
 		Aim = AimMultiplier, Speed = SpeedMultiplier, FlashLight = FLMultiplier, Accuracy = AccMultiplier
 	}
-
-	local MaxPSData = PerfomanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, NoteCount, SongSpeed, playMultiplier, true)
+	local MaxPSData = PerformanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, NoteCount, playMultiplier, true)
 	local RewardedAimPS = MaxPSData.Aim
 	local RewardedSpeedPS = MaxPSData.Speed
 	local RewardedAccPS = MaxPSData.Acc
