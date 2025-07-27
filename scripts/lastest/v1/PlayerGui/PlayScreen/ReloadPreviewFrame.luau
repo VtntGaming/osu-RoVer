@@ -213,9 +213,9 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 
 	if CSRate > 11 then CSRate = 11 end
-	if HPRate > 12 then HPRate = 12 end
-	if ARRate > 12 then ARRate = 12 end
-	if ODRate > 12 then ODRate = 12 end
+	if HPRate > 13 then HPRate = 13 end
+	if ARRate > 13 then ARRate = 13 end
+	if ODRate > 13 then ODRate = 13 end
 
 
 
@@ -322,7 +322,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 				end
 			end
 
-			return {Size = UDim2.new(math.min(Value,10)/10,0,1,0),BackgroundColor3 = DiffColor}
+			return {Size = UDim2.new(math.clamp(Value,0,10)/10,0,1,0),BackgroundColor3 = DiffColor}
 		end
 
 		local function getObj(Name)
@@ -335,7 +335,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 			if isDiff then
 				TextObj.Text = string.format("%.2f",Value)
 			else
-				TextObj.Text = tostring(math.round(Value*10)/10)
+				TextObj.Text = tostring(math.round(Value*100)/100)
 			end
 			if isDiff then
 				TweenService:Create(TextObj,TweenInfo_DiffAnimation,{TextColor3 = PreviewFrame.Overview.BeatmapDifficulty.TextColor3}):Play()

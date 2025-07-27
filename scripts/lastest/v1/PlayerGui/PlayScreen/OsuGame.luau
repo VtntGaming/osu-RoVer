@@ -350,18 +350,20 @@ function checkDifficultyAdjustState()
 	local CS = CurrentSetting.MainSettings.CS
 	local HP = CurrentSetting.MainSettings.HP
 
-	local function checkVaild(data)
-		if tonumber(data) and tonumber(data) >= 0 and tonumber(data) <= 12 then
+	local function checkVaild(data, isAR)
+		local max = 11
+		local min = isAR and -10 or 0
+		if tonumber(data) and tonumber(data) >= min and tonumber(data) <= max then
 			return true
 		else
 			return false
 		end
 	end
 
-	if checkVaild(AR.Text) or checkVaild(CS.Text) or checkVaild(OD.Text) or checkVaild(HP.Text) then
+	if checkVaild(AR.Text, true) or checkVaild(CS.Text) or checkVaild(OD.Text) or checkVaild(HP.Text) then
 		CurrentSetting.MainSettings.DifficultyAdjust.Text = "[DA] Difficulty adjust: Enabled"
 		DifficultyAdjust.Active = true
-		DifficultyAdjust.Data.AR = checkVaild(AR.Text) and tonumber(AR.Text) or nil
+		DifficultyAdjust.Data.AR = checkVaild(AR.Text, true) and tonumber(AR.Text) or nil
 		DifficultyAdjust.Data.OD = checkVaild(OD.Text) and tonumber(OD.Text) or nil
 		DifficultyAdjust.Data.CS = checkVaild(CS.Text) and tonumber(CS.Text) or nil
 		DifficultyAdjust.Data.HP = checkVaild(HP.Text) and tonumber(HP.Text) or nil
