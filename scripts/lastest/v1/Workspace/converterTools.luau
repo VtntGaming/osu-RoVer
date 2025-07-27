@@ -121,10 +121,12 @@ tool.GetDifficultyValueAfterMod = {
 		elseif modData.EZ then
 			rate *= 0.5		
 		end
+		if modData.SA and modData.SA ~= 1 then
+			local h300 = math.floor(tool.DifficultyRange(rate, 80, 50, 20)) - 0.5
+			h300 /= modData.SA
+			rate = (79.5 - h300) / 6
+		end
 		
-		local h300 = math.floor(tool.DifficultyRange(rate, 80, 50, 20)) - 0.5
-		
-		rate = (79.5 - h300) / 6
 		
 		return rate
 	end,
