@@ -6887,13 +6887,14 @@ function LetTheGameBegin()
 
 							local EndPos = UDim2.new((NextHitObjPos.X-LookVector.X)/512,0,(NextHitObjPos.Y-LookVector.Y)/384,0)
 
+							local scalingFactor = CircleSize / 80
 							local Pos = UDim2.new(Pos.X/512,0,Pos.Y/384,0)
-							local Size = UDim2.new(Size/512,0,0.01,0)
+							local Size = UDim2.new(Size/512,0,0.01 * scalingFactor,0)
 
 							Connection.Parent = script.Parent.PlayFrame
 							Connection.Position = FirstPos
 							Connection.Rotation = Rotation
-							Connection.Size = UDim2.new(0,0,0.02,0)
+							Connection.Size = UDim2.new(0,0,0.02 * scalingFactor,0)
 							Connection.ZIndex = NoteZIndex-2
 							Connection.BackgroundTransparency = 0
 							--Connection.RemoveTime.Value = NextHitObj.Time
@@ -6918,7 +6919,7 @@ function LetTheGameBegin()
 							end)
 							if (tick() - Start)*1000 < NextHitObj.Time-250/SongSpeed then
 								wait((NextHitObj.Time-250/SongSpeed)/1000 - (tick()-Start))
-								local ct_ = TweenService:Create(Connection,TweenInfo.new(0.25/SongSpeed,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{BackgroundTransparency = 0.5,Position = EndPos,Size = UDim2.new(0,0,0.01,0)})
+								local ct_ = TweenService:Create(Connection,TweenInfo.new(0.25/SongSpeed,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{BackgroundTransparency = 0.5,Position = EndPos,Size = UDim2.new(0,0,0.01 * scalingFactor,0)})
 								AddHitnoteAnimation(ct_)
 								ct_:Play()
 							end
