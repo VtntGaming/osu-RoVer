@@ -1,5 +1,5 @@
 --!strict
-local preprocessing = require(workspace.DifficultyCalculator.Preprocessing)
+local preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
 local Evaculator = require(script.Parent)
 local aimEvaculator = {}
 
@@ -98,7 +98,7 @@ function aimEvaculator.GetAimDiff(CrrObj:preprocessing.ObjectData)
 	end
 
 	if math.max(prevVelocity, crrVelocity) ~= 0 then
-		prevVelocity = (PrevObj.LazyJumpDistance + (PrevPrevObj.BaseTravelDistance or 0))/CrrObj.StrainTime
+		prevVelocity = (PrevObj.LazyJumpDistance + (PrevPrevObj.BaseTravelDistance or 0))/PrevObj.StrainTime
 		crrVelocity = (CrrObj.LazyJumpDistance + (PrevObj.BaseTravelDistance or 0))/CrrObj.StrainTime
 
 		local distanceRatio = aimEvaculator.Smoothstep(math.abs(prevVelocity - crrVelocity) / math.max(prevVelocity, crrVelocity), 0, 1)
@@ -108,16 +108,16 @@ function aimEvaculator.GetAimDiff(CrrObj:preprocessing.ObjectData)
 		velocityChangeBonus *= math.pow(math.min(CrrObj.StrainTime, PrevObj.StrainTime)/ math.max(CrrObj.StrainTime,PrevObj.StrainTime),2)
 	end
 
-	baseAimStrain *= CrrObj.SmallCircleBonus
 
 	if PrevObj.isSlider then
 		SliderBonus = PrevObj.BaseTravelDistance/PrevObj.BaseTravelTime
 	end
-	baseAimStrain += SliderBonus * slider_multiplier
 
 	baseAimStrain += wiggleBonus * wiggle_multiplier
 	baseAimStrain += velocityChangeBonus * velocity_change_multiplier
 	baseAimStrain += math.max(acuteAngleBonus * acute_angle_multiplier, wideAngleBonus * wide_angle_multiplier)
+	baseAimStrain *= CrrObj.SmallCircleBonus
+	baseAimStrain += SliderBonus * slider_multiplier
 	
 	return baseAimStrain
 end

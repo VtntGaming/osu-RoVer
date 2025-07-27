@@ -1,5 +1,5 @@
 local Evaculator = require(script.Parent)
-local Preprocessing = require(workspace.DifficultyCalculator.Preprocessing)
+local Preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
 local speedEvaculator = {}
 
 function speedEvaculator.GetSpeedDiff(CrrObj:Preprocessing.ObjectData)

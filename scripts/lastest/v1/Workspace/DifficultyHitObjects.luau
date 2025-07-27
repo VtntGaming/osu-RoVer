@@ -100,7 +100,7 @@ export type ObjectData = {
 	LazyJumpDistance:number,
 	MinimumJumpDistance:number,
 	MinimumJumpTime:number,
-	endCursorPosition:number,
+	endCursorPosition:Vector2,
 	lazySLTravelTime:number,
 	Hit300Value:number,
 	BaseTravelTime:number,
@@ -108,6 +108,7 @@ export type ObjectData = {
 	SmallCircleBonus:number,
 	CirclePosition:Vector2,
 	SLTailPosition:Vector2,
+	TailCirclePosition:Vector2,
 	SLTickData:{},
 	Radius:number,
 	SLRepeatCount:number,
@@ -128,6 +129,8 @@ return function(baseList:{any}, baseData)
 	local DifficultyObjects:{ObjectData} = {}
 	for objID, crr in pairs(baseList) do
 		local crrObj = {}::ObjectData
+		
+
 		
 		crrObj.objID = objID
 		crrObj.Previous = function(index)
@@ -168,14 +171,35 @@ return function(baseList:{any}, baseData)
 		-- Angle of 2 previous object with current object
 		
 		local angle = -1
+		--if objID > 2 and objID <= #baseList then
+		--	local prevobj = baseList[objID-1]
+		--	local prevprevobj = baseList[objID+1]
+		--	if prevprevobj and not prevprevobj.isSpinner then
+		--		local v1 = Vector2.new(prevprevobj.Position.X, prevprevobj.Position.Y)
+		--		local v2 = Vector2.new(prevobj.Position.X, prevobj.Position.Y)
+		--		local v3 = Vector2.new(crr.Position.X, crr.Position.Y)
+		--		angle = converterTool.getAngle(v1, v2, v3)
+		--	end
+		--end
+		
 		if objID > 2 and objID <= #baseList then
-			local prevobj = baseList[objID-1]
-			local prevprevobj = baseList[objID+1]
+			local prevobj = crrObj.Previous(1)
+			local prevprevobj = crrObj.Previous(2)
 			if prevprevobj and not prevprevobj.isSpinner then
-				local v1 = Vector2.new(prevprevobj.Position.X, prevprevobj.Position.Y)
-				local v2 = Vector2.new(prevobj.Position.X, prevobj.Position.Y)
-				local v3 = Vector2.new(crr.Position.X, crr.Position.Y)
-				angle = converterTool.getAngle(v1, v2, v3)
+				local prevPrevCursorPosition = prevprevobj.endCursorPosition or prevprevobj.Position
+				local prevCursorPosition = prevobj.endCursorPosition
+				local prevHeadPosition = prevobj.Position
+				local crrHeadPosition = positionOf(crr.Position)
+				
+				if prevPrevCursorPosition then
+					local v1 = prevPrevCursorPosition - prevHeadPosition
+					local v2 = prevCursorPosition - crrHeadPosition
+
+					local dot = v1:Dot(v2)
+					local det = v1.X * v2.X - v1.Y * v2.Y
+
+					angle = math.abs(math.atan2(det, dot))
+				end
 			end
 		end
 		
@@ -194,22 +218,20 @@ return function(baseList:{any}, baseData)
 		local prevobj = baseList[objID-1]
 		local prevDiffObj = crrObj.Previous(1)
 		local normalisedRadius = 50
-		local radius = 54.4 - 4.48 * baseData.CS 
+		local radius = 54.4 - 4.48 * baseData.CS
 		local scalingFactor = normalisedRadius/radius
 		local DeltaTime = crr.Time - prevobj.Time
 		local minimumDeltaTime = 25
 		local StrainTime = math.max(DeltaTime, minimumDeltaTime)
 		local Hit300Value = 2 * h300window(baseData.OD)
-		local LazyJumpDistance = prevDiffObj.endCursorPosition and ((positionOf(crr.Position) * scalingFactor - prevDiffObj.endCursorPosition * scalingFactor).Magnitude) or 0
+		local lastCursorPosition:Vector2 = prevDiffObj.endCursorPosition
+		local currentPosition:Vector2 = positionOf(crr.Position)
+		local TailCirclePosition:Vector2?
+		local LazyJumpDistance = lastCursorPosition and ((currentPosition * scalingFactor - lastCursorPosition * scalingFactor).Magnitude) or 0
 		local MinimumJumpDistance = LazyJumpDistance
 		local MinimumJumpTime = StrainTime
 		local BaseTravelDistance = 0
 		local BaseTravelTime
-		
-		if radius < 30 then
-			local smallCircleBonus = math.min(30 - radius,5)/50
-			scalingFactor *= 1 + smallCircleBonus
-		end
 		
 		
 		-- Slider travel distance
@@ -217,7 +239,6 @@ return function(baseList:{any}, baseData)
 		local maxSLRadius = normalisedRadius * 2.4
 		local assumedSLRadius = normalisedRadius * 1.8
 		
-		local minDeltaTime = 25
 		local lazySLTravelTime
 		local SLTickData = {}
 		local SLRepeatCount = 0
@@ -226,12 +247,30 @@ return function(baseList:{any}, baseData)
 		
 		if crr.isSlider and not baseData.ModData.NS then
 			crrObj.isSlider = true
+
+			
 			local SliderTime = crr.SliderTime * 1000
 			-- Compute slider cursor position
 			local Tail_Leniency = -36
 			local trackingEndTime = math.max(
 				crr.Time + SliderTime + Tail_Leniency, crr.Time + SliderTime/2
 			)
+			
+			local TickData = crr.SliderDifficultyTickData::{any}
+			if TickData then
+				local lastRealTick
+				for _, _tick in pairs(TickData) do
+					if _tick[4] == "Tick" then
+						lastRealTick = _tick
+					end
+				end
+				if lastRealTick then
+					if lastRealTick[1] > trackingEndTime then
+						trackingEndTime = lastRealTick[1]
+					end
+				end
+				
+			end
 						
 			lazySLTravelTime = trackingEndTime - crr.Time
 			local SliderPathData, SLActualTotalLength = toSLPathData(crr.ExtraData[2], positionOf(crr.Position))
@@ -255,22 +294,52 @@ return function(baseList:{any}, baseData)
 				SLTailPosition = SLpositionAt(SliderPathData, endTimeMin)
 			end
 			
+			local currentCursorPosition = positionOf(crr.Position)
+			local LazyTravelDistance = 0
+			if TickData then
+				for i, currentTick in pairs(TickData) do
+					local currentMovement:Vector2 = currentTick[3] - currentCursorPosition
+					local currentMovementLength = scalingFactor * currentMovement.Magnitude
+					local requiredMovement = Assumed_Slider_Radius
+					
+					if i == #TickData then
+						local lazyMovement = endCursorPosition - currentCursorPosition
+						
+						if lazyMovement.Magnitude < currentMovement.Magnitude then
+							currentMovement = lazyMovement
+						end
+						
+						currentMovementLength = scalingFactor * currentMovement.Magnitude
+					elseif currentTick[4] == "Repeat" then
+						requiredMovement = NORMALISED_RADIUS
+					end
+					
+					if currentMovementLength > requiredMovement then
+						currentCursorPosition = currentCursorPosition + currentMovement * (currentMovementLength - requiredMovement) / currentMovementLength
+						currentMovementLength *= (currentMovementLength - requiredMovement) / currentMovementLength
+						LazyTravelDistance += currentMovementLength
+					end
+					
+					if i == #TickData then
+						endCursorPosition = currentCursorPosition
+					end
+				end
+			end
 			
+			local _curvePoints = crr.SliderCurvePoints::{Vector2}
+			TailCirclePosition = slidesCount % 2 == 1 and _curvePoints[1] or _curvePoints[#_curvePoints]
 			--
 			
-			BaseTravelTime = math.max(lazySLTravelTime, minDeltaTime)
-			local LazyTravelDistance = (positionOf(crr.Position) * scalingFactor - endCursorPosition * scalingFactor).Magnitude - radius
-
-			BaseTravelDistance = math.max(0,LazyTravelDistance * math.pow(1 + (slidesCount-1) / 2.5, 1.0 / 2.5))
+			BaseTravelTime = math.max(lazySLTravelTime, MIN_DELTA_TIME)
+			BaseTravelDistance = LazyTravelDistance * math.pow(slidesCount / 2.5, 1 / 2.5)
 		end
 		
-		if prevDiffObj.isSlider then
-			local lastTravelTime = math.max(prevDiffObj.lazySLTravelTime, minimumDeltaTime)
-			MinimumJumpTime = math.max(StrainTime - lastTravelTime, minimumDeltaTime)
+		if prevDiffObj.isSlider and not baseData.ModData.NS then
+			local lastTravelTime = math.max(prevDiffObj.lazySLTravelTime, MIN_DELTA_TIME)
+			MinimumJumpTime = math.max(StrainTime - lastTravelTime, MIN_DELTA_TIME)
 			
-			local tailJumpDistance = (positionOf(crr.Position) - prevDiffObj.SLTailPosition).Magnitude * scalingFactor
-			local JumpDistance = LazyJumpDistance - (maxSLRadius - assumedSLRadius)
-			MinimumJumpDistance = math.max(0, math.min(JumpDistance, tailJumpDistance - maxSLRadius))
+			local tailJumpDistance = (currentPosition - prevDiffObj.TailCirclePosition).Magnitude * scalingFactor
+			MinimumJumpDistance = math.max(0, math.min(LazyJumpDistance - (Maximum_Slider_Radius - Assumed_Slider_Radius), tailJumpDistance - Maximum_Slider_Radius))
 		end
 		
 		crrObj.getDoubletapness = function(nextObj:ObjectData)
@@ -317,6 +386,7 @@ return function(baseList:{any}, baseData)
 		crrObj.MinimumJumpDistance = MinimumJumpDistance
 		crrObj.MinimumJumpTime = MinimumJumpTime
 		crrObj.endCursorPosition = endCursorPosition
+		crrObj.TailCirclePosition = TailCirclePosition
 		crrObj.lazySLTravelTime = lazySLTravelTime
 		crrObj.Hit300Value = Hit300Value
 		crrObj.BaseTravelTime = BaseTravelTime

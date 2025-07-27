@@ -307,8 +307,6 @@ return function(
 		FlashLight = ActualFlashlightPS,
 		ModEffects = ActualTotalPS - ActualTotalPS_AfterMod
 	}
-	
-	print(ActualPSData, MaxPSData)
-	
+		
 	return ActualPSData, MaxPSData -- return both the actual perfomance and max perfomance
 end

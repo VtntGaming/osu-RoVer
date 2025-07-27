@@ -9,7 +9,7 @@ local basePerformanceFL = require(workspace.PerformanceCalculator.BasePerfomance
 local calculator = require(workspace.DifficultyCalculator)
 local tool = require(script.converterTools)
 local sliderTools = require(script.sliderTools)
-local preprocessing = require(workspace.DifficultyCalculator.Preprocessing)
+local preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
 local evaculatorContainer = workspace.DifficultyCalculator.DifficultyEvaculator
 local modData = require(workspace.ModData)
 local evaculators = {
@@ -60,8 +60,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	
 	local DIFFICULTY_VALUE_EXPOMENTAL_RATE = 1/2
 	local DIFFICULTY_VALUE_MULTIPLIER_RATE = 0.0675
-	local DIFFICULTY_VALUE_AIM_MULTIPLIER = 0.85 / 0.42
-	local DIFFICULTY_VALUE_SPEED_MULTIPLIER = 1 / 1.05
+	local DIFFICULTY_VALUE_AIM_MULTIPLIER = 1
+	local DIFFICULTY_VALUE_SPEED_MULTIPLIER = 1
 
 	-- Convert string into datatable
 	--[[
@@ -717,7 +717,54 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			end
 			
 			local SLTickData = {}
-			local SLCurvePoints = {}
+			local SLDifficultyTickData = {}
+			local SLCurvePoints:{Vector2} = {}
+			local function _getTickPosition(_tickTime:number, isReverse:boolean):Vector2?
+				local _slidesCount = tonumber(ExtraData[3])
+				local _beatLength = tonumber(ExtraData[4])
+				local _slideTime = (SliderTime * 1000 / _slidesCount)
+				local _tickProgressLength = ((Time - _tickTime)%_slideTime)/_slideTime * _beatLength
+				if not isReverse then
+					local _prevLength = 0
+					local _currentLength = 0
+					for i = 1, #SLCurvePoints - 1 do
+						local _crr = SLCurvePoints[i]
+						local _next = SLCurvePoints[i+1]
+						local _nextLength = _currentLength + (_next - _crr).Magnitude
+						
+						if _tickProgressLength >= _currentLength then
+							local _ratio = math.min(1, (_tickProgressLength - _currentLength)/(_nextLength - _currentLength))
+							local _pos = _crr:Lerp(_next, _ratio)
+							
+							return _pos
+						else
+							_prevLength = _currentLength
+							_currentLength = _nextLength
+						end 
+					end
+				else
+					local _prevLength = 0
+					local _currentLength = 0
+					for i = #SLCurvePoints, 2, -1 do
+						local _crr = SLCurvePoints[i]
+						local _next = SLCurvePoints[i-1]
+						local _nextLength = _currentLength + (_next - _crr).Magnitude
+
+						if _tickProgressLength >= _currentLength then
+							local _ratio = math.min(1, (_tickProgressLength - _currentLength)/(_nextLength - _currentLength))
+							local _pos = _crr:Lerp(_next, _ratio)
+
+							return _pos
+						else
+							_prevLength = _currentLength
+							_currentLength = _next	
+						end 
+					end
+				end
+				warn("Cannot find tick position from tick time!")
+				print(_tickTime, Time, SliderTime, _beatLength, _tickProgressLength, isReverse)
+				return nil
+			end
 			if isSlider then
 				-- Calculate slider actual curves from raw curve points
 				local beatLength = tonumber(ExtraData[4])
@@ -742,7 +789,13 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 					local CurrentSlide = math.floor(TimeSinceNoteStart/SliderTime)+1
 					if currentTime > Time and currentTime < Time + SliderTime and TimeBetweenTail > 20 and TimeBetweenTail < SliderTime-20 then
 						tickCount += 1
-						SLTickData[#SLTickData+1] = {currentTime, CurrentSlide}
+						local tickPosition = _getTickPosition(currentTime, CurrentSlide%2==0)
+						SLTickData[#SLTickData+1] = {currentTime, CurrentSlide, tickPosition}
+						SLDifficultyTickData[#SLDifficultyTickData+1] = {currentTime, CurrentSlide, tickPosition, "Tick"}
+					else
+						local _type = CurrentSlide < slidesCount and "Repeat" or "Tail"
+						local tickPosition = _getTickPosition(currentTime, CurrentSlide%2==0)
+						SLDifficultyTickData[#SLDifficultyTickData+1] = {currentTime, CurrentSlide, tickPosition, _type}
 					end
 					i += 1
 				end
@@ -764,6 +817,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 				SliderBPM = crrSLBPM,
 				SliderBPMStartTime = crrSLBPMStartTime, 
 				SliderTickData = SLTickData, 
+				SliderDifficultyTickData = SLDifficultyTickData, 
 				SliderCurvePoints = SLCurvePoints,
 				SpinnerDuration = SpinnerDuration, 
 				SliderLengthRaw = SliderLengthRaw
@@ -889,8 +943,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	
 	-- The aim difficulty is the most inaccurate thing to calculate in osu!RoVer
 	-- I need to adjust it back to the original osu! standard
-	local aimAdjustedMultiplier = 0.42
-	local speedAdjustedMultiplier = 1.05
+	local aimAdjustedMultiplier = 1
+	local speedAdjustedMultiplier = 1
 	local aimSkillMultiplier = 26 * aimAdjustedMultiplier
 	local speedSkillMultiplier = 1.47 * speedAdjustedMultiplier
 	local flashlightSkillMultiplier = 0.05512
