@@ -920,6 +920,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	
 	-- ignore the old diff data from the above
 	-- this will be changed soon
+	
 	AimStrainData = {}
 	AimSLStrainData = {}
 	SpeedStrainData = {}
@@ -977,14 +978,15 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		ConvertedData[objectId].PSValue.AimStrainDecay = AimFLStrainDecay
 		ConvertedData[objectId].PSValue.SpeedStrainDecay = SpeedStrainDecay
 		ConvertedData[objectId].PSValue.FLStrainDecay = AimFLStrainDecay
+
 		
-		AimStrainData[#AimStrainData+1] = AimStrain
-		SpeedStrainData[#SpeedStrainData+1] = SpeedStrain
-		RhythmDiffData[#RhythmDiffData+1] = RhythmDiff
-		FLStrainData[#FLStrainData+1] = FLStrain
+		AimStrainData[#AimStrainData+1] = {AimStrain, objectData.Time}
+		SpeedStrainData[#SpeedStrainData+1] = {SpeedStrain * (1 + RhythmDiff), objectData.Time}
+		RhythmDiffData[#RhythmDiffData+1] = {RhythmDiff, objectData.Time}
+		FLStrainData[#FLStrainData+1] = {FLStrain, objectData.Time}
 		
 		if objectData.isSlider then
-			AimSLStrainData[#AimSLStrainData+1] = AimStrain
+			AimSLStrainData[#AimSLStrainData+1] = {AimStrain, objectData.Time}
 		end		
 		
 		local multiplierBase = 10

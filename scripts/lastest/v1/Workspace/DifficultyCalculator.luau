@@ -6,6 +6,7 @@
 local basePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
 local basePerfomanceFL = require(workspace.PerformanceCalculator.BasePerfomanceFL)
 local evaculator = require(script.DifficultyEvaculator)
+local StrainSkills = require(script.StrainSkills)
 
 local perfomance_base_multiplier = 1.14
 local difficulty_multiplier = 0.0675
@@ -13,33 +14,39 @@ local star_rating_multiplier = 0.0265
 
 local calculator = {}
 
-function sortStrain(data:{number})
+function sortPeak(data:{number})
 	table.sort(data,function(a,b) return a>b end)
+end
+
+function sortStrain(data:{{number}})
+	table.sort(data,function(a,b) return a[1]>b[1] end)
 end
 
 function lerp(a:number,b:number,r:number)
 	return a + (b-a)*r
 end
 
-function calculator.DifficultyValue(StrainData)
+function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 	local reducedSelectionCount = 10
 	local weight = 1
 	local decayWeight = 0.9
 	local difficulty = 0
 	local ReducedStrainBaseline = 0.75
 	
-	sortStrain(StrainData)
+	local StrainPeak = StrainSkills.GetStrainPeak(StrainData, strainType)
+	
+	sortPeak(StrainPeak)
 	
 	for i,a in pairs(StrainData) do
 		local scale = math.log10(lerp(1,10,math.clamp((i-1)/reducedSelectionCount,0,1)))
-		StrainData[i] *= lerp(ReducedStrainBaseline, 1, scale)
+		StrainPeak[i] *= lerp(ReducedStrainBaseline, 1, scale)
 		if i > 10 then
 			break
 		end
 	end
 
-	sortStrain(StrainData)
-	for _,strain in pairs(StrainData) do
+	sortPeak(StrainPeak)
+	for _,strain in pairs(StrainPeak) do
 		if strain <= 0 then break end
 		
 		difficulty += strain * weight
@@ -48,58 +55,58 @@ function calculator.DifficultyValue(StrainData)
 	return difficulty
 end
 
-function calculator.DifficultyValueFlashlight(StrainData)
+function calculator.DifficultyValueFlashlight(StrainData:{{number}})
 	local difficulty = 0
 	sortStrain(StrainData)
 	for i, strain in pairs(StrainData) do
-		if strain <= 0 or i > 400 then break end
-		difficulty += strain
+		if strain[1] <= 0 or i > 400 then break end
+		difficulty += strain[1]
 	end
 	return difficulty
 end
 
-function calculator.RelevantNoteCount(strainData:{number})
+function calculator.RelevantNoteCount(strainData:{{number}})
 	if #strainData == 0 then
 		return 0
 	end	
-	local maxStrain = strainData[1]
+	local maxStrain = strainData[1][1]
 	if maxStrain == 0 then
 		return 0
 	end
 	
 	local relevantNoteCount = 0
 	for _, strain in pairs(strainData) do
-		relevantNoteCount += 1 / (1 + math.exp(-(strain/maxStrain * 12 - 6)))
+		relevantNoteCount += 1 / (1 + math.exp(-(strain[1]/maxStrain * 12 - 6)))
 	end
 	
 	return relevantNoteCount
 end
 
-function calculator.CountTopWeightedStrains(strainData:{number})
+function calculator.CountTopWeightedStrains(strainData:{{number}}, strainType:string)
 	if #strainData == 0 then
 		return 0
 	end
 	
-	local consistenTopStrain = calculator.DifficultyValue(strainData) / 10
+	local consistenTopStrain = calculator.DifficultyValue(strainData, strainType) / 10
 	if consistenTopStrain == 0 then
 		return #strainData
 	end
 	
 	local strainCount = 0
 	for _, strain in pairs(strainData) do
-		strainCount += 1.1 / (1 + math.exp(-10 * (strain / consistenTopStrain - 0.88)))
+		strainCount += 1.1 / (1 + math.exp(-10 * (strain[1] / consistenTopStrain - 0.88)))
 	end
 	
 	return strainCount
 end
 
-function calculator.getDificultSliders(strainData:{number})
+function calculator.getDificultSliders(strainData:{{number}})
 	if #strainData == 0 then
 		return 0
 	end
 	
 	sortStrain(strainData)
-	local maxSLStrain = strainData[1]
+	local maxSLStrain = strainData[1][1]
 	
 	if maxSLStrain == 0 then
 		return 0
@@ -107,17 +114,17 @@ function calculator.getDificultSliders(strainData:{number})
 	
 	local strainDiff = 0
 	for _, strain in pairs(strainData) do
-		strainDiff += 1 / (1 + math.exp(-(strain/maxSLStrain * 12 - 6)))
+		strainDiff += 1 / (1 + math.exp(-(strain[1]/maxSLStrain * 12 - 6)))
 	end
 	
 	return strainDiff
 end
 
 export type Data = {
-	AimStrain:{number},
-	AimSLStrain:{number},
-	SpeedStrain:{number},
-	FlashlightStrain:{number},
+	AimStrain:{{number}},
+	AimSLStrain:{{number}},
+	SpeedStrain:{{number}},
+	FlashlightStrain:{{number}},
 	DifficultyValue:{
 		CS:number,
 		AR:number,
@@ -323,8 +330,8 @@ end
 function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	local speedNotes = calculator.RelevantNoteCount(data.SpeedStrain)
 	
-	local aimDiffStrainCount = calculator.CountTopWeightedStrains(data.AimStrain)
-	local speedDiffStrainCount = calculator.CountTopWeightedStrains(data.SpeedStrain)
+	local aimDiffStrainCount = calculator.CountTopWeightedStrains(data.AimStrain, "Aim")
+	local speedDiffStrainCount = calculator.CountTopWeightedStrains(data.SpeedStrain, "Speed")
 	
 	local difficultSliders = calculator.getDificultSliders(data.AimSLStrain)
 	
@@ -333,8 +340,8 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	
 	local TotalHit = data.NoteCount.Total
 	
-	local aimDifficultyValue = calculator.DifficultyValue(data.AimStrain)
-	local speedDifficultyValue = calculator.DifficultyValue(data.SpeedStrain)
+	local aimDifficultyValue = calculator.DifficultyValue(data.AimStrain, "Aim")
+	local speedDifficultyValue = calculator.DifficultyValue(data.SpeedStrain, "Speed")
 	
 	local mechanicalDifficultyRating = calculateMechanicalDifficultyRating(aimDifficultyValue, speedDifficultyValue)
 	
