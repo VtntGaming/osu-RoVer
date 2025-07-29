@@ -1,8 +1,8 @@
-local Evaculator = require(script.Parent)
+local Evaluator = require(script.Parent)
 local Preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
-local speedEvaculator = {}
+local speedEvaluator = {}
 
-function speedEvaculator.GetSpeedDiff(CrrObj:Preprocessing.ObjectData)
+function speedEvaluator.GetSpeedDiff(CrrObj:Preprocessing.ObjectData)
 	if CrrObj.isSpinner then
 		return 0
 	end
@@ -25,16 +25,13 @@ function speedEvaculator.GetSpeedDiff(CrrObj:Preprocessing.ObjectData)
 
 	local speedBonus = 0
 
-	if (Evaculator.milisecondToBPM(strainTime) > min_speed_bonus) then
-		speedBonus = 0.75 * math.pow((Evaculator.BPMToMilisecond(min_speed_bonus) - strainTime)/speed_balancing_factor , 2)
+	if (Evaluator.milisecondToBPM(strainTime) > min_speed_bonus) then
+		speedBonus = 0.75 * math.pow((Evaluator.BPMToMilisecond(min_speed_bonus) - strainTime)/speed_balancing_factor , 2)
 	end
 
-	-- this feature is related to the slider category
-	-- and we will pretent all map does not have slider...
-	-- probably avaiable in uhh.. V1.48?
 	local travelDistance = (prevObj and prevObj.BaseTravelDistance) or 0
-	travelDistance += CrrObj.MinimumJumpDistance
-	local distance = math.min(single_spacing_threshold, travelDistance)
+	local distance = travelDistance + CrrObj.MinimumJumpDistance
+	distance = math.min(single_spacing_threshold, distance)
 	local distanceBonus = math.pow(distance/single_spacing_threshold, 3.95) * distance_multiplier
 	
 	distanceBonus *= math.sqrt(CrrObj.SmallCircleBonus)
@@ -43,4 +40,4 @@ function speedEvaculator.GetSpeedDiff(CrrObj:Preprocessing.ObjectData)
 	return SpeedDiff
 end
 
-return speedEvaculator
+return speedEvaluator

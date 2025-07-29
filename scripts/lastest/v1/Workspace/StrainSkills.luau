@@ -54,6 +54,8 @@ function StrainSkills.GetStrainPeak(strainData:{{number}}, strainType:string):{n
 		_currentSectionPeak = math.max(strain[1], _currentSectionPeak)
 	end
 	
+	_saveCurrentPeak()
+	
 	return StrainPeak
 end
 

@@ -1,6 +1,6 @@
-local flashlightEvaculator = {}
+local flashlightEvaluator = {}
 
-function flashlightEvaculator.getFlashLightDiff(CrrObj, IsHD)
+function flashlightEvaluator.getFlashLightDiff(CrrObj, IsHD)
 	if CrrObj.isSpinner or (CrrObj.Previous(1) and CrrObj.Previous(1).isSpinner) or CrrObj.objID <= 1 then
 		return 0
 	end
@@ -79,4 +79,4 @@ function flashlightEvaculator.getFlashLightDiff(CrrObj, IsHD)
 	return Result
 end
 
-return flashlightEvaculator
+return flashlightEvaluator

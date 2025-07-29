@@ -10,13 +10,13 @@ local calculator = require(workspace.DifficultyCalculator)
 local tool = require(script.converterTools)
 local sliderTools = require(script.sliderTools)
 local preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
-local evaculatorContainer = workspace.DifficultyCalculator.DifficultyEvaculator
+local evaluatorContainer = workspace.DifficultyCalculator.DifficultyEvaluator
 local modData = require(workspace.ModData)
-local evaculators = {
-	Aim = require(evaculatorContainer.AimEvaculator),
-	Speed = require(evaculatorContainer.SpeedEvaculator),
-	Rhythm = require(evaculatorContainer.RhythmCalculator),
-	Flashlight = require(evaculatorContainer.FLEvaculator)
+local evaluators = {
+	Aim = require(evaluatorContainer.AimEvaluator),
+	Speed = require(evaluatorContainer.SpeedEvaluator),
+	Rhythm = require(evaluatorContainer.RhythmCalculator),
+	Flashlight = require(evaluatorContainer.FLEvaluator)
 }
 
 export type ModData = modData.ModData
@@ -799,6 +799,13 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 					end
 					i += 1
 				end
+				
+				-- Just to make sure it includes the slider end
+				if #SLDifficultyTickData == 0 or SLDifficultyTickData[#SLDifficultyTickData][4] ~= "Tail" then
+					local _tailPosition = SLCurvePoints[(slidesCount % 2 == 1) and #SLCurvePoints or 1]
+					local _tailTime = Time + SliderTime
+					SLDifficultyTickData[#SLDifficultyTickData+1] = {_tailTime, slidesCount, _tailPosition, "Tail"}
+				end
 			end
 			local HitObjData = {
 				ObjId = objectID,
@@ -916,7 +923,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	end
 	
 	----------------------------------------------------------------------------
-	-- > Difficulty evaculator
+	-- > Difficulty evaluator
 	
 	-- ignore the old diff data from the above
 	-- this will be changed soon
@@ -955,10 +962,10 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	
 	
 	for objectId, objectData in pairs(ProcessedDifficultyObject) do
-		local AimDiff = evaculators.Aim.GetAimDiff(objectData) * aimSkillMultiplier
-		local SpeedDiff = evaculators.Speed.GetSpeedDiff(objectData) * speedSkillMultiplier
-		local RhythmDiff = evaculators.Rhythm.GetRhythmDiff(objectData) * flashlightSkillMultiplier
-		local FLDiff = modData.FL and evaculators.Flashlight.getFlashLightDiff(objectData, modData.HD) or 0
+		local AimDiff = evaluators.Aim.GetAimDiff(objectData) * aimSkillMultiplier
+		local SpeedDiff = evaluators.Speed.GetSpeedDiff(objectData) * speedSkillMultiplier
+		local RhythmDiff = evaluators.Rhythm.GetRhythmDiff(objectData)
+		local FLDiff = modData.FL and evaluators.Flashlight.getFlashLightDiff(objectData, modData.HD) or 0
 		
 		local AimFLStrainDecay = math.pow(AimFLBaseStrainDecay,objectData.DeltaTime/1000)
 		AimStrain *= AimFLStrainDecay
@@ -978,10 +985,9 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		ConvertedData[objectId].PSValue.AimStrainDecay = AimFLStrainDecay
 		ConvertedData[objectId].PSValue.SpeedStrainDecay = SpeedStrainDecay
 		ConvertedData[objectId].PSValue.FLStrainDecay = AimFLStrainDecay
-
 		
 		AimStrainData[#AimStrainData+1] = {AimStrain, objectData.Time}
-		SpeedStrainData[#SpeedStrainData+1] = {SpeedStrain * (1 + RhythmDiff), objectData.Time}
+		SpeedStrainData[#SpeedStrainData+1] = {SpeedStrain * RhythmDiff, objectData.Time}
 		RhythmDiffData[#RhythmDiffData+1] = {RhythmDiff, objectData.Time}
 		FLStrainData[#FLStrainData+1] = {FLStrain, objectData.Time}
 		

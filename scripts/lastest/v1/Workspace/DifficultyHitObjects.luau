@@ -67,6 +67,28 @@ function toSLPathData(rawData, basePos)
 	return returnData, totalLength
 end
 
+function toSLPathData_New(curvePoints:{Vector2})
+	local returnData = {}
+	local totalLength = 0
+
+	for i, a in pairs(curvePoints) do
+		local l = 0
+		if i > 1 then
+			l = (curvePoints[i-1] - a).Magnitude
+		end
+
+		totalLength += l
+		returnData[#returnData+1] = {a,totalLength,l}
+	end
+
+	for i, a in pairs(returnData) do
+		a[2] /= totalLength
+		a[3] /= totalLength
+	end
+
+	return returnData, totalLength
+end
+
 function SLpositionAt(data, lengthRatio)
 	if lengthRatio >= 1 then
 		return data[#data][1]
@@ -129,9 +151,6 @@ return function(baseList:{any}, baseData)
 	local DifficultyObjects:{ObjectData} = {}
 	for objID, crr in pairs(baseList) do
 		local crrObj = {}::ObjectData
-		
-
-		
 		crrObj.objID = objID
 		crrObj.Previous = function(index)
 			return DifficultyObjects[objID - index]
@@ -273,7 +292,8 @@ return function(baseList:{any}, baseData)
 			end
 						
 			lazySLTravelTime = trackingEndTime - crr.Time
-			local SliderPathData, SLActualTotalLength = toSLPathData(crr.ExtraData[2], positionOf(crr.Position))
+			local _curvePoints = crr.SliderCurvePoints::{Vector2}
+			local SliderPathData, SLActualTotalLength = toSLPathData_New(_curvePoints)
 			local slidesCount = tonumber(crr.ExtraData[3])
 			SLRepeatCount = math.max(0, slidesCount - 1)
 			if slidesCount%2 == 0 then -- if it ends as a reverse state
@@ -315,7 +335,7 @@ return function(baseList:{any}, baseData)
 					end
 					
 					if currentMovementLength > requiredMovement then
-						currentCursorPosition = currentCursorPosition + currentMovement * (currentMovementLength - requiredMovement) / currentMovementLength
+						currentCursorPosition = currentCursorPosition + currentMovement * ((currentMovementLength - requiredMovement) / currentMovementLength)
 						currentMovementLength *= (currentMovementLength - requiredMovement) / currentMovementLength
 						LazyTravelDistance += currentMovementLength
 					end
@@ -326,12 +346,11 @@ return function(baseList:{any}, baseData)
 				end
 			end
 			
-			local _curvePoints = crr.SliderCurvePoints::{Vector2}
 			TailCirclePosition = slidesCount % 2 == 1 and _curvePoints[1] or _curvePoints[#_curvePoints]
 			--
 			
 			BaseTravelTime = math.max(lazySLTravelTime, MIN_DELTA_TIME)
-			BaseTravelDistance = LazyTravelDistance * math.pow(slidesCount / 2.5, 1 / 2.5)
+			BaseTravelDistance = LazyTravelDistance * math.pow(1 + (slidesCount - 1) / 2.5, 1 / 2.5)
 		end
 		
 		if prevDiffObj.isSlider and not baseData.ModData.NS then

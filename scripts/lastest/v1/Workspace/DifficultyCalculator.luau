@@ -5,7 +5,7 @@
 
 local basePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
 local basePerfomanceFL = require(workspace.PerformanceCalculator.BasePerfomanceFL)
-local evaculator = require(script.DifficultyEvaculator)
+local evaluator = require(script.DifficultyEvaluator)
 local StrainSkills = require(script.StrainSkills)
 
 local perfomance_base_multiplier = 1.14
@@ -32,6 +32,10 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 	local decayWeight = 0.9
 	local difficulty = 0
 	local ReducedStrainBaseline = 0.75
+	
+	table.sort(StrainData, function(a,b)
+		return a[2] < b[2]	-- Sort the timing to be perfect
+	end)
 	
 	local StrainPeak = StrainSkills.GetStrainPeak(StrainData, strainType)
 	
@@ -210,19 +214,19 @@ end
 function calculateAimVisibilityFactor(AR:number, attributes)
 	local ar_factor_end_point = 11.5
 	
-	local mechanicalDifficultyFactor = evaculator.ReverseLerp(attributes.mechanicalDifficultyRating, 5, 10)
+	local mechanicalDifficultyFactor = evaluator.ReverseLerp(attributes.mechanicalDifficultyRating, 5, 10)
 	local arFactorStartingPoint = lerp(9, 10.33, mechanicalDifficultyFactor)
 	
-	return evaculator.ReverseLerp(AR, ar_factor_end_point, arFactorStartingPoint)
+	return evaluator.ReverseLerp(AR, ar_factor_end_point, arFactorStartingPoint)
 end
 
 function calculateSpeedVisibilityFactor(AR:number, attributes)
 	local ar_factor_end_point = 11.5
 
-	local mechanicalDifficultyFactor = evaculator.ReverseLerp(attributes.mechanicalDifficultyRating, 5, 10)
+	local mechanicalDifficultyFactor = evaluator.ReverseLerp(attributes.mechanicalDifficultyRating, 5, 10)
 	local arFactorStartingPoint = lerp(10, 10.33, mechanicalDifficultyFactor)
 
-	return evaculator.ReverseLerp(AR, ar_factor_end_point, arFactorStartingPoint)
+	return evaluator.ReverseLerp(AR, ar_factor_end_point, arFactorStartingPoint)
 end
 
 function computeAimRating(aimDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number, attributes)

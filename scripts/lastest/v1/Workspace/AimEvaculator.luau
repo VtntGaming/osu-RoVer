@@ -1,22 +1,22 @@
 --!strict
 local preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
-local Evaculator = require(script.Parent)
-local aimEvaculator = {}
+local Evaluator = require(script.Parent)
+local aimEvaluator = {}
 
-function aimEvaculator.Smootherstep(x:number, _start:number, _end:number)
+function aimEvaluator.Smootherstep(x:number, _start:number, _end:number)
 	x = math.clamp((x - _start) / (_end - _start), 0.0, 1.0)
 
 	return x * x * x * (x * (6.0 * x - 15.0) + 10.0)
 end
 
-function aimEvaculator.Smoothstep(x:number, _start:number, _end:number)
+function aimEvaluator.Smoothstep(x:number, _start:number, _end:number)
 	x = math.clamp((x - _start) / (_end	- _start), 0, 1)
 	
 	return x * x * (3 - 2 * x)
 end
 
-function aimEvaculator.calcWideAngleBonus(angle) return aimEvaculator.Smoothstep(angle, math.rad(40), math.rad(140)) end
-function aimEvaculator.calcAcuteAngleBonus(angle) return aimEvaculator.Smoothstep(angle, math.rad(140), math.rad(40)) end
+function aimEvaluator.calcWideAngleBonus(angle) return aimEvaluator.Smoothstep(angle, math.rad(40), math.rad(140)) end
+function aimEvaluator.calcAcuteAngleBonus(angle) return aimEvaluator.Smoothstep(angle, math.rad(140), math.rad(40)) end
 
 -- Constants
 local wide_angle_multiplier = 1.5
@@ -27,7 +27,7 @@ local wiggle_multiplier = 1.02
 
 
 
-function aimEvaculator.GetAimDiff(CrrObj:preprocessing.ObjectData)
+function aimEvaluator.GetAimDiff(CrrObj:preprocessing.ObjectData)
 	if CrrObj.isSpinner or CrrObj.objID < 3 then
 		return 0
 	end
@@ -71,23 +71,23 @@ function aimEvaculator.GetAimDiff(CrrObj:preprocessing.ObjectData)
 
 		local angleBonus = math.min(crrVelocity, prevVelocity)
 		if PrevObj.StrainTime and math.max(CrrObj.StrainTime,PrevObj.StrainTime) < 1.25 * math.min(CrrObj.StrainTime,PrevObj.StrainTime) then
-			acuteAngleBonus = aimEvaculator.calcAcuteAngleBonus(crrAngle)
-			acuteAngleBonus *= 0.08 + 0.92 * (1 - math.min(acuteAngleBonus, math.pow(aimEvaculator.calcAcuteAngleBonus(lastAngle), 3)))
+			acuteAngleBonus = aimEvaluator.calcAcuteAngleBonus(crrAngle)
+			acuteAngleBonus *= 0.08 + 0.92 * (1 - math.min(acuteAngleBonus, math.pow(aimEvaluator.calcAcuteAngleBonus(lastAngle), 3)))
 			acuteAngleBonus *= angleBonus *
-				aimEvaculator.Smootherstep(Evaculator.milisecondToBPM(CrrObj.StrainTime, 2), 300, 400) *
-				aimEvaculator.Smootherstep(CrrObj.LazyJumpDistance, NormalizedDiameter, NormalizedDiameter * 2)
+				aimEvaluator.Smootherstep(Evaluator.milisecondToBPM(CrrObj.StrainTime, 2), 300, 400) *
+				aimEvaluator.Smootherstep(CrrObj.LazyJumpDistance, NormalizedDiameter, NormalizedDiameter * 2)
 		end
 
-		wideAngleBonus = aimEvaculator.calcWideAngleBonus(crrAngle)
-		wideAngleBonus *= 1 - math.min(wideAngleBonus, math.pow(aimEvaculator.calcWideAngleBonus(lastAngle), 3))
-		wideAngleBonus *= angleBonus * aimEvaculator.Smootherstep(CrrObj.LazyJumpDistance, 0, NormalizedDiameter)
+		wideAngleBonus = aimEvaluator.calcWideAngleBonus(crrAngle)
+		wideAngleBonus *= 1 - math.min(wideAngleBonus, math.pow(aimEvaluator.calcWideAngleBonus(lastAngle), 3))
+		wideAngleBonus *= angleBonus * aimEvaluator.Smootherstep(CrrObj.LazyJumpDistance, 0, NormalizedDiameter)
 		wiggleBonus = angleBonus
-			* aimEvaculator.Smootherstep(CrrObj.LazyJumpDistance, NormalizedRadius, NormalizedDiameter)
-			* math.pow(Evaculator.ReverseLerp(CrrObj.LazyJumpDistance, NormalizedDiameter * 3, NormalizedDiameter), 1.8)
-			* aimEvaculator.Smootherstep(crrAngle, math.rad(110), math.rad(60))
-			* aimEvaculator.Smootherstep(PrevObj.LazyJumpDistance, NormalizedRadius, NormalizedDiameter)
-			* math.pow(Evaculator.ReverseLerp(PrevObj.LazyJumpDistance, NormalizedDiameter * 3, NormalizedDiameter), 1.8)
-			* aimEvaculator.Smootherstep(lastAngle, math.rad(110), math.rad(60))
+			* aimEvaluator.Smootherstep(CrrObj.LazyJumpDistance, NormalizedRadius, NormalizedDiameter)
+			* math.pow(Evaluator.ReverseLerp(CrrObj.LazyJumpDistance, NormalizedDiameter * 3, NormalizedDiameter), 1.8)
+			* aimEvaluator.Smootherstep(crrAngle, math.rad(110), math.rad(60))
+			* aimEvaluator.Smootherstep(PrevObj.LazyJumpDistance, NormalizedRadius, NormalizedDiameter)
+			* math.pow(Evaluator.ReverseLerp(PrevObj.LazyJumpDistance, NormalizedDiameter * 3, NormalizedDiameter), 1.8)
+			* aimEvaluator.Smootherstep(lastAngle, math.rad(110), math.rad(60))
 		
 		if Prev2Obj and Prev2Obj.CirclePosition then
 			local distance = (Prev2Obj.CirclePosition - PrevObj.CirclePosition).Magnitude
@@ -101,7 +101,7 @@ function aimEvaculator.GetAimDiff(CrrObj:preprocessing.ObjectData)
 		prevVelocity = (PrevObj.LazyJumpDistance + (PrevPrevObj.BaseTravelDistance or 0))/PrevObj.StrainTime
 		crrVelocity = (CrrObj.LazyJumpDistance + (PrevObj.BaseTravelDistance or 0))/CrrObj.StrainTime
 
-		local distanceRatio = aimEvaculator.Smoothstep(math.abs(prevVelocity - crrVelocity) / math.max(prevVelocity, crrVelocity), 0, 1)
+		local distanceRatio = aimEvaluator.Smoothstep(math.abs(prevVelocity - crrVelocity) / math.max(prevVelocity, crrVelocity), 0, 1)
 		local overlapVelocityBuff = math.min(NormalizedDiameter * 1.25 / math.min(CrrObj.StrainTime, PrevObj.StrainTime), math.abs(prevVelocity - crrVelocity))
 		velocityChangeBonus = overlapVelocityBuff * distanceRatio
 
@@ -122,4 +122,4 @@ function aimEvaculator.GetAimDiff(CrrObj:preprocessing.ObjectData)
 	return baseAimStrain
 end
 
-return aimEvaculator
+return aimEvaluator
