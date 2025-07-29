@@ -13,7 +13,7 @@ function utils.Smoothstep(x:number, _start:number, _end:number)
 	return x * x * (3 - 2 * x)
 end
 
-function utils.SmootherstepBellCurve(x:number, mean:number?, width:number?)
+function utils.SmoothstepBellCurve(x:number, mean:number?, width:number?)
 	if not mean then mean = 0.5 end
 	if not width then width = 0.5 end
 	if mean and width then

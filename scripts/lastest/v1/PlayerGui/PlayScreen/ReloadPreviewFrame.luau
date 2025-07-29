@@ -259,7 +259,11 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		if Diff > 6 then
 			if Diff <= 9 then
 				if MaxDiff == AimDiffRating then
-					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0.5, (Diff-6)/3 * 0.588235, 1)
+					if AimDiffRating * 0.9 > SpeedDiffRating then
+						PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0.5, (Diff-6)/3 * 0.588235, 1)
+					else
+						PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0, (Diff-6)/3 * 0.588235, 1)
+					end
 				elseif MaxDiff == SpeedDiffRating then
 					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0, (Diff-6)/3 * 0.588235, 1)
 				else
@@ -267,7 +271,11 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 				end
 			elseif Diff <= 13 then
 				if MaxDiff == AimDiffRating then
-					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0.5, 0.588235 + (Diff-9)/4 * 0.411765, 1)
+					if AimDiffRating * 0.9 > SpeedDiffRating then
+						PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0.5, 0.588235 + (Diff-9)/4 * 0.411765, 1)
+					else
+						PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0, 0.588235 + (Diff-9)/4 * 0.411765, 1)
+					end
 				elseif MaxDiff == SpeedDiffRating then
 					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0, 0.588235 + (Diff-9)/4 * 0.411765, 1)
 				else
@@ -275,7 +283,11 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 				end
 			else
 				if MaxDiff == AimDiffRating then
-					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0.5, 1, 1)
+					if AimDiffRating * 0.9 > SpeedDiffRating then
+						PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0.5, 1, 1)
+					else
+						PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0, 1, 1)
+					end
 				elseif MaxDiff == SpeedDiffRating then
 					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0, 1, 1)
 				else

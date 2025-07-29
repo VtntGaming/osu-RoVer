@@ -75,7 +75,7 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 
 	local startRatio = 0
 	local firstDeltaSwitch = false
-	local historicalNoteCount = math.min(CrrObj.objID, history_obj_max)
+	local historicalNoteCount = math.min(CrrObj.objID-1, history_obj_max)
 	local rhythmStart = 0
 
 	while rhythmStart < historicalNoteCount - 2 and CrrObj.Time - CrrObj.Previous(rhythmStart).Time < history_time_max do
@@ -98,9 +98,9 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 		local deltaDifference = math.max(prevDelta, currDelta) / math.min(prevDelta, currDelta)
 		local deltaDifferenceFraction = deltaDifference - truncate(deltaDifference)
 		
-		local currRatio = 1 + rhythm_ratio_multiplier * math.min(0.5, DifficultyCalculationUtils.SmootherstepBellCurve(deltaDifferenceFraction))
+		local currRatio = 1 + rhythm_ratio_multiplier * math.min(0.5, DifficultyCalculationUtils.SmoothstepBellCurve(deltaDifferenceFraction))
 
-		local differenceMultiplier = math.clamp(2 - deltaDifferenceEpsilon / 8, 0, 1)
+		local differenceMultiplier = math.clamp(2 - deltaDifference / 8, 0, 1)
 
 		local windowPenalty = math.min(1, math.max(0, math.abs(prevDelta - currDelta) - deltaDifferenceEpsilon) / deltaDifferenceEpsilon)
 		local effectiveRatio = windowPenalty * currRatio * differenceMultiplier
