@@ -1,6 +1,7 @@
 --[LOCATION]:[Workspace.OsuConvert.converterTools]
 --!strict
 local diffCalculator = require(workspace.DifficultyCalculator)
+local modData = require(workspace.ModData)
 local tool = {}
 
 function tool.ConvertRaw(FileText)
@@ -79,7 +80,22 @@ function tool.DifficultyValue(difficulty:number)
 	return (difficulty - 5) / 5
 end
 
-export type ModData = diffCalculator.ModData
+export type ModData = modData.ModData
+
+tool.HitWindowsFor = {
+	h300 = function(ODRate:number, Speed:number):number
+		local h300 = math.floor(tool.DifficultyRange(ODRate, 80, 50, 20)) - 0.5
+		return h300 / Speed
+	end,
+	h100 = function(ODRate:number, Speed:number):number
+		local h100 = math.floor(tool.DifficultyRange(ODRate, 140, 100, 60)) - 0.5
+		return h100 / Speed
+	end,
+	h50 = function(ODRate:number, Speed:number):number
+		local h50 = math.floor(tool.DifficultyRange(ODRate, 200, 150, 100)) - 0.5
+		return h50 / Speed
+	end,
+}
 
 tool.GetDifficultyValueAfterMod = {
 	AR = function(rate:number, modData:ModData)
@@ -123,8 +139,7 @@ tool.GetDifficultyValueAfterMod = {
 			rate *= 0.5		
 		end
 		if modData.SA and modData.SA ~= 1 then
-			local h300 = math.floor(tool.DifficultyRange(rate, 80, 50, 20)) - 0.5
-			h300 /= modData.SA
+			local h300 = tool.HitWindowsFor.h300(rate, modData.SA)
 			rate = (79.5 - h300) / 6
 		end
 		

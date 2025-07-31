@@ -1092,8 +1092,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			Aim = 1, Speed = 1, FL = 1, Acc = 1
 		}
 
-		local MaxPSData = PerformanceCalculator(AimDifficulty, SpeedDifficulty, FlashlightDifficulty, ODRate, ARRate, modData, ReturningData.NoteCount, PSMultiplier, true)
-
 		BeatmapDifficulty = difficultyAttributes.StarRating
 	end
 	--warn(tostring(AimDifficulty).."\n"..tostring(StreamDifficulty))
@@ -1109,7 +1107,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	ReturningData.Difficulty.SpeedRelevantNoteCount = SpeedRelevantNoteCount
 	ReturningData.Difficulty.MaxCombo = MapMaxCombo
 	ReturningData.Difficulty.MaxSpinnerScore = MaxSpinnerScore
-
 
 	--2234.05 -> 12.19
 	--9.15 -> 1.70

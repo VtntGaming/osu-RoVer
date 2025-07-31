@@ -1,3 +1,4 @@
+--[LOCATION]:[StarterGui.PlayScreen.Cursor]
 local Cursor = script.Parent.CursorField.Cursor
 
 local LastCursorPos = Cursor.Position

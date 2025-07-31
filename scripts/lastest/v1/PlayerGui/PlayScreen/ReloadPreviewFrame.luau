@@ -539,21 +539,22 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	local NoteCount = {
 		Circle = Notes, Slider = Sliders, Spinner = Spinners
 	}
+	
+	local AimDiffStrainCount = ReturnData.Difficulty.AimDifficultyStrainCount
+	local SpeedDiffStrainCount = ReturnData.Difficulty.SpeedDifficultyStrainCount
+	local SpeedRelevantNoteCount = ReturnData.Difficulty.SpeedRelevantNoteCount
 
-	local playMultiplier = {
-		Aim = AimMultiplier, Speed = SpeedMultiplier, FlashLight = FLMultiplier, Accuracy = AccMultiplier
-	}
-	local MaxPSData = PerformanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, NoteCount, playMultiplier, true)
-	local RewardedAimPS = MaxPSData.Aim
-	local RewardedSpeedPS = MaxPSData.Speed
-	local RewardedAccPS = MaxPSData.Acc
-	local RewardedFlashlightPS = MaxPSData.FlashLight
+	local MaxPSData = PerformanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, NoteCount, true, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount)
+	local RewardedAimPS = MaxPSData.Max.AccPS
+	local RewardedSpeedPS = MaxPSData.Max.SpeedPS
+	local RewardedAccPS = MaxPSData.Max.AccPS
+	local RewardedFlashlightPS = MaxPSData.Max.FlashlightPS
 
 
 	-- Nerf 60% aim PS and 60% flaslight PS on Touch devices
-	local TouchDevicePS = MaxPSData.TouchDevicePS - MaxPSData.MaxTotalPS
-	local ModPS = MaxPSData.ModEffects
-	local TotalPS = MaxPSData.MaxTotalPS
+	local TouchDevicePS = 0
+	local ModPS = 0
+	local TotalPS = MaxPSData.Max.TotalPS
 
 	DetailedInterface.Difficulty.Data.Text = string.format("%.2f (%.2fps)",BaseDiff,TotalPS)
 	DetailedInterface.AimDifficulty.Data.Text = string.format("%.2f (%.2fps)",AimDiff,RewardedAimPS)

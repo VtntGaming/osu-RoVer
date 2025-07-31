@@ -8,6 +8,7 @@ local basePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
 local basePerfomanceFL = require(workspace.PerformanceCalculator.BasePerfomanceFL)
 local evaluator = require(script.DifficultyEvaluator)
 local StrainSkills = require(script.StrainSkills)
+local modData = require(workspace.ModData)
 
 local perfomance_base_multiplier = 1.14
 local difficulty_multiplier = 0.0675
@@ -25,6 +26,13 @@ end
 
 function lerp(a:number,b:number,r:number)
 	return a + (b-a)*r
+end
+
+type ModData = modData.ModData
+
+function calculator.CalculateDifficultyMultiplier(ModData:ModData):number
+	local multiplier = perfomance_base_multiplier
+	return multiplier
 end
 
 function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
@@ -143,30 +151,6 @@ export type Data = {
 		Total:number
 	},
 	ModData:ModData
-}
-
-export type ModData = {
-	HD:boolean?,	-- Hidden
-	HR:boolean?,	-- Hardrock
-	EZ:boolean?,	-- Easy
-	NS:boolean?,	-- No sliders
-	SA:number?,		-- Speed adjust
-	FL:boolean?,	-- Flashlight
-	RX:boolean?,	-- Relax
-	AP:boolean?,	-- Autopilot
-	AT:boolean?,	-- Autoplay
-	SO:boolean?,	-- SpunOut
-	V2:boolean?,	-- ScoreV2
-	TD:boolean?,	-- Touchdevice
-	DA:{Active:boolean?, Data:{
-		CS:number?, AR:number?, OD:number?, HP:number?
-	}?}?,			-- Difficulty adjust
-	-- osu!lazer possible mods
-	MG:{
-		Active:boolean?, 
-		Strength:number?
-	}?,				-- Magnetised
-	
 }
 
 export type DifficultyAttributes = {
