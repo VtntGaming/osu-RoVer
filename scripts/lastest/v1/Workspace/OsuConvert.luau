@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.OsuConvert]
 --!native
 -- osu!RoVer converter
 -- convert raw osu file into readable and excutable lua data

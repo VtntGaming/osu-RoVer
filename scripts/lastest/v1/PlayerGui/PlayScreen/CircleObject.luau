@@ -1,3 +1,4 @@
+--[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.Components.Gameplay.CircleObject]
 local Tool = {}
 
 -- 01234567

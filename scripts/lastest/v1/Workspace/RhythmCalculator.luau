@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.DifficultyCalculator.DifficultyEvaluator.RhythmCalculator]
 local rhythmCalculator = {}
 local DifficultyCalculationUtils = require(script.Parent.DifficultyCalculationUtils_Base)
 

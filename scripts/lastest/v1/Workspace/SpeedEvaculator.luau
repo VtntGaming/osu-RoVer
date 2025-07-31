@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.DifficultyCalculator.DifficultyEvaluator.SpeedEvaluator]
 local Evaluator = require(script.Parent)
 local Preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
 local speedEvaluator = {}

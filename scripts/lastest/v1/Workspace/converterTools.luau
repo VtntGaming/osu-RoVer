@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.OsuConvert.converterTools]
 --!strict
 local diffCalculator = require(workspace.DifficultyCalculator)
 local tool = {}

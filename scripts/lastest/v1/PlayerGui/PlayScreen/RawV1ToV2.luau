@@ -1,3 +1,4 @@
+--[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.Components.Gameplay.RawV1ToV2]
 function getScoreMissPenaltyMultiplier(missCount, noteCount)
 	-- miss penalty can take up to 25% of the current score
 	local penaltyMax = 0.25

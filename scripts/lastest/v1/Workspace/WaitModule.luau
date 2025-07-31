@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.WaitModule]
 --!native
 --V1.3
 --Used user FPS instead of old wait()

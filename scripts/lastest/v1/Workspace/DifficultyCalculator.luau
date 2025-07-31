@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.DifficultyCalculator]
 --!strict
 -- Credited the osu! team on the github for the difficulty calculator and preprocessing
 -- Even though I have to transfer code from C# to lua all by myself

@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.DifficultyCalculator.StrainSkills]
 --!strict
 local StrainSkills = {}
 

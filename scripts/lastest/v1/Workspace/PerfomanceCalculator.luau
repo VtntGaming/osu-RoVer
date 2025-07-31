@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.PerformanceCalculator]
 local basePerformance = require(script.BasePerfomance)
 local basePerformanceFL = require(script.BasePerfomanceFL)
 local utils = require(script.DifficultyCalculationUtils)

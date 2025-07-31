@@ -1,3 +1,4 @@
+--[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.UISeparate]
 return function(TargetObject)
 	local Count = 3
 	local runservice = game:GetService("RunService")

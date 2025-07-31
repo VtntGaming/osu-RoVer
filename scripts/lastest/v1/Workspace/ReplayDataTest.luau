@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.ReplayDataTest]
 -- MOD StableNL MobileMode AT HC HD HR EZ SL FL
 
 return[[

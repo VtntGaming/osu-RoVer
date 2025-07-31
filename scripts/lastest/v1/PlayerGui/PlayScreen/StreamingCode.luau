@@ -1,3 +1,4 @@
+--[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.Components.Perfomance.StreamingCode]
 local streaming = {}
 
 function generateId()

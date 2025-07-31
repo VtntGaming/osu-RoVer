@@ -1,3 +1,4 @@
+--[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.Components.Gameplay.SliderComponent]
 local Slider = {}
 local PlayFrame = script.Parent.Parent.Parent.Parent.PlayFrame
 local TweenService = game:GetService("TweenService")

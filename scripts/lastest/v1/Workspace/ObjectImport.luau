@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.ObjectImport]
 return function(Data,Target)
 	local VirtualData = {}
 	VirtualData[0] = Target

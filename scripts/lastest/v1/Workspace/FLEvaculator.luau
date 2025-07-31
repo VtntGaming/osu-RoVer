@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.DifficultyCalculator.DifficultyEvaluator.FLEvaluator]
 local flashlightEvaluator = {}
 
 function flashlightEvaluator.getFlashLightDiff(CrrObj, IsHD)

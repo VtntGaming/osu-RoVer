@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.ModData]
 export type ModData = {
 	HD:boolean?,	-- Hidden
 	HR:boolean?,	-- Hardrock

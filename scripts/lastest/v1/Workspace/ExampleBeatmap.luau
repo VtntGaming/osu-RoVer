@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.ExampleBeatmap]
 -- Last update: 20-08-2022 [Aug 20, 2022]
 -- Note: Custom audio may be unavailable, you can only use audio upload from VtntGaming and Roblox .-.
 

@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.DifficultyCalculator.DifficultyEvaluator.DifficultyCalculationUtils]
 -- Up to now I don't really know how this utils actually work
 -- Github source:
 -- osu.Game/Rulesets/Difficulty/Utils/DifficultyCalculationUtils_ErrorFunction.cs

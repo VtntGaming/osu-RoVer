@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.DifficultyCalculator.DifficultyHitObjects]
 --[[
 {ObjId = objectID,
 Position = HitPos,

@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.ObjectReader]
 return function(Obj)
 	local List = ""
 	local ID = 0

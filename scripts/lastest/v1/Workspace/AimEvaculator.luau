@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.DifficultyCalculator.DifficultyEvaluator.AimEvaluator]
 --!strict
 local preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
 local Evaluator = require(script.Parent)

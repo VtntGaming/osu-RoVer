@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.OsuConvert.sliderTools]
 --!strict
 local sliderTools = {}
 local converterTools = require(script.Parent.converterTools)

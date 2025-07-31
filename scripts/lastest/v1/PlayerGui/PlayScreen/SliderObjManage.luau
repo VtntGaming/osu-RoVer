@@ -1,3 +1,4 @@
+--[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.Components.Perfomance.SliderObjManage]
 local obj = {}
 
 local MaxObject = 100

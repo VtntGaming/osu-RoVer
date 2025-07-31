@@ -1,3 +1,4 @@
+--[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.ReloadPreviewFrame]
 local BeatmapPreviewSession = ""
 local BasePreviewBeatmapset = ""
 TweenService = game:GetService("TweenService")

@@ -1,3 +1,4 @@
+--[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.Components.Gameplay.GetMaxScore]
 return function(NoteCount, MaxCombo, DifficulcyMulti, ModMulti)
 	DifficulcyMulti = DifficulcyMulti or 6
 	ModMulti = ModMulti or 1
