@@ -78,7 +78,23 @@ function calculator.DifficultyValueFlashlight(StrainData:{{number}})
 	return difficulty
 end
 
+local function _DeepCopy(t:{any}):{any}
+	local newT = {}
+	for index, data in pairs(t) do
+		if typeof(data) == "table" then
+			newT[index] = _DeepCopy(data)
+		else
+			newT[index] = data
+		end
+	end
+
+	return newT
+end
+
+
 function calculator.RelevantNoteCount(strainData:{{number}})
+	strainData = _DeepCopy(strainData)
+	sortStrain(strainData)
 	if #strainData == 0 then
 		return 0
 	end	

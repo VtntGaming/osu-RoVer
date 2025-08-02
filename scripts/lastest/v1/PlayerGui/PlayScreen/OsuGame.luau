@@ -14,9 +14,10 @@ ParallelProcessingFolder = game.Players.LocalPlayer.PlayerScripts.ParallelProces
 local wait = task.wait--require(workspace.WaitModule)
 local _tick = tick
 local tick = os.clock
-PerformanceCalculator = require(workspace.PerformanceCalculator)
+local PerformanceCalculator = require(workspace.PerformanceCalculator)
 SliderComponent = require(ScriptComponent.Gameplay.SliderComponent)
 local modData = require(workspace.ModData)
+local StrainSkills = require(workspace.DifficultyCalculator.StrainSkills)
 StreamingLoop = require(ScriptComponent.Perfomance.StreamingCode).create()
 SliderObjManage = require(ScriptComponent.Perfomance.SliderObjManage).init()
 
@@ -692,7 +693,8 @@ PlayerGui.BG.BeatmapLeaderboard.Destroying:Connect(function()
 	LBDetailMovementConnection:Disconnect()
 end)
 
-function GetUserPlayUpdatedPS(Data, externalData)
+function GetUserPlayUpdatedPS(Data, externalData):(number, number, number)
+	local PreviewMapPS = PreviewMapPS::{any}
 	local AimDiff = PreviewMapPS.AimDiff
 	local SpeedDiff = PreviewMapPS.SpeedDiff
 	local FLDiff = PreviewMapPS.FLdDiff
@@ -706,10 +708,10 @@ function GetUserPlayUpdatedPS(Data, externalData)
 		FLDiff = externalData.FLDiff
 	end
 
-	local h300 = Data.ExtraAccurancy[1]
-	local h100 = Data.ExtraAccurancy[2]
-	local h50 = Data.ExtraAccurancy[3]
-	local MissCount = Data.ExtraAccurancy[4]
+	local h300 = Data.ExtraAccurancy[1]::number
+	local h100 = Data.ExtraAccurancy[2]::number
+	local h50 = Data.ExtraAccurancy[3]::number
+	local MissCount = Data.ExtraAccurancy[4]::number
 
 	local ODRate = PreviewMapPS.OD
 	local ARRate = PreviewMapPS.AR
@@ -721,18 +723,15 @@ function GetUserPlayUpdatedPS(Data, externalData)
 	
 	local ModData:modData.ModData = Data.Mod
 	ModData.SA = CurrentSpeed
-	local Multiplier = {
-		Aim = 1, Speed = 1, Flashlight = 1
+	
+	local AccuracyData:PerformanceCalculator.AccuracyData = {
+		h300 = h300, h100 = h100, h50 = h50, missCount = MissCount, EffectiveMissCount = MissCount
 	}
 	
-	local AccuracyData = {
-		hit300 = h300, hit100 = h100, hit50 = h50, miss = MissCount
-	}
- 
-	local ActualPS,MaxPSData = PerformanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, objCount, Multiplier, false, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, AccuracyData)
+	local ReturnData = PerformanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, objCount, false, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, AccuracyData)::PerformanceCalculator.PerfomanceAttributes
 	
 	--print(ActualPS, AimDiff, SpeedDiff, externalData~=nil)
-	return ActualPS.ActualTotalPS,MaxPSData.MaxTotalPS, mapMaxCombo
+	return ReturnData.Max, ReturnData.Current, mapMaxCombo
 end
 
 
@@ -747,7 +746,8 @@ function ShowLeaderboardPlayDetail(Data)
 	local DisplayPS = ""
 
 	if Data.ExtraAccurancy then
-		DisplayPS = "\nUpdatedPS: "..tostring(math.round(GetUserPlayUpdatedPS(Data))).."ps"
+		local _, updatedPS, _ = GetUserPlayUpdatedPS(Data)
+		DisplayPS = "\nUpdatedPS: "..tostring(math.round(updatedPS.TotalPS)).."ps"
 	end
 
 
@@ -938,10 +938,10 @@ function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
 		add(DisplayLBInformationValue.h50, Data.ExtraAccurancy[3])
 		add(DisplayLBInformationValue.miss, Data.ExtraAccurancy[4])
 		add(DisplayLBInformationValue.rankedPS, Data.PS or 0)
-		local UpdatedPS,MaxPS, mapMaxCombo = GetUserPlayUpdatedPS(Data, externalData)
+		local MaxPS, UpdatedPS, mapMaxCombo = GetUserPlayUpdatedPS(Data, externalData)
 		add(DisplayLBInformationValue.MapMaxCombo, mapMaxCombo)
-		add(DisplayLBInformationValue.calculatedBasePS, UpdatedPS)
-		add(DisplayLBInformationValue.calculatedMaxPS, MaxPS)
+		add(DisplayLBInformationValue.calculatedBasePS, UpdatedPS.TotalPS)
+		add(DisplayLBInformationValue.calculatedMaxPS, MaxPS.TotalPS)
 		local crrID = HttpService:GenerateGUID()
 		UserPlayInformationAnimateID = crrID
 		local ReplayOption = MainFrame.ReplayOption
@@ -5806,22 +5806,21 @@ function AddPerfomanceScore(PSValue)
 	local AimDiffStrainCount = ReturnData.Difficulty.AimDifficultyStrainCount
 	local SpeedDiffStrainCount = ReturnData.Difficulty.SpeedDifficultyStrainCount
 	local SpeedRelevantNoteCount = ReturnData.Difficulty.SpeedRelevantNoteCount
-	local AccData = {
-		hit300 = AccuracyData.h300,
-		hit100 = AccuracyData.h100,
-		hit50 = AccuracyData.h50,
-		miss = AccuracyData.miss
+	local AccData:PerformanceCalculator.AccuracyData = {
+		h300 = AccuracyData.h300,
+		h100 = AccuracyData.h100,
+		h50 = AccuracyData.h50,
+		missCount = AccuracyData.miss
 	}
 	
 	
-	local PSData, MaxPSData = PerformanceCalculator(
+	local PSData = PerformanceCalculator(
 		LiveDiffData.AimFinal, 
 		LiveDiffData.SpeedFinal, 
 		LiveDiffData.FLFinal, 
 		ODRate, ARRate, 
 		ModData, 
-		NoteCount,
-		Multiplier, 
+		NoteCount, 
 		MaxOnly, 
 		AimDiffStrainCount, 
 		SpeedDiffStrainCount, 
@@ -5829,14 +5828,12 @@ function AddPerfomanceScore(PSValue)
 		AccData
 	)
 	
-	local TotalPS = PSData.ActualTotalPS
-	local AimPS = PSData.Aim
-	local SpeedPS = PSData.Speed
-	local AccPS = PSData.Acc
-	local FlashlightPS = PSData.FlashLight
-	local ModPS = PSData.ModEffects
-	
-	
+	local TotalPS = PSData.Current.TotalPS
+	local AimPS = PSData.Current.AimPS
+	local SpeedPS = PSData.Current.SpeedPS
+	local AccPS = PSData.Current.AccPS
+	local FlashlightPS = PSData.Current.FlashlightPS
+	local ModPS = 0
 	
 	CurrentPerfomance = TotalPS
 	

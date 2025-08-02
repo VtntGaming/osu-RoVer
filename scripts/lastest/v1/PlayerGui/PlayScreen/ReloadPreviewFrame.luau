@@ -545,7 +545,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	local SpeedRelevantNoteCount = ReturnData.Difficulty.SpeedRelevantNoteCount
 
 	local MaxPSData = PerformanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, NoteCount, true, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount)
-	local RewardedAimPS = MaxPSData.Max.AccPS
+	local RewardedAimPS = MaxPSData.Max.AimPS
 	local RewardedSpeedPS = MaxPSData.Max.SpeedPS
 	local RewardedAccPS = MaxPSData.Max.AccPS
 	local RewardedFlashlightPS = MaxPSData.Max.FlashlightPS

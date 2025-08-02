@@ -35,10 +35,10 @@ function calculateSpeedHighDeviationNerf(Attributes:SpeedAttributes):number
 	return adjustedSpeedValue / speedValue
 end
 
-type AccuracyData = {
+export type AccuracyData = {
 	h300:number, h100:number, h50:number, missCount:number,
-	EffectiveMissCount:number,
-	Accuracy:number,
+	EffectiveMissCount:number?,
+	Accuracy:number?,
 	SpeedDeviation:number?,
 }
 
@@ -105,7 +105,7 @@ function _CalculateDeviation(relevantCount300:number, relevantCount100:number, r
 	local h50Time = ConverterTools.HitWindowsFor.h50(ODRate, ModData.SA or 1)
 	
 	if pLowerBound > 0.01 then
-		deviation = h300Time / math.sqrt(2) * DifficultyCalculationUtils.ErfInv(pLowerBound)
+		deviation = h300Time / (math.sqrt(2) * DifficultyCalculationUtils.ErfInv(pLowerBound))
 		
 		local h100WindowTailAmount = math.sqrt(2/math.pi) * h100Time * math.exp(-0.5 * math.pow(h100Time / deviation, 2))
 				/ (deviation * DifficultyCalculationUtils.Erf(h100Time / (math.sqrt(2) * deviation)))
@@ -116,8 +116,6 @@ function _CalculateDeviation(relevantCount300:number, relevantCount100:number, r
 	
 	local h50Variance = (h50Time * h50Time + h100Time * h50Time + h100Time * h100Time) / 3
 	deviation = math.sqrt(((relevantCount300 + relevantCount100) * math.pow(deviation, 2) + relevantCount50 * h50Variance) / (relevantCount300 + relevantCount100 + relevantCount50))
-	
-	
 	
 	return deviation
 end
@@ -188,9 +186,16 @@ function _ComputeAccuracyValue(Attributes:AccuracyAttributes):number
 	if Attributes.ModData.NS then
 		hitObjectsWithAccuracy += Attributes.NoteCount.Sliders
 	end
+	
+	local totalNotes = hitObjectsWithAccuracy + Attributes.NoteCount.Spinners
 
 	local accData = Attributes.AccuracyData	
 	local totalHit = accData.h300 + accData.h100 + accData.h50 + accData.missCount
+	
+	if totalHit < totalNotes then
+		-- Simulate the acc ps they gonna get
+		hitObjectsWithAccuracy *= (totalHit / totalNotes)
+	end
 	
 	if hitObjectsWithAccuracy > 0 then
 		betterAccuracyPercentage = ((Attributes.AccuracyData.h300 - math.max(totalHit - hitObjectsWithAccuracy, 0)) * 6 + accData.h100 * 2 + accData.h50) / (hitObjectsWithAccuracy * 6)
@@ -351,7 +356,7 @@ function _GetPerfomanceAttributes(Attributes:GeneralAttributes):ReturnAttributes
 	return returnAttributes
 end
 
-type PerfomanceAttributes = {
+export type PerfomanceAttributes = {
 	Current:ReturnAttributes,
 	Max:ReturnAttributes
 }
@@ -407,24 +412,17 @@ return function(
 		MaxCombo = 0,
 		MapMaxCombo = 0
 	}
-	print(debug.traceback())
-	print(
-		AimValue, 
-		SpeedValue, 
-		FLValue, 
-		ODRate, 
-		ARRate, 
-		ModData, 
-		NoteCount, 
-		MaxOnly, 
-		AimDiffStrainCount, 
-		SpeedDiffStrainCount, 
-		SpeedRelevantNoteCount, 
-		AccuracyData
-	)
 	
 	local perfectScoreResult = _GetPerfomanceAttributes(PerfectScoreAttribute)
 	ReturnAttributes.Max = perfectScoreResult
+	
+	if not MaxOnly then
+		local PlayerScoreAttribute = _DeepCopy(PerfectScoreAttribute)::GeneralAttributes
+		PlayerScoreAttribute.AccuracyData = AccuracyData
+		
+		local playerScoreResult = _GetPerfomanceAttributes(PlayerScoreAttribute)
+		ReturnAttributes.Current = playerScoreResult
+	end
 	
 	return ReturnAttributes
 end

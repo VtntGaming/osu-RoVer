@@ -63,6 +63,7 @@ function utils.ErfInv(x:number):number
 	
 	local a = 0.147
 	local sgn = math.sign(x)
+	x = math.abs(x)
 	local ln = math.log(1 - x * x)
 	local t1 = 2 / (math.pi * a) + ln / 2
 	local t2 = ln / a
