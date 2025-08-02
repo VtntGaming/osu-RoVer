@@ -17,7 +17,6 @@ local tick = os.clock
 local PerformanceCalculator = require(workspace.PerformanceCalculator)
 SliderComponent = require(ScriptComponent.Gameplay.SliderComponent)
 local modData = require(workspace.ModData)
-local StrainSkills = require(workspace.DifficultyCalculator.StrainSkills)
 StreamingLoop = require(ScriptComponent.Perfomance.StreamingCode).create()
 SliderObjManage = require(ScriptComponent.Perfomance.SliderObjManage).init()
 
@@ -1262,7 +1261,10 @@ LoadLeaderboard = function()
 					AddLeaderboardConnection(NewLBFrame,Data.ExtraData,Data.Score,Data.UID,GetDate(Data.ExtraData.Date))
 				end)
 
-				if not Success then warn("Player leaderboard load failed ",Data) end
+				if not Success then 
+					warn("Player leaderboard load failed ",Data)
+					warn(output)
+				end
 				for i = 1,10 do
 					wait()
 				end
@@ -4113,7 +4115,7 @@ script.Parent.HitError.HitErrorDisplay._100s.Size = UDim2.new(hit100/hit50,0,0.2
 EstimatedCombo = 0
 
 AccuracyData = {
-	h300 = 0,h100 = 0,h50 = 0,miss = 0,Combo = 0, MaxCombo = 0, MaxPeromanceCombo = 0, PerfomanceCombo = 0, h300Bonus = 0, bonustotal = 0,
+	h300 = 0,h100 = 0,h50 = 0,miss = 0, Combo = 0, MaxCombo = 0, MaxPeromanceCombo = 0, PerfomanceCombo = 0, h300Bonus = 0, bonustotal = 0,
 	HitErrorGraph = {
 
 	},
@@ -5526,7 +5528,6 @@ local LiveDiffData = {
 }
 LiveDiffLastHit = tick()
 
-local Missed = false -- If turn on, pp based on combo will enabled
 
 if PSDisplay == true then
 	script.Parent.PSEarned.Visible = true
@@ -5546,11 +5547,36 @@ if not Flashlight then
 	script.Parent.LiveDiffDisplay.Flashlight.Visible = false
 end
 
+local LivePlayProcessing = require(ScriptComponent.Gameplay.LivePlayProcessing)
+local LivePlaySession = LivePlayProcessing.new()
+LivePlaySession:SetupData({
+	ModData = {
+		HD = HiddenMod,
+		HR = HardRock,
+		EZ = EasyMod,
+		NF = NoFail,
+		NS = not SliderMode,
+		FL = Flashlight,
+		RX = false,
+		AP = false,
+		AT = AutoPlay,
+		SO = false,
+		V2 = ScoreV2Enabled,
+		TD = TouchDeviceDetected,
+		DA = DifficultyAdjust,
+		SA = SongSpeed
+	},
+	ODRate = ReturnData.Difficulty.OverallDifficulty,
+	ARRate = ReturnData.Difficulty.ApproachRate,
+	NoteCount = ReturnData.NoteCount,
+	AimDiffStrainCount = ReturnData.Difficulty.AimDifficultyStrainCount,
+	SpeedDiffStrainCount = ReturnData.Difficulty.SpeedDifficultyStrainCount,
+	SpeedRelevantNoteCount = ReturnData.Difficulty.SpeedRelevantNoteCount,
+})
+
 task.spawn(function()
 	local LiveDiffDisplay = script.Parent.LiveDiffDisplay
 	local DiffStrikeWarning = LiveDiffDisplay.DiffStrikeWarning
-	local basePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
-	--local LiveDiffValue = LiveDiffDisplay.LiveDiffValue
 
 	local waittime = 0
 	if OptimizedPerfomance then
@@ -5586,50 +5612,6 @@ task.spawn(function()
 			LiveDiffDisplay = LiveDiffDisplay,
 			LiveDiffData = LiveDiffData
 		})
-		
-		
-		--[[local exRate = 1/2.25
-		local mulRate = 1.44226
-
-		local CalculatedAimDiff = math.pow(CurrentLiveDiffAim, exRate) * mulRate * math.pow(0.15, tick() - LiveDiffLastHit)
-		local CalculatedSpeedDiff = math.pow(CurrentLiveDiffSpeed, exRate) * mulRate * math.pow(0.3, tick() - LiveDiffLastHit)
-		local CalculatedFLDiff = math.pow(CurrentLiveDiffFL, exRate) * mulRate * math.pow(0.15, tick() - LiveDiffLastHit)
-
-		CalculatedAimDiff /= 4.53871
-		CalculatedSpeedDiff /= 4.53871
-		CalculatedFLDiff /= 4.53871
-
-		local RewardedAimPS = basePerfomance(CalculatedAimDiff)
-		local RewardedSpeedPS = basePerfomance(CalculatedSpeedDiff)
-		local RewardedFlashlightPS =  basePerfomance(CalculatedFLDiff)
-
-		local diffCalcPS = ((RewardedAimPS^1.1+RewardedSpeedPS^1.1 +RewardedFlashlightPS^1.1)^(1/1.1))
-
-		local CalculatedLiveDiff = 0.027 * math.pow(1.15, 1/3) * (math.pow(100000 / math.pow(2, 1 / 1.1) * diffCalcPS ,1/3) + 4)
-		if diffCalcPS < 0.01 then
-			CalculatedLiveDiff = 0
-		end
-
-		local CurrentGraphNum = math.floor(#DiffGraphList / (BeatmapLength / 1000) * (tick() - Start)) + 1
-		local CurrentGraph = DiffGraphList[CurrentGraphNum] or DiffGraphList[1]
-		local NextGraph = math.max(DiffGraphList[CurrentGraphNum + 1] or 0, DiffGraphList[CurrentGraphNum + 2] or 0)
-
-		if NextGraph and NextGraph >= 60 and NextGraph >= ReturnData.Difficulty.BeatmapDifficulty - 40 and NextGraph >= CurrentGraph + 10 then
-			DiffStrikeWarning.Visible = true
-			StrikeLock = true
-		elseif not StrikeLock or CalculatedLiveDiff * 10 >= DiffGraphList[CurrentGraphNum - 1] or 0 + 7.5 then
-			StrikeLock = false
-			DiffStrikeWarning.Visible = false
-		end
-
-		TweenService:Create(LiveDiffValue, TweenInfo.new(0.2, Enum.EasingStyle.Linear), {Value = CalculatedLiveDiff}):Play()
-
-		local CurrentDiff = LiveDiffValue.Value
-		local ActualDiff = CalculatedLiveDiff
-		LiveDiffDisplay.Text = string.format("DR: %.2f",math.max(ActualDiff))
-		LiveDiffDisplay.Aim.Text = string.format("%.2f",math.max(CalculatedAimDiff))
-		LiveDiffDisplay.Speed.Text = string.format("%.2f",math.max(CalculatedSpeedDiff))
-		LiveDiffDisplay.Flashlight.Text = string.format("%.2f",math.max(CalculatedFLDiff))]]
 	end)
 end)
 if not Flashlight then
@@ -5642,220 +5624,14 @@ function ClampTop100Data(Data)
 	end
 end
 
-function AddPerfomanceScore(PSValue)
-	--[[
-	local LiveDiffData = {
-		Aim = {},
-		Speed = {},
-		Flashlight = {},
-		AimFinal = 0, SpeedFinal = 0, FLFinal = 0
+function AddPerfomanceScore(PSValue, HitObj):number
+	local _accData:PerformanceCalculator.AccuracyData = {
+		h300 = AccuracyData.h300, h100 = AccuracyData.h100,
+		h50 = AccuracyData.h50, missCount = AccuracyData.miss
 	}
+	LivePlaySession:ProcessPerfomanceScore(PSValue, HitObj and HitObj.Time or 0, _accData)
 	
-	]]
-	
-	local function sortStrain(data)
-		table.sort(data,function(a,b) return a>b end)
-	end
-	
-	local function FLDifficultyValue(FLStrain)
-		local difficulty = 0
-		sortStrain(FLStrain)
-		for i, strain in pairs(FLStrain) do
-			if strain <= 0 or i > 400 then break end
-			difficulty += strain
-		end
-		return difficulty
-	end
-	
-	local function difficultyValue(data, isAim)
-		local reducedSelectionCount = 10
-		local weight = 1
-		local decayWeight = 0.9
-		local difficulty = 0
-		local ReducedStrainBaseline = 0.75
-		
-		local base = cloneTable(data)
-		for i,a in pairs(base) do
-			local scale = math.log10(lerp(1,10,math.clamp(i/reducedSelectionCount,0,1)))
-			base[i] *= lerp(ReducedStrainBaseline, 1, scale)
-		end
-
-		sortStrain(base)
-
-		for _,strain in pairs(base) do
-			if strain <= 0 then break end
-
-			difficulty += strain * weight
-			weight *= decayWeight
-		end
-		
-		return difficulty
-	end
-	
-	local function fixStrain(strain, count)
-		for i = #strain, count+1, -1 do
-			strain[i] = nil
-		end
-	end
-	
-	if PSValue then
-		local RhythmDiff = PSValue.Rhythm
-		CurrentLiveDiffAim *= PSValue.AimStrainDecay
-		CurrentLiveDiffAim += PSValue.Aim
-		CurrentLiveDiffSpeed *= PSValue.SpeedStrainDecay
-		CurrentLiveDiffSpeed += PSValue.Speed
-		if Flashlight then
-			CurrentLiveDiffFL *= PSValue.FLStrainDecay
-			CurrentLiveDiffFL += PSValue.Flashlight
-		end
-		LiveDiffLastHit = tick()
-		
-		local CrrData = {CurrentLiveDiffAim, CurrentLiveDiffSpeed, CurrentLiveDiffFL}
-		local DiffChange = false
-		
-		if (#LiveDiffData.Aim < 100 or CrrData[1] > LiveDiffData.Aim[100]) and CrrData[1] > 0 then
-			LiveDiffData.Aim[#LiveDiffData.Aim+1] = CrrData[1]
-			sortStrain(LiveDiffData.Aim)
-			fixStrain(LiveDiffData.Aim, 100)
-			LiveDiffData.AimFinal = math.pow(difficultyValue(LiveDiffData.Aim, true), 1/2) * 0.0675 * 0.85
-		end
-		if (#LiveDiffData.Speed < 100 or CrrData[2]*RhythmDiff > LiveDiffData.Speed[100]) and CrrData[2] > 0 then
-			LiveDiffData.Speed[#LiveDiffData.Speed+1] = CrrData[2]*RhythmDiff
-			sortStrain(LiveDiffData.Speed)
-			fixStrain(LiveDiffData.Speed, 100)
-			LiveDiffData.SpeedFinal = math.pow(difficultyValue(LiveDiffData.Speed), 1/2) * 0.0675 * 1
-		end
-		if Flashlight and CrrData[3] > 0 and (#LiveDiffData.Flashlight < 400 or CrrData[3] > LiveDiffData.Flashlight[400]) then
-			LiveDiffData.Flashlight[#LiveDiffData.Flashlight+1] = CrrData[3]
-			sortStrain(LiveDiffData.Flashlight)
-			fixStrain(LiveDiffData.Flashlight, 400)
-			LiveDiffData.FLStacked += CrrData[3]
-			LiveDiffData.FLFinal = math.pow(FLDifficultyValue(LiveDiffData.Flashlight), 1/2) * 0.0675
-		end
-	end
-
-	--[[local TotalHit = AccuracyData.h300 + AccuracyData.h100 + AccuracyData.h50 + AccuracyData.miss
-	local Accuracy = (AccuracyData.h300*3 + AccuracyData.h100 + AccuracyData.h50*0.5) / (TotalHit * 3)
-	local BetterAcc = ((AccuracyData.h300 - (TotalHit - #BeatmapData)) * 3 + AccuracyData.h50 + AccuracyData.h50 * 0.5) / (#BeatmapData * 3)
-	local MissCount = AccuracyData.miss
-	local AimPS = MaxPSValue.Aim
-	local SpeedPS = MaxPSValue.Speed
-	local FlashlightPS = MaxPSValue.Flashlight
-	local AccPS = MaxPSValue.Acc
-	local Consistency = 1
-	local Scaling = math.min(math.pow(TotalHit, 0.8) / math.pow(#BeatmapData, 0.8), 1.0)
-
-
-
-	if MissCount > 0 then
-		AimPS *= 0.97 * math.pow(1 - math.pow(MissCount / TotalHit, 0.775), MissCount)
-		SpeedPS *= 0.97 * math.pow(1 - math.pow(MissCount / TotalHit, 0.775), math.pow(MissCount, 0.875))
-		FlashlightPS *= 0.97 * math.pow(1 - math.pow(MissCount / TotalHit, 0.775), math.pow(MissCount, .875))
-	end
-
-	-- it's pretty easy to adjust AimPS based on Accuracy
-	AimPS *= Accuracy
-
-	-- but in the other hand, SpeedPS and AccPS isn't that easy...
-	SpeedPS *= (0.95 + math.pow(OverallDifficulty, 2) / 750) * math.pow(Accuracy, (14.5 - math.max(OverallDifficulty, 8)) / 2)
-	-- nerf doubletapping effect
-	SpeedPS *= math.pow(0.99, (AccuracyData.h50 < TotalHit / 500) and 0 or (AccuracyData.h50 - TotalHit / 500))
-
-	AccPS *= math.pow(BetterAcc, 24)
-
-	-- flashlight (if avaiable)
-
-	FlashlightPS *= 0.5 + Accuracy / 2.0;
-
-	AimPS *= Scaling
-	SpeedPS *= Scaling
-	AccPS *= Scaling
-	FlashlightPS *= Scaling
-
-
-	local ModPS = AimPS * (MaxPSValue.Mod.Aim-1) + SpeedPS * (MaxPSValue.Mod.Speed-1) + AccPS * (MaxPSValue.Mod.Acc-1) + FlashlightPS * (MaxPSValue.Mod.Flashlight-1)
-
-
-	local TotalPS = math.pow(AimPS^0.95 + SpeedPS^0.95 + AccPS^0.95 + FlashlightPS^0.95,1/0.95) + ModPS]]
-	local AimValue = ReturnData.Difficulty.AimDifficulty
-	local SpeedValue = ReturnData.Difficulty.SpeedDifficulty
-	local FLValue = ReturnData.Difficulty.FlashLightDifficulty
-	local ODRate = ReturnData.Difficulty.OverallDifficulty
-	local ARRate = ReturnData.Difficulty.ApproachRate
-	local ModData:modData.ModData = {
-		HD = HiddenMod,
-		HR = HardRock,
-		EZ = EasyMod,
-		NF = NoFail,
-		NS = not SliderMode,
-		FL = Flashlight,
-		RX = false,
-		AP = false,
-		AT = AutoPlay,
-		SO = false,
-		V2 = ScoreV2Enabled,
-		TD = TouchDeviceDetected,
-		DA = DifficultyAdjust,
-		SA = SongSpeed
-	}
-	local NoteCount = ReturnData.NoteCount
-	local Multiplier = {
-		Aim = 1, Speed = 1, Flashlight = 1, Accuracy = 1
-	}
-	local MaxOnly = false
-	local AimDiffStrainCount = ReturnData.Difficulty.AimDifficultyStrainCount
-	local SpeedDiffStrainCount = ReturnData.Difficulty.SpeedDifficultyStrainCount
-	local SpeedRelevantNoteCount = ReturnData.Difficulty.SpeedRelevantNoteCount
-	local AccData:PerformanceCalculator.AccuracyData = {
-		h300 = AccuracyData.h300,
-		h100 = AccuracyData.h100,
-		h50 = AccuracyData.h50,
-		missCount = AccuracyData.miss
-	}
-	
-	
-	local PSData = PerformanceCalculator(
-		LiveDiffData.AimFinal, 
-		LiveDiffData.SpeedFinal, 
-		LiveDiffData.FLFinal, 
-		ODRate, ARRate, 
-		ModData, 
-		NoteCount, 
-		MaxOnly, 
-		AimDiffStrainCount, 
-		SpeedDiffStrainCount, 
-		SpeedRelevantNoteCount, 
-		AccData
-	)
-	
-	local TotalPS = PSData.Current.TotalPS
-	local AimPS = PSData.Current.AimPS
-	local SpeedPS = PSData.Current.SpeedPS
-	local AccPS = PSData.Current.AccPS
-	local FlashlightPS = PSData.Current.FlashlightPS
-	local ModPS = 0
-	
-	CurrentPerfomance = TotalPS
-	
-	local AimSpeed = math.round(AimPS * 10) * 1000000 +  math.round(SpeedPS * 10)
-	local AccFL = math.round(AccPS * 10) * 1000000 + math.round(FlashlightPS * 10)
-	local Mod = math.round(ModPS * 10)
-	
-	local LivePSDisplay = script.Parent.PSEarned
-	LivePSDisplay.Actor:SendMessage("Process",{
-		AimSpeed = AimSpeed,
-		AccFL = AccFL,
-		Mod = Mod
-	})
-	--[[local DetailedPSDisplay = LivePSDisplay.DetailedDisplay
-	LivePSDisplay.Text = string.format("%.0fps",TotalPS)
-	DetailedPSDisplay.Aim.Text = string.format("Aim | %.1fps",AimPS)
-	DetailedPSDisplay.Speed.Text = string.format("Speed | %.1fps",SpeedPS)
-	DetailedPSDisplay.Flashlight.Text = string.format("Flashlight | %.1fps",FlashlightPS)
-	DetailedPSDisplay.Mod.Text = string.format("Mod | %.1fps",ModPS)
-	DetailedPSDisplay.Accuracy.Text = string.format("Acc | %.1fps",AccPS)]]
-
-	return TotalPS
+	return LivePlaySession.CurrentPerformance
 end
 
 
@@ -6720,7 +6496,6 @@ function LetTheGameBegin()
 					EstimatedCombo += 1
 					AccuracyData.MaxConsistency += EstimatedCombo
 					AccuracyData.PerfomanceCombo = 0
-					Missed = true
 					AddPerfomanceScore(HitObj.PSValue)
 					
 					AccuracyData.miss += 1
@@ -7276,7 +7051,6 @@ function LetTheGameBegin()
 										EstimatedCombo += 1
 										AccuracyData.MaxConsistency += EstimatedCombo
 										AccuracyData.PerfomanceCombo = 0
-										Missed = true
 										DrainHP(-0.02, -0.075, -0.14)
 									end
 								end
@@ -7390,7 +7164,6 @@ function LetTheGameBegin()
 										EstimatedCombo += 1
 										AccuracyData.MaxConsistency += EstimatedCombo
 										AccuracyData.PerfomanceCombo = 0
-										Missed = true
 										AddPerfomanceScore(HitObj.PSValue)
 										for i = 1, Multiplier do
 											DrainHP(-0.02, -0.075, -0.14)
@@ -7527,7 +7300,6 @@ function LetTheGameBegin()
 									EstimatedCombo += 1
 									AccuracyData.MaxConsistency += EstimatedCombo
 									AccuracyData.PerfomanceCombo = 0
-									Missed = true
 									AddPerfomanceScore(HitObj.PSValue)
 									if AccuracyData.Combo >= 20 then
 										script.Parent.ComboBreak:Play()
@@ -7729,7 +7501,6 @@ function LetTheGameBegin()
 							EstimatedCombo += 1
 							AccuracyData.MaxConsistency += EstimatedCombo
 							AccuracyData.PerfomanceCombo = 0
-							Missed = true
 							DrainHP(-0.03, -0.125, -0.2)
 							ComboNoteData.Missor50 = true
 							ComboNoteData.Full300 = false
@@ -7881,7 +7652,6 @@ function LetTheGameBegin()
 									EstimatedCombo += 1
 									AccuracyData.MaxConsistency += EstimatedCombo
 									AccuracyData.PerfomanceCombo = 0
-									Missed = true
 									if not HitObjProperties.isSlider or SliderMode == false then
 										AccuracyData.miss += 1
 										MissedInCurrentTime = true
@@ -7943,7 +7713,6 @@ function LetTheGameBegin()
 									EstimatedCombo += 1
 									AccuracyData.MaxConsistency += EstimatedCombo
 									AccuracyData.PerfomanceCombo = 0
-									Missed = true
 									DrainHP(-0.03, -0.125, -0.2)
 									CreateHitDelay(Color3.new(1, 0.372549, 0.372549),HitDelay)
 									ComboNoteData.Missor50 = true

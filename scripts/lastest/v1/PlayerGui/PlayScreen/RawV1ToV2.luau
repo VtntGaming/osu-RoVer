@@ -24,6 +24,13 @@ function getMinimumConsistencyScore(PlayerMaxCombo)
 	return math.pow(MinimumScore, 1.1704417) * 1.2255 * 6 * 1 * 0.7
 end
 
+function getMaximumConsistencyScore(PlayerMaxCombo:number, MapMaxCombo:number):number
+	local MinimumScore = getMinimumConsistencyScore(PlayerMaxCombo)
+	local RemainsCombo = MapMaxCombo - PlayerMaxCombo -- Assume player missed all at that section
+	local RemainsScore = RemainsCombo * (RemainsCombo + 1) // 2
+	return math.pow(RemainsScore, 1.1704417) * 1.2255 * 6 * 0.7 + MinimumScore
+end
+
 
 function getBaseMultiplier(ModData)
 	local multiplier = 1
@@ -73,10 +80,10 @@ return function(V1Score, AccuracyData, NoteCount, MaxCombo, MaxAccScore, MaxCons
 	-- We assume that the score follows the new score system
 	-- So the miss penalty also apply to this
 	local AccuracyScore = getAccuracyScore(AccuracyData, NoteCount, MaxCombo) * MissPenalty
-	local MinimumConsistencyScore = getMinimumConsistencyScore(AccuracyData.MaxCombo) * MissPenalty
-	local AssumedConsistencyScore = V1Score - AccuracyScore
-	local ConsistencyScore = math.max(MinimumConsistencyScore, AssumedConsistencyScore)
-	ConsistencyScore = math.min(ConsistencyScore, MaxConsistencyScore * MissPenalty) -- player score cannot higher than the max score
+	local MinimumConsistencyScore = math.max(0, getMinimumConsistencyScore(AccuracyData.MaxCombo) * MissPenalty)
+	local MaximumConsistencyScore = math.min(getMaximumConsistencyScore(AccuracyData.MaxCombo, MaxCombo), MaxConsistencyScore) * MissPenalty
+	local AssumedConsistencyScore = math.max(0, V1Score - AccuracyScore)
+	local ConsistencyScore = math.clamp(AssumedConsistencyScore, MinimumConsistencyScore, MaximumConsistencyScore) -- Clamp up the score
 	
 	local exRate = 0.44150110375
 	local AccV2Score = math.pow(AccuracyScore/MaxAccScore,exRate) * 300000 * MissPenalty
