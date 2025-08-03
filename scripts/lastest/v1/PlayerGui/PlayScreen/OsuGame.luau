@@ -1,3 +1,4 @@
+--[LOCATION]:[StarterGui.PlayScreen.OsuGame]
 -- Services instance load
 TweenService = game:GetService("TweenService")
 UserInputService = game:GetService("UserInputService")
@@ -8646,8 +8647,8 @@ end
 
 -->   2021 - 2025 osu!RoVer   <--
 -- osu!corescript by VtntGaming
--- String size: 311.909KB (V1.47)
+-- String size: 305.418KB (V1.47)
 
--- Source code used as a backup script, if you're not VtntGaming and see this please use it right :>
+-- Source code used as a backup script, if you're not VtntOsu and see this please use it right :>
 -- Some mathmethic is inspired/taken from osu! and osu!Lazer github source
 ----------------- End script -----------------

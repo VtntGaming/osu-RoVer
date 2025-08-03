@@ -1,3 +1,4 @@
+--[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.Components.Gameplay.LivePlayProcessing]
 --!strict
 local modData = require(workspace.ModData)
 local DifficultyCalculator = require(workspace.DifficultyCalculator)

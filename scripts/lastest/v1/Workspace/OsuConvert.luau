@@ -1,8 +1,7 @@
 --[LOCATION]:[Workspace.OsuConvert]
---!native
 -- osu!RoVer converter
 -- convert raw osu file into readable and excutable lua data
--- V1.47 (Size: 49.93KB)
+-- V1.47 (Size: 38.56KB)
 
 local PerformanceCalculator = require(workspace.PerformanceCalculator)
 local BasePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
