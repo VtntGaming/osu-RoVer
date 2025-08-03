@@ -238,7 +238,7 @@ function _ComputeFlashlightValue(Attributes:FlashlightAttributes):number
 	end
 	local accData = Attributes.AccuracyData	
 	local totalHit = accData.h300 + accData.h100 + accData.h50 + accData.missCount
-	local flashlightPS = basePerformanceFL(Attributes.FLDiff)
+	local flashlightPS = basePerformanceFL(Attributes.FLDiff or 0)
 	local effectiveMissCount = accData.EffectiveMissCount
 	if effectiveMissCount > 0 then
 		flashlightPS *= 0.97 * math.pow	(1 - math.pow(effectiveMissCount / totalHit, 0.775), math.pow(effectiveMissCount, .875))

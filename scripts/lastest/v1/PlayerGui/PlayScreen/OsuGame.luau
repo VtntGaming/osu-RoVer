@@ -909,7 +909,12 @@ function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
 		end
 
 		local externalData
-		local DiffChangeModEnabled = Data.Mod.EZ ~= EasyMod or Data.Mod.HR ~= HardRock or Data.Mod.FL ~= Flashlight or (Flashlight and Data.Mod.HD ~= HiddenMod)
+		local DiffChangeModEnabled = 
+			Data.Mod.EZ ~= EasyMod or 
+			Data.Mod.HR ~= HardRock or 
+			Data.Mod.FL ~= Flashlight or 
+			(Flashlight and Data.Mod.HD ~= HiddenMod) or
+			Data.Mod.TD == true
 		if Data.Speed ~= PreviewMapPS.CurrentSpeed or DiffChangeModEnabled then
 			-- We re-calculate the map and update if the player's current mod data is difference than the current set
 			-- Player're not always set the NM mod to set so
@@ -5053,10 +5058,10 @@ spawn(function()
 			end
 
 
-			while tick() - Start < (BreakTime[2]/1000)-0.5 do
+			while tick() - Start < (BreakTime[2]/1000)-1 do
 				wait()
 				local TimeElapsed = (tick() - Start) - BreakTime[1]/1000
-				local TimeLeft = ((TimeElapsed+0.5 < Duration and (Duration - TimeElapsed)-0.5) or 0)
+				local TimeLeft = ((TimeElapsed+0.5 < Duration and (Duration - TimeElapsed)-1) or 0)
 				local DisplayTime = TimeLeft + 1
 				if TimeLeft == 0 then
 					DisplayTime = 0
@@ -5082,10 +5087,10 @@ spawn(function()
 			end
 
 			TweenService:Create(FlashlightFrame,TweenInfo.new(2,Enum.EasingStyle.Linear),{Size = UDim2.new(FLSize,0,FLSize,0)}):Play()
-			TweenService:Create(BreakTimeFrame.TimeProgress,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{BackgroundTransparency = 1}):Play()
-			TweenService:Create(BreakTimeFrame,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(0,4,0,2),Rotation = -20,GroupTransparency = 1}):Play()
-			TweenService:Create(script.Parent.BreaktimeFrameOutline,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(1.067,0,0.8,0)}):Play()
-			TweenService:Create(script.Parent.BreaktimeFrameOutline.UIStroke,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Transparency = 1}):Play()
+			TweenService:Create(BreakTimeFrame.TimeProgress,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{BackgroundTransparency = 1}):Play()
+			TweenService:Create(BreakTimeFrame,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(0,4,0,2),Rotation = -20,GroupTransparency = 1}):Play()
+			TweenService:Create(script.Parent.BreaktimeFrameOutline,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(1.067,0,0.8,0)}):Play()
+			TweenService:Create(script.Parent.BreaktimeFrameOutline.UIStroke,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Transparency = 1}):Play()
 			--TweenService:Create(BreakTimeFrame,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Position = UDim2.new(0.5,0,-1.5,-18)}):Play()
 		end
 	end
@@ -5515,10 +5520,6 @@ local StrainData = {
 	HighestOverall = 0
 }
 
-CurrentLiveDiffAim = 0
-CurrentLiveDiffSpeed = 0
-CurrentLiveDiffFL = 0
-
 -- We use this to increament the difficulty value of the game
 local LiveDiffData = {
 	Aim = {},
@@ -5596,12 +5597,11 @@ task.spawn(function()
 			waittime = 0
 		end
 		
-		
 		local env = ParallelProcessingFolder.Core_OsuGame_LiveDifficultyProcess:SendMessage("Process",{
-			CurrentLiveDiffAim = CurrentLiveDiffAim,
-			CurrentLiveDiffSpeed = CurrentLiveDiffSpeed,
-			CurrentLiveDiffFL = CurrentLiveDiffFL,
-			LiveDiffLastHit = LiveDiffLastHit,
+			CurrentLiveDiffAim = LivePlaySession.CurrentLiveDiffAim,
+			CurrentLiveDiffSpeed = LivePlaySession.CurrentLiveDiffSpeed,
+			CurrentLiveDiffFL = LivePlaySession.CurrentLiveDiffFL,
+			LiveDiffLastHit = LivePlaySession.LiveDiffLastHit,
 			DiffGraphList = DiffGraphList,
 			BeatmapLength = BeatmapLength,
 			Start = Start,
@@ -5611,8 +5611,13 @@ task.spawn(function()
 			LiveDiffValue = LiveDiffValue,
 			PeakDiffValue = PeakDiffValue,
 			LiveDiffDisplay = LiveDiffDisplay,
-			LiveDiffData = LiveDiffData
-		})
+			LiveDiffData = {
+				AimFinal = LivePlaySession.AimDiffFinal,
+				SpeedFinal = LivePlaySession.SpeedDiffFinal,
+				FLFinal = LivePlaySession.FLDiffFinal,
+				StarRating = LivePlaySession.CurrentStarRating
+			}
+		})		
 	end)
 end)
 if not Flashlight then
@@ -5625,12 +5630,12 @@ function ClampTop100Data(Data)
 	end
 end
 
-function AddPerfomanceScore(PSValue, HitObj):number
+function AddPerfomanceScore(HitObj):number
 	local _accData:PerformanceCalculator.AccuracyData = {
 		h300 = AccuracyData.h300, h100 = AccuracyData.h100,
 		h50 = AccuracyData.h50, missCount = AccuracyData.miss
 	}
-	LivePlaySession:ProcessPerfomanceScore(PSValue, HitObj and HitObj.Time or 0, _accData)
+	LivePlaySession:ProcessPerfomanceScore(HitObj and HitObj.PSValue or nil, HitObj and HitObj.Time or 0, _accData)
 	
 	return LivePlaySession.CurrentPerformance
 end
@@ -6475,19 +6480,19 @@ function LetTheGameBegin()
 						CreateHitResult(4)
 						AddScore(300)
 						AddHP(0.03 + 0.07)
-						AddPerfomanceScore(HitObj.PSValue)
+						AddPerfomanceScore(HitObj)
 					elseif Spinner.RoundRequired.Value-Spinner.Spinner.RoundSpinned.Value <= 1 then
 						AccuracyData.h100 += 1
 						CreateHitResult(3)
 						AddScore(100)
 						AddHP(0.011 + 0.05)
-						AddPerfomanceScore(HitObj.PSValue)
+						AddPerfomanceScore(HitObj)
 					else
 						AccuracyData.h50 += 1
 						CreateHitResult(2)
 						AddScore(50)
 						AddHP(0.002 + 0.03)
-						AddPerfomanceScore(HitObj.PSValue)
+						AddPerfomanceScore(HitObj)
 					end
 				else
 					if AccuracyData.Combo >= 20 then
@@ -6497,7 +6502,7 @@ function LetTheGameBegin()
 					EstimatedCombo += 1
 					AccuracyData.MaxConsistency += EstimatedCombo
 					AccuracyData.PerfomanceCombo = 0
-					AddPerfomanceScore(HitObj.PSValue)
+					AddPerfomanceScore(HitObj)
 					
 					AccuracyData.miss += 1
 					MissedInCurrentTime = true
@@ -7165,7 +7170,7 @@ function LetTheGameBegin()
 										EstimatedCombo += 1
 										AccuracyData.MaxConsistency += EstimatedCombo
 										AccuracyData.PerfomanceCombo = 0
-										AddPerfomanceScore(HitObj.PSValue)
+										AddPerfomanceScore(HitObj)
 										for i = 1, Multiplier do
 											DrainHP(-0.02, -0.075, -0.14)
 										end
@@ -7263,7 +7268,7 @@ function LetTheGameBegin()
 									end
 									AccuracyData.h300 += 1
 									AddScore(300)
-									AddPerfomanceScore(HitObj.PSValue)
+									AddPerfomanceScore(HitObj)
 									CreateSliderHitResult(4,SliderCurvePoints[#SliderCurvePoints])
 								elseif TickCollected/TickRequired >= 0.5 then
 									if isLastComboNote then
@@ -7279,7 +7284,7 @@ function LetTheGameBegin()
 									AccuracyData.h100 += 1
 									AddScore(100)
 									CreateSliderHitResult(3,SliderCurvePoints[#SliderCurvePoints])
-									AddPerfomanceScore(HitObj.PSValue)
+									AddPerfomanceScore(HitObj)
 								elseif TickCollected > 0 then
 									AccuracyData.h50 += 1
 									AddScore(50)
@@ -7289,7 +7294,7 @@ function LetTheGameBegin()
 										AddHP(0.002)
 									end
 									CreateSliderHitResult(2,SliderCurvePoints[#SliderCurvePoints])
-									AddPerfomanceScore(HitObj.PSValue)
+									AddPerfomanceScore(HitObj)
 								else
 									AccuracyData.PerfomanceCombo = 0
 									AccuracyData.miss += 1
@@ -7301,7 +7306,7 @@ function LetTheGameBegin()
 									EstimatedCombo += 1
 									AccuracyData.MaxConsistency += EstimatedCombo
 									AccuracyData.PerfomanceCombo = 0
-									AddPerfomanceScore(HitObj.PSValue)
+									AddPerfomanceScore(HitObj)
 									if AccuracyData.Combo >= 20 then
 										script.Parent.ComboBreak:Play()
 									end
@@ -7505,7 +7510,7 @@ function LetTheGameBegin()
 							DrainHP(-0.03, -0.125, -0.2)
 							ComboNoteData.Missor50 = true
 							ComboNoteData.Full300 = false
-							AddPerfomanceScore(HitObj.PSValue)
+							AddPerfomanceScore(HitObj)
 							CurrentHitnote = HitNoteID + 1
 							TotalNotes -= 1
 							if not HitObjProperties.isSlider or SliderMode == false then
@@ -7658,7 +7663,7 @@ function LetTheGameBegin()
 										MissedInCurrentTime = true
 										AddScore(0)
 										CreateHitResult(1)
-										AddPerfomanceScore(HitObj.PSValue)
+										AddPerfomanceScore(HitObj)
 									end
 									DrainHP(-0.03, -0.125, -0.2)
 									ComboNoteData.Missor50 = true
@@ -7723,7 +7728,7 @@ function LetTheGameBegin()
 										MissedInCurrentTime = true
 										AddScore(0)
 										CreateHitResult(1)
-										AddPerfomanceScore(HitObj.PSValue)
+										AddPerfomanceScore(HitObj)
 									end
 									HitMiss = true
 									task.spawn(function()
@@ -7821,7 +7826,7 @@ function LetTheGameBegin()
 											CreateHitDelay(Color3.new(0.686275, 1, 1),HitDelay)
 											CreateHitResult(4)
 											AddScore(300)
-											AddPerfomanceScore(HitObj.PSValue)
+											AddPerfomanceScore(HitObj)
 										elseif math.abs(HitDelay) <= hit100 then
 											if isLastComboNote then
 												if not ComboNoteData.Missor50 then
@@ -7837,7 +7842,7 @@ function LetTheGameBegin()
 											CreateHitDelay(Color3.new(0.686275, 1, 0.686275),HitDelay)
 											CreateHitResult(3)
 											AddScore(100)
-											AddPerfomanceScore(HitObj.PSValue)
+											AddPerfomanceScore(HitObj)
 										else
 											ComboNoteData.Missor50 = true
 											ComboNoteData.Full300 = false
@@ -7850,7 +7855,7 @@ function LetTheGameBegin()
 											CreateHitDelay(Color3.new(1, 1, 0.686275),HitDelay)
 											CreateHitResult(2)
 											AddScore(50)
-											AddPerfomanceScore(HitObj.PSValue)
+											AddPerfomanceScore(HitObj)
 										end
 									else
 										AddHP(0.02)
@@ -8139,7 +8144,7 @@ StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat,true)
 
 ----------- Calculate perfomance score -----------
 
-local TotalRewardedPS = AddPerfomanceScore()
+local TotalRewardedPS = LivePlaySession.CurrentPerformance
 
 ----------- Submit play result ---------------
 local function GetNewNum(CurrentNum)

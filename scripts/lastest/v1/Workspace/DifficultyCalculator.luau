@@ -28,6 +28,19 @@ function lerp(a:number,b:number,r:number)
 	return a + (b-a)*r
 end
 
+local function _DeepCopy(t:{any}):{any}
+	local newT = {}
+	for index, data in pairs(t) do
+		if typeof(data) == "table" then
+			newT[index] = _DeepCopy(data)
+		else
+			newT[index] = data
+		end
+	end
+
+	return newT
+end
+
 type ModData = modData.ModData
 
 function calculator.CalculateDifficultyMultiplier(ModData:ModData):number
@@ -50,7 +63,7 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 	
 	sortPeak(StrainPeak)
 	
-	for i,a in pairs(StrainData) do
+	for i,a in pairs(StrainPeak) do
 		local scale = math.log10(lerp(1,10,math.clamp((i-1)/reducedSelectionCount,0,1)))
 		StrainPeak[i] *= lerp(ReducedStrainBaseline, 1, scale)
 		if i > 10 then
@@ -68,6 +81,35 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 	return difficulty
 end
 
+function calculator.LiveDifficultyValue(StrainPeak:{number}):number
+	local reducedSelectionCount = 10
+	local weight = 1
+	local decayWeight = 0.9
+	local difficulty = 0
+	local ReducedStrainBaseline = 0.75
+	
+	StrainPeak = _DeepCopy(StrainPeak)::{number}
+	
+	sortPeak(StrainPeak)
+	
+	for i,a in pairs(StrainPeak) do
+		local scale = math.log10(lerp(1,10,math.clamp((i-1)/reducedSelectionCount,0,1)))
+		StrainPeak[i] *= lerp(ReducedStrainBaseline, 1, scale)
+		if i > 10 then
+			break
+		end
+	end
+
+	sortPeak(StrainPeak)
+	for _,strain in pairs(StrainPeak) do
+		if strain <= 0 then break end
+
+		difficulty += strain * weight
+		weight *= decayWeight
+	end
+	return difficulty
+end
+
 function calculator.DifficultyValueFlashlight(StrainData:{{number}})
 	local difficulty = 0
 	sortStrain(StrainData)
@@ -77,20 +119,6 @@ function calculator.DifficultyValueFlashlight(StrainData:{{number}})
 	end
 	return difficulty
 end
-
-local function _DeepCopy(t:{any}):{any}
-	local newT = {}
-	for index, data in pairs(t) do
-		if typeof(data) == "table" then
-			newT[index] = _DeepCopy(data)
-		else
-			newT[index] = data
-		end
-	end
-
-	return newT
-end
-
 
 function calculator.RelevantNoteCount(strainData:{{number}})
 	strainData = _DeepCopy(strainData)
@@ -161,7 +189,7 @@ export type Data = {
 		HP:number
 	},
 	NoteCount:{
-		Cirlce:number,
+		Circle:number,
 		Slider:number,
 		Spinner:number,
 		Total:number
@@ -230,7 +258,7 @@ function calculateSpeedVisibilityFactor(AR:number, attributes)
 	return evaluator.ReverseLerp(AR, ar_factor_end_point, arFactorStartingPoint)
 end
 
-function computeAimRating(aimDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number, attributes)
+function calculator.ComputeAimRating(aimDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number, attributes)
 	if modData.AP then
 		return 0
 	end
@@ -276,7 +304,7 @@ function computeAimRating(aimDifficultyValue:number, modData:ModData, totalHit:n
 	return aimRating * math.pow(ratingMultiplier, 1/3)
 end
 
-function computeSpeedRating(speedDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number, attributes)
+function calculator.ComputeSpeedRating(speedDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number, attributes)
 	if modData.RX then
 		return 0
 	end
@@ -350,8 +378,8 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	
 	local mechanicalDifficultyRating = calculateMechanicalDifficultyRating(aimDifficultyValue, speedDifficultyValue)
 	
-	local aimRating = computeAimRating(aimDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
-	local speedRating = computeSpeedRating(speedDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
+	local aimRating = calculator.ComputeAimRating(aimDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
+	local speedRating = calculator.ComputeSpeedRating(speedDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
 	local flashlightRating = 0	-- I will do this later
 	
 	local aimBasePerfomance = basePerfomance(aimRating)
@@ -377,6 +405,52 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	}
 	
 	return Attributes
+end
+
+export type LiveDifficultyAttributes = {
+	AimPeak:{number},
+	SpeedPeak:{number},
+	ModData:modData.ModData,
+	ARRate:number,
+	ODRate:number,
+	NoteCount:{
+		Circle:number,
+		Slider:number,
+		Spinner:number,
+		Total:number
+	}
+}
+
+export type LiveDifficultyReturnAttributes = {
+	AimDifficulty:number,
+	SpeedDifficulty:number,
+	StarRating:number
+}
+
+function calculator.GetDifficultyAttributesFromLiveData(Attributes:LiveDifficultyAttributes):LiveDifficultyReturnAttributes
+	local aimDifficultyValue = calculator.LiveDifficultyValue(Attributes.AimPeak)
+	local speedDifficultyValue = calculator.LiveDifficultyValue(Attributes.SpeedPeak)
+	local mechanicalDifficultyRating = calculateMechanicalDifficultyRating(aimDifficultyValue, speedDifficultyValue)
+	
+	local aimRating = calculator.ComputeAimRating(aimDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
+	local speedRating = calculator.ComputeSpeedRating(speedDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
+	local flashlightRating = 0
+	
+	local aimBasePerfomance = basePerfomance(aimRating)
+	local speedBasePerfomance = basePerfomance(speedRating)
+	
+	local basePerfomance = math.pow(
+		aimBasePerfomance ^ 1.1 + speedBasePerfomance ^ 1.1 + 0 ^ 1.1, 1 / 1.1
+	)
+	
+	local multiplier = calculateDifficultyMultiplier(Attributes.ModData, Attributes.NoteCount.Total, Attributes.NoteCount.Spinner)
+	local starRating = calculateStarRating(basePerfomance, multiplier)
+	
+	return {
+		AimDifficulty = aimRating,
+		SpeedDifficulty = speedRating,
+		StarRating = starRating
+	}
 end
 
 return calculator

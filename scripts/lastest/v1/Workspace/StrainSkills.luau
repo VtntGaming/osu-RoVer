@@ -42,7 +42,7 @@ function StrainSkills.GetStrainPeak(strainData:{{number}}, strainType:string):{n
 			_currentSectionEnd = math.ceil(strain[2]/_sectionLength) * _sectionLength
 		end
 		
-		if strain[2] > _currentSectionEnd then
+		while strain[2] > _currentSectionEnd do
 			local previousTime = 0
 			if i > 1 then
 				previousTime = strainData[i-1][2]
@@ -57,7 +57,15 @@ function StrainSkills.GetStrainPeak(strainData:{{number}}, strainType:string):{n
 	
 	_saveCurrentPeak()
 	
-	return StrainPeak
+	local FilteredPeaks = {}
+	-- We need to filters out zero strain for the worst case senario
+	for _, strain in pairs(StrainPeak) do
+		if strain > 0 then
+			FilteredPeaks[#FilteredPeaks + 1] = strain
+		end
+	end
+	
+	return FilteredPeaks
 end
 
 return StrainSkills

@@ -21,7 +21,7 @@ function sineOut(t)
 	return math.sin((t * math.pi) / 2)
 end
 
-function Slider.new(curvePoint:{ [any]: Vector2 }, slideCount:number, circleRadius:number, ExtraLengthData:{[any]:number}, ObjManage)
+function Slider.new(curvePoint:{ [any]: Vector2}, slideCount:number, circleRadius:number, ExtraLengthData:{[any]:number}, ObjManage)
 	local SliderObject = {
 		TotalLength = 0
 	} 
@@ -30,6 +30,16 @@ function Slider.new(curvePoint:{ [any]: Vector2 }, slideCount:number, circleRadi
 	for i, currentPoint in pairs(curvePoint) do
 		local nextPoint = curvePoint[i+1]
 		if not nextPoint then break end
+		
+		if typeof(currentPoint) == "table" then
+			local _current = currentPoint::{X:number, Y:number, ExtraLength:number}
+			currentPoint = Vector2.new(_current.X, _current.Y)
+		end
+		
+		if typeof(nextPoint) == "table" then
+			local _next = nextPoint::{X:number, Y:number, ExtraLength:number}
+			nextPoint = Vector2.new(_next.X, _next.Y)
+		end
 		
 		local Vector = (nextPoint - currentPoint)
 		local length = Vector.Magnitude

@@ -26,7 +26,7 @@ end
 
 function getMaximumConsistencyScore(PlayerMaxCombo:number, MapMaxCombo:number):number
 	local MinimumScore = getMinimumConsistencyScore(PlayerMaxCombo)
-	local RemainsCombo = MapMaxCombo - PlayerMaxCombo -- Assume player missed all at that section
+	local RemainsCombo = math.max(0, MapMaxCombo - PlayerMaxCombo) -- Assume player missed all at that section
 	local RemainsScore = RemainsCombo * (RemainsCombo + 1) // 2
 	return math.pow(RemainsScore, 1.1704417) * 1.2255 * 6 * 0.7 + MinimumScore
 end
