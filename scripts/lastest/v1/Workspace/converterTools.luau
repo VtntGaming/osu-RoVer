@@ -107,6 +107,10 @@ tool.GetDifficultyValueAfterMod = {
 			rate *= 0.5		
 		end
 		
+		if not (modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.AR) then
+			rate = math.clamp(rate, 0, 10)
+		end
+		
 		if modData.SA and modData.SA ~= 1 then
 			local ARTime = 1200
 			if rate < 5 then
@@ -138,6 +142,9 @@ tool.GetDifficultyValueAfterMod = {
 		elseif modData.EZ then
 			rate *= 0.5		
 		end
+		if not (modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.OD) then
+			rate = math.clamp(rate, 0, 10)
+		end
 		if modData.SA and modData.SA ~= 1 then
 			local h300 = tool.HitWindowsFor.h300(rate, modData.SA)
 			rate = (79.5 - h300) / 6
@@ -154,6 +161,9 @@ tool.GetDifficultyValueAfterMod = {
 		elseif modData.EZ then
 			rate *= 0.5		
 		end
+		if not (modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.CS) then
+			rate = math.clamp(rate, 0, 10)
+		end
 		
 		return rate
 	end,
@@ -164,6 +174,9 @@ tool.GetDifficultyValueAfterMod = {
 			rate *= 1.3
 		elseif modData.EZ then
 			rate *= 0.5		
+		end
+		if not (modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.HP) then
+			rate = math.clamp(rate, 0, 10)
 		end
 
 		return rate

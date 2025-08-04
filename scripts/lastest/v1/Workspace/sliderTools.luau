@@ -213,7 +213,7 @@ end
 
 -- Main function
 
-function sliderTools.convertToBaseCurve(raw:string, headPosition:Vector2)
+function sliderTools.convertToBaseCurve(raw:string, headPosition:Vector2, isHR:boolean?)
 	local curveType
 	local curvePoints = {}
 	curvePoints[1] = headPosition	-- Include the circle position
@@ -221,15 +221,19 @@ function sliderTools.convertToBaseCurve(raw:string, headPosition:Vector2)
 		if i == 1 then
 			curveType = str
 		else
-			curvePoints[#curvePoints+1] = toVector2(str)
+			local _vector = toVector2(str)
+			if isHR then
+				_vector = Vector2.new(_vector.X, 384 - _vector.Y)
+			end
+			curvePoints[#curvePoints+1] = _vector
 		end
 	end
 	return curveType, curvePoints
 end
 
 
-function sliderTools.convertToSliderCurve(headPosition:Vector2, raw:string, sliderLength:number)
-	local curveType, rawCurve = sliderTools.convertToBaseCurve(raw, headPosition)
+function sliderTools.convertToSliderCurve(headPosition:Vector2, raw:string, sliderLength:number, isHR:boolean?)
+	local curveType, rawCurve = sliderTools.convertToBaseCurve(raw, headPosition, isHR)
 	local returnPoints = {}
 	if curveType == "B" and #rawCurve > 2 then
 		local function insert(newPoints)

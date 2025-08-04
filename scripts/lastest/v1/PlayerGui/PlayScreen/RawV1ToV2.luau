@@ -28,7 +28,7 @@ function getMaximumConsistencyScore(PlayerMaxCombo:number, MapMaxCombo:number):n
 	local MinimumScore = getMinimumConsistencyScore(PlayerMaxCombo)
 	local RemainsCombo = math.max(0, MapMaxCombo - PlayerMaxCombo) -- Assume player missed all at that section
 	local RemainsScore = RemainsCombo * (RemainsCombo + 1) // 2
-	return math.pow(RemainsScore, 1.1704417) * 1.2255 * 6 * 0.7 + MinimumScore
+	return math.max(0, math.pow(RemainsScore, 1.1704417) * 1.2255 * 6 * 0.7) + MinimumScore
 end
 
 
@@ -50,7 +50,7 @@ function getBaseMultiplier(ModData)
 	return multiplier
 end
 
-return function(V1Score, AccuracyData, NoteCount, MaxCombo, MaxAccScore, MaxConsistencyScore, MaxSpinnerScore, ModUsed, Speed)
+return function(V1Score:number, AccuracyData:{MaxCombo:number,h300:number,h100:number,h50:number,miss:number},  NoteCount:number,MaxCombo:number, MaxAccScore:number, MaxConsistencyScore:number, MaxSpinnerScore:number, ModUsed:{[string]:any}, Speed:number):number
 	-- decrease spin score from V1 and increase later in V2
 	local SpinScore = math.min(math.floor(V1Score/100)*100, MaxSpinnerScore)
 	V1Score -= SpinScore
@@ -82,6 +82,7 @@ return function(V1Score, AccuracyData, NoteCount, MaxCombo, MaxAccScore, MaxCons
 	local AccuracyScore = getAccuracyScore(AccuracyData, NoteCount, MaxCombo) * MissPenalty
 	local MinimumConsistencyScore = math.max(0, getMinimumConsistencyScore(AccuracyData.MaxCombo) * MissPenalty)
 	local MaximumConsistencyScore = math.min(getMaximumConsistencyScore(AccuracyData.MaxCombo, MaxCombo), MaxConsistencyScore) * MissPenalty
+	MaximumConsistencyScore = math.max(MaximumConsistencyScore, MinimumConsistencyScore)
 	local AssumedConsistencyScore = math.max(0, V1Score - AccuracyScore)
 	local ConsistencyScore = math.clamp(AssumedConsistencyScore, MinimumConsistencyScore, MaximumConsistencyScore) -- Clamp up the score
 	

@@ -168,7 +168,7 @@ OnMultiplayer = false
 MultiplayerMatchFailed = false
 OptimizedPerfomance = false
 MPScoreV2Enabled = false
-ScoreV2Enabled = false
+ScoreV2Enabled = GameSettingManage.getSettings:Invoke("ScoreV2")
 ReplayMode = false
 ExclusiveEffects = false
 Hit300Display = false
@@ -297,6 +297,10 @@ CurrentModData = {
 	Speed = tonumber(CurrentSetting.MainSettings.Speed.Text) or 1
 }
 
+function IsTouchDeviceActive():boolean
+	return not AutoPlay and EnableTouchDevice and UserInputService.TouchEnabled
+end
+
 -- blank function to prevent warnings and errors
 function ReloadPreviewFrame() end
 function LoadLeaderboard() end
@@ -417,6 +421,8 @@ CurrentSetting.MainSettings.AutoPlay.MouseButton1Click:Connect(function()
 	else
 		CurrentSetting.MainSettings.AutoPlay.Text = "[AT] Auto play: Disabled"
 	end
+
+	ReloadPreviewFrame()
 end)
 
 CurrentSetting.MainSettings.SliderMode.MouseButton1Click:Connect(function()
@@ -914,7 +920,7 @@ function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
 			Data.Mod.HR ~= HardRock or 
 			Data.Mod.FL ~= Flashlight or 
 			(Flashlight and Data.Mod.HD ~= HiddenMod) or
-			Data.Mod.TD == true
+			Data.Mod.TD ~= IsTouchDeviceActive()
 		if Data.Speed ~= PreviewMapPS.CurrentSpeed or DiffChangeModEnabled then
 			-- We re-calculate the map and update if the player's current mod data is difference than the current set
 			-- Player're not always set the NM mod to set so
@@ -925,7 +931,8 @@ function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
 				HD = Data.Mod.HD,
 				HR = Data.Mod.HR,
 				EZ = Data.Mod.EZ,
-				FL = Data.Mod.FL				
+				FL = Data.Mod.FL,
+				TD = Data.Mod.TD
 			}
 			
 			local _, returnData = require(workspace.OsuConvert)(1, MapFile, 0, true, false, ModData)
@@ -989,13 +996,18 @@ function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
 		Data.Mod, Data.Speed
 	}
 	
+	local DisplayScore:number = Score
 	
-	local ScoreV2 = require(ScriptComponent.Gameplay.RawV1ToV2)(Score, AccData, table.unpack(sendData))
+	if ScoreV2Enabled then
+		local ScoreV2 = require(ScriptComponent.Gameplay.RawV1ToV2)(Score, AccData, table.unpack(sendData))
+		DisplayScore = ScoreV2
+	end
+	
 
 	local function Check()
 		local mapMaxCombo = DisplayLBInformationValue.MapMaxCombo
 		if LeaderboardFrame.AbsoluteSize.X < 250 then
-			LeaderboardFrame.MainFrame.Score.Text = string.format("%s (%dx)", GetScore(ScoreV2), Data.MaxCombo)
+			LeaderboardFrame.MainFrame.Score.Text = string.format("%s (%dx)", GetScore(DisplayScore), Data.MaxCombo)
 			LeaderboardFrame.MainFrame.Score.Text = GetScore(Score).."("..tostring(Data.MaxCombo).."x)"
 			LeaderboardFrame.MainFrame.Accuracy.Visible = false
 			LeaderboardFrame.MainFrame.PlayDate.Visible = false
@@ -1006,7 +1018,7 @@ function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
 			LeaderboardFrame.MainFrame.PlayDate.Visible = true
 			LeaderboardFrame.MainFrame.PSEarned.Position = UDim2.new(1,-8,1,0)
 			LeaderboardFrame.MainFrame.PSEarned.Text = tostring(math.round(Data.PS)).."ps"
-			LeaderboardFrame.MainFrame.Score.Text = string.format("Score: %s (%dx)", GetScore(ScoreV2), Data.MaxCombo)
+			LeaderboardFrame.MainFrame.Score.Text = string.format("Score: %s (%dx)", GetScore(DisplayScore), Data.MaxCombo)
 		end
 	end
 	wait()
@@ -1049,6 +1061,35 @@ end)
 
 PSLeaderboard = false
 
+-- Legacy user leaderboard data
+type UserPlayInfo = {
+	HaveReplay:boolean,
+	Accurancy:string,
+	MaxCombo:number,
+	Grade:string,
+	Date:number,
+	ExtraAccurancy: {number},
+	Speed:number,
+	PS:number,
+	Mod:{
+		FL:boolean,
+		SL:boolean,
+		NF:boolean,
+		HD:boolean,
+		HR:boolean,
+		EZ:boolean,
+		AT:boolean,
+		TD:boolean
+	}
+}
+type UserLeaderboardData = {
+	Score:number,
+	Rank:number,
+	ExtraData:UserPlayInfo,
+	ThumbnailId:string,
+	UID:number
+}
+
 LoadLeaderboard = function()
 	local OptimizedPerfomance = GameSettingManage.getSettings:Invoke("OptimizedPerfomance")
 	local LeaderboardInterface = PlayerGui.BG.BeatmapLeaderboard
@@ -1086,7 +1127,7 @@ LoadLeaderboard = function()
 	LeaderboardInterface.PersonalBestTitle.TextTransparency = 1
 
 	-- Get map lb data from the server
-	local GolbalData,PersonalData,SessionChanged = game.ReplicatedStorage.BeatmapLeaderboard:InvokeServer(1,{DatastoreName = CurrentKey})
+	local GolbalData:{UserPlayInfo}, PersonalData:UserPlayInfo, SessionChanged:boolean = game.ReplicatedStorage.BeatmapLeaderboard:InvokeServer(1,{DatastoreName = CurrentKey})
 	-- prevent duplicating request
 	if SessionChanged == true or CurrentLeaderboardSession ~= ThisLBSession then return end
 
@@ -1104,7 +1145,8 @@ LoadLeaderboard = function()
 	local SendingData = {
 		Golbal = GolbalData,
 		Local = PersonalData,
-		PSLeaderboard = PSLeaderboard
+		PSLeaderboard = PSLeaderboard,
+		V2Leaderboard = ScoreV2Enabled
 	}
 	
 
@@ -1117,10 +1159,43 @@ LoadLeaderboard = function()
 	local function getps(plr)
 		return plr.ExtraData and (plr.ExtraData.PS or 0) or 0
 	end
+	
+	local SavedScoreV2:{[number]:number} = {}
+	
+	local PreviewMapPS = PreviewMapPS::{[any]:any}
+	
+	local function getScoreV2(data:UserLeaderboardData):number
+		if SavedScoreV2[data.UID] then
+			return SavedScoreV2[data.UID]
+		end
+		local ScoreV2 = require(ScriptComponent.Gameplay.RawV1ToV2)(
+			data.Score,
+			{
+				MaxCombo = data.ExtraData.MaxCombo, 
+				h300 = data.ExtraData.ExtraAccurancy[1],
+				h100 = data.ExtraData.ExtraAccurancy[2],
+				h50 = data.ExtraData.ExtraAccurancy[3],
+				miss = data.ExtraData.ExtraAccurancy[4],
+			},
+			PreviewMapPS.objCount, PreviewMapPS.MaxCombo, PreviewMapPS.MaxAccScore, PreviewMapPS.MaxConsistencyScore, PreviewMapPS.MaxSpinnerScore,
+			data.ExtraData.Mod, data.ExtraData.Speed
+		)
+		
+		SavedScoreV2[data.UID] = ScoreV2
+		return ScoreV2
+	end
 
 	if PSLeaderboard then
 		table.sort(GolbalData,function(plr1,plr2)
 			return getps(plr1) > getps(plr2) or (getps(plr1) == getps(plr2) and plr1.Rank < plr2.Rank)
+		end)
+
+		for newrank,plr in pairs(GolbalData) do
+			plr.Rank = newrank
+		end
+	elseif ScoreV2Enabled then
+		table.sort(GolbalData,function(plr1,plr2)
+			return getScoreV2(plr1) > getScoreV2(plr2) or (getScoreV2(plr1) == getScoreV2(plr2) and plr1.Rank < plr2.Rank)
 		end)
 
 		for newrank,plr in pairs(GolbalData) do
@@ -1439,6 +1514,16 @@ GameSettingManage.SubscribeSettingChange:Fire("UsePSLeaderboard", script, functi
 	LoadLeaderboard()
 end)
 
+GameSettingManage.SubscribeSettingChange:Fire("ScoreV2", script, function(value)
+	ScoreV2Enabled = value
+	LoadLeaderboard()
+end)
+
+GameSettingManage.SubscribeSettingChange:Fire("EnableTouchDevice", script, function(value)
+	EnableTouchDevice = value
+	ReloadPreviewFrame()
+end)
+
 
 
 --Overview 
@@ -1504,7 +1589,7 @@ ReloadPreviewFrame = function()
 		AT = AutoPlay,
 		SO = false,
 		V2 = ScoreV2Enabled,
-		TD = false,	-- By deafault it is false
+		TD = IsTouchDeviceActive(),	-- By deafault it is false
 		DA = DifficultyAdjust
 	}
 	local _1,_2,_3,_4,_5,_6 = script.Parent.GameplayScripts.ReloadPreviewFrame.LoadPreviewFrame:Invoke(
@@ -2079,10 +2164,11 @@ end
 Instance.new("BoolValue",script.Parent).Name = "GameStarted"
 
 local Settings = CurrentSetting.MainSettings
---
+-- The game main difficulty value
 local CS = 5
 local ApproachRate = 5
 local OverallDifficulty = 5
+local HPDrain = 5
 
 
 -- Load settings from Object data into Script data
@@ -2093,7 +2179,6 @@ Beatmap = Settings.BeatmapFile.Text
 CursorSensitivity = SavedGameSettings.VirtualCursorSensitivity
 CursorID = SavedGameSettings.CursorID
 CursorSize = SavedGameSettings.CursorSize
-CustomDiff = false
 CursorTrailId = SavedGameSettings.CursorTrailID
 CursorTrailSize = SavedGameSettings.CursorTrailSize
 CursorTrailTransparency = 1-(SavedGameSettings.CursorTrailOpacity)*0.01
@@ -2208,7 +2293,10 @@ ToggleDirectChange("OptimizedPerfomance", function(value)
 	script.Parent.PSEarned.TextTransparency = value and 0 or 1
 end)
 ToggleDirectChange("ShowHit300", function(value) Hit300Display = value end)
-ToggleDirectChange("ScoreV2", function(value) ScoreV2Enabled = value end)
+ToggleDirectChange("ScoreV2", function(value)
+	ScoreV2Enabled = value
+	LoadLeaderboard()
+end)
 ToggleDirectChange("BGDim", function(value)
 	DefaultBackgroundTrans = 1-(value * 0.01)
 	TweenService:Create(PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans}):Play()
@@ -2491,7 +2579,7 @@ local ModData:modData.ModData = {
 	AT = AutoPlay,
 	SO = false,
 	V2 = ScoreV2Enabled,
-	TD = TouchDeviceDetected,
+	TD = TouchDeviceDetected or Replay_TouchDevice,
 	DA = DifficultyAdjust,
 	SA = SongSpeed
 }
@@ -2581,7 +2669,6 @@ end
 
 -----
 
-local HPDrain = 5
 -- indicate if the map have 2 song
 -- this is mostly possible on 7+ minute song length
 ExistSecondSong = (ReturnData.MapSongId2 ~= nil)
@@ -2695,71 +2782,15 @@ end)
 
 
 
-
+-- Setup difficulty values
 if isSpectating == false then
-	if ReturnData.Difficulty ~= nil then
+	if ReturnData.Difficulty ~= nil then		
+		local ConvertTools = require(workspace.OsuConvert.converterTools)
 		local Difficulty = ReturnData.Difficulty
-		local HRMulti = 1
-		local CSHRMulti = 1
-		if HardRock then
-			HRMulti = 1.4
-			CSHRMulti = 1.3
-		elseif EasyMod then
-			HRMulti = 0.5
-			CSHRMulti = 0.5
-		end
-
-		CS = Difficulty.CircleSize * CSHRMulti
-		ApproachRate = Difficulty.ApproachRate * HRMulti
-		OverallDifficulty = Difficulty.OverallDifficulty * HRMulti
-		HPDrain = Difficulty.HPDrainRate * HRMulti
-		if CS > math.max(7,Difficulty.CircleSize) then
-			CS = math.max(7,Difficulty.CircleSize)
-		end
-		if ApproachRate > math.max(10,Difficulty.ApproachRate) then
-			ApproachRate = math.max(10,Difficulty.ApproachRate)
-		end
-		if OverallDifficulty > math.max(10,Difficulty.OverallDifficulty)  then
-			OverallDifficulty = math.max(10,Difficulty.OverallDifficulty)
-		end
-		if HPDrain > math.max(10,Difficulty.HPDrainRate) then
-			HPDrain = math.max(10,Difficulty.HPDrainRate)
-		end
-	end
-
-	if tonumber(CustomHP) then
-		HPDrain = CustomHP
-		if not NoFail then
-			CustomDiff = true
-		end
-	end
-
-	if tonumber(CustomCS) then
-		CustomDiff = true
-		CS = CustomCS
-	end
-	if tonumber(CustomAR) then
-		ApproachRate = CustomAR
-		CustomDiff = true
-	end
-	if tonumber(CustomOD) then
-		CustomDiff = true
-		OverallDifficulty = CustomOD
-	end
-
-	if not SpeedSync and Flashlight then
-		CustomDiff = true
-	end
-
-
-	if CS == nil or ((not CustomCS and (CS < 0 or CS > 11)) or CS < 0 or CS > 11) then
-		CS = 4
-	end
-	if ApproachRate == nil or ApproachRate < -10 or ApproachRate > 12 then
-		ApproachRate = 5
-	end
-	if OverallDifficulty == nil or OverallDifficulty < 0 or OverallDifficulty > 10 then
-		OverallDifficulty = 5
+		CS = ConvertTools.GetDifficultyValueAfterMod.CS(Difficulty.CircleSize, ModData)
+		ApproachRate = ConvertTools.GetDifficultyValueAfterMod.AR(Difficulty.ApproachRate, ModData)
+		OverallDifficulty = ConvertTools.GetDifficultyValueAfterMod.OD(Difficulty.OverallDifficulty, ModData)
+		HPDrain = ConvertTools.GetDifficultyValueAfterMod.HP(Difficulty.HPDrainRate, ModData)
 	end
 else
 	local Diff = SavedSpectateData.DiffData
@@ -2774,7 +2805,7 @@ local RankedRequirement = {
 	ReplayMode == false,
 	SpeedSync == true,
 	not LocalPlayer:FindFirstChild("PlayerUnranked"),
-	CustomDiff == false,
+	not DifficultyAdjust or not DifficultyAdjust.Active,
 	isSpectating == false,
 	LocalPlayer.UserId >= 1,
 	onTutorial == false
@@ -3429,7 +3460,7 @@ spawn(function()
 	if BeatmapData[1].Time > 4000 then
 		script.Parent.SkipButton.Visible = true
 		TweenService:Create(script.Parent.SkipButton,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0.5,0,0.8,0),GroupTransparency = 0}):Play()
-		if EnableTouchDevice and UserInputService.TouchEnabled then
+		if IsTouchDeviceActive() then
 			script.Parent.SkipButton.SkipButton.Text = "Skip"
 		end
 
@@ -3795,13 +3826,13 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 
 	task.spawn(function()
 		UserInputService.InputBegan:Connect(function(data)
-			if data.KeyCode == Key1Input and not (EnableTouchDevice and UserInputService.TouchEnabled) then
+			if data.KeyCode == Key1Input and not IsTouchDeviceActive() then
 				MouseHitEvent:Fire(SecurityKey,1)
-			elseif data.KeyCode == Key2Input and not (EnableTouchDevice and UserInputService.TouchEnabled) then
+			elseif data.KeyCode == Key2Input and not (IsTouchDeviceActive()) then
 				MouseHitEvent:Fire(SecurityKey,2)
-			elseif data.UserInputType == Enum.UserInputType.MouseButton1 and MouseButtonEnabled == true and not (EnableTouchDevice and UserInputService.TouchEnabled) then
+			elseif data.UserInputType == Enum.UserInputType.MouseButton1 and MouseButtonEnabled == true and not (IsTouchDeviceActive()) then
 				MouseHitEvent:Fire(SecurityKey,3)
-			elseif data.UserInputType == Enum.UserInputType.MouseButton2 and MouseButtonEnabled == true and not (EnableTouchDevice and UserInputService.TouchEnabled) then
+			elseif data.UserInputType == Enum.UserInputType.MouseButton2 and MouseButtonEnabled == true and not (IsTouchDeviceActive()) then
 				MouseHitEvent:Fire(SecurityKey,4)
 			end
 		end)
@@ -4093,7 +4124,7 @@ PC:			0ms	-|-----|----|	125.0ms
 TD:			0ms	--|------|---|	140.0ms
 ]]
 
-if (EnableTouchDevice and UserInputService.TouchEnabled) or TouchDeviceDetected or Replay_TouchDevice then
+if (IsTouchDeviceActive()) or TouchDeviceDetected or Replay_TouchDevice then
 	-- Adjust hit window for TD
 	hit300 = (150 - 12 * OverallDifficulty) / SongSpeed -- 150 - 30
 	hit100 = (220 - 12.5 * OverallDifficulty) / SongSpeed -- 220 - 95
@@ -6191,9 +6222,9 @@ function LetTheGameBegin()
 		local AnimationIdList = {}
 		local SliderATKey = 3
 
-		if HardRock then
-			HitObj.Position = {X = HitObj.Position.X,Y=384-HitObj.Position.Y} -- swap the note Y-Axis
-		end
+		--if HardRock then
+		--	HitObj.Position = {X = HitObj.Position.X,Y=384-HitObj.Position.Y} -- swap the note Y-Axis
+		--end
 
 		local NoteId = HttpService:GenerateGUID()
 
@@ -6625,20 +6656,23 @@ function LetTheGameBegin()
 
 						if SliderMode and HitObjProperties.isSlider then
 							repeat wait() until SLEndPos
-							if HardRock then
-								HitObjPos = Vector2.new(SLEndPos.X,384-SLEndPos.Y)
-							else
-								HitObjPos = Vector2.new(SLEndPos.X,SLEndPos.Y)
-							end
+							--if HardRock then
+							--	HitObjPos = Vector2.new(SLEndPos.X,384-SLEndPos.Y)
+							--else
+							--	HitObjPos = Vector2.new(SLEndPos.X,SLEndPos.Y)
+							--end
+							HitObjPos = Vector2.new(SLEndPos.X,SLEndPos.Y)
 						end
 
 						local NextHitObjPos
 
-						if HardRock then
-							NextHitObjPos = Vector2.new(NextHitObj.Position.X,384-NextHitObj.Position.Y)
-						else
-							NextHitObjPos = Vector2.new(NextHitObj.Position.X,NextHitObj.Position.Y)
-						end
+						--if HardRock then
+						--	NextHitObjPos = Vector2.new(NextHitObj.Position.X,384-NextHitObj.Position.Y)
+						--else
+						--	NextHitObjPos = Vector2.new(NextHitObj.Position.X,NextHitObj.Position.Y)
+						--end
+						
+						NextHitObjPos = Vector2.new(NextHitObj.Position.X,NextHitObj.Position.Y)
 						local Point = HitObjPos-NextHitObjPos
 						local Rotation = math.deg(math.atan2(Point.Y,Point.X))
 
@@ -8464,7 +8498,7 @@ if not ReplayMode and not isSpectating and not onTutorial --[[and not RunService
 	local PlayerName = "USER "..((not AutoPlay and LocalPlayer.Name) or "osu!AT").."\n"
 	local DateFormat = "DATE "..tostring(os.time()).."\n"
 	-- MOD StableNL EnableTouchDevice AT NF HD HR EZ SL FL
-	local ModFormat = "MOD "..get(ClassicNotelock)..get(EnableTouchDevice and UserInputService.TouchEnabled)
+	local ModFormat = "MOD "..get(ClassicNotelock)..get(IsTouchDeviceActive())
 		..get(AutoPlay)..get(NoFail)..get(HiddenMod)..get(HardRock)..get(EasyMod)..get(SliderMode)..get(Flashlight).."\n"
 	local SpeedFormat = "SPEED "..tostring(SongSpeed).."\n"
 	local FilenameForamt = "FILENAME "..Beatmap.Name.."\n"

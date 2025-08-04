@@ -409,6 +409,9 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 					HitPos.X = tonumber(data)
 				elseif CurrentType == 2 then
 					HitPos.Y = tonumber(data)
+					if modData.HR then
+						HitPos.Y = 384 - HitPos.Y
+					end
 				elseif CurrentType == 3 then
 					Time = (tonumber(data)+DelayedTime)/SongSpeed
 				elseif CurrentType == 4 then
@@ -769,7 +772,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 				-- Calculate slider actual curves from raw curve points
 				local beatLength = tonumber(ExtraData[4])
 				local headPosition = Vector2.new(HitPos.X, HitPos.Y)
-				SLCurvePoints = sliderTools.convertToSliderCurve(headPosition, ExtraData[2], beatLength)
+				SLCurvePoints = sliderTools.convertToSliderCurve(headPosition, ExtraData[2], beatLength, modData.HR)
 				
 				-- Calculate slider ticks
 				local ObjBPM = crrSLBPM
