@@ -1,7 +1,7 @@
---!native
+--[LOCATION]:[Workspace.OsuConvert]
 -- osu!RoVer converter
 -- convert raw osu file into readable and excutable lua data
--- V1.47 (Size: 49.93KB)
+-- V1.47 (Size: 38.56KB)
 
 local PerformanceCalculator = require(workspace.PerformanceCalculator)
 local BasePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
@@ -9,14 +9,14 @@ local basePerformanceFL = require(workspace.PerformanceCalculator.BasePerfomance
 local calculator = require(workspace.DifficultyCalculator)
 local tool = require(script.converterTools)
 local sliderTools = require(script.sliderTools)
-local preprocessing = require(workspace.DifficultyCalculator.Preprocessing)
-local evaculatorContainer = workspace.DifficultyCalculator.DifficultyEvaculator
+local preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
+local evaluatorContainer = workspace.DifficultyCalculator.DifficultyEvaluator
 local modData = require(workspace.ModData)
-local evaculators = {
-	Aim = require(evaculatorContainer.AimEvaculator),
-	Speed = require(evaculatorContainer.SpeedEvaculator),
-	Rhythm = require(evaculatorContainer.RhythmCalculator),
-	Flashlight = require(evaculatorContainer.FLEvaculator)
+local evaluators = {
+	Aim = require(evaluatorContainer.AimEvaluator),
+	Speed = require(evaluatorContainer.SpeedEvaluator),
+	Rhythm = require(evaluatorContainer.RhythmCalculator),
+	Flashlight = require(evaluatorContainer.FLEvaluator)
 }
 
 export type ModData = modData.ModData
@@ -58,10 +58,10 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	--local DIFFICULTY_VALUE_EXPOMENTAL_RATE = 1/2.15
 	--local DIFFICULTY_VALUE_MULTIPLIER_RATE = 0.5504298051287392
 	
-	local DIFFICULTY_VALUE_EXPOMENTAL_RATE = 1/2
-	local DIFFICULTY_VALUE_MULTIPLIER_RATE = 0.0675
-	local DIFFICULTY_VALUE_AIM_MULTIPLIER = 0.85 / 0.42
-	local DIFFICULTY_VALUE_SPEED_MULTIPLIER = 1 / 1.05
+	local DIFFICULTY_VALUE_EXPOMENTAL_RATE = 1/3
+	local DIFFICULTY_VALUE_MULTIPLIER_RATE = 0.265
+	local DIFFICULTY_VALUE_AIM_MULTIPLIER = 1
+	local DIFFICULTY_VALUE_SPEED_MULTIPLIER = 1
 
 	-- Convert string into datatable
 	--[[
@@ -396,8 +396,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			local crrSLBPMStartTime = 0
 			local ExtraData = {}
 			local HitObjBPMData = {BPM = 60,SliderMultiplier = 1,LastBPMTiming = 0}
-			local RewardPS = {
-				Aim = 0, Stream = 0, Flashlight = 0, AimStrainDecay = 1, SpeedStrainDecay = 1, FLStrainDecay = 1
+			local RewardPS:{Aim:number, Speed:number, Flashlight:number, AimStrainDecay:number, SpeedStrainDecay:number, FLStrainDecay:number} = {
+				Aim = 0, Speed = 0, Flashlight = 0, AimStrainDecay = 1, SpeedStrainDecay = 1, FLStrainDecay = 1
 			}
 			local StackCount = 0
 			local raw = string.split(HitObj,",")
@@ -409,6 +409,9 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 					HitPos.X = tonumber(data)
 				elseif CurrentType == 2 then
 					HitPos.Y = tonumber(data)
+					if modData.HR then
+						HitPos.Y = 384 - HitPos.Y
+					end
 				elseif CurrentType == 3 then
 					Time = (tonumber(data)+DelayedTime)/SongSpeed
 				elseif CurrentType == 4 then
@@ -674,7 +677,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 					CurrentSpeedStrain += TimingDifficulty
 
 					if GetPS then
-						RewardPS.Stream = not isSpinner and TimingDifficulty or 0
+						RewardPS.Speed = not isSpinner and TimingDifficulty or 0
 					end
 
 					-- Calculate current difficulty
@@ -717,12 +720,59 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			end
 			
 			local SLTickData = {}
-			local SLCurvePoints = {}
+			local SLDifficultyTickData = {}
+			local SLCurvePoints:{Vector2} = {}
+			local function _getTickPosition(_tickTime:number, isReverse:boolean):Vector2?
+				local _slidesCount = tonumber(ExtraData[3])
+				local _beatLength = tonumber(ExtraData[4])
+				local _slideTime = (SliderTime * 1000 / _slidesCount)
+				local _tickProgressLength = ((Time - _tickTime)%_slideTime)/_slideTime * _beatLength
+				if not isReverse then
+					local _prevLength = 0
+					local _currentLength = 0
+					for i = 1, #SLCurvePoints - 1 do
+						local _crr = SLCurvePoints[i]
+						local _next = SLCurvePoints[i+1]
+						local _nextLength = _currentLength + (_next - _crr).Magnitude
+						
+						if _tickProgressLength >= _currentLength then
+							local _ratio = math.min(1, (_tickProgressLength - _currentLength)/(_nextLength - _currentLength))
+							local _pos = _crr:Lerp(_next, _ratio)
+							
+							return _pos
+						else
+							_prevLength = _currentLength
+							_currentLength = _nextLength
+						end 
+					end
+				else
+					local _prevLength = 0
+					local _currentLength = 0
+					for i = #SLCurvePoints, 2, -1 do
+						local _crr = SLCurvePoints[i]
+						local _next = SLCurvePoints[i-1]
+						local _nextLength = _currentLength + (_next - _crr).Magnitude
+
+						if _tickProgressLength >= _currentLength then
+							local _ratio = math.min(1, (_tickProgressLength - _currentLength)/(_nextLength - _currentLength))
+							local _pos = _crr:Lerp(_next, _ratio)
+
+							return _pos
+						else
+							_prevLength = _currentLength
+							_currentLength = _next	
+						end 
+					end
+				end
+				warn("Cannot find tick position from tick time!")
+				print(_tickTime, Time, SliderTime, _beatLength, _tickProgressLength, isReverse)
+				return nil
+			end
 			if isSlider then
 				-- Calculate slider actual curves from raw curve points
 				local beatLength = tonumber(ExtraData[4])
 				local headPosition = Vector2.new(HitPos.X, HitPos.Y)
-				SLCurvePoints = sliderTools.convertToSliderCurve(headPosition, ExtraData[2], beatLength)
+				SLCurvePoints = sliderTools.convertToSliderCurve(headPosition, ExtraData[2], beatLength, modData.HR)
 				
 				-- Calculate slider ticks
 				local ObjBPM = crrSLBPM
@@ -742,9 +792,22 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 					local CurrentSlide = math.floor(TimeSinceNoteStart/SliderTime)+1
 					if currentTime > Time and currentTime < Time + SliderTime and TimeBetweenTail > 20 and TimeBetweenTail < SliderTime-20 then
 						tickCount += 1
-						SLTickData[#SLTickData+1] = {currentTime, CurrentSlide}
+						local tickPosition = _getTickPosition(currentTime, CurrentSlide%2==0)
+						SLTickData[#SLTickData+1] = {currentTime, CurrentSlide, tickPosition}
+						SLDifficultyTickData[#SLDifficultyTickData+1] = {currentTime, CurrentSlide, tickPosition, "Tick"}
+					else
+						local _type = CurrentSlide < slidesCount and "Repeat" or "Tail"
+						local tickPosition = _getTickPosition(currentTime, CurrentSlide%2==0)
+						SLDifficultyTickData[#SLDifficultyTickData+1] = {currentTime, CurrentSlide, tickPosition, _type}
 					end
 					i += 1
+				end
+				
+				-- Just to make sure it includes the slider end
+				if #SLDifficultyTickData == 0 or SLDifficultyTickData[#SLDifficultyTickData][4] ~= "Tail" then
+					local _tailPosition = SLCurvePoints[(slidesCount % 2 == 1) and #SLCurvePoints or 1]
+					local _tailTime = Time + SliderTime
+					SLDifficultyTickData[#SLDifficultyTickData+1] = {_tailTime, slidesCount, _tailPosition, "Tail"}
 				end
 			end
 			local HitObjData = {
@@ -764,6 +827,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 				SliderBPM = crrSLBPM,
 				SliderBPMStartTime = crrSLBPMStartTime, 
 				SliderTickData = SLTickData, 
+				SliderDifficultyTickData = SLDifficultyTickData, 
 				SliderCurvePoints = SLCurvePoints,
 				SpinnerDuration = SpinnerDuration, 
 				SliderLengthRaw = SliderLengthRaw
@@ -862,10 +926,11 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	end
 	
 	----------------------------------------------------------------------------
-	-- > Difficulty evaculator
+	-- > Difficulty evaluator
 	
 	-- ignore the old diff data from the above
 	-- this will be changed soon
+	
 	AimStrainData = {}
 	AimSLStrainData = {}
 	SpeedStrainData = {}
@@ -889,8 +954,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	
 	-- The aim difficulty is the most inaccurate thing to calculate in osu!RoVer
 	-- I need to adjust it back to the original osu! standard
-	local aimAdjustedMultiplier = 0.42
-	local speedAdjustedMultiplier = 1.05
+	local aimAdjustedMultiplier = 1
+	local speedAdjustedMultiplier = 1
 	local aimSkillMultiplier = 26 * aimAdjustedMultiplier
 	local speedSkillMultiplier = 1.47 * speedAdjustedMultiplier
 	local flashlightSkillMultiplier = 0.05512
@@ -900,10 +965,10 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	
 	
 	for objectId, objectData in pairs(ProcessedDifficultyObject) do
-		local AimDiff = evaculators.Aim.GetAimDiff(objectData) * aimSkillMultiplier
-		local SpeedDiff = evaculators.Speed.GetSpeedDiff(objectData) * speedSkillMultiplier
-		local RhythmDiff = evaculators.Rhythm.GetRhythmDiff(objectData) * flashlightSkillMultiplier
-		local FLDiff = modData.FL and evaculators.Flashlight.getFlashLightDiff(objectData, modData.HD) or 0
+		local AimDiff = evaluators.Aim.GetAimDiff(objectData) * aimSkillMultiplier
+		local SpeedDiff = evaluators.Speed.GetSpeedDiff(objectData) * speedSkillMultiplier
+		local RhythmDiff = evaluators.Rhythm.GetRhythmDiff(objectData)
+		local FLDiff = modData.FL and evaluators.Flashlight.getFlashLightDiff(objectData, modData.HD) or 0
 		
 		local AimFLStrainDecay = math.pow(AimFLBaseStrainDecay,objectData.DeltaTime/1000)
 		AimStrain *= AimFLStrainDecay
@@ -924,13 +989,13 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		ConvertedData[objectId].PSValue.SpeedStrainDecay = SpeedStrainDecay
 		ConvertedData[objectId].PSValue.FLStrainDecay = AimFLStrainDecay
 		
-		AimStrainData[#AimStrainData+1] = AimStrain
-		SpeedStrainData[#SpeedStrainData+1] = SpeedStrain
-		RhythmDiffData[#RhythmDiffData+1] = RhythmDiff
-		FLStrainData[#FLStrainData+1] = FLStrain
+		AimStrainData[#AimStrainData+1] = {AimStrain, objectData.Time}
+		SpeedStrainData[#SpeedStrainData+1] = {SpeedStrain * RhythmDiff, objectData.Time}
+		RhythmDiffData[#RhythmDiffData+1] = {RhythmDiff, objectData.Time}
+		FLStrainData[#FLStrainData+1] = {FLStrain, objectData.Time}
 		
 		if objectData.isSlider then
-			AimSLStrainData[#AimSLStrainData+1] = AimStrain
+			AimSLStrainData[#AimSLStrainData+1] = {AimStrain, objectData.Time}
 		end		
 		
 		local multiplierBase = 10
@@ -1029,8 +1094,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			Aim = 1, Speed = 1, FL = 1, Acc = 1
 		}
 
-		local MaxPSData = PerformanceCalculator(AimDifficulty, SpeedDifficulty, FlashlightDifficulty, ODRate, ARRate, modData, ReturningData.NoteCount, PSMultiplier, true)
-
 		BeatmapDifficulty = difficultyAttributes.StarRating
 	end
 	--warn(tostring(AimDifficulty).."\n"..tostring(StreamDifficulty))
@@ -1046,7 +1109,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	ReturningData.Difficulty.SpeedRelevantNoteCount = SpeedRelevantNoteCount
 	ReturningData.Difficulty.MaxCombo = MapMaxCombo
 	ReturningData.Difficulty.MaxSpinnerScore = MaxSpinnerScore
-
 
 	--2234.05 -> 12.19
 	--9.15 -> 1.70
