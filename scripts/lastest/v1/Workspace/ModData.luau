@@ -21,7 +21,9 @@ export type ModData = {
 		Active:boolean?, 
 		Strength:number?
 	}?,				-- Magnetised
-
+	-- Depricated ranked mods (These mode is still on the leaderboard)
+	HC:boolean?,	-- Hardcore (Reverse of No fail)
+	SL:boolean?,	-- Sliders (Reverse of No sliders)
 }
 
 return nil
