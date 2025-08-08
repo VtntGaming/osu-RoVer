@@ -33,6 +33,9 @@ end
 
 
 function getBaseMultiplier(ModData)
+	if not ModData then
+		return 1	-- Well.. I have no idea for this ¯\_(ツ)_/¯
+	end
 	local multiplier = 1
 	if ModData.NF then
 		multiplier *= 0.5
