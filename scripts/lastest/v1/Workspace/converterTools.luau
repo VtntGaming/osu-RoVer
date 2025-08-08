@@ -83,8 +83,11 @@ end
 export type ModData = modData.ModData
 
 tool.HitWindowsFor = {
-	h300 = function(ODRate:number, Speed:number):number
+	h300 = function(ODRate:number, Speed:number, IsTD:boolean?):number
 		local h300 = math.floor(tool.DifficultyRange(ODRate, 80, 50, 20)) - 0.5
+		if IsTD then
+			h300 = math.floor(tool.DifficultyRange(ODRate, 120, 75, 30)) - 0.5
+		end
 		return h300 / Speed
 	end,
 	h100 = function(ODRate:number, Speed:number):number
@@ -94,6 +97,16 @@ tool.HitWindowsFor = {
 	h50 = function(ODRate:number, Speed:number):number
 		local h50 = math.floor(tool.DifficultyRange(ODRate, 200, 150, 100)) - 0.5
 		return h50 / Speed
+	end,
+}
+
+tool.GetDifficultyFromValue = {
+	OD = function(rate:number, isTD:boolean?):number
+		if isTD then
+			local h300 = math.floor(tool.DifficultyRange(rate, 80, 50, 20)) - 0.5	
+			rate = (119.5 - h300) / 9
+		end		
+		return rate
 	end,
 }
 
@@ -145,8 +158,8 @@ tool.GetDifficultyValueAfterMod = {
 		if not (modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.OD) then
 			rate = math.clamp(rate, 0, 10)
 		end
-		if modData.SA and modData.SA ~= 1 then
-			local h300 = tool.HitWindowsFor.h300(rate, modData.SA)
+		if (modData.SA and modData.SA ~= 1) or modData.TD then
+			local h300 = tool.HitWindowsFor.h300(rate, modData.SA or 1, modData.TD)
 			rate = (79.5 - h300) / 6
 		end
 		
@@ -161,7 +174,7 @@ tool.GetDifficultyValueAfterMod = {
 		elseif modData.EZ then
 			rate *= 0.5		
 		end
-		if not (modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.CS) then
+		if not (modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.HP) then
 			rate = math.clamp(rate, 0, 10)
 		end
 		
@@ -175,8 +188,16 @@ tool.GetDifficultyValueAfterMod = {
 		elseif modData.EZ then
 			rate *= 0.5		
 		end
-		if not (modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.HP) then
+		if not (modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.CS) then
 			rate = math.clamp(rate, 0, 10)
+		end
+		if modData.TD then
+			local radius = (54.4 - 4.48 * rate)*2
+			-- In the game I have gave significant advantages to TD's CS and OD rate
+			-- So I need to nerf the difficulty rating and PS reward
+			radius *= 1.1875
+			
+			rate = (54.4 -  radius / 2) / 4.48
 		end
 
 		return rate

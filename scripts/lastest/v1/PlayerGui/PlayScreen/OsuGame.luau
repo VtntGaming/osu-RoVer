@@ -4770,8 +4770,10 @@ if isSpectating == true then
 						repeat wait() until tick() - StartTick >= CurrentSpecTime or SpectateDelay <= 0
 					end
 				end
+				
+				script.Parent.PSEarned.AnimatedPSEarned.PerformanceValue.Value = Data.InGameData.Perfomance
 
-				script.Parent.PSEarned.Text = tostring(math.floor(Data.InGameData.Perfomance)).."ps"
+				--script.Parent.PSEarned.Text = tostring(math.floor(Data.InGameData.Perfomance)).."ps"
 				CurrentPerfomance = Data.InGameData.Perfomance
 				HighestPerfomance = Data.InGameData.HighestPerfomance
 
