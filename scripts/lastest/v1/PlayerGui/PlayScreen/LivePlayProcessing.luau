@@ -19,6 +19,9 @@ export type LivePlayProcessing = {
 	AimDiffStrainCount:number,
 	SpeedDiffStrainCount:number,
 	SpeedRelevantNoteCount:number,
+	BaseAimDiff:number,
+	BaseSpeedDiff:number,
+	BaseFlashlightDiff:number,
 	
 	--> Live data
 	CurrentLiveDiffAim:number,
@@ -49,10 +52,11 @@ export type LivePlayProcessing = {
 	-- Function
 	SetupData:(self:LivePlayProcessing, Attributes:InputAttributes) -> (),
 	StartLiveDiffDisplay:(self:LivePlayProcessing) -> (),
-	ProcessPerfomanceScore:(self:LivePlayProcessing, PSValue:PSValue, Timing:number, AccData:PerformanceCalculator.AccuracyData) -> (),
+	ProcessPerfomanceScore:(self:LivePlayProcessing, PSValue:PSValue?, Timing:number?, AccData:PerformanceCalculator.AccuracyData) -> (),
 	_ProcessCurrentStrain:(self:LivePlayProcessing, Timing:number, PSValue:BasePSValue) -> (),
 	_SaveCurrentPeak:(self:LivePlayProcessing) -> (),
 	_StartNewSection:(self:LivePlayProcessing, Timing:number, Strains:{Aim:number, Speed:number, Flashlight:number}) -> (),
+	ProcessFinalResult:(self:LivePlayProcessing, AccData:PerformanceCalculator.AccuracyData) -> (),
 }
 
 export type InputAttributes = {
@@ -63,6 +67,9 @@ export type InputAttributes = {
 	AimDiffStrainCount:number,
 	SpeedDiffStrainCount:number,
 	SpeedRelevantNoteCount:number,
+	AimDifficulty:number,
+	SpeedDifficulty:number,
+	FlashlightDifficulty:number,
 }
 
 type BasePSValue = {
@@ -134,6 +141,9 @@ function LivePlayProcessing:SetupData(Attributes:InputAttributes)
 	self.AimDiffStrainCount = Attributes.AimDiffStrainCount
 	self.SpeedDiffStrainCount = Attributes.SpeedDiffStrainCount
 	self.SpeedRelevantNoteCount = Attributes.SpeedRelevantNoteCount
+	self.BaseAimDiff = Attributes.AimDifficulty
+	self.BaseSpeedDiff = Attributes.SpeedDifficulty
+	self.BaseFlashlightDiff = Attributes.FlashlightDifficulty
 end
 
 function LivePlayProcessing:StartLiveDiffDisplay()
@@ -187,8 +197,8 @@ function LivePlayProcessing:_ProcessCurrentStrain(Timing:number, PSValue:BasePSV
 	self.PreviousTime = Timing
 end
 
-function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue, Timing:number, AccData:PerformanceCalculator.AccuracyData)
-	if PSValue then
+function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:number?, AccData:PerformanceCalculator.AccuracyData)
+	if PSValue and Timing then
 		local RhythmDiff = PSValue.Rhythm
 		self.CurrentLiveDiffAim *= PSValue.AimStrainDecay
 		self.CurrentLiveDiffAim += PSValue.Aim
@@ -273,6 +283,14 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue, Timing:numbe
 		AccFL = AccFL,
 		Mod = Mod
 	})
+end
+
+function LivePlayProcessing:ProcessFinalResult(AccData:PerformanceCalculator.AccuracyData)
+	-- This is the last stage of score processing
+	-- It will use the stats of pre-calculated instead of live-calculated
+	self.AimDiffFinal = self.BaseAimDiff
+	self.SpeedDiffFinal = self.BaseSpeedDiff
+	self:ProcessPerfomanceScore(nil, nil, AccData)
 end
 
 return LivePlayProcessing

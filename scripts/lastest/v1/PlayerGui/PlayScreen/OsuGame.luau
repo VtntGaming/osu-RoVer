@@ -1355,29 +1355,33 @@ LoadLeaderboard = function()
 				end
 
 				wait((i-1)*0.05)
-				if not OptimizedPerfomance then
-					TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0,0,0,0),BackgroundTransparency = 0.9}):Play()
-					TweenService:Create(NewLBFrame,TweenInfo.new(.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(1,0,0,40)}):Play()
-				else
-					NewLBFrame.MainFrame.Position = UDim2.new(0,0,0,0)
-					NewLBFrame.MainFrame.BackgroundTransparency = 0.9
-					NewLBFrame.Size = UDim2.new(1,0,0,40)
-				end
-				wait(0.5)
-				for _,a in pairs(NewLBFrame.MainFrame:GetChildren()) do
-					if a:IsA("TextLabel") then
-						if a.Name ~= "UserName" then
-							TweenService:Create(a,TweenInfo.new(0.75,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
-						end
+				if NewLBFrame.Parent then
+					if not OptimizedPerfomance then
+						TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0,0,0,0),BackgroundTransparency = 0.9}):Play()
+						TweenService:Create(NewLBFrame,TweenInfo.new(.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(1,0,0,40)}):Play()
 					else
-						TweenService:Create(a,TweenInfo.new(0.75,Enum.EasingStyle.Linear),{ImageTransparency = 0.95}):Play()
+						NewLBFrame.MainFrame.Position = UDim2.new(0,0,0,0)
+						NewLBFrame.MainFrame.BackgroundTransparency = 0.9
+						NewLBFrame.Size = UDim2.new(1,0,0,40)
 					end
-				end
-				if not OptimizedPerfomance then
-					AddLBTweenConnection(TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0.8}),(i-1)*0.1)
-				end
-				if i == #GolbalData then
-					GolbalLoaded = true
+					wait(0.5)
+					if NewLBFrame.Parent then
+						for _,a in pairs(NewLBFrame.MainFrame:GetChildren()) do
+							if a:IsA("TextLabel") then
+								if a.Name ~= "UserName" then
+									TweenService:Create(a,TweenInfo.new(0.75,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
+								end
+							else
+								TweenService:Create(a,TweenInfo.new(0.75,Enum.EasingStyle.Linear),{ImageTransparency = 0.95}):Play()
+							end
+						end
+						if not OptimizedPerfomance then
+							AddLBTweenConnection(TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0.8}),(i-1)*0.1)
+						end
+						if i == #GolbalData then
+							GolbalLoaded = true
+						end
+					end					
 				end
 			end)
 		end
@@ -1509,6 +1513,13 @@ LoadLeaderboard = function()
 	end
 end
 
+function UpdateMultiplayerRule()
+	script.Parent.MultiplayerData.ChangeRule:Fire({
+		SL = SliderMode,
+		ScoreV2 = MPScoreV2Enabled
+	})
+end
+
 GameSettingManage.SubscribeSettingChange:Fire("UsePSLeaderboard", script, function(value)
 	PSLeaderboard = value
 	LoadLeaderboard()
@@ -1517,6 +1528,8 @@ end)
 GameSettingManage.SubscribeSettingChange:Fire("ScoreV2", script, function(value)
 	ScoreV2Enabled = value
 	LoadLeaderboard()
+	MPScoreV2Enabled = value
+	UpdateMultiplayerRule()
 end)
 
 GameSettingManage.SubscribeSettingChange:Fire("EnableTouchDevice", script, function(value)
@@ -1532,21 +1545,13 @@ PreviewBeatmapset = 0
 BeatmapSetId = 0
 BeatmapId = 0
 
-function UpdateRule()
-	script.Parent.MultiplayerData.ChangeRule:Fire({
-		SL = SliderMode,
-		ScoreV2 = MPScoreV2Enabled
-	})
-end
+
 
 script.Parent.MultiplayerData.RuleChanged.Event:Connect(function(Rule)
 	SliderMode = Rule.Slider
 	--osuStableNotelock = Rule.StableNL
 	MPScoreV2Enabled = Rule.ScoreV2
 end)
-
---CurrentSetting.MainSettings.SliderMode:GetPropertyChangedSignal("Text"):Connect(UpdateRule)
---CurrentSetting.MainSettings.ScoreV2:GetPropertyChangedSignal("Text"):Connect(UpdateRule)
 
 script.Parent.GetMapData.OnInvoke = function()
 	local SongSpeed = tonumber(CurrentSetting.MainSettings.Speed.Text)
@@ -2129,6 +2134,8 @@ end
 
 
 if OnMultiplayer then
+	script.Parent.MultiplayerLeaderboard.StateEnabled.Value = InGameLeaderboard
+	script.Parent.MultiplayerLeaderboard.LbTrigger:Fire(InGameLeaderboard)
 	script.Parent.MultiplayerLeaderboard.LeaderboardWorking.Disabled = false	
 else
 	script.Parent.Leaderboard.LeaderboardWorking.Disabled = false
@@ -2294,8 +2301,10 @@ ToggleDirectChange("OptimizedPerfomance", function(value)
 end)
 ToggleDirectChange("ShowHit300", function(value) Hit300Display = value end)
 ToggleDirectChange("ScoreV2", function(value)
-	ScoreV2Enabled = value
-	LoadLeaderboard()
+	if not OnMultiplayer then
+		ScoreV2Enabled = value
+		LoadLeaderboard()
+	end
 end)
 ToggleDirectChange("BGDim", function(value)
 	DefaultBackgroundTrans = 1-(value * 0.01)
@@ -2808,7 +2817,7 @@ local RankedRequirement = {
 	not DifficultyAdjust or not DifficultyAdjust.Active,
 	isSpectating == false,
 	LocalPlayer.UserId >= 1,
-	onTutorial == false
+	onTutorial == false,
 }
 
 task.spawn(function()
@@ -3536,6 +3545,9 @@ spawn(function()
 			local checkingSongObj = script.Parent.GameSong.Song
 			local ExtraLength = 0
 			local Offset = 0.1 -- due to some of roblox audio latency
+			if SongSpeed > 1 then
+				Offset = 0.1 * SongSpeed
+			end
 			if ExistSecondSong and ((tick() - SongStart)*SongSpeed*ReturnData.SongSpeed > script.Parent.GameSong.Song.TimeLength) then
 				ExtraLength = script.Parent.GameSong.Song.TimeLength
 				checkingSongObj = script.Parent.GameSong.Song2
@@ -4925,9 +4937,25 @@ PlayerGui.MenuInterface.DropdownMenu.MenuListAnimate.hiddenRequest:Fire(true)
 
 script.Parent.GameSong.Song.PlaybackSpeed = SongSpeed * ReturnData.SongSpeed
 script.Parent.GameSong.Song.DefaultPitch.Pitch = ReturnData.SongPitch
-if SongSpeed >= 0.5 and SongSpeed <= 2 and not KeepOriginalPitch then
-	script.Parent.GameSong.Song.DefaultPitch.Pitch = ReturnData.SongPitch/SongSpeed
+
+script.Parent.GameSong.Song2.PlaybackSpeed = SongSpeed * ReturnData.SongSpeed
+script.Parent.GameSong.Song2.DefaultPitch.Pitch = ReturnData.SongPitch
+if SongSpeed >= 0.5 and SongSpeed <= 2 then
+	if not KeepOriginalPitch then
+		script.Parent.GameSong.Song.DefaultPitch.Pitch = ReturnData.SongPitch/SongSpeed
+		script.Parent.GameSong.Song2.DefaultPitch.Pitch = ReturnData.SongPitch/SongSpeed		
+	end
+
+	ToggleDirectChange("EnableSpeedPitch", function(isEnable)
+		local pitch = 1
+		if not isEnable then
+			pitch = 1 / SongSpeed
+		end
+		script.Parent.GameSong.Song.DefaultPitch.Pitch = ReturnData.SongPitch * pitch
+		script.Parent.GameSong.Song2.DefaultPitch.Pitch = ReturnData.SongPitch * pitch		
+	end)
 end
+
 
 local NPS = 0
 local VisibleNotes = 0
@@ -5607,6 +5635,9 @@ LivePlaySession:SetupData({
 	AimDiffStrainCount = ReturnData.Difficulty.AimDifficultyStrainCount,
 	SpeedDiffStrainCount = ReturnData.Difficulty.SpeedDifficultyStrainCount,
 	SpeedRelevantNoteCount = ReturnData.Difficulty.SpeedRelevantNoteCount,
+	AimDifficulty = ReturnData.Difficulty.AimDifficulty,
+	SpeedDifficulty = ReturnData.Difficulty.SpeedDifficulty,
+	FlashlightDifficulty = ReturnData.Difficulty.FlashLightDifficulty
 })
 
 task.spawn(function()
@@ -5738,7 +5769,7 @@ end
 
 
 
-local FramePerSec = 0
+FramePerSec = 0
 
 RunService.Stepped:Connect(function()
 	FramePerSec += 1
@@ -8179,7 +8210,11 @@ script.Parent.ProgressBar.Visible = false
 StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat,true)
 
 ----------- Calculate perfomance score -----------
-
+local _accData:PerformanceCalculator.AccuracyData = {
+	h300 = AccuracyData.h300, h100 = AccuracyData.h100,
+	h50 = AccuracyData.h50, missCount = AccuracyData.miss
+}
+LivePlaySession:ProcessFinalResult(_accData)
 local TotalRewardedPS = LivePlaySession.CurrentPerformance
 
 ----------- Submit play result ---------------

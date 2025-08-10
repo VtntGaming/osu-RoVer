@@ -58,7 +58,6 @@ return function(V1Score:number, AccuracyData:{MaxCombo:number,h300:number,h100:n
 	local SpinScore = math.min(math.floor(V1Score/100)*100, MaxSpinnerScore)
 	V1Score -= SpinScore
 	Speed = Speed or 1
-	local ScoreMultiplier = getBaseMultiplier(ModUsed)
 	local V1SpeedMultiplier = 1
 	if Speed < 1 then
 		V1SpeedMultiplier = Speed^4.185
@@ -71,14 +70,19 @@ return function(V1Score:number, AccuracyData:{MaxCombo:number,h300:number,h100:n
 	elseif Speed > 1 then
 		V2SpeedMultiplier = 1 + (Speed - 1) * 0.2
 	end
+
+	local ScoreMultiplier = 1
+	if ModUsed then
+		ScoreMultiplier = getBaseMultiplier(ModUsed)
+		if ModUsed.HC then
+			V1Score *= 0.5 -- normalize the score of HC
+		end
+		if (ModUsed.Version and ModUsed.NS) or not ModUsed.SL then
+			MaxCombo = NoteCount -- non-slider -> no bonus max combo
+		end
+	end	
+
 	V1Score /= ScoreMultiplier * V1SpeedMultiplier
-	if ModUsed.HC then
-		V1Score *= 0.5 -- normalize the score of HC
-	end
-	if (ModUsed.Version and ModUsed.NS) or not ModUsed.SL then
-		MaxCombo = NoteCount -- non-slider -> no bonus max combo
-	end
-	
 	local MissPenalty = getScoreMissPenaltyMultiplier(AccuracyData.miss, NoteCount)
 	-- We assume that the score follows the new score system
 	-- So the miss penalty also apply to this
