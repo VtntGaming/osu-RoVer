@@ -1,9 +1,8 @@
-!THIS UPDATE LOG IS NOT FINAL, CHANGES CAN BE MADE IN THE FUTURE!
-
 Time has come, osu!RoVer Stable V1.47 is LIVE!
 Here's the upcomming change to the next version...
 
 -> Difficulty/ Perfomance Score
+  - The difficulty/performance update is now using the latest version of osu performance github (pp-dev)
   - Change to Flashlight mod:
     + FL mod calculation now worked individually, used it's own calculation to determine the flashlight diff and flashlight PS
     (Before change: FL mod directly effect aimPS based on the length of the map)
@@ -56,6 +55,10 @@ Here's the upcomming change to the next version...
   - Game now support stack leniency, based on the map configruation, make it easier to read, specially HD mod
   - Fixed partially lag strike when entering the game.
   - Fixed key register issue on replay that having TD mod
+
+-> Improved multiplayer
+  - Make the multiplayer chat compatible with the new TextChatService
+  - Fix some small bugs
 
 -> Game menu:
   - Made the difficulty timeline draw smoother
