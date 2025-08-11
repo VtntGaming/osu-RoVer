@@ -2588,7 +2588,7 @@ local ModData:modData.ModData = {
 	AT = AutoPlay,
 	SO = false,
 	V2 = ScoreV2Enabled,
-	TD = TouchDeviceDetected or Replay_TouchDevice,
+	TD = not ReplayMode and IsTouchDeviceActive() or Replay_TouchDevice,
 	DA = DifficultyAdjust,
 	SA = SongSpeed
 }
