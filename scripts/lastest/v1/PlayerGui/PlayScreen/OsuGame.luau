@@ -646,16 +646,16 @@ function GetModData(Mod,Detailed)
 		end
 	end
 
-	if Mod.SL == true then
+	if Mod.SL == false then
 		ModUsed = true
 		if Mods > 0 then
 			ReturnText = ReturnText..","
 		end
 		Mods += 1
 		if Detailed then
-			ReturnText = ReturnText.."Slider"
+			ReturnText = ReturnText.."NoSliders"
 		else
-			ReturnText = ReturnText.."SL"
+			ReturnText = ReturnText.."NS"
 		end
 	end
 
@@ -671,9 +671,81 @@ function GetModData(Mod,Detailed)
 			ReturnText = ReturnText.."FL"
 		end
 	end
+	
+	if Mod.DA and Mod.DA.Active then
+		ModUsed = true
+		if Mods > 0 then
+			ReturnText = ReturnText..","
+		end
+		Mods += 1
+		local _format = "DA("
+		local _longFormat = "DifficultyAdjust("
+		local function _add(txt, num, addComma)
+			local strNum = tostring(math.floor(num*10)/10)
+			_format..= txt..strNum..(addComma and "," or ")")
+			_longFormat..= txt..strNum..(addComma and "," or ")")
+		end
+		local _data = Mod.DA.Data
+		if _data.CS then
+			_add("CS", _data.CS, true)
+		end
+		if _data.AR then
+			_add("AR", _data.AR, true)
+		end
+		if _data.OD then
+			_add("OD", _data.OD, true)
+		end
+		if _data.HP then
+			_add("HP", _data.HP, false)
+		end
+		if Detailed then
+			ReturnText = ReturnText.._longFormat
+		else
+			ReturnText = ReturnText.._format
+		end
+	end
+	
+	if Mod.RX then
+		ModUsed = true
+		if Mods > 0 then
+			ReturnText = ReturnText..","
+		end
+		Mods += 1
+		if Detailed then
+			ReturnText = ReturnText.."Relax"
+		else
+			ReturnText = ReturnText.."RX"
+		end
+	end
+	
+	if Mod.SO then
+		ModUsed = true
+		if Mods > 0 then
+			ReturnText = ReturnText..","
+		end
+		Mods += 1
+		if Detailed then
+			ReturnText = ReturnText.."SpunOut"
+		else
+			ReturnText = ReturnText.."SO"
+		end
+	end
+	
+	if Mod.AP then
+		ModUsed = true
+		if Mods > 0 then
+			ReturnText = ReturnText..","
+		end
+		Mods += 1
+		if Detailed then
+			ReturnText = ReturnText.."AutoPilot"
+		else
+			ReturnText = ReturnText.."AP"
+		end
+	end
 
 	if Mods > 0 and not Detailed then
-		ReturnText = ReturnText
+		ReturnText = " | "..ReturnText
 	elseif Mods == 0 and Detailed then
 		ReturnText = "None"
 	end
@@ -1299,7 +1371,7 @@ LoadLeaderboard = function()
 						Data.ExtraData.Mod.SA = Data.ExtraData.Speed or 1
 						MaxComboText = " ("..tostring(Data.ExtraData.MaxCombo).."x)"
 						NewLBFrame.MainFrame.Accuracy.Text = tostring(Data.ExtraData.Accurancy).."%"
-						NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date).." | "..GetModData(Data.ExtraData.Mod)
+						NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date)..GetModData(Data.ExtraData.Mod)
 						NewLBFrame.MainFrame.Grade.Text = Data.ExtraData.Grade
 						if Data.ExtraData.Grade == "SS" then
 							NewLBFrame.MainFrame.Grade.Text = "S"
@@ -1453,7 +1525,7 @@ LoadLeaderboard = function()
 					Data.ExtraData.Mod.SA = Data.ExtraData.Speed or 1
 					MaxComboText = " ("..tostring(Data.ExtraData.MaxCombo).."x)"
 					NewLBFrame.MainFrame.Accuracy.Text = tostring(Data.ExtraData.Accurancy).."%"
-					NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date).." | "..GetModData(Data.ExtraData.Mod)
+					NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date)..GetModData(Data.ExtraData.Mod)
 					NewLBFrame.MainFrame.Grade.Text = Data.ExtraData.Grade
 					if Data.ExtraData.Grade == "SS" then
 						NewLBFrame.MainFrame.Grade.Text = "S"
