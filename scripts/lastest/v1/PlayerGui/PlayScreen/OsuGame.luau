@@ -621,6 +621,30 @@ function GetModData(Mod,Detailed)
 			ReturnText = ReturnText.."EZ"
 		end
 	end
+	
+	if Mod.SA and Mod.SA ~= 1 then
+		ModUsed = true
+		if Mods > 0 then
+			ReturnText = ReturnText..","
+		end
+		Mods += 1
+		local _format = string.format("SA(%.1fx)", Mod.SA)
+		local _formatDetailed = string.format("SpeedAdjust(%.1fx)", Mod.SA)
+		
+		if Mod.SA == 1.5 then
+			_format = "DT"
+			_formatDetailed = "DoubleTime"
+		elseif Mod.SA == 0.75 then
+			_format = "HT"	
+			_formatDetailed = "HalfTime"	
+		end
+		
+		if Detailed then
+			ReturnText = ReturnText.._formatDetailed
+		else
+			ReturnText = ReturnText.._format
+		end
+	end
 
 	if Mod.SL == true then
 		ModUsed = true
@@ -649,7 +673,7 @@ function GetModData(Mod,Detailed)
 	end
 
 	if Mods > 0 and not Detailed then
-		ReturnText = ReturnText.." | "
+		ReturnText = ReturnText
 	elseif Mods == 0 and Detailed then
 		ReturnText = "None"
 	end
@@ -745,6 +769,8 @@ function ShowLeaderboardPlayDetail(Data)
 	if Data.Mod == nil then -- old plays
 		Data.Mod = {} -- just replace it with no value instead
 	end
+	
+	Data.Mod.SA = Data.Speed or 1
 
 	local ModDetail = GetModData(Data.Mod,true)
 	local PlayedDate = os.date("*t",tonumber(Data.Date))
@@ -1127,7 +1153,7 @@ LoadLeaderboard = function()
 	LeaderboardInterface.PersonalBestTitle.TextTransparency = 1
 
 	-- Get map lb data from the server
-	local GolbalData:{UserPlayInfo}, PersonalData:UserPlayInfo, SessionChanged:boolean = game.ReplicatedStorage.BeatmapLeaderboard:InvokeServer(1,{DatastoreName = CurrentKey})
+	local GolbalData:{UserPlayInfo}, PersonalData:UserPlayInfo, SessionChanged:boolean = game.ReplicatedStorage.BeatmapLeaderboard:InvokeServer(1,{DatastoreName = CurrentKey, UsingPerformanceLeaderboard = PSLeaderboard})
 	-- prevent duplicating request
 	if SessionChanged == true or CurrentLeaderboardSession ~= ThisLBSession then return end
 
@@ -1270,9 +1296,10 @@ LoadLeaderboard = function()
 					NewLBFrame.MainFrame.UserName.Text = "@"..Data.Name
 					local MaxComboText = ""
 					if Data.ExtraData ~= nil then
+						Data.ExtraData.Mod.SA = Data.ExtraData.Speed or 1
 						MaxComboText = " ("..tostring(Data.ExtraData.MaxCombo).."x)"
 						NewLBFrame.MainFrame.Accuracy.Text = tostring(Data.ExtraData.Accurancy).."%"
-						NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date).." | "..GetModData(Data.ExtraData.Mod)..string.format("%.2fx",Data.ExtraData.Speed)
+						NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date).." | "..GetModData(Data.ExtraData.Mod)
 						NewLBFrame.MainFrame.Grade.Text = Data.ExtraData.Grade
 						if Data.ExtraData.Grade == "SS" then
 							NewLBFrame.MainFrame.Grade.Text = "S"
@@ -1423,9 +1450,10 @@ LoadLeaderboard = function()
 				end)
 				local MaxComboText = ""
 				if Data.ExtraData ~= nil then
+					Data.ExtraData.Mod.SA = Data.ExtraData.Speed or 1
 					MaxComboText = " ("..tostring(Data.ExtraData.MaxCombo).."x)"
 					NewLBFrame.MainFrame.Accuracy.Text = tostring(Data.ExtraData.Accurancy).."%"
-					NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date).." | "..GetModData(Data.ExtraData.Mod)..string.format("%.2fx",math.floor(Data.ExtraData.Speed*100)/100)
+					NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date).." | "..GetModData(Data.ExtraData.Mod)
 					NewLBFrame.MainFrame.Grade.Text = Data.ExtraData.Grade
 					if Data.ExtraData.Grade == "SS" then
 						NewLBFrame.MainFrame.Grade.Text = "S"
@@ -8294,7 +8322,13 @@ DisplayModPlayed = (function()
 
 	-- Check for SongSpeed and format if necessary
 	if SongSpeed ~= 1 then
-		table.insert(mods, string.format(",SA(%sx)", tostring(math.round(SongSpeed * 100) / 100)))
+		if SongSpeed == 1.5 then
+			table.insert(mods, "DT")
+		elseif SongSpeed == 0.75 then
+			table.insert(mods, "HT")
+		else
+			table.insert(mods, string.format(",SA(%sx)", tostring(math.round(SongSpeed * 100) / 100)))
+		end
 	end
 	-- Only concatenate if mods exist
 	if #mods > 0 then
