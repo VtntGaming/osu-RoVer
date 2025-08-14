@@ -4,6 +4,7 @@ local modData = require(workspace.ModData)
 local DifficultyCalculator = require(workspace.DifficultyCalculator)
 local PerformanceCalculator = require(workspace.PerformanceCalculator)
 local StrainSkills = require(workspace.DifficultyCalculator.StrainSkills)
+local ConverterTools = require(workspace.OsuConvert.converterTools)
 export type PSValue = {Aim:number, Speed:number, Rhythm:number, Flashlight:number, AimStrainDecay:number, SpeedStrainDecay:number, FLStrainDecay:number}
 export type LivePlayProcessing = {
 	new:() -> (LivePlayProcessing),
@@ -135,8 +136,8 @@ end
 
 function LivePlayProcessing:SetupData(Attributes:InputAttributes)
 	self.ModData = Attributes.ModData
-	self.ODRate = Attributes.ODRate
-	self.ARRate = Attributes.ARRate
+	self.ODRate = ConverterTools.GetDifficultyValueAfterMod.OD(Attributes.ODRate, Attributes.ModData)
+	self.ARRate = ConverterTools.GetDifficultyValueAfterMod.OD(Attributes.ARRate, Attributes.ModData)
 	self.NoteCount = Attributes.NoteCount
 	self.AimDiffStrainCount = Attributes.AimDiffStrainCount
 	self.SpeedDiffStrainCount = Attributes.SpeedDiffStrainCount

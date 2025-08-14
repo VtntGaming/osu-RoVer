@@ -621,17 +621,41 @@ function GetModData(Mod,Detailed)
 			ReturnText = ReturnText.."EZ"
 		end
 	end
+	
+	if Mod.SA and Mod.SA ~= 1 then
+		ModUsed = true
+		if Mods > 0 then
+			ReturnText = ReturnText..","
+		end
+		Mods += 1
+		local _format = string.format("SA(%.1fx)", Mod.SA)
+		local _formatDetailed = string.format("SpeedAdjust(%.1fx)", Mod.SA)
+		
+		if Mod.SA == 1.5 then
+			_format = "DT"
+			_formatDetailed = "DoubleTime"
+		elseif Mod.SA == 0.75 then
+			_format = "HT"	
+			_formatDetailed = "HalfTime"	
+		end
+		
+		if Detailed then
+			ReturnText = ReturnText.._formatDetailed
+		else
+			ReturnText = ReturnText.._format
+		end
+	end
 
-	if Mod.SL == true then
+	if Mod.SL == false then
 		ModUsed = true
 		if Mods > 0 then
 			ReturnText = ReturnText..","
 		end
 		Mods += 1
 		if Detailed then
-			ReturnText = ReturnText.."Slider"
+			ReturnText = ReturnText.."NoSliders"
 		else
-			ReturnText = ReturnText.."SL"
+			ReturnText = ReturnText.."NS"
 		end
 	end
 
@@ -647,9 +671,81 @@ function GetModData(Mod,Detailed)
 			ReturnText = ReturnText.."FL"
 		end
 	end
+	
+	if Mod.DA and Mod.DA.Active then
+		ModUsed = true
+		if Mods > 0 then
+			ReturnText = ReturnText..","
+		end
+		Mods += 1
+		local _format = "DA("
+		local _longFormat = "DifficultyAdjust("
+		local function _add(txt, num, addComma)
+			local strNum = tostring(math.floor(num*10)/10)
+			_format..= txt..strNum..(addComma and "," or ")")
+			_longFormat..= txt..strNum..(addComma and "," or ")")
+		end
+		local _data = Mod.DA.Data
+		if _data.CS then
+			_add("CS", _data.CS, true)
+		end
+		if _data.AR then
+			_add("AR", _data.AR, true)
+		end
+		if _data.OD then
+			_add("OD", _data.OD, true)
+		end
+		if _data.HP then
+			_add("HP", _data.HP, false)
+		end
+		if Detailed then
+			ReturnText = ReturnText.._longFormat
+		else
+			ReturnText = ReturnText.._format
+		end
+	end
+	
+	if Mod.RX then
+		ModUsed = true
+		if Mods > 0 then
+			ReturnText = ReturnText..","
+		end
+		Mods += 1
+		if Detailed then
+			ReturnText = ReturnText.."Relax"
+		else
+			ReturnText = ReturnText.."RX"
+		end
+	end
+	
+	if Mod.SO then
+		ModUsed = true
+		if Mods > 0 then
+			ReturnText = ReturnText..","
+		end
+		Mods += 1
+		if Detailed then
+			ReturnText = ReturnText.."SpunOut"
+		else
+			ReturnText = ReturnText.."SO"
+		end
+	end
+	
+	if Mod.AP then
+		ModUsed = true
+		if Mods > 0 then
+			ReturnText = ReturnText..","
+		end
+		Mods += 1
+		if Detailed then
+			ReturnText = ReturnText.."AutoPilot"
+		else
+			ReturnText = ReturnText.."AP"
+		end
+	end
 
 	if Mods > 0 and not Detailed then
-		ReturnText = ReturnText.." | "
+		ReturnText = " | "..ReturnText
 	elseif Mods == 0 and Detailed then
 		ReturnText = "None"
 	end
@@ -745,6 +841,8 @@ function ShowLeaderboardPlayDetail(Data)
 	if Data.Mod == nil then -- old plays
 		Data.Mod = {} -- just replace it with no value instead
 	end
+	
+	Data.Mod.SA = Data.Speed or 1
 
 	local ModDetail = GetModData(Data.Mod,true)
 	local PlayedDate = os.date("*t",tonumber(Data.Date))
@@ -1127,7 +1225,7 @@ LoadLeaderboard = function()
 	LeaderboardInterface.PersonalBestTitle.TextTransparency = 1
 
 	-- Get map lb data from the server
-	local GolbalData:{UserPlayInfo}, PersonalData:UserPlayInfo, SessionChanged:boolean = game.ReplicatedStorage.BeatmapLeaderboard:InvokeServer(1,{DatastoreName = CurrentKey})
+	local GolbalData:{UserPlayInfo}, PersonalData:UserPlayInfo, SessionChanged:boolean = game.ReplicatedStorage.BeatmapLeaderboard:InvokeServer(1,{DatastoreName = CurrentKey, UsingPerformanceLeaderboard = PSLeaderboard})
 	-- prevent duplicating request
 	if SessionChanged == true or CurrentLeaderboardSession ~= ThisLBSession then return end
 
@@ -1270,9 +1368,10 @@ LoadLeaderboard = function()
 					NewLBFrame.MainFrame.UserName.Text = "@"..Data.Name
 					local MaxComboText = ""
 					if Data.ExtraData ~= nil then
+						Data.ExtraData.Mod.SA = Data.ExtraData.Speed or 1
 						MaxComboText = " ("..tostring(Data.ExtraData.MaxCombo).."x)"
 						NewLBFrame.MainFrame.Accuracy.Text = tostring(Data.ExtraData.Accurancy).."%"
-						NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date).." | "..GetModData(Data.ExtraData.Mod)..string.format("%.2fx",Data.ExtraData.Speed)
+						NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date)..GetModData(Data.ExtraData.Mod)
 						NewLBFrame.MainFrame.Grade.Text = Data.ExtraData.Grade
 						if Data.ExtraData.Grade == "SS" then
 							NewLBFrame.MainFrame.Grade.Text = "S"
@@ -1423,9 +1522,10 @@ LoadLeaderboard = function()
 				end)
 				local MaxComboText = ""
 				if Data.ExtraData ~= nil then
+					Data.ExtraData.Mod.SA = Data.ExtraData.Speed or 1
 					MaxComboText = " ("..tostring(Data.ExtraData.MaxCombo).."x)"
 					NewLBFrame.MainFrame.Accuracy.Text = tostring(Data.ExtraData.Accurancy).."%"
-					NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date).." | "..GetModData(Data.ExtraData.Mod)..string.format("%.2fx",math.floor(Data.ExtraData.Speed*100)/100)
+					NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date)..GetModData(Data.ExtraData.Mod)
 					NewLBFrame.MainFrame.Grade.Text = Data.ExtraData.Grade
 					if Data.ExtraData.Grade == "SS" then
 						NewLBFrame.MainFrame.Grade.Text = "S"
@@ -2588,7 +2688,7 @@ local ModData:modData.ModData = {
 	AT = AutoPlay,
 	SO = false,
 	V2 = ScoreV2Enabled,
-	TD = TouchDeviceDetected or Replay_TouchDevice,
+	TD = not ReplayMode and IsTouchDeviceActive() or Replay_TouchDevice,
 	DA = DifficultyAdjust,
 	SA = SongSpeed
 }
@@ -4152,10 +4252,6 @@ EarlyMiss = math.min(EarlyMiss, CircleApproachTime/SongSpeed)
 if CircleApproachTime/SongSpeed < hit50 then
 	local MissTiming = math.max(0,hit50 - CircleApproachTime/SongSpeed)
 	script.Parent.HitError.MissArea.Size = UDim2.new(MissTiming/(hit50*2),0,0.25,0)
-end
-
-if SpeedSync then
-	CircleApproachTime /= SongSpeed
 end
 
 script.Parent.HitError.Size = UDim2.new(0,hit50*(19/16)*HitErrorMulti,0,25)
@@ -8298,7 +8394,13 @@ DisplayModPlayed = (function()
 
 	-- Check for SongSpeed and format if necessary
 	if SongSpeed ~= 1 then
-		table.insert(mods, string.format(",SA(%sx)", tostring(math.round(SongSpeed * 100) / 100)))
+		if SongSpeed == 1.5 then
+			table.insert(mods, "DT")
+		elseif SongSpeed == 0.75 then
+			table.insert(mods, "HT")
+		else
+			table.insert(mods, string.format(",SA(%sx)", tostring(math.round(SongSpeed * 100) / 100)))
+		end
 	end
 	-- Only concatenate if mods exist
 	if #mods > 0 then
