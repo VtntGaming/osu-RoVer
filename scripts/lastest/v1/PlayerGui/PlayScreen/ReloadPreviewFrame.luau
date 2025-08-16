@@ -208,8 +208,8 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 	local CSRate = converterTools.GetDifficultyValueAfterMod.CS(ReturnData.Difficulty.CircleSize, ModData)
 	local HPRate = converterTools.GetDifficultyValueAfterMod.HP(ReturnData.Difficulty.HPDrainRate, ModData)
-	local ARRate = converterTools.GetDifficultyValueAfterMod.AR(ReturnData.Difficulty.ApproachRate, ModData)
-	local ODRate = converterTools.GetDifficultyValueAfterMod.OD(ReturnData.Difficulty.OverallDifficulty, ModData)
+	local ARRate, ARRate_NoSA = converterTools.GetDifficultyValueAfterMod.AR(ReturnData.Difficulty.ApproachRate, ModData)
+	local ODRate, ODRate_NoSA = converterTools.GetDifficultyValueAfterMod.OD(ReturnData.Difficulty.OverallDifficulty, ModData)
 	local SpeedAR = ARRate
 
 
@@ -381,16 +381,16 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 		local RPMRequire = 150
 		if ODRate < 5 then
-			RPMRequire = 150 - 60 * (5-ODRate)/5  -- 90 - 150RPM
+			RPMRequire = 150 - 60 * (5-ODRate)/5
 		else
-			RPMRequire = 150 + 75 * (ODRate-5)/5 -- 150 - 225RPM
+			RPMRequire = 150 + 75 * (ODRate-5)/5
 		end
 
-
+		print(ODRate_NoSA)
 		local DetailARTime = 1200
-		local Detail300Timing = 100 - 8 * ODRate
-		local Detail100Timing = 175 - 10 * ODRate
-		local Detail50Timing = 250 - 12.5 * ODRate
+		local Detail300Timing = 100 - 8 * ODRate_NoSA
+		local Detail100Timing = 175 - 10 * ODRate_NoSA
+		local Detail50Timing = 250 - 12.5 * ODRate_NoSA
 		local DetailSpinRequirement = RPMRequire
 		local DetailHitObjRadius = 54.4 - 4.48 * CSRate
 
@@ -595,12 +595,12 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	DetailedInterface.MaxHealth.Data.Text = string.format("%s",ModData.EZ and "3 x 100%" or "100%")
 
 	local HitWindowData = {
-		h300 = 100 - 8 * ODRate,
-		h100 = 175 - 10 * ODRate,
-		h50 = 250 - 12.5 * ODRate,
-		TDh300 = 150 - 12 * ODRate,
-		TDh100 = 220 - 12.5 * ODRate,
-		TDh50 = 275 - 13.5 * ODRate
+		h300 = 100 - 8 * ODRate_NoSA,
+		h100 = 175 - 10 * ODRate_NoSA,
+		h50 = 250 - 12.5 * ODRate_NoSA,
+		TDh300 = 150 - 12 * ODRate_NoSA,
+		TDh100 = 220 - 12.5 * ODRate_NoSA,
+		TDh50 = 275 - 13.5 * ODRate_NoSA
 	}
 
 	DetailedInterface.HitWindow.Data.Text = string.format("%.1f/%.1f/%.1fms",

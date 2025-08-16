@@ -2898,7 +2898,7 @@ if isSpectating == false then
 		local Difficulty = ReturnData.Difficulty
 		CS = ConvertTools.GetDifficultyValueAfterMod.CS(Difficulty.CircleSize, ModData)
 		ApproachRate = ConvertTools.GetDifficultyValueAfterMod.AR(Difficulty.ApproachRate, ModData)
-		OverallDifficulty = ConvertTools.GetDifficultyValueAfterMod.OD(Difficulty.OverallDifficulty, ModData)
+		_, OverallDifficulty = ConvertTools.GetDifficultyValueAfterMod.OD(Difficulty.OverallDifficulty, ModData)
 		HPDrain = ConvertTools.GetDifficultyValueAfterMod.HP(Difficulty.HPDrainRate, ModData)
 	end
 else

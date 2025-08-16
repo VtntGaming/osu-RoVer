@@ -83,18 +83,27 @@ end
 export type ModData = modData.ModData
 
 tool.HitWindowsFor = {
-	h300 = function(ODRate:number, Speed:number, IsTD:boolean?):number
+	h300 = function(ODRate:number, Speed:number, IsTD:boolean?, byPassSA:boolean?):number
+		if byPassSA then
+			Speed = 1
+		end
 		local h300 = math.floor(tool.DifficultyRange(ODRate, 80, 50, 20)) - 0.5
 		if IsTD then
 			h300 = math.floor(tool.DifficultyRange(ODRate, 120, 75, 30)) - 0.5
 		end
 		return h300 / Speed
 	end,
-	h100 = function(ODRate:number, Speed:number):number
+	h100 = function(ODRate:number, Speed:number, byPassSA:boolean?):number
+		if byPassSA then
+			Speed = 1
+		end
 		local h100 = math.floor(tool.DifficultyRange(ODRate, 140, 100, 60)) - 0.5
 		return h100 / Speed
 	end,
-	h50 = function(ODRate:number, Speed:number):number
+	h50 = function(ODRate:number, Speed:number, byPassSA:boolean?):number
+		if byPassSA then
+			Speed = 1
+		end
 		local h50 = math.floor(tool.DifficultyRange(ODRate, 200, 150, 100)) - 0.5
 		return h50 / Speed
 	end,
@@ -111,7 +120,7 @@ tool.GetDifficultyFromValue = {
 }
 
 tool.GetDifficultyValueAfterMod = {
-	AR = function(rate:number, modData:ModData)
+	AR = function(rate:number, modData:ModData):(number, number)
 		if modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.AR then
 			rate = modData.DA.Data.AR
 		elseif modData.HR then
@@ -123,6 +132,8 @@ tool.GetDifficultyValueAfterMod = {
 		if not (modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.AR) then
 			rate = math.clamp(rate, 0, 10)
 		end
+		
+		local rateAfterSA = rate
 		
 		if modData.SA and modData.SA ~= 1 then
 			local ARTime = 1200
@@ -137,17 +148,17 @@ tool.GetDifficultyValueAfterMod = {
 			ARTime /= modData.SA
 			
 			if ARTime > 1200 then
-				rate = 5 - ((ARTime - 1200) / 600 * 5)
+				rateAfterSA = 5 - ((ARTime - 1200) / 600 * 5)
 			elseif ARTime < 1200 then
-				rate = 5 + ((1200 - ARTime) / 750 * 5)
+				rateAfterSA = 5 + ((1200 - ARTime) / 750 * 5)
 			else
-				rate = 5
+				rateAfterSA = 5
 			end
 		end
 		
-		return rate
+		return rateAfterSA, rate
 	end,
-	OD = function(rate:number, modData:ModData)
+	OD = function(rate:number, modData:ModData):(number, number)
 		if modData.DA  and modData.DA.Active and modData.DA.Data and modData.DA.Data.OD then
 			rate = modData.DA.Data.OD
 		elseif modData.HR then
@@ -158,13 +169,19 @@ tool.GetDifficultyValueAfterMod = {
 		if not (modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.OD) then
 			rate = math.clamp(rate, 0, 10)
 		end
+		
+		local rateAfterSA = rate
+		
 		if (modData.SA and modData.SA ~= 1) or modData.TD then
-			local h300 = tool.HitWindowsFor.h300(rate, modData.SA or 1, modData.TD)
+			local h300 = tool.HitWindowsFor.h300(rate, modData.SA or 1, modData.TD, true)
 			rate = (79.5 - h300) / 6
+			
+			local h300AfterSA = tool.HitWindowsFor.h300(rate, modData.SA or 1, modData.TD, false)
+			rateAfterSA = (79.5 - h300AfterSA) / 6
 		end
 		
 		
-		return rate
+		return rateAfterSA, rate
 	end,
 	HP = function(rate:number, modData:ModData)
 		if modData.DA and modData.DA.Active and modData.DA.Data and modData.DA.Data.HP then
