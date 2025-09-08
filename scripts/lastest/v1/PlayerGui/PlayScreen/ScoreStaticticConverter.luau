@@ -81,7 +81,7 @@ type ScoreStatisticVersion0 = {
 	}
 }
 
-type ScoreStatistic = {
+type ScoreStatisticVersion1 = {
 	Version:number,
 	HaveReplay:boolean,
 	Accuracy:number,
@@ -100,6 +100,8 @@ type ScoreStatistic = {
 	Performance:number
 }
 
+export type ScoreStatistic = ScoreStatisticVersion1
+
 local ConvertVersion = {
 	["Default"] = function(oldStat:ScoreStatisticVersion0):ScoreStatistic
 		local newStat:ScoreStatistic = {
@@ -109,10 +111,10 @@ local ConvertVersion = {
 			MaxCombo = oldStat.MaxCombo,
 			Date = oldStat.Date,
 			Statistic = {
-				h300 = oldStat[1],
-				h100 = oldStat[2],
-				h50 = oldStat[3],
-				missCount = oldStat[4]
+				h300 = oldStat.ExtraAccurancy[1],
+				h100 = oldStat.ExtraAccurancy[2],
+				h50 = oldStat.ExtraAccurancy[3],
+				missCount = oldStat.ExtraAccurancy[4]
 			},
 			ModData = {
 				FL = oldStat.Mod.FL,
