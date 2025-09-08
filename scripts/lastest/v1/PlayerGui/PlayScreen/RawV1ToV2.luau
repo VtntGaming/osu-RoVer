@@ -77,7 +77,7 @@ return function(V1Score:number, AccuracyData:{MaxCombo:number,h300:number,h100:n
 		if ModUsed.HC then
 			V1Score *= 0.5 -- normalize the score of HC
 		end
-		if (ModUsed.Version and ModUsed.NS) or not ModUsed.SL then
+		if (ModUsed.Version and ModUsed.NS) or (not ModUsed.Version and not ModUsed.SL) then
 			MaxCombo = NoteCount -- non-slider -> no bonus max combo
 		end
 	end	

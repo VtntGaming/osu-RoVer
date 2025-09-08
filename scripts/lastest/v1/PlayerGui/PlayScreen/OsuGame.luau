@@ -3128,7 +3128,7 @@ AdjustIngameSongVolume(SavedGameSettings.MusicVolume)
 timingPointEffectVolumeMultiplier = 1
 function AdjustIngameEffectVolume(volume)
 	for _,Hitsound in pairs(script.Hitsounds:GetChildren()) do
-		Hitsound.Volume = volume*0.01*timingPointEffectVolumeMultiplier
+		Hitsound.Volume = volume*0.05*timingPointEffectVolumeMultiplier
 	end
 end
 AdjustIngameEffectVolume(EffectVolume)
@@ -5426,6 +5426,7 @@ function CreateHitSound(HitsoundType,CustomSampleSet, AmbientRatio)
 		local HitsoundFilename = SelectedSampleSet.."-"..HitsoundTypeset[HitsoundType]
 		local CurrentHitsound = script.Hitsounds[HitsoundFilename]:Clone()
 		local CurrentHitsound2 = script.Hitsounds[HitsoundFilename]:Clone()
+		
 
 		CurrentHitsound.Volume *= 0.5 + (1-AmbientRatio)*0.5
 		CurrentHitsound2.Volume *= 0.5 + (AmbientRatio)*0.5
@@ -5818,10 +5819,13 @@ end)
 TotalHit = 0
 TotalUnstableTime = 0
 LastHit = 0
+OffsetAvg = 0
 
 function CreateHitDelay(Color,HitDelay)
-	-- can be called as HitWindow hit 
-	local Pos = (HitDelay+hit50)/(hit50*2)
+	-- can be called as HitWindow hit
+	OffsetAvg = math.lerp(OffsetAvg, HitDelay, 1/10)
+	local Pos = (OffsetAvg+hit50)/(hit50*2)
+	local DrawPos = (HitDelay+hit50)/(hit50*2)
 	TweenService:Create(script.Parent.HitError,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{AnchorPoint = Vector2.new(0.5,1)}):Play()
 	TweenService:Create(script.Parent.HitError.CurrentDelay.Delay,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(Pos,0,0.5,0),ImageTransparency = 0}):Play()
 	TweenService:Create(script.Parent.HitError.CurrentDelay.UnstableRate,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{TextTransparency = 0}):Play()
@@ -5850,7 +5854,7 @@ function CreateHitDelay(Color,HitDelay)
 
 	local NewHitDelay = script.NoteDelay:Clone()
 	NewHitDelay.Parent = script.Parent.HitError
-	NewHitDelay.Position = UDim2.new(Pos,0,0.5,0)
+	NewHitDelay.Position = UDim2.new(DrawPos,0,0.5,0)
 	NewHitDelay.BackgroundColor3 = Color
 	task.spawn(function()
 		TweenService:Create(NewHitDelay,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{Size = UDim2.new(0,2,0.75,0), BackgroundTransparency = 0.1}):Play()
@@ -8221,9 +8225,9 @@ if AccuracyData.miss > 0 then
 	ResultFrame.hit0s.TextColor3 = Color3.fromRGB(255, 107, 107)
 end
 local TotalNoteResult = AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss
-local RawAccurancy = ((AccuracyData.h300*300+AccuracyData.h100*100+AccuracyData.h50*50)/(TotalNoteResult*300))*100
-local GameAccurancy = math.floor((RawAccurancy)*100)/100
-local tostringAcc = string.format("%s%s",string.format("%.2d",GameAccurancy),string.sub(string.format("%.2f",GameAccurancy%1),2,4))
+local RawAccuracy = ((AccuracyData.h300*300+AccuracyData.h100*100+AccuracyData.h50*50)/(TotalNoteResult*300))*100
+local GameAccuracy = math.floor((RawAccuracy)*100)/100
+local tostringAcc = string.format("%s%s",string.format("%.2d",GameAccuracy),string.sub(string.format("%.2f",GameAccuracy%1),2,4))
 ResultFrame.Accuracy.Text = string.format("%dx/%dx | %s%%", AccuracyData.MaxCombo, ReturnData.Difficulty.MaxCombo, tostringAcc)
 
 local GameplayRank = "D"
@@ -8254,7 +8258,7 @@ end
 if percent300s >= 0.9 and misstotal <= 0 and percent50s < 0.01 then
 	GameplayRank = "S"
 end
-if GameAccurancy >= 100 then
+if GameAccuracy >= 100 then
 	GameplayRank = "SS"
 	SS = true
 end
@@ -8667,14 +8671,9 @@ if not CanUploadReplay then
 	PlayerGui.NotificationPopup.NotificationsPopup.ClientCreateNotification:Fire("Your replay is too big to upload, your replay size was "..string.format("%.2f/4096.00kB",#ReplayDataEncoded/(1024^2)),Color3.new(1,0,0))
 end
 
-if PlayRanked == true and CanbeSubmitted then
-	local RankedScore = math.round(Score)
-	OnlineResult.SubmitStatus.Text = "Submitting score"
-	--ResultFrame.Score.Text = "[Submitting...]"
-	local ReturnResult = game.ReplicatedStorage.BeatmapLeaderboard:InvokeServer(2,{DatastoreName = CurrentKey,BeatmapKey = tostring(BeatmapKey),PlayData = {
-		Score = RankedScore,
-		ReplayData = (CanUploadReplay and ReplayDataEncoded) or "",
-		ExtraData = {
+--[[
+	Version 0:
+	ExtraData = {
 			HaveReplay = CanUploadReplay,
 			Accurancy = tostringAcc,
 			MaxCombo = AccuracyData.MaxCombo,
@@ -8694,6 +8693,98 @@ if PlayRanked == true and CanbeSubmitted then
 				TD = TouchDeviceDetected
 			}
 		},
+		
+	Version 1:
+	ExtraData = {
+			Version = 1,
+			HaveReplay = CanUploadReplay,
+			Accuracy = GameAccuracy,
+			MaxCombo = AccuracyData.MaxCombo,
+			Date = os.time(),
+			Statistic = {
+				h300 = AccuracyData.h300,
+				h100 = AccuracyData.h100,
+				h50 = AccuracyData.h50,
+				missCount = AccuracyData.miss
+			},
+			Performance = TotalRewardedPS,
+			ModData = {
+				FL = Flashlight,
+				NS = not SliderMode,
+				NF = NoFail,
+				HD = HiddenMod,
+				HR = HardRock,
+				EZ = EasyMod,
+				AT = AutoPlay,
+				TD = TouchDeviceDetected,
+				SA = SongSpeed
+			},
+			Score = RankedScore,
+			ScoreV2 = getScoreV2(),			
+			Consistency = getConsistency(),
+		}::ScoreStatistic,
+]]
+
+--[[
+	Versions:
+	*no specified* (We will call it 0) - V1.47.3 and before
+	1 - V1.47.4 and beyond
+]]
+
+type ScoreStatistic = {
+	Version:number,
+	HaveReplay:boolean,
+	Accuracy:number,
+	MaxCombo:number,
+	Date:number,
+	Statistic:{
+		h300:number,
+		h100:number,
+		h50:number,
+		missCount:number
+	},
+	ModData:modData.ModData,
+	Consistency:number,
+	Score:number,
+	ScoreV2:number,
+	Performance:number
+}
+
+if PlayRanked == true and CanbeSubmitted then
+	local RankedScore = math.round(Score)
+	OnlineResult.SubmitStatus.Text = "Submitting score"
+	--ResultFrame.Score.Text = "[Submitting...]"
+	local ReturnResult = game.ReplicatedStorage.BeatmapLeaderboard:InvokeServer(2,{DatastoreName = CurrentKey,BeatmapKey = tostring(BeatmapKey),PlayData = {
+		Score = RankedScore,
+		ReplayData = (CanUploadReplay and ReplayDataEncoded) or "",
+		ExtraData = {
+			Version = 1,
+			HaveReplay = CanUploadReplay,
+			Accuracy = GameAccuracy,
+			MaxCombo = AccuracyData.MaxCombo,
+			Date = os.time(),
+			Statistic = {
+				h300 = AccuracyData.h300,
+				h100 = AccuracyData.h100,
+				h50 = AccuracyData.h50,
+				missCount = AccuracyData.miss
+			},
+			Performance = TotalRewardedPS,
+			ModData = {
+				FL = Flashlight,
+				NS = not SliderMode,
+				NF = NoFail,
+				HD = HiddenMod,
+				HR = HardRock,
+				EZ = EasyMod,
+				AT = AutoPlay,
+				TD = TouchDeviceDetected,
+				SA = SongSpeed
+			},
+			Score = RankedScore,
+			ScoreV2 = getScoreV2(),			
+			Consistency = getConsistency(),
+		}::ScoreStatistic,
 		BadgeCondition = BadgeCondition,
 		SecurityData = { -- You somehow change this? you gonna get kick
 			BeatmapName = Beatmap.Name,
