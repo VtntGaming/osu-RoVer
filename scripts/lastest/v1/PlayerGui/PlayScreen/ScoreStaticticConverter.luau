@@ -125,9 +125,9 @@ local ConvertVersion = {
 				TD = oldStat.Mod.TD,
 				SA = oldStat.Speed
 			},
-			Consistency = -1,
-			Score = -1,
-			ScoreV2 = -1,
+			Consistency = 0,
+			Score = 0,
+			ScoreV2 = 0,
 			Performance = oldStat.PS
 		}		
 		
