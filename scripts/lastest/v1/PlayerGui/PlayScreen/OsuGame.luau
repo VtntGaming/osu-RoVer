@@ -1931,6 +1931,10 @@ script.Parent.Parent.BG.StartButton.MouseButton1Click:Connect(function()
 		TweenService:Create(BGFrame.BeatmapLeaderboard,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{AnchorPoint = Vector2.new(0,0)}):Play()
 		TweenService:Create(BGFrame.BeatmapCount,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{AnchorPoint = Vector2.new(0,0)}):Play()
 		TweenService:Create(PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = math.max(0.8,DefaultBackgroundTrans+0.2)}):Play()
+		if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+			AutoPlay = true	-- Right control to toggle auto-play
+			print("Toggle autoplay")
+		end
 		wait(0.5)
 		script.Parent.StartGame:Fire()
 		StreamingLoop:AddLoop(function() return not BeatmapStarted end, 0.5, function()
