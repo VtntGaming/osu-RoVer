@@ -5922,7 +5922,7 @@ local ReplayData = {
 local ReplayDataValue = script.Parent.GameplayData.CurrentReplayData
 ReplayDataValue.Value = HttpService:JSONEncode(ReplayData)
 
-game.ReplicatedStorage.UserReplaySaves.ControlRemote.ReplayUpload:FireServer(1,CurrentKey.."-"..tostring(LocalPlayer.UserId))
+game.ReplicatedStorage.UserReplaySaves.ControlRemote.ReplayUpload:FireServer(1,`{ReturnData.BeatmapSetsData.BeatmapsetID}-{ReturnData.BeatmapSetsData.BeatmapID}-{tostring(LocalPlayer.UserId)}`)
 
 function UploadReplay(Method,Data1,Data2,Data3)
 	game.ReplicatedStorage.UserReplaySaves.ControlRemote.ReplayUpload:FireServer(Method,Data1,Data2,Data3)
@@ -8754,45 +8754,49 @@ if PlayRanked == true and CanbeSubmitted then
 	local RankedScore = math.round(Score)
 	OnlineResult.SubmitStatus.Text = "Submitting score"
 	--ResultFrame.Score.Text = "[Submitting...]"
-	local ReturnResult = game.ReplicatedStorage.BeatmapLeaderboard:InvokeServer(2,{DatastoreName = CurrentKey,BeatmapKey = tostring(BeatmapKey),PlayData = {
-		Score = RankedScore,
-		ReplayData = (CanUploadReplay and ReplayDataEncoded) or "",
-		ExtraData = {
-			Version = 1,
-			HaveReplay = CanUploadReplay,
-			Accuracy = GameAccuracy,
-			MaxCombo = AccuracyData.MaxCombo,
-			Date = os.time(),
-			Statistic = {
-				h300 = AccuracyData.h300,
-				h100 = AccuracyData.h100,
-				h50 = AccuracyData.h50,
-				missCount = AccuracyData.miss
-			},
-			Performance = TotalRewardedPS,
-			ModData = {
-				FL = Flashlight,
-				NS = not SliderMode,
-				NF = NoFail,
-				HD = HiddenMod,
-				HR = HardRock,
-				EZ = EasyMod,
-				AT = AutoPlay,
-				TD = TouchDeviceDetected,
-				SA = SongSpeed
-			},
+	local _datastoreScope = `{ReturnData.BeatmapSetsData.BeatmapsetID}-{ReturnData.BeatmapSetsData.BeatmapID}`
+	local ReturnResult = game.ReplicatedStorage.BeatmapLeaderboard:InvokeServer(2,{
+		DatastoreName = _datastoreScope,
+		BeatmapKey = ReturnData.BeatmapSetsData.BeatmapID,
+		PlayData = {
 			Score = RankedScore,
-			ScoreV2 = getScoreV2(),			
-			Consistency = getConsistency(),
-		}::ScoreStatistic,
-		BadgeCondition = BadgeCondition,
-		SecurityData = { -- You somehow change this? you gonna get kick
-			BeatmapName = Beatmap.Name,
-			beatmapid = ReturnData.BeatmapSetsData.BeatmapID,
-			metadata = ReturnData.Overview.Metadata,
-			SecurityKey = ServerSecurityKey -- There's no way you get this key.. do you?
-		}
-	}})
+			ReplayData = (CanUploadReplay and ReplayDataEncoded) or "",
+			ExtraData = {
+				Version = 1,
+				HaveReplay = CanUploadReplay,
+				Accuracy = GameAccuracy,
+				MaxCombo = AccuracyData.MaxCombo,
+				Date = os.time(),
+				Statistic = {
+					h300 = AccuracyData.h300,
+					h100 = AccuracyData.h100,
+					h50 = AccuracyData.h50,
+					missCount = AccuracyData.miss
+				},
+				Performance = TotalRewardedPS,
+				ModData = {
+					FL = Flashlight,
+					NS = not SliderMode,
+					NF = NoFail,
+					HD = HiddenMod,
+					HR = HardRock,
+					EZ = EasyMod,
+					AT = AutoPlay,
+					TD = TouchDeviceDetected,
+					SA = SongSpeed
+				},
+				Score = RankedScore,
+				ScoreV2 = getScoreV2(),			
+				Consistency = getConsistency(),
+			}::ScoreStatistic,
+			BadgeCondition = BadgeCondition,
+			SecurityData = {	-- This let the server re-check again if the sending data is actually correct or not
+				BeatmapName = Beatmap.Name,
+				beatmapid = ReturnData.BeatmapSetsData.BeatmapID,
+				metadata = ReturnData.Overview.Metadata,	-- The beatmap information for report gathering
+				SecurityKey = ServerSecurityKey -- A key to let the server know if it's a true obtained score
+			}
+		}})
 
 	local OldScore = ReturnResult.Score
 
