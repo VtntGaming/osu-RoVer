@@ -3367,7 +3367,7 @@ spawn(function()
 		
 
 		local SongLoudness = script.Parent.GameSong.AudioAnalyzer.RmsLevel
-		local LoudnessMulti = math.clamp(SongLoudness * 2, 0, 1)
+		local LoudnessMulti = math.clamp(SongLoudness * 1, 0, 1)
 		local Progress = 1-(FullTimeLeft/TotalTime)
 		Progress += LoudnessMulti/10
 		TweenService:Create(script.Parent.ProgressBar.Time,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{Size = UDim2.new(Progress,0,1,0)}):Play()
