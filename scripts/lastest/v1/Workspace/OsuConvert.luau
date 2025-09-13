@@ -1,9 +1,8 @@
 --[LOCATION]:[Workspace.OsuConvert]
 -- osu!RoVer converter
 -- convert raw osu file into readable and excutable lua data
--- V1.47 (Size: 38.56KB)
+-- V1.47 (Size: 27.69KB)
 
-local PerformanceCalculator = require(workspace.PerformanceCalculator)
 local BasePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
 local basePerformanceFL = require(workspace.PerformanceCalculator.BasePerfomanceFL)
 local calculator = require(workspace.DifficultyCalculator)
@@ -28,9 +27,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	elseif FileType == 3 then
 		OsuData = game.ReplicatedStorage.GetModuleData:InvokeServer(tonumber(Beatmap))
 	end
-	local Space = "\n" --[[script.Space.Value]]
-	local Data = {}
-	local TempData = ""
 
 	local ReturningData = {} --Should be useful
 	ReturningData.Overview = {OverviewStartTime = 0,Metadata = {}}
@@ -50,34 +46,16 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	local SongSpeed = modData.SA or 1
 
 	local MapData = {}
-	local MapDataName = {}
 	local TimingPoints = {}
 	local BeatmapColor
 	local OriginalPreviewTime = -1
-	
-	--local DIFFICULTY_VALUE_EXPOMENTAL_RATE = 1/2.15
-	--local DIFFICULTY_VALUE_MULTIPLIER_RATE = 0.5504298051287392
 	
 	local DIFFICULTY_VALUE_EXPOMENTAL_RATE = 1/3
 	local DIFFICULTY_VALUE_MULTIPLIER_RATE = 0.265
 	local DIFFICULTY_VALUE_AIM_MULTIPLIER = 1
 	local DIFFICULTY_VALUE_SPEED_MULTIPLIER = 1
 
-	-- Convert string into datatable
-	--[[
-	-----------
-	[Data]
-	1
-	2
-	3
-	4
-	E
-	Data: Data
-	[Data2]
-	ExampleText
-	-----------
-	return as {["Data"] = {1,2,3,4,"E","Data: Data"},["Data2"] = {"ExampleText"}}
-	]]
+	-- Spilt into categories
 	---------------
 	local Listraw = string.split(OsuData, "\n")
 	local currentIndex = nil
@@ -110,7 +88,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	
 	-- Make sure that no data is blank
 
-	local a,_ = pcall(function()
+	local _,_ = pcall(function()
 		if MapData.RobloxData ~= nil  then
 			local RblxData = {}
 			for _,RawData in pairs(MapData.RobloxData) do
@@ -323,34 +301,16 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 
 
 	local ConvertedData = {}
-	local DiffList = {}
-	local NoteDiff = {}
-	local DifficultyStrike = {}
 	local RawDifficulty = {}
-	local RawDifficulty2 = {}
 	--local StrainData = {}
 	local AimStrainData = {}
 	local AimSLStrainData = {}
 	local SpeedStrainData = {}
 	local RhythmDiffData = {}
 	local FLStrainData = {}
-	local AimDiff = {}
-	local StreamDiff = {}
 	local AimDifficulty = 0
 	local SpeedDifficulty = 0
 	local FlashlightDifficulty = 0
-	local CurrentAimStrain = 0
-	local CurrentSpeedStrain = 0
-	local CurrentFLStrain = 0
-	local CurrentStrain = 0
-	local HighestStrain = 0
-	local AvgStrain = 0
-	local PrevVelocity = 0
-	local PrevMoveTime = 0
-	local FLMultiplier = 0
-	local LastNotePosition = Vector2.new(0,0)
-	local NoteStackStrain = 0
-	local PrevDoubleTapness = 1
 	local NoteCount = {
 		Circle = 0, Slider = 0, Spinner = 0
 	}
@@ -363,7 +323,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	-- RawDifficulty2 = {[1] = {[1] = <HighestDiff>,[2] = <2nd highest>}}
 	-- DifficultyStrike = {[1] = <Diff>}
 	-- Difficulty record each 5 seconds
-	local GetPS = true
 
 	local DifficultyStrikeRecord = 2000/SongSpeed -- in milisecond
 	
@@ -388,9 +347,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			local HitPos = {X = 0,Y = 0}
 			local Time = 0
 			local Type = 0
-			local Location = 0
 			local SpinTime = 0
-			local CurrentType = 1
 			local SliderTime = 0
 			local crrSLBPM = -1
 			local crrSLBPMStartTime = 0
@@ -468,256 +425,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			if not isSpinner and not isSlider then
 				NoteCount.Circle += 1
 			end
-			if isReturnDifficulty == true then
-				local StreamDifficulty = 0
-				local AimDifficulty = 0
-
-
-				if objectID ~= 1 and not isSpinner then
-					local PrevHitObj = ConvertedData[#ConvertedData]
-					local TimeBetween = Time-PrevHitObj.Time
-					if TimeBetween*SongSpeed <= 1.1 then
-						TimeBetween = 9999999999999
-					end
-					if TimeBetween == 0 then TimeBetween = 1 end
-					local DistanceBetween = math.abs((Vector2.new(PrevHitObj.Position.X,PrevHitObj.Position.Y)-Vector2.new(HitPos.X,HitPos.Y)).Magnitude)
-					local CS = ReturningData.Difficulty.CircleSize * ((modData.HR and 1.3) or (modData.EZ and 0.5) or 1)
-					if modData.HR or modData.EZ then
-						CS = math.clamp(CS, 0, 11)
-					end
-					
-					local Normalized_Radius = 50
-					
-					-- we will process it in the calculator module
-					--local CSMultiplier = Normalized_Radius/((54.4 - 4.48 * CS))
-					--DistanceBetween *= CSMultiplier
-					local DistanceBetween_Speed = DistanceBetween
-					--DistanceBetween -= ((54.4 - 4.48 * CS)*2)*0.75 -- only effect aim rating
-					--------------
-					-- AIM DIFFICULTY CALCULATOR
-					if DistanceBetween < 0 then DistanceBetween = 0 end
-					if DistanceBetween_Speed < 0 then DistanceBetween_Speed = 0 end
-					local MoveSpeed = DistanceBetween/(TimeBetween/1000)
-					local Angle = 0
-					local LengthPrev = 0
-					local LengthCurrent = DistanceBetween
-					local TimePrev = 999999999999999
-					local BonusAngle = 0
-					local VelocityChangeBonus = 1
-
-					local CrrObjData = {
-						MoveTime = TimeBetween, DeltaTime = math.floor((TimeBetween)/16)*16, MoveDistance = DistanceBetween_Speed, isSlider = isSlider, isSpinner = isSpinner,
-						Angle = 0
-					}
-
-					local PrevObjData = {
-						MoveTime = 999999999, MoveDistance = 0, SLTravelDistance = PrevHitObj.SLTravelDistance,
-						Angle = 0
-					}
-
-					local PrevPrevObjData = {
-						MoveTime = 999999999, MoveDistance = 0,
-						Angle = 0
-					}
-
-					local NextObjData
-
-					if objectID > 2 then
-						local nextObjPos
-						local crrObjPos = Vector2.new(HitPos.X,HitPos.Y)
-						local prevObjPos = Vector2.new(ConvertedData[objectID-1].Position.X,ConvertedData[objectID-1].Position.Y)
-						local prevObjTime = ConvertedData[objectID-1].Time
-						local prevprevObjPos
-						local prevprevObjTime
-						local prevprevprevObjPos
-						if objectID < #MapData["HitObjects"] then
-							local nextObjdata = string.split(MapData["HitObjects"][objectID+1],",")
-							if #nextObjdata > 1 then
-								nextObjPos = Vector2.new(tonumber(nextObjdata[1]),tonumber(nextObjdata[2]))
-								CrrObjData.Angle = tool.getAngle(prevObjPos,crrObjPos,nextObjPos)
-								NextObjData = {DeltaTime = math.floor((tonumber(nextObjdata[3]) - Time)/16)*16}
-							end
-						end
-						if objectID > 3 then
-							prevprevObjPos = Vector2.new(ConvertedData[objectID-2].Position.X,ConvertedData[objectID-2].Position.Y)
-							PrevObjData.Angle = tool.getAngle(prevprevObjPos,prevObjPos,crrObjPos)
-							PrevObjData.MoveTime = (Time - prevObjTime)
-							PrevObjData.MoveDistance = math.max(((prevObjPos - crrObjPos).Magnitude),0)
-							if objectID > 4 then
-								prevprevObjTime = ConvertedData[objectID-3].Time
-								prevprevprevObjPos = Vector2.new(ConvertedData[objectID-4].Position.X,ConvertedData[objectID-4].Position.Y)
-								PrevPrevObjData.Angle = tool.getAngle(prevprevprevObjPos,prevprevObjPos,prevObjPos)
-								PrevPrevObjData.MoveTime = (prevObjTime - prevprevObjTime)
-								PrevPrevObjData.MoveDistance = math.max(((prevprevObjPos - prevObjPos).Magnitude),0)
-							end
-						end
-					end
-
-					local AimDifficulty = 0--calculator.GetAimDiff(CrrObjData, PrevObjData, PrevPrevObjData, ReturningData.Difficulty.CircleSize, modData.HR, modData.EZ)
-
-					local Difficulty = AimDifficulty --GetSpeedDiff(MoveSpeed) * GetDistanceMultiplier(DistanceBetween) * BonusAngle * VelocityChangeBonus
-					--Difficulty *= (1+FLMultiplier*#MapData.HitObjects)
-
-					local CircleSize = (54.4 - 4.48 * CS)
-					local DistanceBetween2Note = (LastNotePosition-Vector2.new(HitPos.X,HitPos.Y)).Magnitude
-					local TimingNerf = 0
-					if DistanceBetween <  CircleSize then -- if there's stacking note, decrease speed ps
-						local TimingNerf = DistanceBetween/CircleSize*0.2
-
-						if DistanceBetween2Note < CircleSize then -- if 3+ notes stacked, decrease more
-							TimingNerf += DistanceBetween2Note/CircleSize*0.1
-						end
-
-						NoteStackStrain *= math.pow(0.15,TimeBetween/1000)
-						NoteStackStrain += 1
-
-						TimingNerf *= math.pow(0.5,math.max(NoteStackStrain-1,0)) * 5
-						--	print(TimingNerf)
-					end
-
-
-
-
-					LastNotePosition = Vector2.new(PrevHitObj.Position.X,PrevHitObj.Position.Y)
-
-					local AimStrainDecay = math.pow(0.15,TimeBetween/1000)
-
-					RewardPS.AimStrainDecay = AimStrainDecay
-					Difficulty *= 0.85 -- Adjust the aim diff
-					CurrentAimStrain *= AimStrainDecay
-					CurrentAimStrain += AimDifficulty
-
-					AimDifficulty = Difficulty 
-
-					-- Get acc diff
-					if GetPS then
-						RewardPS.Aim =  not isSpinner and Difficulty or 0
-					end
-
-					-- FLASHLIGHT DIFFICULTY CALCULATOR
-
-					local FlashlightDifficulty = 0
-
-					if modData.FL then
-						local ObjList = {}
-						-- get current + latest 10 object data
-						for crr = 0,10 do
-							local ObjData = MapData["HitObjects"][objectID - crr]
-							local PrevObjData = MapData["HitObjects"][objectID - crr - 1]
-							if not ObjData or not PrevObjData then
-								break
-							end
-
-							local prevObj = string.split(PrevObjData,",")
-							local crrObj = string.split(ObjData,",")
-
-							local Angle = -1
-							local PrevObjTime = tonumber(prevObj[3]) or 0
-							local CrrObjTime = tonumber(crrObj[3]) or 0
-							local MoveTime = math.abs(CrrObjTime - PrevObjTime) -- just in case
-							local MoveDistance = (Vector2.new(tonumber(prevObj[1]),tonumber(prevObj[2])) - Vector2.new(tonumber(crrObj[1]),tonumber(crrObj[2]))).Magnitude
-
-							if crr == 0 then
-								Angle = CrrObjData.Angle
-							elseif objectID - crr < #ConvertedData and objectID-crr-1 >= 1 then
-								local nextObj = string.split(MapData["HitObjects"][objectID - crr + 1],",")
-
-								Angle = tool.getAngle(
-									Vector2.new(tonumber(prevObj[1]),tonumber(prevObj[2])),
-									Vector2.new(tonumber(crrObj[1]),tonumber(crrObj[2])),
-									Vector2.new(tonumber(nextObj[1]),tonumber(nextObj[2]))
-								)
-							end
-
-
-
-							local CrrData = {
-								Angle = Angle,
-								MoveTime = MoveTime,
-								MoveDistance = MoveDistance,
-								StartTime = CrrObjTime
-							}
-
-							ObjList[crr] = CrrData
-						end
-						FlashlightDifficulty = 0--calculator.getFlashLightDiff(ObjList, #MapData["HitObjects"], ReturningData.Difficulty.CircleSize, ReturningData.Difficulty.ApproachRate, modData.FL, modData.EZ, modData.HR, modData.HD, SongSpeed)
-					end
-
-					local FLStrainDecay = math.pow(0.15,TimeBetween/1000)
-
-					CurrentFLStrain *= FLStrainDecay
-					RewardPS.FLStrainDecay = FLStrainDecay
-
-					CurrentFLStrain += FlashlightDifficulty
-
-					if GetPS then
-						RewardPS.Flashlight =  not isSpinner and FlashlightDifficulty or 0
-					end
-
-
-					-- SPEED (STREAM) DIFFICULTY CALCULATOR
-
-					local PrevTimeBetween = -1
-					local PrevDistanceBetween = 0
-
-					local PrevPrevHitObj = ConvertedData[#ConvertedData-1]
-					if PrevPrevHitObj then
-						PrevTimeBetween = PrevHitObj.Time  - PrevPrevHitObj.Time
-						PrevDistanceBetween = (Vector2.new(HitPos.X,HitPos.Y)-Vector2.new(PrevPrevHitObj.X,PrevPrevHitObj.Y)).Magnitude
-					end
-					local TimeBetween = Time-PrevHitObj.Time 
-					local TimingDifficulty = 0--calculator.GetSpeedDiff(CrrObjData, PrevObjData, NextObjData, ReturningData.Difficulty.CircleSize, ReturningData.Difficulty.OverallDifficulty, ReturningData.Difficulty.ApproachRate, modData.EZ, modData.HR, SongSpeed)
-					local bpmdata = tool.GetBPMData(Time, TimingPoints, SongSpeed)
-					local RhythmMultiplier = 1 -- base
-					TimingDifficulty *= RhythmMultiplier
-					
-					local SpeedStrainDecay = math.pow(0.3,TimeBetween/1000)
-					RewardPS.SpeedStrainDecay = SpeedStrainDecay
-					CurrentSpeedStrain *= SpeedStrainDecay
-					CurrentSpeedStrain += TimingDifficulty
-
-					if GetPS then
-						RewardPS.Speed = not isSpinner and TimingDifficulty or 0
-					end
-
-					-- Calculate current difficulty
-					-- math.pow(HighestAimStrain,0.5)*2.35
-					-- old (all): , 0.4365) * 1.495128
-
-					--local exRate = 1/2.3
-					--local mulRate = 1.353255313310456
-
-					local CurrentAimStrain = CurrentAimStrain  --math.pow(CurrentAimStrain, exRate) * mulRate * 1.10
-					local CurrentSpeedStrain = CurrentSpeedStrain--math.pow(CurrentSpeedStrain, exRate) * mulRate -- Old: , 0.41) * 1.753802
-					local CurrentFLStrain =  CurrentFLStrain --math.pow(CurrentFLStrain, exRate) * mulRate
-					
-					local multiplierBase = 10
-
-					local crrCalculateAim = math.pow(CurrentAimStrain * multiplierBase, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
-					local crrCalculateSpeed = math.pow(CurrentSpeedStrain * multiplierBase, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_SPEED_MULTIPLIER
-					local crrCalculateFL = math.pow(CurrentFLStrain * multiplierBase, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE
-
-					local RewardedAimPS = BasePerfomance(crrCalculateAim)
-					local RewardedSpeedPS = BasePerfomance(crrCalculateSpeed)
-					local RewardedFlashlightPS = BasePerfomance(crrCalculateFL)
-
-					local basePerfomance = ((RewardedAimPS^1.1+RewardedSpeedPS^1.1+RewardedFlashlightPS^1.1)^(1/1.1))
-					local CurrentStrain = 0.027 * math.pow(1.15, 1/3) * (math.pow(100000 / math.pow(2, 1 / 1.1) * basePerfomance ,1/3) + 4)
-
-					if CurrentStrain > HighestStrain then
-						HighestStrain = CurrentStrain
-					end
-
-					--StrainData[#StrainData+1] = CurrentStrain
-					AimStrainData[#AimStrainData+1] = CurrentAimStrain
-					SpeedStrainData[#SpeedStrainData+1] = CurrentSpeedStrain
-					FLStrainData[#FLStrainData+1] = CurrentFLStrain
-
-					DiffList[#DiffList+1] = Difficulty
-					RawDifficulty[#RawDifficulty+1] = {CurrentStrain,Time}
-
-				end
-			end
 			
 			local SLTickData = {}
 			local SLDifficultyTickData = {}
@@ -728,7 +435,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 				local _slideTime = (SliderTime * 1000 / _slidesCount)
 				local _tickProgressLength = ((Time - _tickTime)%_slideTime)/_slideTime * _beatLength
 				if not isReverse then
-					local _prevLength = 0
 					local _currentLength = 0
 					for i = 1, #SLCurvePoints - 1 do
 						local _crr = SLCurvePoints[i]
@@ -741,12 +447,10 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 							
 							return _pos
 						else
-							_prevLength = _currentLength
 							_currentLength = _nextLength
 						end 
 					end
 				else
-					local _prevLength = 0
 					local _currentLength = 0
 					for i = #SLCurvePoints, 2, -1 do
 						local _crr = SLCurvePoints[i]
@@ -759,7 +463,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 
 							return _pos
 						else
-							_prevLength = _currentLength
 							_currentLength = _next	
 						end 
 					end
@@ -1011,8 +714,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	end
 
 	local BeatmapDifficulty = 0
-	local AimDifficulty = 0
-	local StreamDifficulty = 0
 	local AimDiffStrainCount = 0
 	local SpeedDiffStrainCount = 0
 	local SpeedRelevantNoteCount = 0
@@ -1087,16 +788,9 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		SpeedDiffStrainCount = difficultyAttributes.SpeedDifficultStrainCount
 		SpeedRelevantNoteCount = difficultyAttributes.SpeedNoteCount
 		FlashlightDifficulty = difficultyAttributes.FlashlightDifficulty
-		
-		local ARRate = DifficultyValue.AR
-		local ODRate = DifficultyValue.OD
-		local PSMultiplier = {
-			Aim = 1, Speed = 1, FL = 1, Acc = 1
-		}
 
 		BeatmapDifficulty = difficultyAttributes.StarRating
 	end
-	--warn(tostring(AimDifficulty).."\n"..tostring(StreamDifficulty))
 
 
 	ReturningData.Difficulty.DifficultyStrike = DifficultyStrikeList
