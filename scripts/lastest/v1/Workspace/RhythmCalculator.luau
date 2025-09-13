@@ -27,7 +27,7 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 	local history_time_max = 5000 -- ms
 	local history_obj_max = 32
 	local rhythm_overall_multiplier = 1
-	local rhythm_ratio_multiplier = 12
+	local rhythm_ratio_multiplier = 15
 	local min_delta_time = 25
 
 	local function newIsland(delta, epsilon) -- Initiate Island class
@@ -177,8 +177,11 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 		LastObj = PrevObj
 		PrevObj = currentObj
 	end
-
-	return math.sqrt(4 + rhythmComplexitySum * rhythm_overall_multiplier) / 2.0
+	
+	local rhythmDiff = math.sqrt(4 + rhythmComplexitySum * rhythm_overall_multiplier) / 2.0
+	rhythmDiff *= 1 - CrrObj.getDoubletapness(CrrObj.Next(1))
+	
+	return rhythmDiff
 end
 
 return rhythmCalculator
