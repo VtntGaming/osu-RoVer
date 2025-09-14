@@ -386,7 +386,6 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 			RPMRequire = 150 + 75 * (ODRate-5)/5
 		end
 
-		print(ODRate_NoSA)
 		local DetailARTime = 1200
 		local Detail300Timing = 100 - 8 * ODRate_NoSA
 		local Detail100Timing = 175 - 10 * ODRate_NoSA

@@ -326,24 +326,35 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 
 	local DifficultyStrikeRecord = 2000/SongSpeed -- in milisecond
 	
+	local HitObjectsListing = {}
+	
 	for i, obj in ipairs(MapData["HitObjects"]) do
 		local data = string.split(obj, ",")
 		-- valid format checking 
 		if not tonumber(data[1]) or not tonumber(data[2]) or not tonumber(data[3]) then
 			warn(i)
+		else
+			HitObjectsListing[#HitObjectsListing+1] = {
+				Time = tonumber(data[3]),
+				Data = obj
+			}
 		end
 	end
 
 	-- sort based on the time
-	table.sort(MapData["HitObjects"], function(obj1, obj2)
-		obj1 = string.split(obj1, ",")
-		obj2 = string.split(obj2, ",")
-		return tonumber(obj1[3]) < tonumber(obj2[3])
+	table.sort(HitObjectsListing, function(obj1, obj2)
+		if not obj1.Time then
+			return false
+		elseif not obj2.Time then
+			return true
+		else
+			return obj1.Time < obj2.Time
+		end
 	end)
 
-
 	if metadataonly ~= true then -- this would reduce lag
-		for objectID,HitObj in pairs(MapData["HitObjects"]) do
+		for objectID,HitObjData in pairs(HitObjectsListing) do
+			local HitObj = HitObjData.Data
 			local HitPos = {X = 0,Y = 0}
 			local Time = 0
 			local Type = 0
@@ -604,9 +615,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		RoundRequiredPerSec = 2.5 - 1 * (5-ODRateAfterMod)/5  -- 90 - 150RPM
 	else
 		RoundRequiredPerSec = 2.5 + 1.25 * (ODRateAfterMod-5)/5 -- 150 - 225RPM
-	end
-	
-	
+	end	
 	
 	for _, obj in pairs(ConvertedData) do
 		local NoteCombo = 1
