@@ -4288,7 +4288,8 @@ NoteCompleted = 0
 
 local ScoreMultiplier = {
 	Difficulty = 6,
-	Mod = 1
+	Mod = 1,
+	ModV2 = 1
 }
 
 script.Parent.MultiplayerData.GetInGameData.OnInvoke = function()
@@ -4299,27 +4300,35 @@ end
 -- SpeedIncrease mod: Speed ^ 4.185
 
 local SpeedMulti = 1
+local SpeedMultiV2 = 1
 if SongSpeed < 1 then
 	SpeedMulti = SongSpeed^4.185
+	SpeedMultiV2 = 0.1 + ((SongSpeed - 0.5)/0.5)*0.4
 elseif SongSpeed > 1 then
 	SpeedMulti = SongSpeed^0.28
+	SpeedMultiV2 = 1 + (SongSpeed - 1) * 0.2
 end
 ScoreMultiplier.Mod *= SpeedMulti
+ScoreMultiplier.ModV2 *= SpeedMultiV2
 
 if NoFail == true then
 	ScoreMultiplier.Mod *= 0.5
+	ScoreMultiplier.ModV2 *= 0.5
 end
 
 if HiddenMod == true then
 	ScoreMultiplier.Mod *= 1.06
+	ScoreMultiplier.ModV2 *= 1.06
 end
 
 if HardRock == true then
 	ScoreMultiplier.Mod *= 1.06
+	ScoreMultiplier.ModV2 *= 1.06
 end
 
 if EasyMod == true then
 	ScoreMultiplier.Mod *= 0.5
+	ScoreMultiplier.ModV2 *= 0.5
 end
 
 local ScoreDisplay = script.Parent.ScoreFrameDisplay
@@ -4341,26 +4350,42 @@ function getConsistencyScore()
 	return math.pow(AccuracyData.BaseConsistency, 1.1704417) * 1.2255 * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.7
 end
 
+function getScoreMissPenaltyMultiplier(missCount, noteCount)
+	-- miss penalty can take up to 25% of the current score
+	local penaltyMax = 0.25
+
+	return (1 - penaltyMax) + penaltyMax / ((missCount / (4 * math.pow(math.log(noteCount), 0.94))) + 1)
+end
+
 function getScoreV1()
-	local AccuracyScore = getAccuracyScore()
-	local ConsistencyScore = getConsistencyScore()
+	local totalNotes = AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss
+	local missPenalty = getScoreMissPenaltyMultiplier(AccuracyData.miss, totalNotes)
+	local AccuracyScore = getAccuracyScore() * missPenalty
+	local ConsistencyScore = getConsistencyScore() * missPenalty
 	-- Spinner score provide fixed value
 	return math.round(ConsistencyScore+AccuracyScore+AccuracyData.SpinnerScore)
 end
 
 function getScoreV2()
+	local totalNotes = AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss
+	local missPenalty = getScoreMissPenaltyMultiplier(AccuracyData.miss, totalNotes)
 	local ActualAccScore = getAccuracyScore()
 	local ActualConsistencyScore = getConsistencyScore()
+	local maxAccScore, maxConsistencyScore = PreviewMapPS.MaxAccScore, PreviewMapPS.MaxConsistencyScore
 
 	local MaxPossibleScore = require(ScriptComponent.Gameplay.GetMaxScore)(#BeatmapData, ReturnData.Difficulty.MaxCombo) --AccScoreMax + ConsistencyScoreMax
 	local ActualScore = ActualAccScore + ActualConsistencyScore
 
 	local exRate = 0.44150110375
-
-	local ScoreV2 = math.pow(ActualScore/MaxPossibleScore,exRate) * 1000000 * ScoreMultiplier.Mod
-
+	
+	local accScore = math.pow(ActualAccScore/maxAccScore, exRate) * 300000 * missPenalty
+	local consistencyScore = math.pow(ActualConsistencyScore/maxConsistencyScore, exRate) * 700000 * missPenalty
+	
 	-- Spinner score only gives 10% points in ScoreV2
-	return math.round(ScoreV2 + AccuracyData.SpinnerScore * 0.1)
+	local ScoreV2 = accScore + consistencyScore + AccuracyData.SpinnerScore * 0.1
+	--local ScoreV2 = math.pow(ActualScore/MaxPossibleScore,exRate) * 1000000 * ScoreMultiplier.Mod * missPenalty
+	
+	return math.round(ScoreV2)
 end
 
 spawn(function()
@@ -4435,7 +4460,7 @@ spawn(function()
 		end
 		
 		ParallelProcessingFolder.Core_OsuGame_ScoreProcessing:SendMessage("Process", {
-			Score = Score,
+			Score = ScoreV2Enabled and getScoreV2() or getScoreV1(),
 			script = script,
 			ScoreV2Enabled = ScoreV2Enabled,
 			CurrentTotalScore = CurrentTotalScore,
@@ -4527,6 +4552,7 @@ FLAnimate = true
 if Flashlight == true then
 	TweenService:Create(FlashlightFrame,TweenInfo.new(1,Enum.EasingStyle.Linear),{Size = UDim2.new(15,0,15,0),ImageTransparency = 0}):Play()
 	ScoreMultiplier.Mod *= 1.12
+	ScoreMultiplier.ModV2 *= 1.12
 	script.Parent.PlayFrame.ZIndex = 0
 	spawn(function()
 		wait(2.5)
