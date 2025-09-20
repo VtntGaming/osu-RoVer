@@ -70,7 +70,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			-- found index
 			local index = string.sub(crrLine, 2, #crrLine-1)
 			currentIndex = index
-
 			MapData[index] = {}
 		else
 			-- normal line
@@ -801,6 +800,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		BeatmapDifficulty = difficultyAttributes.StarRating
 	end
 
+	local consistencyScore, accuracyScore, v1Score = tool.GetScoreV1(MapMaxCombo)
 
 	ReturningData.Difficulty.DifficultyStrike = DifficultyStrikeList
 	ReturningData.Difficulty.BeatmapDifficulty = BeatmapDifficulty
@@ -812,6 +812,11 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	ReturningData.Difficulty.SpeedRelevantNoteCount = SpeedRelevantNoteCount
 	ReturningData.Difficulty.MaxCombo = MapMaxCombo
 	ReturningData.Difficulty.MaxSpinnerScore = MaxSpinnerScore
+	ReturningData.Difficulty.MaxScoreV1 = {
+		Total = v1Score,
+		AccuracyScore = accuracyScore,
+		ConsistencyScore = consistencyScore
+	}
 
 	--2234.05 -> 12.19
 	--9.15 -> 1.70

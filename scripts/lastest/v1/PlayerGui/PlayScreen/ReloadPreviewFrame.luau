@@ -15,8 +15,12 @@ event.Event:Connect(function(_f)
 	_f()
 end)
 
+local _tasks = {}
+
 local function spawn(f)
-	event:Fire(f)
+	_tasks[#_tasks+1] = task.spawn(function()
+		f()
+	end)
 end
 local thisScript = script
 
@@ -69,6 +73,9 @@ end
 script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,FileType,CurrentModData,BeatmapStudio
 	,CurrentKey,BeatmapKey,PreviewFrameBaseVolume,PreviewBeatmapset,ModData:modData.ModData
 )
+	for _, _task:thread in pairs(_tasks) do
+		task.cancel(_task)
+	end
 	local script = script.Parent.Parent.OsuGame
 
 
@@ -569,6 +576,8 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	DetailedInterface.AccBonus.Data.Text = string.format("%.2fps",RewardedAccPS)
 	DetailedInterface.ModsBonus.Data.Text = string.format("%.2fps",ModPS)
 	DetailedInterface.TouchDeviceBonus.Data.Text = string.format("%.2fps",TouchDevicePS)
+	DetailedInterface.MaxCombo.Data.Text = `{ReturnData.Difficulty.MaxCombo}x`
+	DetailedInterface.MaxScoreV1.Data.Text = `{math.floor(ReturnData.Difficulty.MaxScoreV1.Total)}`
 
 	-- Gameplay Data
 	local ConstantHPDrainRate = 5
@@ -614,7 +623,16 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		HitWindowData.TDh100/SongSpeed,
 		HitWindowData.TDh50/SongSpeed
 	)
-
+	
+	local circleApproachTime = 1200
+	
+	if ARRate < 5 then
+		circleApproachTime = 1200 + 600 * (5 - ARRate) / 5
+	elseif ARRate > 5 then
+		circleApproachTime = 1200 - 750 * (ARRate - 5) / 5
+	end
+	
+	DetailedInterface.ApproachTime.Data.Text = string.format("%.2fms", circleApproachTime)
 
 	-- Difficulty strike
 

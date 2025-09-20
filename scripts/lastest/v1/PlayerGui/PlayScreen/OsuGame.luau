@@ -19,6 +19,7 @@ SliderComponent = require(ScriptComponent.Gameplay.SliderComponent)
 local modData = require(workspace.ModData)
 StreamingLoop = require(ScriptComponent.Perfomance.StreamingCode).create()
 SliderObjManage = require(ScriptComponent.Perfomance.SliderObjManage).init()
+local ScoreStaticticConverter = require(ScriptComponent.Gameplay.ScoreStatisticConverter)
 
 -- basic function
 function lerp(a, b, ratio)
@@ -500,7 +501,7 @@ local RankColor = {
 LocalLeaderboardData = {}
 LeaderboardFrameConnection = {}
 
-function GetModData(Mod,Detailed)
+function GetModData(Mod:modData.ModData,Detailed)
 	local ReturnText = ""
 	local Mods = 0
 
@@ -591,7 +592,7 @@ function GetModData(Mod,Detailed)
 			ReturnText = ReturnText.."EZ"
 		end
 	end
-	
+
 	if Mod.SA and Mod.SA ~= 1 then
 		if Mods > 0 then
 			ReturnText = ReturnText..","
@@ -599,7 +600,7 @@ function GetModData(Mod,Detailed)
 		Mods += 1
 		local _format = string.format("SA(%.1fx)", Mod.SA)
 		local _formatDetailed = string.format("SpeedAdjust(%.1fx)", Mod.SA)
-		
+
 		if Mod.SA == 1.5 then
 			_format = "DT"
 			_formatDetailed = "DoubleTime"
@@ -607,7 +608,7 @@ function GetModData(Mod,Detailed)
 			_format = "HT"	
 			_formatDetailed = "HalfTime"	
 		end
-		
+
 		if Detailed then
 			ReturnText = ReturnText.._formatDetailed
 		else
@@ -615,7 +616,7 @@ function GetModData(Mod,Detailed)
 		end
 	end
 
-	if Mod.SL == false then
+	if Mod.NS == true then
 		if Mods > 0 then
 			ReturnText = ReturnText..","
 		end
@@ -638,7 +639,7 @@ function GetModData(Mod,Detailed)
 			ReturnText = ReturnText.."FL"
 		end
 	end
-	
+
 	if Mod.DA and Mod.DA.Active then
 		if Mods > 0 then
 			ReturnText = ReturnText..","
@@ -670,7 +671,7 @@ function GetModData(Mod,Detailed)
 			ReturnText = ReturnText.._format
 		end
 	end
-	
+
 	if Mod.RX then
 		if Mods > 0 then
 			ReturnText = ReturnText..","
@@ -682,7 +683,7 @@ function GetModData(Mod,Detailed)
 			ReturnText = ReturnText.."RX"
 		end
 	end
-	
+
 	if Mod.SO then
 		if Mods > 0 then
 			ReturnText = ReturnText..","
@@ -694,7 +695,7 @@ function GetModData(Mod,Detailed)
 			ReturnText = ReturnText.."SO"
 		end
 	end
-	
+
 	if Mod.AP then
 		if Mods > 0 then
 			ReturnText = ReturnText..","
@@ -745,24 +746,24 @@ PlayerGui.BG.BeatmapLeaderboard.Destroying:Connect(function()
 	LBDetailMovementConnection:Disconnect()
 end)
 
-function GetUserPlayUpdatedPS(Data, externalData):(number, number, number)
+function GetUserPlayUpdatedPS(Data:ScoreStatistic, externalData):(number, number, number)
 	local PreviewMapPS = PreviewMapPS::{any}
 	local AimDiff = PreviewMapPS.AimDiff
 	local SpeedDiff = PreviewMapPS.SpeedDiff
 	local FLDiff = PreviewMapPS.FLdDiff
 	local objCount = PreviewMapPS.objCountData
 	local mapMaxCombo = PreviewMapPS.MaxCombo
-	
+
 	if externalData then
 		AimDiff = externalData.AimDiff
 		SpeedDiff = externalData.SpeedDiff
 		FLDiff = externalData.FLDiff
 	end
 
-	local h300 = Data.ExtraAccurancy[1]::number
-	local h100 = Data.ExtraAccurancy[2]::number
-	local h50 = Data.ExtraAccurancy[3]::number
-	local MissCount = Data.ExtraAccurancy[4]::number
+	local h300 = Data.Statistic.h300
+	local h100 = Data.Statistic.h100
+	local h50 = Data.Statistic.h50
+	local MissCount = Data.Statistic.missCount
 
 	local ODRate = PreviewMapPS.OD
 	local ARRate = PreviewMapPS.AR
@@ -770,43 +771,43 @@ function GetUserPlayUpdatedPS(Data, externalData):(number, number, number)
 	local SpeedDiffStrainCount = PreviewMapPS.AimDiffStrainCount
 	local SpeedRelevantNoteCount = PreviewMapPS.SpeedRelevantNoteCount
 	local CurrentSpeed = PreviewMapPS.CurrentSpeed
-	
-	
-	local ModData:modData.ModData = Data.Mod
+
+
+	local ModData:modData.ModData = Data.ModData
 	ModData.SA = CurrentSpeed
-	
+
 	local AccuracyData:PerformanceCalculator.AccuracyData = {
 		h300 = h300, h100 = h100, h50 = h50, missCount = MissCount, EffectiveMissCount = MissCount
 	}
-	
+
 	local ReturnData = PerformanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, objCount, false, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, AccuracyData)::PerformanceCalculator.PerfomanceAttributes
-	
+
 	--print(ActualPS, AimDiff, SpeedDiff, externalData~=nil)
 	return ReturnData.Max, ReturnData.Current, mapMaxCombo
 end
 
-function ShowLeaderboardPlayDetail(Data)
-	if Data.Mod == nil then -- old plays
-		Data.Mod = {} -- just replace it with no value instead
+function ShowLeaderboardPlayDetail(Data:ScoreStatistic)
+	if Data.ModData == nil then -- old plays
+		Data.ModData = {} -- just replace it with no value instead
 	end
-	
-	Data.Mod.SA = Data.Speed or 1
 
-	local ModDetail = GetModData(Data.Mod,true)
+	local ModDetail = GetModData(Data.ModData,true)
 	local PlayedDate = os.date("*t",tonumber(Data.Date))
 
 	local DisplayPS = ""
 
-	if Data.ExtraAccurancy then
+	if Data.Statistic then
 		local _, updatedPS, _ = GetUserPlayUpdatedPS(Data)
 		DisplayPS = "\nUpdatedPS: "..tostring(math.round(updatedPS.TotalPS)).."ps"
 	end
 
 	local DateDetail = string.format("%.2d/%.2d/%.4d %.2d:%.2d:%.2d",PlayedDate.day,PlayedDate.month,PlayedDate.year,PlayedDate.hour,PlayedDate.min,PlayedDate.sec)
 	--local Accuracy = "<font color='#00ffff'>300</font>:"..Data.ExtraAccurancy[1].." <font color='#00ff00'>100</font>:"..Data.ExtraAccurancy[2].." <font color='#ffff00'>50</font>:"..Data.ExtraAccurancy[3].." <font color='#ff0000'>miss</font>:"..Data.ExtraAccurancy[4]
-	local Accuracy = string.format("Statistic: <font color='#00ffff'>%d</font>/<font color='#00ff00'>%d</font>/<font color='#ffff00'>%d</font>/<font color='#ff0000'>%d</font>",Data.ExtraAccurancy[1],Data.ExtraAccurancy[2],Data.ExtraAccurancy[3],Data.ExtraAccurancy[4])
+	local Accuracy = string.format("Statistic: <font color='#00ffff'>%d</font>/<font color='#00ff00'>%d</font>/<font color='#ffff00'>%d</font>/<font color='#ff0000'>%d</font>",Data.Statistic.h300,Data.Statistic.h100,Data.Statistic.h50,Data.Statistic.missCount)
 
-	local FullText = "Played on "..DateDetail.."\n"..Accuracy.."\nAccuracy: "..Data.Accurancy.."%\nMod: "..ModDetail..DisplayPS
+	local FullText = string.format("Played on %s\n%s\nAccuracy:%.2f%%\nMod:%s%s",
+		DateDetail,Accuracy,Data.Accuracy,ModDetail,DisplayPS
+	)
 	local LeaderboardDetail = PlayerGui.BG.BeatmapLeaderboard.LeaderboardDetail
 	LeaderboardDetail.LeaderboardDetail.Text = FullText
 	local Textbounds = LeaderboardDetail.LeaderboardDetail.TextBounds
@@ -867,6 +868,15 @@ local DisplayLBInformationValue = {
 	calculatedMaxPS = Instance.new("NumberValue")
 }
 
+local RankColor = {
+	SS = Color3.fromRGB(255, 255, 0),
+	S = Color3.fromRGB(255, 255, 0),
+	A = Color3.fromRGB(0, 255, 0),
+	B = Color3.fromRGB(0, 85, 255),
+	C = Color3.fromRGB(170, 0, 127),
+	D = Color3.fromRGB(255, 0, 0)
+}
+
 function updateLBStaistic()
 	local LbInformation = PlayerGui.BG.BeatmapLeaderboard.UserPlayInformation
 	local MainFrame = LbInformation.MainFrame
@@ -886,33 +896,22 @@ function updateLBStaistic()
 	local Total = (h300+h100+h50+miss)
 	local Acc = (h300*3+h100+h50*0.5)/(Total*3)*100
 	local GameplayRank = "D"
-
-	local RankColor = {
-		SS = Color3.fromRGB(255, 255, 0),
-		S = Color3.fromRGB(255, 255, 0),
-		A = Color3.fromRGB(0, 255, 0),
-		B = Color3.fromRGB(0, 85, 255),
-		C = Color3.fromRGB(170, 0, 127),
-		D = Color3.fromRGB(255, 0, 0)
-	}
-
-	local percent300s = h300/Total
-	local percent50s = h50/Total
+	
 	local misstotal = miss
 
-	if percent300s >= 0.6 then
+	if Acc >= 70 then
 		GameplayRank = "C"
 	end
-	if (percent300s >= 0.7 and misstotal <= 0) or percent300s >= 0.8 then
+	if Acc >= 80 then
 		GameplayRank = "B"
 	end
-	if (percent300s >= 0.8 and misstotal <= 0) or percent300s >= 0.9 then
+	if Acc >= 90 then
 		GameplayRank = "A"
 	end
-	if percent300s >= 0.9 and misstotal <= 0 and percent50s < 0.01 then
+	if Acc >= 95 and misstotal <= 0 then
 		GameplayRank = "S"
 	end
-	if percent300s >= 1 then
+	if Acc >= 100 then
 		GameplayRank = "SS"
 	end
 
@@ -925,7 +924,7 @@ for _, obj in pairs(DisplayLBInformationValue) do
 	obj:GetPropertyChangedSignal("Value"):Connect(updateLBStaistic)
 end
 
-function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
+function AddLeaderboardConnection(LeaderboardFrame,Data:ScoreStatistic,Score,UID,DateFormat)
 	if not LeaderboardFrame:IsA("Frame") and not Data then return end
 
 	LeaderboardFrameConnection[#LeaderboardFrameConnection+1] = LeaderboardFrame.MouseEnter:Connect(function()
@@ -955,26 +954,17 @@ function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
 
 		local externalData
 		local DiffChangeModEnabled = 
-			Data.Mod.EZ ~= EasyMod or 
-			Data.Mod.HR ~= HardRock or 
-			Data.Mod.FL ~= Flashlight or 
-			(Flashlight and Data.Mod.HD ~= HiddenMod) or
-			Data.Mod.TD ~= IsTouchDeviceActive()
-		if Data.Speed ~= PreviewMapPS.CurrentSpeed or DiffChangeModEnabled then
+			Data.ModData.EZ ~= EasyMod or 
+			Data.ModData.HR ~= HardRock or 
+			Data.ModData.FL ~= Flashlight or 
+			(Flashlight and Data.ModData.HD ~= HiddenMod) or
+			Data.ModData.TD ~= IsTouchDeviceActive()
+		if Data.ModData.SA ~= PreviewMapPS.CurrentSpeed or DiffChangeModEnabled then
 			-- We re-calculate the map and update if the player's current mod data is difference than the current set
 			-- Player're not always set the NM mod to set so
 			local MapFile = PreviewMapPS.MapFile
-			
-			local ModData = {
-				SA = Data.Speed,
-				HD = Data.Mod.HD,
-				HR = Data.Mod.HR,
-				EZ = Data.Mod.EZ,
-				FL = Data.Mod.FL,
-				TD = Data.Mod.TD
-			}
-			
-			local _, returnData = require(workspace.OsuConvert)(1, MapFile, 0, true, false, ModData)
+
+			local _, returnData = require(workspace.OsuConvert)(1, MapFile, 0, true, false, Data.ModData)
 			externalData = {
 				AimDiff = returnData.Difficulty.AimDifficulty,
 				SpeedDiff = returnData.Difficulty.SpeedDifficulty,
@@ -984,11 +974,11 @@ function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
 
 		add(DisplayLBInformationValue.Score, Score)
 		add(DisplayLBInformationValue.MaxCombo, Data.MaxCombo)
-		add(DisplayLBInformationValue.h300, Data.ExtraAccurancy[1])
-		add(DisplayLBInformationValue.h100, Data.ExtraAccurancy[2])
-		add(DisplayLBInformationValue.h50, Data.ExtraAccurancy[3])
-		add(DisplayLBInformationValue.miss, Data.ExtraAccurancy[4])
-		add(DisplayLBInformationValue.rankedPS, Data.PS or 0)
+		add(DisplayLBInformationValue.h300, Data.Statistic.h300)
+		add(DisplayLBInformationValue.h100, Data.Statistic.h100)
+		add(DisplayLBInformationValue.h50, Data.Statistic.h50)
+		add(DisplayLBInformationValue.miss, Data.Statistic.missCount)
+		add(DisplayLBInformationValue.rankedPS, Data.Performance or 0)
 		local MaxPS, UpdatedPS, mapMaxCombo = GetUserPlayUpdatedPS(Data, externalData)
 		add(DisplayLBInformationValue.MapMaxCombo, mapMaxCombo)
 		add(DisplayLBInformationValue.calculatedBasePS, UpdatedPS.TotalPS)
@@ -1023,20 +1013,20 @@ function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
 		TweenService:Create(LbInformation,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Position = UDim2.new(0,-20,0,math.max(math.min(LeaderboardFrame.AbsolutePosition.Y+58,workspace.CurrentCamera.ViewportSize.Y-216),36))}):Play()
 	end)
 	local AccData = {
-		h300 = Data.ExtraAccurancy[1],
-		h100 = Data.ExtraAccurancy[2],
-		h50 = Data.ExtraAccurancy[3],
-		miss = Data.ExtraAccurancy[4],
+		h300 = Data.Statistic.h300,
+		h100 = Data.Statistic.h100,
+		h50 = Data.Statistic.h50,
+		miss = Data.Statistic.missCount,
 		MaxCombo = Data.MaxCombo
 	}
-	
+
 	local sendData = {
 		PreviewMapPS.objCount, PreviewMapPS.MaxCombo, PreviewMapPS.MaxAccScore, PreviewMapPS.MaxConsistencyScore, PreviewMapPS.MaxSpinnerScore,
-		Data.Mod, Data.Speed
+		Data.ModData
 	}
-	
+
 	local DisplayScore:number = Score
-	
+
 	if ScoreV2Enabled then
 		local ScoreV2 = require(ScriptComponent.Gameplay.RawV1ToV2)(Score, AccData, table.unpack(sendData))
 		DisplayScore = ScoreV2
@@ -1049,12 +1039,12 @@ function AddLeaderboardConnection(LeaderboardFrame,Data,Score,UID,DateFormat)
 			LeaderboardFrame.MainFrame.Accuracy.Visible = false
 			LeaderboardFrame.MainFrame.PlayDate.Visible = false
 			LeaderboardFrame.MainFrame.PSEarned.Position = UDim2.new(1,-8,0.6666,0)
-			LeaderboardFrame.MainFrame.PSEarned.Text = DateFormat.." | "..tostring(math.round(Data.PS)).."ps"
+			LeaderboardFrame.MainFrame.PSEarned.Text = DateFormat.." | "..tostring(math.round(Data.Performance)).."ps"
 		else
 			LeaderboardFrame.MainFrame.Accuracy.Visible = true
 			LeaderboardFrame.MainFrame.PlayDate.Visible = true
 			LeaderboardFrame.MainFrame.PSEarned.Position = UDim2.new(1,-8,1,0)
-			LeaderboardFrame.MainFrame.PSEarned.Text = tostring(math.round(Data.PS)).."ps"
+			LeaderboardFrame.MainFrame.PSEarned.Text = tostring(math.round(Data.Performance)).."ps"
 			LeaderboardFrame.MainFrame.Score.Text = string.format("Score: %s (%dx)", GetScore(DisplayScore), Data.MaxCombo)
 		end
 	end
@@ -1100,24 +1090,22 @@ PSLeaderboard = false
 
 -- Legacy user leaderboard data
 type UserPlayInfo = {
+	Version:number,
 	HaveReplay:boolean,
-	Accurancy:string,
+	Accuracy:number,
 	MaxCombo:number,
-	Grade:string,
 	Date:number,
-	ExtraAccurancy: {number},
-	Speed:number,
-	PS:number,
-	Mod:{
-		FL:boolean,
-		SL:boolean,
-		NF:boolean,
-		HD:boolean,
-		HR:boolean,
-		EZ:boolean,
-		AT:boolean,
-		TD:boolean
-	}
+	Statistic:{
+		h300:number,
+		h100:number,
+		h50:number,
+		missCount:number
+	},
+	ModData:modData.ModData,
+	Consistency:number,
+	Score:number,
+	ScoreV2:number,
+	Performance:number
 }
 type UserLeaderboardData = {
 	Score:number,
@@ -1127,202 +1115,381 @@ type UserLeaderboardData = {
 	UID:number
 }
 
+local lbLoadTask:thread?
+
+function getGrade(accuracy:number, missCount:number)
+	if accuracy >= 100 then
+		return "SS"
+	elseif accuracy >= 95 and missCount <= 0 then
+		return "S"
+	elseif accuracy >= 90 then
+		return "A"
+	elseif accuracy >= 80 then
+		return "B"
+	elseif accuracy >= 70 then
+		return "C"
+	else
+		return "D"
+	end
+end
+
+function GetDate(CurrentDate)
+	local PlayedTime = os.time() - (tonumber(CurrentDate) or 0)
+
+	if PlayedTime < 3600 then
+		return tostring(math.floor(PlayedTime/60)).."mi"
+	elseif PlayedTime < 86400 then
+		return tostring(math.floor(PlayedTime/3600)).."h"
+	elseif PlayedTime < 2592000 then
+		return tostring(math.floor(PlayedTime/86400)).."d"
+	elseif PlayedTime < 62208000 then
+		return tostring(math.floor(PlayedTime/2592000)).."m"
+	else
+		return tostring(math.floor(PlayedTime/31104000)).."y"
+	end
+end
+
 LoadLeaderboard = function()
-	local OptimizedPerfomance = GameSettingManage.getSettings:Invoke("OptimizedPerfomance")
-	local LeaderboardInterface = PlayerGui.BG.BeatmapLeaderboard
-	local ThisLBSession = HttpService:GenerateGUID()
-	CurrentLeaderboardSession = ThisLBSession
+	if lbLoadTask then
+		task.cancel(lbLoadTask)
+	end
 
-	-- Clear old data
-	for i,obj in pairs(LeaderboardInterface.GolbalLeaderboard:GetChildren()) do
-		if not obj:IsA("Frame") or not obj:FindFirstChild("MainFrame") then continue end
-		TweenService:Create(obj.MainFrame,TweenInfo.new(0.75+obj.LayoutOrder*0.01, Enum.EasingStyle.Quart,Enum.EasingDirection.In),{Position = UDim2.new(1,0,0,0)}):Play()
-	end
-	local PersonalBestOldData = LeaderboardInterface.PersonalBest:FindFirstChild("PlayerPB") 
-	if PersonalBestOldData then
-		PersonalBestOldData:Destroy()
-	end
-	LocalLeaderboardData = {}
-	for _,connection in pairs(LeaderboardFrameConnection) do
-		if connection then
-			connection:Disconnect()
+	lbLoadTask = task.spawn(function()
+		local OptimizedPerfomance = GameSettingManage.getSettings:Invoke("OptimizedPerfomance")
+		local LeaderboardInterface = PlayerGui.BG.BeatmapLeaderboard
+		local ThisLBSession = HttpService:GenerateGUID()
+		CurrentLeaderboardSession = ThisLBSession
+
+		-- Clear old data
+		for i,obj in pairs(LeaderboardInterface.GolbalLeaderboard:GetChildren()) do
+			if not obj:IsA("Frame") or not obj:FindFirstChild("MainFrame") then continue end
+			TweenService:Create(obj.MainFrame,TweenInfo.new(0.75+obj.LayoutOrder*0.01, Enum.EasingStyle.Quart,Enum.EasingDirection.In),{Position = UDim2.new(1,0,0,0)}):Play()
 		end
-	end
-	LeaderboardFrameConnection = {}
-
-	script.Parent.GameplayData.LeaderboardData.Value = "[]"
-
-	-- Load new data
-
-	--LeaderboardInterface.LoadingText.Visible = true
-	task.spawn(function()
-		LeaderboardInterface.UILoad.LoadingUI.Frame.LocalScript.Disabled = false
-		TweenService:Create(LeaderboardInterface.UILoad,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{GroupTransparency = 0}):Play()
-	end)
-	LeaderboardInterface.NoRecord.Visible = false
-	LeaderboardInterface.PersonalBest.NoRecord.Visible = false
-	LeaderboardInterface.PersonalBestTitle.TextTransparency = 1
-
-	-- Get map lb data from the server
-	local GolbalData:{UserPlayInfo}, PersonalData:UserPlayInfo, SessionChanged:boolean = game.ReplicatedStorage.BeatmapLeaderboard:InvokeServer(1,{DatastoreName = CurrentKey, UsingPerformanceLeaderboard = PSLeaderboard})
-	-- prevent duplicating request
-	if SessionChanged == true or CurrentLeaderboardSession ~= ThisLBSession then return end
-
-	local Leaderboard = LeaderboardInterface.GolbalLeaderboard
-	Leaderboard:ClearAllChildren()
-
-	local UIListLayout = Instance.new("UIListLayout",Leaderboard)
-	UIListLayout.Padding = UDim.new(0,5)
-	UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
-	local PersonalRank = "-"
-	local Top100Score = 1
-
-	local SendingData = {
-		Golbal = GolbalData,
-		Local = PersonalData,
-		PSLeaderboard = PSLeaderboard,
-		V2Leaderboard = ScoreV2Enabled
-	}	
-
-	script.Parent.GameplayData.LbStateAvaiable.LbDataProcess.Update:Fire(SendingData)
-	--script.Parent.GameplayData.LeaderboardData.Value = HttpService:JSONEncode(SendingData)
-	--CurrentPreviewFrame.Overview.LeaderboardDisplay.LBData.Value = HttpService:JSONEncode(SendingData)
-
-	if script.Parent:FindFirstChild("GameStarted") or StartupState == "FastRestart" then return end
-	
-	local function getps(plr)
-		return plr.ExtraData and (plr.ExtraData.PS or 0) or 0
-	end
-	
-	local SavedScoreV2:{[number]:number} = {}
-	
-	local PreviewMapPS = PreviewMapPS::{[any]:any}
-	
-	local function getScoreV2(data:UserLeaderboardData):number
-		if SavedScoreV2[data.UID] then
-			return SavedScoreV2[data.UID]
+		local PersonalBestOldData = LeaderboardInterface.PersonalBest:FindFirstChild("PlayerPB") 
+		if PersonalBestOldData then
+			PersonalBestOldData:Destroy()
 		end
-		local ScoreV2 = require(ScriptComponent.Gameplay.RawV1ToV2)(
-			data.Score,
-			{
-				MaxCombo = data.ExtraData.MaxCombo, 
-				h300 = data.ExtraData.ExtraAccurancy[1],
-				h100 = data.ExtraData.ExtraAccurancy[2],
-				h50 = data.ExtraData.ExtraAccurancy[3],
-				miss = data.ExtraData.ExtraAccurancy[4],
-			},
-			PreviewMapPS.objCount, PreviewMapPS.MaxCombo, PreviewMapPS.MaxAccScore, PreviewMapPS.MaxConsistencyScore, PreviewMapPS.MaxSpinnerScore,
-			data.ExtraData.Mod, data.ExtraData.Speed
-		)
+		LocalLeaderboardData = {}
+		for _,connection in pairs(LeaderboardFrameConnection) do
+			if connection then
+				connection:Disconnect()
+			end
+		end
+		LeaderboardFrameConnection = {}
+
+		script.Parent.GameplayData.LeaderboardData.Value = "[]"
+
+		-- Load new data
+
+		--LeaderboardInterface.LoadingText.Visible = true
+		task.spawn(function()
+			LeaderboardInterface.UILoad.LoadingUI.Frame.LocalScript.Disabled = false
+			TweenService:Create(LeaderboardInterface.UILoad,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{GroupTransparency = 0}):Play()
+		end)
+		LeaderboardInterface.NoRecord.Visible = false
+		LeaderboardInterface.PersonalBest.NoRecord.Visible = false
+		LeaderboardInterface.PersonalBestTitle.TextTransparency = 1
+
+		-- Get map lb data from the server
+		local GlobalData:{UserLeaderboardData}, PersonalData:UserLeaderboardData, SessionChanged:boolean = game.ReplicatedStorage.BeatmapLeaderboard:InvokeServer(1,{DatastoreName = CurrentKey, UsingPerformanceLeaderboard = PSLeaderboard})
+
+		for _, data in pairs(GlobalData) do
+			data.ExtraData = ScoreStaticticConverter.ConvertStatictic(data.ExtraData)
+		end
 		
-		SavedScoreV2[data.UID] = ScoreV2
-		return ScoreV2
-	end
+		if PersonalData.ExtraData then
+			PersonalData.ExtraData = ScoreStaticticConverter.ConvertStatictic(PersonalData.ExtraData)
+		end
+	
 
-	if PSLeaderboard then
-		table.sort(GolbalData,function(plr1,plr2)
-			return getps(plr1) > getps(plr2) or (getps(plr1) == getps(plr2) and plr1.Rank < plr2.Rank)
+		-- prevent duplicating request
+		if SessionChanged == true or CurrentLeaderboardSession ~= ThisLBSession then return end
+
+		local Leaderboard = LeaderboardInterface.GolbalLeaderboard
+		Leaderboard:ClearAllChildren()
+
+		local UIListLayout = Instance.new("UIListLayout",Leaderboard)
+		UIListLayout.Padding = UDim.new(0,5)
+		UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+		local PersonalRank = "-"
+		local Top100Score = 1
+
+		local SendingData = {
+			Golbal = GlobalData,
+			Local = PersonalData,
+			PSLeaderboard = PSLeaderboard,
+			V2Leaderboard = ScoreV2Enabled
+		}	
+
+		script.Parent.GameplayData.LbStateAvaiable.LbDataProcess.Update:Fire(SendingData)
+		--script.Parent.GameplayData.LeaderboardData.Value = HttpService:JSONEncode(SendingData)
+		--CurrentPreviewFrame.Overview.LeaderboardDisplay.LBData.Value = HttpService:JSONEncode(SendingData)
+
+		if script.Parent:FindFirstChild("GameStarted") or StartupState == "FastRestart" then return end
+
+		local function getps(plr:UserLeaderboardData)
+			return plr.ExtraData and (plr.ExtraData.Performance or 0) or 0
+		end
+
+		local SavedScoreV2:{[number]:number} = {}
+
+		local PreviewMapPS = PreviewMapPS::{[any]:any}
+
+		local function getScoreV2(data:UserLeaderboardData):number
+			if SavedScoreV2[data.UID] then
+				return SavedScoreV2[data.UID]
+			end
+			local ScoreV2 = require(ScriptComponent.Gameplay.RawV1ToV2)(
+				data.Score,
+				{
+					MaxCombo = data.ExtraData.MaxCombo, 
+					h300 = data.ExtraData.Statistic.h300,
+					h100 = data.ExtraData.Statistic.h100,
+					h50 = data.ExtraData.Statistic.h50,
+					miss = data.ExtraData.Statistic.missCount,
+				},
+				PreviewMapPS.objCount, PreviewMapPS.MaxCombo, PreviewMapPS.MaxAccScore, PreviewMapPS.MaxConsistencyScore, PreviewMapPS.MaxSpinnerScore,
+				data.ExtraData.ModData
+			)
+
+			SavedScoreV2[data.UID] = ScoreV2
+			return ScoreV2
+		end
+
+		if PSLeaderboard then
+			table.sort(GlobalData,function(plr1,plr2)
+				return getps(plr1) > getps(plr2) or (getps(plr1) == getps(plr2) and plr1.Rank < plr2.Rank)
+			end)
+
+			for newrank,plr in pairs(GlobalData) do
+				plr.Rank = newrank
+			end
+		elseif ScoreV2Enabled then
+			table.sort(GlobalData,function(plr1,plr2)
+				return getScoreV2(plr1) > getScoreV2(plr2) or (getScoreV2(plr1) == getScoreV2(plr2) and plr1.Rank < plr2.Rank)
+			end)
+
+			for newrank,plr in pairs(GlobalData) do
+				plr.Rank = newrank
+			end
+		end
+
+		--LeaderboardInterface.LoadingText.Visible = false
+		task.spawn(function()
+			LeaderboardInterface.UILoad.LoadingUI.Frame.CloseRequest:Fire()
+			wait(0.15)
+			TweenService:Create(LeaderboardInterface.UILoad,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{GroupTransparency = 1}):Play()
 		end)
 
-		for newrank,plr in pairs(GolbalData) do
-			plr.Rank = newrank
-		end
-	elseif ScoreV2Enabled then
-		table.sort(GolbalData,function(plr1,plr2)
-			return getScoreV2(plr1) > getScoreV2(plr2) or (getScoreV2(plr1) == getScoreV2(plr2) and plr1.Rank < plr2.Rank)
-		end)
+		wait(0.4)
+		if not script.Parent:FindFirstChild("GameStarted") then
+			local function GetScore(CurrentScore)
+				CurrentScore = tostring(CurrentScore)
+				local NewScore = ""
 
-		for newrank,plr in pairs(GolbalData) do
-			plr.Rank = newrank
-		end
-	end
-
-	--LeaderboardInterface.LoadingText.Visible = false
-	task.spawn(function()
-		LeaderboardInterface.UILoad.LoadingUI.Frame.CloseRequest:Fire()
-		wait(0.15)
-		TweenService:Create(LeaderboardInterface.UILoad,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{GroupTransparency = 1}):Play()
-	end)
-
-	wait(0.4)
-	if not script.Parent:FindFirstChild("GameStarted") then
-		local function GetScore(CurrentScore)
-			CurrentScore = tostring(CurrentScore)
-			local NewScore = ""
-
-			for i = 1,#CurrentScore do
-				i = (#CurrentScore-i)+1
-				if math.floor((#NewScore+1)/4)-((#NewScore+1)/4) == 0 then
-					NewScore = string.sub(CurrentScore,i,i)..","..NewScore
-				else
-					NewScore = string.sub(CurrentScore,i,i)..NewScore
+				for i = 1,#CurrentScore do
+					i = (#CurrentScore-i)+1
+					if math.floor((#NewScore+1)/4)-((#NewScore+1)/4) == 0 then
+						NewScore = string.sub(CurrentScore,i,i)..","..NewScore
+					else
+						NewScore = string.sub(CurrentScore,i,i)..NewScore
+					end
 				end
-			end
-			return NewScore
-		end
+				return NewScore
+			end 
+			Leaderboard.CanvasSize = UDim2.new(0,0,0,#GlobalData*45)
+			Leaderboard.CanvasPosition = Vector2.new(0,0)
 
-		local function GetDate(CurrentDate)
-			local PlayedTime = os.time() - (tonumber(CurrentDate) or 0)
+			local Total = #GlobalData + ((PersonalData and tonumber(PersonalData.Score) and 1) or 0)
+			local Loaded = 0
 
-			if PlayedTime < 3600 then
-				return tostring(math.floor(PlayedTime/60)).."mi"
-			elseif PlayedTime < 86400 then
-				return tostring(math.floor(PlayedTime/3600)).."h"
-			elseif PlayedTime < 2592000 then
-				return tostring(math.floor(PlayedTime/86400)).."d"
-			elseif PlayedTime < 62208000 then
-				return tostring(math.floor(PlayedTime/2592000)).."m"
-			else
-				return tostring(math.floor(PlayedTime/31104000)).."y"
-			end
-		end
-		Leaderboard.CanvasSize = UDim2.new(0,0,0,#GolbalData*45)
-		Leaderboard.CanvasPosition = Vector2.new(0,0)
+			for i,Data in pairs(GlobalData) do
+				task.spawn(function()
+					local NewLBFrame = script.Leaderboard.LeaderboardFrame:Clone()
+					NewLBFrame.Parent = Leaderboard
 
-		local Total = #GolbalData + ((PersonalData and PersonalData.Data and tonumber(PersonalData.Data.Score) and 1) or 0)
-		local Loaded = 0
+					NewLBFrame.MouseEnter:Connect(function()
+						TweenService:Create(NewLBFrame.MainFrame.PlayerName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 1}):Play()
+						TweenService:Create(NewLBFrame.MainFrame.UserName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
+					end)
+					NewLBFrame.MouseLeave:Connect(function()
+						TweenService:Create(NewLBFrame.MainFrame.PlayerName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
+						TweenService:Create(NewLBFrame.MainFrame.UserName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 1}):Play()
+					end)
+					-- check
+					local Success,output = pcall(function()
+						NewLBFrame.LayoutOrder = tonumber(Data.Rank)
+						NewLBFrame.MainFrame.PlayerName.Text = Data.DisplayName
+						NewLBFrame.MainFrame.UserName.Text = "@"..Data.Name
+						local MaxComboText = ""
+						if Data.ExtraData ~= nil then
+							local achievedGrade = getGrade(Data.ExtraData.Accuracy, Data.ExtraData.Statistic.missCount)
+							MaxComboText = " ("..tostring(Data.ExtraData.MaxCombo).."x)"
+							NewLBFrame.MainFrame.Accuracy.Text = string.format("%.2f%%",Data.ExtraData.Accuracy)
+							NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date)..GetModData(Data.ExtraData.ModData)
+							NewLBFrame.MainFrame.Grade.Text = achievedGrade
+							if achievedGrade == "SS" then
+								NewLBFrame.MainFrame.Grade.Text = "S"
+								if Data.ExtraData.ModData and (Data.ExtraData.ModData.HD or Data.ExtraData.ModData.FL) then
+									NewLBFrame.MainFrame.Grade_SSH.Visible = true
+								else
+									NewLBFrame.MainFrame.Grade_SS.Visible = true
+								end
+							end
+							NewLBFrame.MainFrame.Grade.TextColor3 = RankColor[achievedGrade]
+							if achievedGrade == "SS" or achievedGrade == "S" then
+								if Data.ExtraData.ModData and (Data.ExtraData.ModData.HD or Data.ExtraData.ModData.FL) then
+									NewLBFrame.MainFrame.Grade.TextColor3 = Color3.fromRGB(177,177,177)
+								end
+							end
+							local PSEarned = Data.ExtraData.Performance
+							if PSEarned ~= nil then
+								NewLBFrame.MainFrame.PSEarned.Text = tostring(math.floor(PSEarned)).."ps"
+							else
+								NewLBFrame.MainFrame.PSEarned.Text = "-"
+							end
+						else
+							NewLBFrame.MainFrame.Accuracy.Text = "-"
+							NewLBFrame.MainFrame.PlayDate.Text = "-"
+							NewLBFrame.MainFrame.PSEarned.Text = "-"
+						end
+						if tostring(Data.Rank) == "100" then
+							Top100Score = (tonumber(Data.Score) or 0)+1
+						end
+						NewLBFrame.MainFrame.Score.Text = "Score: "..GetScore(Data.Score)..MaxComboText
+						NewLBFrame.MainFrame.Rank.Text = "#"..tostring(Data.Rank)
+						--NewLBFrame.MainFrame.PlayerImage.Image = Data.ThumbnailId
+						task.spawn(function()
+							if not NewLBFrame.Parent then
+								-- posibility of being removed while loading
+								return
+							end
+							if Data.UID == "1241445502" then -- the creator mark
+								NewLBFrame.MainFrame.PlayerName.TextColor3 = Color3.new(0.333333, 1, 0.498039)
+								NewLBFrame.MainFrame.Rank.TextColor3 = Color3.new(0.333333, 1, 0.498039)
+								NewLBFrame.MainFrame.UserName.TextColor3 = Color3.new(0.333333, 1, 0.498039)
+							end
 
-		for i,Data in pairs(GolbalData) do
-			task.spawn(function()
-				local NewLBFrame = script.Leaderboard.LeaderboardFrame:Clone()
-				NewLBFrame.Parent = Leaderboard
+							if Data.Name == LocalPlayer.Name then
+								NewLBFrame.MainFrame.PlayerName.TextColor3 = Color3.new(0,1,1)
+								NewLBFrame.MainFrame.Rank.TextColor3 = Color3.new(0,1,1)
+								NewLBFrame.MainFrame.UserName.TextColor3 = Color3.new(0,1,1)
+								PersonalRank = tostring(Data.Rank)
+							else
+								local isLoaded = false
+								local isFriend = false
+								while isLoaded == false do
+									wait()
+									if pcall(function()
+											isFriend = LocalPlayer:IsFriendsWith(game.Players:GetUserIdFromNameAsync(Data.Name))
+										end) == true then
+										isLoaded = true
+									end
+								end
+								if isFriend == true then
+									NewLBFrame.MainFrame.PlayerName.TextColor3 = Color3.new(1, 1, 0.215686)
+									NewLBFrame.MainFrame.Rank.TextColor3 = Color3.new(1, 1, 0.215686)
+									NewLBFrame.MainFrame.UserName.TextColor3 = Color3.new(1, 1, 0.215686)
+								end
+							end
+						end)
+						AddLeaderboardConnection(NewLBFrame,Data.ExtraData,Data.Score,Data.UID,GetDate(Data.ExtraData.Date))
+					end)
 
-				NewLBFrame.MouseEnter:Connect(function()
-					TweenService:Create(NewLBFrame.MainFrame.PlayerName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 1}):Play()
-					TweenService:Create(NewLBFrame.MainFrame.UserName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
+					if not Success then 
+						warn("Player leaderboard load failed ",Data)
+						warn(output)
+					end
+					for i = 1,10 do
+						wait()
+					end
+					Loaded += 1
+					if Loaded < Total then
+						repeat wait() until Loaded >= Total
+					end
+
+					wait((i-1)*0.05)
+					if NewLBFrame.Parent then
+						if not OptimizedPerfomance then
+							TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0,0,0,0),BackgroundTransparency = 0.9}):Play()
+							TweenService:Create(NewLBFrame,TweenInfo.new(.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(1,0,0,40)}):Play()
+						else
+							NewLBFrame.MainFrame.Position = UDim2.new(0,0,0,0)
+							NewLBFrame.MainFrame.BackgroundTransparency = 0.9
+							NewLBFrame.Size = UDim2.new(1,0,0,40)
+						end
+						wait(0.5)
+						if NewLBFrame.Parent then
+							for _,a in pairs(NewLBFrame.MainFrame:GetChildren()) do
+								if a:IsA("TextLabel") then
+									if a.Name ~= "UserName" then
+										TweenService:Create(a,TweenInfo.new(0.75,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
+									end
+								else
+									TweenService:Create(a,TweenInfo.new(0.75,Enum.EasingStyle.Linear),{ImageTransparency = 0.95}):Play()
+								end
+							end
+							if not OptimizedPerfomance then
+								AddLBTweenConnection(TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0.8}),(i-1)*0.1)
+							end
+						end					
+					end
 				end)
-				NewLBFrame.MouseLeave:Connect(function()
-					TweenService:Create(NewLBFrame.MainFrame.PlayerName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
-					TweenService:Create(NewLBFrame.MainFrame.UserName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 1}):Play()
-				end)
-				-- check
-				local Success,output = pcall(function()
-					NewLBFrame.LayoutOrder = tonumber(Data.Rank)
-					NewLBFrame.MainFrame.PlayerName.Text = Data.DisplayName
-					NewLBFrame.MainFrame.UserName.Text = "@"..Data.Name
+			end
+
+			if #GlobalData == 0 then
+				LeaderboardInterface.NoRecord.Visible = true
+			end
+
+			spawn(function()
+				TweenService:Create(Leaderboard.Parent.PersonalBestTitle,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
+				local Data = PersonalData
+				if tonumber(Data.Score) ~= nil then
+					LeaderboardInterface.PersonalBest.Visible = true
+					LeaderboardInterface.PersonalBestTitle.Visible = true
+					LeaderboardInterface.GolbalLeaderboard.Size = UDim2.new(1,0,1,-100)
+					LeaderboardInterface.ScrollSide.Size = UDim2.new(0,4,1,-100)
+
+					local PlayersFitScreen = math.floor(Leaderboard.AbsoluteSize.Y/40)+1
+					local WaitTime = (#GlobalData >= PlayersFitScreen and PlayersFitScreen*0.1) or (#GlobalData)*0.1
+					local NewLBFrame = script.Leaderboard.LeaderboardFrame:Clone()
+					NewLBFrame.Parent = LeaderboardInterface.PersonalBest
+					NewLBFrame.Name = "PlayerPB"
+					NewLBFrame.ZIndex = tonumber(Data.Rank)
+					NewLBFrame.MainFrame.PlayerName.Text = LocalPlayer.DisplayName
+					NewLBFrame.MainFrame.UserName.Text = "@"..LocalPlayer.Name
+
+					NewLBFrame.MouseEnter:Connect(function()
+						TweenService:Create(NewLBFrame.MainFrame.PlayerName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 1}):Play()
+						TweenService:Create(NewLBFrame.MainFrame.UserName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
+					end)
+					NewLBFrame.MouseLeave:Connect(function()
+						TweenService:Create(NewLBFrame.MainFrame.PlayerName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
+						TweenService:Create(NewLBFrame.MainFrame.UserName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 1}):Play()
+					end)
 					local MaxComboText = ""
 					if Data.ExtraData ~= nil then
-						Data.ExtraData.Mod.SA = Data.ExtraData.Speed or 1
+						local achievedGrade = getGrade(Data.ExtraData.Accuracy, Data.ExtraData.Statistic.missCount)
 						MaxComboText = " ("..tostring(Data.ExtraData.MaxCombo).."x)"
-						NewLBFrame.MainFrame.Accuracy.Text = tostring(Data.ExtraData.Accurancy).."%"
+						NewLBFrame.MainFrame.Accuracy.Text = string.format("%.2f%%",Data.ExtraData.Accuracy)
 						NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date)..GetModData(Data.ExtraData.Mod)
-						NewLBFrame.MainFrame.Grade.Text = Data.ExtraData.Grade
-						if Data.ExtraData.Grade == "SS" then
+						NewLBFrame.MainFrame.Grade.Text = achievedGrade
+						if achievedGrade == "SS" then
 							NewLBFrame.MainFrame.Grade.Text = "S"
-							if Data.ExtraData.Mod and (Data.ExtraData.Mod.HD or Data.ExtraData.Mod.FL) then
+							if Data.ExtraData.ModData and (Data.ExtraData.ModData.HD or Data.ExtraData.ModData.FL) then
 								NewLBFrame.MainFrame.Grade_SSH.Visible = true
 							else
 								NewLBFrame.MainFrame.Grade_SS.Visible = true
 							end
 						end
-						NewLBFrame.MainFrame.Grade.TextColor3 = RankColor[Data.ExtraData.Grade]
-						if Data.ExtraData.Grade == "SS" or Data.ExtraData.Grade == "S" then
-							if Data.ExtraData.Mod and (Data.ExtraData.Mod.HD or Data.ExtraData.Mod.FL) then
+						NewLBFrame.MainFrame.Grade.TextColor3 = RankColor[achievedGrade]
+						if achievedGrade == "SS" or achievedGrade == "S" then
+							if Data.ExtraData.ModData and (Data.ExtraData.ModData.HD or Data.ExtraData.ModData.FL) then
 								NewLBFrame.MainFrame.Grade.TextColor3 = Color3.fromRGB(177,177,177)
 							end
 						end
-						local PSEarned = Data.ExtraData.PS
+						local PSEarned = Data.ExtraData.Performance
 						if PSEarned ~= nil then
 							NewLBFrame.MainFrame.PSEarned.Text = tostring(math.floor(PSEarned)).."ps"
 						else
@@ -1333,216 +1500,63 @@ LoadLeaderboard = function()
 						NewLBFrame.MainFrame.PlayDate.Text = "-"
 						NewLBFrame.MainFrame.PSEarned.Text = "-"
 					end
-					if tostring(Data.Rank) == "100" then
-						Top100Score = (tonumber(Data.Score) or 0)+1
-					end
-					NewLBFrame.MainFrame.Score.Text = "Score: "..GetScore(Data.Score)..MaxComboText
-					NewLBFrame.MainFrame.Rank.Text = "#"..tostring(Data.Rank)
-					--NewLBFrame.MainFrame.PlayerImage.Image = Data.ThumbnailId
-					task.spawn(function()
-						if not NewLBFrame.Parent then
-							-- posibility of being removed while loading
-							return
-						end
-						if Data.UID == "1241445502" then -- the creator mark
-							NewLBFrame.MainFrame.PlayerName.TextColor3 = Color3.new(0.333333, 1, 0.498039)
-							NewLBFrame.MainFrame.Rank.TextColor3 = Color3.new(0.333333, 1, 0.498039)
-							NewLBFrame.MainFrame.UserName.TextColor3 = Color3.new(0.333333, 1, 0.498039)
-						end
 
-						if Data.Name == LocalPlayer.Name then
-							NewLBFrame.MainFrame.PlayerName.TextColor3 = Color3.new(0,1,1)
-							NewLBFrame.MainFrame.Rank.TextColor3 = Color3.new(0,1,1)
-							NewLBFrame.MainFrame.UserName.TextColor3 = Color3.new(0,1,1)
-							PersonalRank = tostring(Data.Rank)
+					NewLBFrame.MainFrame.Score.Text = "Score: "..GetScore(Data.Score)..MaxComboText
+					task.spawn(function()
+						NewLBFrame.MainFrame.Rank.Text = "-"
+						for i,e in pairs(GlobalData) do
+							if e.UID == LocalPlayer.UserId then
+								PersonalRank = tostring(i)
+								break
+							end
+						end
+						if PersonalRank ~= "-" then
+							NewLBFrame.MainFrame.Rank.Text = "#"..tostring(PersonalRank)
 						else
-							local isLoaded = false
-							local isFriend = false
-							while isLoaded == false do
-								wait()
-								if pcall(function()
-										isFriend = LocalPlayer:IsFriendsWith(game.Players:GetUserIdFromNameAsync(Data.Name))
-									end) == true then
-									isLoaded = true
-								end
-							end
-							if isFriend == true then
-								NewLBFrame.MainFrame.PlayerName.TextColor3 = Color3.new(1, 1, 0.215686)
-								NewLBFrame.MainFrame.Rank.TextColor3 = Color3.new(1, 1, 0.215686)
-								NewLBFrame.MainFrame.UserName.TextColor3 = Color3.new(1, 1, 0.215686)
-							end
+							local TopPercent = 1+math.floor((99-(tonumber(Data.Score)/Top100Score)*99)+0.5)
+							NewLBFrame.MainFrame.Rank.Text = "Top "..string.format("%.1f",TopPercent).."%"
 						end
 					end)
+					--NewLBFrame.MainFrame.PlayerImage.Image = Data.ThumbnailId
 					AddLeaderboardConnection(NewLBFrame,Data.ExtraData,Data.Score,Data.UID,GetDate(Data.ExtraData.Date))
-				end)
-
-				if not Success then 
-					warn("Player leaderboard load failed ",Data)
-					warn(output)
-				end
-				for i = 1,10 do
-					wait()
-				end
-				Loaded += 1
-				if Loaded < Total then
-					repeat wait() until Loaded >= Total
-				end
-
-				wait((i-1)*0.05)
-				if NewLBFrame.Parent then
+					for i = 1,10 do
+						wait()
+					end
+					Loaded += 1
+					if Loaded < Total then
+						repeat wait() until Loaded >= Total
+					end
+					wait(WaitTime)
+					NewLBFrame.Size = UDim2.new(1,0,0,40)
 					if not OptimizedPerfomance then
-						TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0,0,0,0),BackgroundTransparency = 0.9}):Play()
-						TweenService:Create(NewLBFrame,TweenInfo.new(.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(1,0,0,40)}):Play()
+						TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.75,Enum.EasingStyle.Quart),{Position = UDim2.new(0,0,0,0),BackgroundTransparency = 0.9}):Play()
 					else
 						NewLBFrame.MainFrame.Position = UDim2.new(0,0,0,0)
-						NewLBFrame.MainFrame.BackgroundTransparency = 0.9
-						NewLBFrame.Size = UDim2.new(1,0,0,40)
+					end
+
+					wait(0.25)
+					for _,a in pairs(NewLBFrame.MainFrame:GetChildren()) do
+						if a:IsA("TextLabel") then
+							if a.Name ~= "UserName" then
+								TweenService:Create(a,TweenInfo.new(0.75,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
+							end
+						else
+							TweenService:Create(a,TweenInfo.new(0.75,Enum.EasingStyle.Linear),{ImageTransparency = 0.95}):Play()
+						end
 					end
 					wait(0.5)
-					if NewLBFrame.Parent then
-						for _,a in pairs(NewLBFrame.MainFrame:GetChildren()) do
-							if a:IsA("TextLabel") then
-								if a.Name ~= "UserName" then
-									TweenService:Create(a,TweenInfo.new(0.75,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
-								end
-							else
-								TweenService:Create(a,TweenInfo.new(0.75,Enum.EasingStyle.Linear),{ImageTransparency = 0.95}):Play()
-							end
-						end
-						if not OptimizedPerfomance then
-							AddLBTweenConnection(TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0.8}),(i-1)*0.1)
-						end
-						if i == #GolbalData then
-							GolbalLoaded = true
-						end
-					end					
+					if not OptimizedPerfomance then
+						AddLBTweenConnection(TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0.8}),WaitTime)
+					end
+				else
+					LeaderboardInterface.PersonalBest.Visible = false
+					LeaderboardInterface.PersonalBestTitle.Visible = false
+					LeaderboardInterface.GolbalLeaderboard.Size = UDim2.new(1,0,1,-40)
+					LeaderboardInterface.ScrollSide.Size = UDim2.new(0,4,1,-40)
 				end
 			end)
 		end
-
-		if #GolbalData == 0 then
-			LeaderboardInterface.NoRecord.Visible = true
-		end
-
-		spawn(function()
-			TweenService:Create(Leaderboard.Parent.PersonalBestTitle,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
-			local Data = PersonalData
-			if tonumber(Data.Score) ~= nil then
-				LeaderboardInterface.PersonalBest.Visible = true
-				LeaderboardInterface.PersonalBestTitle.Visible = true
-				LeaderboardInterface.GolbalLeaderboard.Size = UDim2.new(1,0,1,-100)
-				LeaderboardInterface.ScrollSide.Size = UDim2.new(0,4,1,-100)
-
-				local PlayersFitScreen = math.floor(Leaderboard.AbsoluteSize.Y/40)+1
-				local WaitTime = (#GolbalData >= PlayersFitScreen and PlayersFitScreen*0.1) or (#GolbalData)*0.1
-			--[[ 
-				Data.ExtraData.Mod = {
-					FL = <Fl>
-				}
-			]]
-				local NewLBFrame = script.Leaderboard.LeaderboardFrame:Clone()
-				NewLBFrame.Parent = LeaderboardInterface.PersonalBest
-				NewLBFrame.Name = "PlayerPB"
-				NewLBFrame.ZIndex = tonumber(Data.Rank)
-				NewLBFrame.MainFrame.PlayerName.Text = LocalPlayer.DisplayName
-				NewLBFrame.MainFrame.UserName.Text = "@"..LocalPlayer.Name
-
-				NewLBFrame.MouseEnter:Connect(function()
-					TweenService:Create(NewLBFrame.MainFrame.PlayerName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 1}):Play()
-					TweenService:Create(NewLBFrame.MainFrame.UserName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
-				end)
-				NewLBFrame.MouseLeave:Connect(function()
-					TweenService:Create(NewLBFrame.MainFrame.PlayerName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
-					TweenService:Create(NewLBFrame.MainFrame.UserName,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{TextTransparency = 1}):Play()
-				end)
-				local MaxComboText = ""
-				if Data.ExtraData ~= nil then
-					Data.ExtraData.Mod.SA = Data.ExtraData.Speed or 1
-					MaxComboText = " ("..tostring(Data.ExtraData.MaxCombo).."x)"
-					NewLBFrame.MainFrame.Accuracy.Text = tostring(Data.ExtraData.Accurancy).."%"
-					NewLBFrame.MainFrame.PlayDate.Text = GetDate(Data.ExtraData.Date)..GetModData(Data.ExtraData.Mod)
-					NewLBFrame.MainFrame.Grade.Text = Data.ExtraData.Grade
-					if Data.ExtraData.Grade == "SS" then
-						NewLBFrame.MainFrame.Grade.Text = "S"
-						if Data.ExtraData.Mod and (Data.ExtraData.Mod.HD or Data.ExtraData.Mod.FL) then
-							NewLBFrame.MainFrame.Grade_SSH.Visible = true
-						else
-							NewLBFrame.MainFrame.Grade_SS.Visible = true
-						end
-					end
-					NewLBFrame.MainFrame.Grade.TextColor3 = RankColor[Data.ExtraData.Grade]
-					if Data.ExtraData.Grade == "SS" or Data.ExtraData.Grade == "S" then
-						if Data.ExtraData.Mod and (Data.ExtraData.Mod.HD or Data.ExtraData.Mod.FL) then
-							NewLBFrame.MainFrame.Grade.TextColor3 = Color3.fromRGB(177,177,177)
-						end
-					end
-					local PSEarned = Data.ExtraData.PS
-					if PSEarned ~= nil then
-						NewLBFrame.MainFrame.PSEarned.Text = tostring(math.floor(PSEarned)).."ps"
-					else
-						NewLBFrame.MainFrame.PSEarned.Text = "-"
-					end
-				else
-					NewLBFrame.MainFrame.Accuracy.Text = "-"
-					NewLBFrame.MainFrame.PlayDate.Text = "-"
-					NewLBFrame.MainFrame.PSEarned.Text = "-"
-				end
-
-				NewLBFrame.MainFrame.Score.Text = "Score: "..GetScore(Data.Score)..MaxComboText
-				task.spawn(function()
-					NewLBFrame.MainFrame.Rank.Text = "-"
-					for i,e in pairs(GolbalData) do
-						if e.UID == LocalPlayer.UserId then
-							PersonalRank = tostring(i)
-							break
-						end
-					end
-					if PersonalRank ~= "-" then
-						NewLBFrame.MainFrame.Rank.Text = "#"..tostring(PersonalRank)
-					else
-						local TopPercent = 1+math.floor((99-(tonumber(Data.Score)/Top100Score)*99)+0.5)
-						NewLBFrame.MainFrame.Rank.Text = "Top "..string.format("%.1f",TopPercent).."%"
-					end
-				end)
-				--NewLBFrame.MainFrame.PlayerImage.Image = Data.ThumbnailId
-				AddLeaderboardConnection(NewLBFrame,Data.ExtraData,Data.Score,Data.UID,GetDate(Data.ExtraData.Date))
-				for i = 1,10 do
-					wait()
-				end
-				Loaded += 1
-				if Loaded < Total then
-					repeat wait() until Loaded >= Total
-				end
-				wait(WaitTime)
-				NewLBFrame.Size = UDim2.new(1,0,0,40)
-				if not OptimizedPerfomance then
-					TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.75,Enum.EasingStyle.Quart),{Position = UDim2.new(0,0,0,0),BackgroundTransparency = 0.9}):Play()
-				else
-					NewLBFrame.MainFrame.Position = UDim2.new(0,0,0,0)
-				end
-
-				wait(0.25)
-				for _,a in pairs(NewLBFrame.MainFrame:GetChildren()) do
-					if a:IsA("TextLabel") then
-						if a.Name ~= "UserName" then
-							TweenService:Create(a,TweenInfo.new(0.75,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
-						end
-					else
-						TweenService:Create(a,TweenInfo.new(0.75,Enum.EasingStyle.Linear),{ImageTransparency = 0.95}):Play()
-					end
-				end
-				wait(0.5)
-				if not OptimizedPerfomance then
-					AddLBTweenConnection(TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0.8}),WaitTime)
-				end
-			else
-				LeaderboardInterface.PersonalBest.Visible = false
-				LeaderboardInterface.PersonalBestTitle.Visible = false
-				LeaderboardInterface.GolbalLeaderboard.Size = UDim2.new(1,0,1,-40)
-				LeaderboardInterface.ScrollSide.Size = UDim2.new(0,4,1,-40)
-			end
-		end)
-	end
+	end)
 end
 
 function UpdateMultiplayerRule()
@@ -2089,7 +2103,7 @@ task.spawn(function()
 	--TweenService:Create(script.Parent.Interface.BG,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,false),{BackgroundTransparency = 1}):Play()
 	TweenService:Create(CurrentPreviewFrame.OverviewSong.EqualizerSoundEffect,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{HighGain = 0,MidGain = 0}):Play()
 	TweenService:Create(CurrentPreviewFrame.OverviewSong,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{Volume = 0}):Play()
-	
+
 	if CurrentPreviewFrame:FindFirstChild("OverviewSong2") then
 		TweenService:Create(CurrentPreviewFrame.OverviewSong2.EqualizerSoundEffect,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{HighGain = 0,MidGain = 0}):Play()
 		TweenService:Create(CurrentPreviewFrame.OverviewSong2,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{Volume = 0}):Play()
@@ -3277,7 +3291,7 @@ task.spawn(function()
 				TweenService:Create(HPLeft, TweenInfo.new(0.25, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { Size = UDim2.new(HealthPoint / MaxHealthPoint, 0, 1, 0) }):Play()
 			end
 			-- -0.03, -0.125, -0.2
-			
+
 			local scale = (HPDrain - 5) / 5
 			local HPMissDrain = 12.5
 
@@ -3286,13 +3300,13 @@ task.spawn(function()
 			elseif (HPDrain < 5) then
 				HPMissDrain =  12.5 + (12.5 - 0.03) * scale
 			end
-			
+
 			local MissLeftBeforeFail = math.ceil(HealthPoint/(HPMissDrain + 1))
 			local display = ""
 			if HealthPoint < 50 and not NoFail then
 				display = string.format('<font color = "#ff0000">(%d)</font>',MissLeftBeforeFail)
 			end
-			
+
 			HealthDisplay.Text = tostring(math.ceil(HPLeft.Size.X.Scale * 100)) .. "% "..display
 
 			local HolderTrans = 0
@@ -3364,7 +3378,7 @@ spawn(function()
 		else
 			script.Parent.ProgressBar.TimeLeft.Time.Text = ""
 		end
-		
+
 
 		local SongLoudness = script.Parent.GameSong.AudioAnalyzer.RmsLevel
 		local LoudnessMulti = math.clamp(SongLoudness * 1, 0, 1)
@@ -3484,7 +3498,7 @@ spawn(function()
 			if CurrentGameTime < 1 then
 				CheckPeriod = 0.1
 			end
-			
+
 			script.Parent.SongOffsetDisplay.Text = string.format("%.1fms", ((checkingSongObj.TimePosition + ExtraLength) - CurrentGameTime)*1000)
 			if (tick()-LastAudioTimeAdjust) >= CheckPeriod and CurrentGameTime >= 0 and math.abs((checkingSongObj.TimePosition + ExtraLength) - CurrentGameTime) > 0.05 and script.Parent.GameSong.Song.IsReady == true and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 and not BeatmapFailed then
 				checkingSongObj.TimePosition = (tick() - SongStart)*SongSpeed*ReturnData.SongSpeed - ExtraLength + Offset
@@ -3496,7 +3510,7 @@ spawn(function()
 			if CurrentPreviewFrame.OverviewSong.IsPlaying == true and tick()-SongStart >= 0.5 then
 				CurrentPreviewFrame.OverviewSong:Stop()
 			end
-			
+
 			if CurrentPreviewFrame:FindFirstChild("OverviewSong2") and CurrentPreviewFrame.OverviewSong2.IsPlaying == true and tick()-SongStart >= 0.5 then
 				CurrentPreviewFrame.OverviewSong2:Stop()
 			end
@@ -3872,7 +3886,7 @@ spawn(function()
 		end
 		local Passed = tick() - LastTick
 		LastTick = tick()
-		
+
 		ParallelProcessingFolder.Core_OsuGame_KeyHistoryUpdate:SendMessage("Process",{
 			KeyHistory = KeyHistory,
 			Passed = Passed
@@ -3918,7 +3932,7 @@ spawn(function()
 			end
 			TweenService:Create(new, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {BackgroundTransparency = 0}):Play()
 		end
-		
+
 		local keyName = {
 			"K1", "K2", "M1", "M2"
 		}
@@ -4243,7 +4257,7 @@ AccFrameLastUpdate = 0
 script.Parent.GameplayData.Accuracy:GetPropertyChangedSignal("Value"):Connect(function()
 	if OptimizedPerfomance and (tick() - AccFrameLastUpdate < 0.04) then return end
 	AccFrameLastUpdate = tick()
-	
+
 	local Acc = script.Parent.GameplayData.Accuracy.Value/100
 	local AccurancyDisplay = script.Parent.AccurancyFrameDisplay
 
@@ -4377,14 +4391,14 @@ function getScoreV2()
 	local ActualScore = ActualAccScore + ActualConsistencyScore
 
 	local exRate = 0.44150110375
-	
+
 	local accScore = math.pow(ActualAccScore/maxAccScore, exRate) * 300000 * missPenalty
 	local consistencyScore = math.pow(ActualConsistencyScore/maxConsistencyScore, exRate) * 700000 * missPenalty
-	
+
 	-- Spinner score only gives 10% points in ScoreV2
 	local ScoreV2 = accScore + consistencyScore + AccuracyData.SpinnerScore * 0.1
 	--local ScoreV2 = math.pow(ActualScore/MaxPossibleScore,exRate) * 1000000 * ScoreMultiplier.Mod * missPenalty
-	
+
 	return math.round(ScoreV2)
 end
 
@@ -4458,7 +4472,7 @@ spawn(function()
 			WaitTime = 0
 			TweenTimeMultiplier = 1
 		end
-		
+
 		ParallelProcessingFolder.Core_OsuGame_ScoreProcessing:SendMessage("Process", {
 			Score = ScoreV2Enabled and getScoreV2() or getScoreV1(),
 			script = script,
@@ -4476,7 +4490,7 @@ spawn(function()
 			ScriptComponent = ScriptComponent,
 			ReturnData = ReturnData
 		})
-		
+
 		--[[if Score ~= CurrentScore or (ScoreV2Enabled and CurrentTotalScore~=TotalScoreEstimated) then
 			local AccuracyScore = getAccuracyScore()
 			local ConsistencyScore = getConsistencyScore()
@@ -4630,10 +4644,10 @@ if isSpectating == true then
 		end
 
 		SpectateRemote.OnClientEvent:Connect(QueueSpectateEvent)
-		
+
 		-- we will keep reading from the queue list
 		-- read from the first, remove that data until there's no queue
-		
+
 		spawn(function()
 			SpecStartTickChange = tick()
 			while true do
@@ -4651,7 +4665,7 @@ if isSpectating == true then
 
 				if tick() - SpecStartTickChange > 5 or SpecStartTickChange == 0 then
 					local HostStartTick = tick() - CurrentSpecTime
-					
+
 					local HostLatency = (workspace.ServerStatus.ServerTick.Value - HostTime)
 					print(HostLatency)
 					if HostLatency > SpectateDelay/1000 + 0.5 or HostLatency < SpectateDelay/1000 then -- more than 500ms then update
@@ -4666,7 +4680,7 @@ if isSpectating == true then
 						repeat wait() until tick() - StartTick >= CurrentSpecTime or SpectateDelay <= 0
 					end
 				end
-				
+
 				script.Parent.PSEarned.AnimatedPSEarned.PerformanceValue.Value = Data.InGameData.Perfomance
 
 				--script.Parent.PSEarned.Text = tostring(math.floor(Data.InGameData.Perfomance)).."ps"
@@ -4946,38 +4960,27 @@ spawn(function()
 			TweenService:Create(script.Parent.BreaktimeFrameOutline.UIStroke,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Transparency = 0}):Play()
 			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat,true)
 			local TotalNoteResult = AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss
-			local GameAccurancy = math.floor(((AccuracyData.h300*300+AccuracyData.h100*100+AccuracyData.h50*50)/(TotalNoteResult*300))*100*100)/100
+			local GameAccuracy = math.floor(((AccuracyData.h300*300+AccuracyData.h100*100+AccuracyData.h50*50)/(TotalNoteResult*300))*100*100)/100
 			local GameplayRank = "D"
-			local percent300s = AccuracyData.h300/(AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss)
-			local percent50s = AccuracyData.h50/(AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss)
 			local misstotal = AccuracyData.miss
 
-			local tostringAcc = string.format("%s%s%%",string.format("%.2d",GameAccurancy),string.sub(string.format("%.2f",GameAccurancy%1),2,4))
-
-			local RankColor = {
-				SS = Color3.fromRGB(255, 255, 0),
-				S = Color3.fromRGB(255, 255, 0),
-				A = Color3.fromRGB(0, 255, 0),
-				B = Color3.fromRGB(0, 85, 255),
-				C = Color3.fromRGB(170, 0, 127),
-				D = Color3.fromRGB(255, 0, 0)
-			}
+			local tostringAcc = string.format("%s%s%%",string.format("%.2d",GameAccuracy),string.sub(string.format("%.2f",GameAccuracy%1),2,4))
 
 			local SS = false
 
-			if percent300s >= 0.6 then
+			if GameAccuracy >= 70 then
 				GameplayRank = "C"
 			end
-			if (percent300s >= 0.7 and misstotal <= 0) or percent300s >= 0.8 then
+			if GameAccuracy >= 80 then
 				GameplayRank = "B"
 			end
-			if (percent300s >= 0.8 and misstotal <= 0) or percent300s >= 0.9 then
+			if GameAccuracy >= 90 then
 				GameplayRank = "A"
 			end
-			if percent300s >= 0.9 and misstotal <= 0 and percent50s < 0.01 then
+			if GameAccuracy >= 95 and misstotal <= 0 then
 				GameplayRank = "S"
 			end
-			if GameAccurancy >= 100 then
+			if GameAccuracy >= 100 then
 				GameplayRank = "SS"
 				SS = true
 			end
@@ -5104,25 +5107,22 @@ spawn(function()
 		end
 
 		local GameplayRank = "D"
-		local percent300s = AccuracyData.h300/(AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss)
-		local percent50s = AccuracyData.h50/(AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss)
 		local misstotal = AccuracyData.miss
 
-		if percent300s >= 0.6 then
+		if GameAccurancy >= 0.7 then
 			GameplayRank = "C"
 		end
-		if (percent300s >= 0.7 and misstotal <= 0) or percent300s >= 0.8 then
+		if GameAccurancy >= 0.8 then
 			GameplayRank = "B"
 		end
-		if (percent300s >= 0.8 and misstotal <= 0) or percent300s >= 0.9 then
+		if GameAccurancy >= 0.9 then
 			GameplayRank = "A"
 		end
-		if percent300s >= 0.9 and misstotal <= 0 and percent50s < 0.01 then
+		if GameAccurancy >= 0.95 and misstotal <= 0 then
 			GameplayRank = "S"
 		end
 		if GameAccurancy >= 100 then
 			GameplayRank = "SS"
-			SS = true
 		end
 
 		local AccurancyPoint = (GameAccurancy-60)/40
@@ -5205,7 +5205,7 @@ function CreateHitSound(HitsoundType,CustomSampleSet, AmbientRatio)
 		local HitsoundFilename = SelectedSampleSet.."-"..HitsoundTypeset[HitsoundType]
 		local CurrentHitsound = script.Hitsounds[HitsoundFilename]:Clone()
 		local CurrentHitsound2 = script.Hitsounds[HitsoundFilename]:Clone()
-		
+
 
 		CurrentHitsound.Volume *= 0.5 + (1-AmbientRatio)*0.5
 		CurrentHitsound2.Volume *= 0.5 + (AmbientRatio)*0.5
@@ -5505,7 +5505,7 @@ task.spawn(function()
 		elseif not OptimizedPerfomance and waittime == 0.1 then
 			waittime = 0
 		end
-		
+
 		local _env = ParallelProcessingFolder.Core_OsuGame_LiveDifficultyProcess:SendMessage("Process",{
 			CurrentLiveDiffAim = LivePlaySession.CurrentLiveDiffAim,
 			CurrentLiveDiffSpeed = LivePlaySession.CurrentLiveDiffSpeed,
@@ -5539,7 +5539,7 @@ function AddPerfomanceScore(HitObj):number
 		h50 = AccuracyData.h50, missCount = AccuracyData.miss
 	}
 	LivePlaySession:ProcessPerfomanceScore(HitObj and HitObj.PSValue or nil, HitObj and HitObj.Time or 0, _accData)
-	
+
 	return LivePlaySession.CurrentPerformance
 end
 
@@ -5699,9 +5699,10 @@ if not ReplayMode and not isSpectating and not onTutorial then
 		local Encoded = Digit1..Digit2_1..Digit2_2..Digit3
 		ReplayDataEncoded = ReplayDataEncoded.."\n"..Encoded
 	end
-	
+
 	task.spawn(function()
 		local LastRecord = tick()
+		local PastPosition
 		StreamingLoop:AddLoop(function() return true end, 0, function()
 			if tick() - LastRecord < 1/120 then
 				return "continue"
@@ -6033,7 +6034,7 @@ local UnusedNotes = {}
 
 function newHitCircle(HitObj, NoteZIndex)
 	local Circle
-	
+
 	if #UnusedNotes > 0 then
 		local _index = #UnusedNotes
 		Circle = UnusedNotes[_index]
@@ -6055,7 +6056,7 @@ function newHitCircle(HitObj, NoteZIndex)
 			ZIndex = NoteZIndex
 		})
 	end
-	
+
 	return Circle
 end
 
@@ -6063,7 +6064,7 @@ function clearHitCircle(Circle)
 	-- The circle has done it's work
 	-- It will be either invisible and add to idle queue or just completely destroy
 	local MaxCircleNote = 10
-	
+
 	if #UnusedNotes >= MaxCircleNote then
 		Circle:Destroy()
 	else
@@ -6223,7 +6224,7 @@ function LetTheGameBegin()
 							local Pos = UDim2.new(((256+(LookVector.X*128)))/512,0,((192+(LookVector.Z*128)))/384,0)
 							TweenService:Create(ATVC,TweenInfo.new(0.01,Enum.EasingStyle.Linear),{Position = Pos}):Play()
 						end)]]
-						
+
 						local ATSpinnerRPM = 440
 						local ATSpinnerSPR = 1/(ATSpinnerRPM/60)
 						local origin = Vector2.new(256, 192)
@@ -6237,7 +6238,7 @@ function LetTheGameBegin()
 							TweenService:Create(ATVC,TweenInfo.new(0),{Position = UDim2.fromScale(newPos.X, newPos.Y)}):Play()
 							task.wait()
 						end
-						
+
 						--wait(SpinnerTime-0.1)
 						--Connection:Disconnect()
 						wait(0.1)
@@ -6398,7 +6399,7 @@ function LetTheGameBegin()
 					AccuracyData.MaxConsistency += EstimatedCombo
 					AccuracyData.PerfomanceCombo = 0
 					AddPerfomanceScore(HitObj)
-					
+
 					AccuracyData.miss += 1
 					MissedInCurrentTime = true
 					AddScore(0)
@@ -6417,7 +6418,7 @@ function LetTheGameBegin()
 						wait()
 					end
 				end
-				
+
 				-- Process autoplay of the hit circle
 				if AutoPlay == true and ReplayMode ~= true then
 					task.spawn(function()
@@ -6535,7 +6536,7 @@ function LetTheGameBegin()
 						--else
 						--	NextHitObjPos = Vector2.new(NextHitObj.Position.X,NextHitObj.Position.Y)
 						--end
-						
+
 						NextHitObjPos = Vector2.new(NextHitObj.Position.X,NextHitObj.Position.Y)
 						local Point = HitObjPos-NextHitObjPos
 						local Rotation = math.deg(math.atan2(Point.Y,Point.X))
@@ -6601,10 +6602,10 @@ function LetTheGameBegin()
 						isLastComboNote = true
 					end
 				end)
-				
- 				-- Stop processing further if the beatmap has failed
+
+				-- Stop processing further if the beatmap has failed
 				if BeatmapFailed then return end
-				
+
 				-- Create hit circle
 				--[[
 				local Circle = ObjectManagement_Actor.ToggleCloneObject:Invoke(script.Circle, script.Parent.PlayFrame, {
@@ -6612,13 +6613,13 @@ function LetTheGameBegin()
 					Size = UDim2.new(CircleSize/384,0,CircleSize/384,0),
 					ZIndex = NoteZIndex
 				})]]
-				
+
 				local Circle = newHitCircle(HitObj, NoteZIndex)
 
 				Circle.TextLabel.Text = Combo
 				Circle.HitCircle.ImageColor3 = ComboColor[CurrentComboColor]
 				Circle.ApproachCircle.ImageColor3 = ComboColor[CurrentComboColor]
-				
+
 				local _list = {}
 				if #Circle.CircleNumber:GetChildren() > 1 then
 					for _, obj in pairs(Circle.CircleNumber:GetChildren()) do
@@ -6632,8 +6633,8 @@ function LetTheGameBegin()
 						end
 					end
 				end
-				
-				
+
+
 				for i, char in pairs(tostring(Combo):split("")) do
 					local NumberBase = script.HitCircleNumber["Number_"..char]
 					local NumberFrame
@@ -6646,15 +6647,15 @@ function LetTheGameBegin()
 						NumberFrame = NumberBase:Clone()
 						NumberFrame.Parent = Circle.CircleNumber
 					end
-					
+
 
 					NumberFrame.LayoutOrder = i
-					
+
 					NumberFrame.ImageTransparency = 1
 				end
 				HitObj.ComboColor = ComboColor[CurrentComboColor]
-				
-				
+
+
 				if tick() - Start < (HitObj.Time - CircleApproachTime)/1000 then
 					task.spawn(function()
 						Circle.Visible = false
@@ -6797,9 +6798,9 @@ function LetTheGameBegin()
 						if V < 0.75 then
 							V = 0.75
 						end
-						
+
 						local ExtraLengthData
-						
+
 						if #SliderCurvePoints > 400 then -- I will have to decrease the points count to make it less lag
 							local env = ExternalFunction_Actor.ProcessCommand:Invoke("Core_OsuGame_ProcessLargeSliderPoints",{
 								SliderCurvePoints = SliderCurvePoints
@@ -6817,7 +6818,7 @@ function LetTheGameBegin()
 								end
 							end
 						end
-						
+
 						if Slides % 2 == 0 then
 							SLEndPos = SliderCurvePoints[1]
 						else
@@ -6836,7 +6837,7 @@ function LetTheGameBegin()
 						FollowCircle.ZIndex = NoteZIndex-2
 						SliderObject.setFollowCirclePosition(0, false)
 						local SnakeInTime = math.min(FadeInTime, 0.2/SongSpeed)
-						
+
 						task.spawn(function()
 							if Slides > 1 then
 								local SliderBPMStartTime = HitObj.SliderBPMStartTime/100
@@ -6850,7 +6851,7 @@ function LetTheGameBegin()
 								end)
 							end
 						end)
-						
+
 						if not SnakingInSlider then
 							SliderObject.SetSnakingIn(1)
 						end
@@ -6889,13 +6890,13 @@ function LetTheGameBegin()
 								t = ((((tick() - Start) - HitObj.Time/1000) / SliderTime)  % (1/Slides)) / (1/Slides)
 							end
 							local currentSlide = math.floor(((tick() - Start - HitObj.Time/1000) / SliderTime) / (1/Slides)) + 1
-							
-							
+
+
 							return SliderObject.isCursorInFollowCircle(CursorPosition, t, currentSlide%2==0)
 						end
 						task.spawn(function()
 							repeat wait() until (tick() - Start) >= HitObj.Time/1000 and SliderTime ~= -1
-							
+
 							task.spawn(function()
 								-- Slider tick handler
 								for i, tickData in pairs(HitObj.SliderTickData) do
@@ -7047,17 +7048,17 @@ function LetTheGameBegin()
 									end
 									AddHealthDrainMultiplier(0.7*Multiplier)
 								end
-								
+
 								local reverseFadeInTime = math.min(SliderTime/Slides, 0.015/SongSpeed)
 								local reverseFadeOutTime = 0.25/SongSpeed
-								
+
 								local function processReverseArrow(slideStart, slideEnd)
 									slideEnd = math.min(slideEnd, Slides)
 									for i = slideStart, slideEnd do
 										SliderObject.clearCurrentReverseArrow(i-1, reverseFadeOutTime, reverseFadeInTime, i~=slideEnd)
 									end
 								end
-								
+
 								while tick() - Start < HitObj.Time/1000 + SliderTime and not Completed do
 									if Slides > 1 then  -- If slides <= 1, just wait
 										local CurrentSlide = math.floor((tick() - Start - HitObj.Time/1000)/(SliderTime/Slides))+1
@@ -7561,7 +7562,7 @@ function LetTheGameBegin()
 								-- once passed all the note, this input will be used
 								-- and no other circle can process this input session
 								prevNoteRegisterId = unquieRegisterId
-								
+
 								IsHitted = true
 								DisplayingHitnote[HitNoteID].IsHitted = true
 								task.spawn(function()
@@ -7738,7 +7739,7 @@ function LetTheGameBegin()
 										t2_:Play()
 										Circle.HitCircleLightning.Visible = false
 										Circle.Lightning.Visible = false
-										
+
 										-- process the fade out circle
 
 										for _,Object in pairs(Circle:GetChildren()) do
@@ -7927,27 +7928,18 @@ local percent300s = AccuracyData.h300/(AccuracyData.h300+AccuracyData.h100+Accur
 local percent50s = AccuracyData.h50/(AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss)
 local misstotal = AccuracyData.miss
 
-local _RankColor = {
-	SS = Color3.fromRGB(255, 255, 0),
-	S = Color3.fromRGB(255, 255, 0),
-	A = Color3.fromRGB(0, 255, 0),
-	B = Color3.fromRGB(0, 85, 255),
-	C = Color3.fromRGB(170, 0, 127),
-	D = Color3.fromRGB(255, 0, 0)
-}
-
 local SS = false
 
-if percent300s >= 0.6 then
+if GameAccuracy >= 70 then
 	GameplayRank = "C"
 end
-if (percent300s >= 0.7 and misstotal <= 0) or percent300s >= 0.8 then
+if GameAccuracy >= 80 then
 	GameplayRank = "B"
 end
-if (percent300s >= 0.8 and misstotal <= 0) or percent300s >= 0.9 then
+if GameAccuracy >= 90 then
 	GameplayRank = "A"
 end
-if percent300s >= 0.9 and misstotal <= 0 and percent50s < 0.01 then
+if GameAccuracy >= 95 and misstotal <= 0 then
 	GameplayRank = "S"
 end
 if GameAccuracy >= 100 then
@@ -7960,14 +7952,12 @@ ResultFrame.Parent.Parent.ResultFrameAnim.Disabled = false
 task.spawn(function()
 	local AccuracyValue = 0
 
-	if percent300s < 0.6 then
-		AccuracyValue = math.min(percent300s/0.6*0.4,0.39)
-	elseif misstotal > 0 and percent300s >= 0.7 then
-		AccuracyValue = math.min(0.4 + (percent300s-0.6)/0.4*0.6 - 0.15,0.84)
-	elseif percent300s >= 0.9 and percent50s >= 0.01 then
-		AccuracyValue = 0.84
+	if GameAccuracy < 70 then
+		AccuracyValue = math.min(GameAccuracy/70*0.4,0.4)
+	elseif GameAccuracy < 95 or misstotal > 0 then
+		AccuracyValue = math.min(0.4 + (GameAccuracy-70)/30*0.45, 0.845)
 	else
-		AccuracyValue = 0.4 + (percent300s-0.6)/0.4*0.6
+		AccuracyValue = 0.85 + (GameAccuracy-95)/5*0.15
 	end
 
 	wait(0.5)
@@ -8102,7 +8092,7 @@ DisplayModPlayed = (function()
 			display = string.sub(display,2,#display)
 		end
 		ModDisplay = ModDisplay .. display
-		
+
 		return ModDisplay
 	else
 		return ""
@@ -8133,15 +8123,6 @@ local FrameList = {}
 local LastDataAccuracy = 1
 
 for i,Accurancy in pairs(TimeAccurancy) do
-	local RankColor = {
-		SS = Color3.fromRGB(0, 255, 255),
-		S = Color3.fromRGB(255, 255, 0),
-		A = Color3.fromRGB(0, 255, 0),
-		B = Color3.fromRGB(0, 85, 255),
-		C = Color3.fromRGB(217, 0, 130),
-		D = Color3.fromRGB(255, 0, 0)
-	}
-
 	local ChartFrame = script.ChartFrame:Clone()
 	ChartFrame.Parent = AccurancyChartFrame
 	ChartFrame.LayoutOrder = i

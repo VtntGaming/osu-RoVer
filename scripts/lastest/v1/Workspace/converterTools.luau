@@ -221,4 +221,20 @@ tool.GetDifficultyValueAfterMod = {
 	end,
 }
 
+local function getConsistencyScore(combo:number):number
+	local score = (combo * (combo + 1) / 2)
+	score = math.pow(score, 1.1704417) * 1.2255
+	return score * 6 * 0.7
+end
+
+local function getAccuracyScore(combo:number):number
+	return math.pow(combo ,2.265) * 6 * 0.3
+end
+
+function tool.GetScoreV1(maxCombo:number):(number, number, number)
+	local consistencyScore = getConsistencyScore(maxCombo)
+	local accuracyScore = getAccuracyScore(maxCombo)
+	return consistencyScore, accuracyScore, consistencyScore + accuracyScore
+end
+
 return tool
