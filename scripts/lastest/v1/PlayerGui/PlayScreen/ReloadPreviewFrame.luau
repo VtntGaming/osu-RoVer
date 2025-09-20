@@ -445,6 +445,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 			end
 		end
 	end
+	local mapListingMainFrame = game.Players.LocalPlayer.PlayerGui.BeatmapListing:WaitForChild("MainFrame")
 	spawn(function()
 		local BeatmapsetID = ReturnData.BeatmapSetsData.BeatmapsetID
 		local BeatmapID = ReturnData.BeatmapSetsData.BeatmapID
@@ -495,7 +496,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		mapCreators["set_"..tostring(BeatmapsetID)] = RelatedUsers[webData.user_id]
 
 
-		game.Players.LocalPlayer.PlayerGui.BeatmapListing.MainFrame:WaitForChild("MainFrame").WorkingScript.UpdateRelatedMapper:Fire(mapCreators)
+		mapListingMainFrame:WaitForChild("MainFrame").WorkingScript.UpdateRelatedMapper:Fire(mapCreators)
 
 
 		WebDetailedFrame.BeatmapID.Data.Text = tostring(BeatmapID)
@@ -616,9 +617,6 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 
 	-- Difficulty strike
-	for i = 1,5 do
-		wait()
-	end
 
 	local ExpomentalRate = 2
 
@@ -966,7 +964,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 	repeat until wait() <= 1/30
 	local Background = game.Players.LocalPlayer.PlayerGui.BG.Background.Background
-	local Background_Listing = game.Players.LocalPlayer.PlayerGui.BeatmapListing.MainFrame.MainFrame.BG_Ambient.Main.Backgrounds
+	local Background_Listing = mapListingMainFrame:WaitForChild("MainFrame").BG_Ambient.Main.Backgrounds
 
 	ReturnData.ImageId = ReturnData.CustomBackgroundFile or tostring(ReturnData.ImageId)
 	local NewBackground
