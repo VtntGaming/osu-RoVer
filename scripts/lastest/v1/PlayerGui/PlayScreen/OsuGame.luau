@@ -8261,7 +8261,8 @@ for _,a in pairs(AccuracyData.HitErrorGraph) do
 	end
 end
 
-for _,a in pairs(AccuracyData.HitErrorGraph) do
+
+for i,a in pairs(AccuracyData.HitErrorGraph) do
 	local Frame = script.OffsetFrame:Clone()
 	Frame.Parent = OffsetFrame.MainFrame.MainFrame
 	local ExtraVerticalSize = math.round(1/99*workspace.Camera.ViewportSize.X*0.728625)-2
@@ -8269,6 +8270,18 @@ for _,a in pairs(AccuracyData.HitErrorGraph) do
 
 	if a[3] <= 0 then
 		Frame.BackgroundColor3 = Color3.new(0.333333, 0.333333, 0.333333)
+	else
+		if i == 1 then
+			Frame.BackgroundColor3 = Color3.new(1, 1, 1)
+		elseif math.abs(a[1]) <= hit300 then
+			Frame.BackgroundColor3 = Color3.new(0.294118, 0.764706, 1)
+		elseif math.abs(a[1]) <= hit100 then
+			Frame.BackgroundColor3 = Color3.new(0.294118, 1, 0.294118)
+		elseif math.abs(a[1]) <= hit50 then
+			Frame.BackgroundColor3 = Color3.new(1, 1, 0.294118)		
+		else
+			Frame.BackgroundColor3 = Color3.new(1, 0.294118, 0.294118)					
+		end 
 	end
 	Frame.LayoutOrder = a[4]
 end
