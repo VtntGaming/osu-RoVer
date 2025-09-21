@@ -57,7 +57,7 @@ return function(V1Score:number, AccuracyData:{MaxCombo:number,h300:number,h100:n
 	-- decrease spin score from V1 and increase later in V2
 	local SpinScore = math.min(math.floor(V1Score/100)*100, MaxSpinnerScore)
 	V1Score -= SpinScore
-	Speed = Speed or 1
+	Speed = tonumber(ModUsed and ModUsed.SA) or Speed or 1
 	local V1SpeedMultiplier = 1
 	if Speed < 1 then
 		V1SpeedMultiplier = Speed^4.185
@@ -77,15 +77,17 @@ return function(V1Score:number, AccuracyData:{MaxCombo:number,h300:number,h100:n
 		if ModUsed.HC then
 			V1Score *= 0.5 -- normalize the score of HC
 		end
-		if (ModUsed.Version and ModUsed.NS) or not ModUsed.SL then
+		if (ModUsed.Version and ModUsed.NS) or (not ModUsed.Version and not ModUsed.SL) then
 			MaxCombo = NoteCount -- non-slider -> no bonus max combo
 		end
 	end	
 
-	V1Score /= ScoreMultiplier * V1SpeedMultiplier
-	local MissPenalty = getScoreMissPenaltyMultiplier(AccuracyData.miss, NoteCount)
-	-- We assume that the score follows the new score system
+	-- We assume that the ScoreV1 follows the new score system
 	-- So the miss penalty also apply to this
+	local MissPenalty = getScoreMissPenaltyMultiplier(AccuracyData.miss, NoteCount)
+	V1Score /= MissPenalty
+	V1Score /= ScoreMultiplier * V1SpeedMultiplier
+	
 	local AccuracyScore = getAccuracyScore(AccuracyData, NoteCount, MaxCombo) * MissPenalty
 	local MinimumConsistencyScore = math.max(0, getMinimumConsistencyScore(AccuracyData.MaxCombo) * MissPenalty)
 	local MaximumConsistencyScore = math.min(getMaximumConsistencyScore(AccuracyData.MaxCombo, MaxCombo), MaxConsistencyScore) * MissPenalty

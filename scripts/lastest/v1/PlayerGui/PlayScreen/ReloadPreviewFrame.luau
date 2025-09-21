@@ -15,8 +15,12 @@ event.Event:Connect(function(_f)
 	_f()
 end)
 
+local _tasks = {}
+
 local function spawn(f)
-	event:Fire(f)
+	_tasks[#_tasks+1] = task.spawn(function()
+		f()
+	end)
 end
 local thisScript = script
 
@@ -69,6 +73,9 @@ end
 script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,FileType,CurrentModData,BeatmapStudio
 	,CurrentKey,BeatmapKey,PreviewFrameBaseVolume,PreviewBeatmapset,ModData:modData.ModData
 )
+	for _, _task:thread in pairs(_tasks) do
+		task.cancel(_task)
+	end
 	local script = script.Parent.Parent.OsuGame
 
 
@@ -208,8 +215,8 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 	local CSRate = converterTools.GetDifficultyValueAfterMod.CS(ReturnData.Difficulty.CircleSize, ModData)
 	local HPRate = converterTools.GetDifficultyValueAfterMod.HP(ReturnData.Difficulty.HPDrainRate, ModData)
-	local ARRate = converterTools.GetDifficultyValueAfterMod.AR(ReturnData.Difficulty.ApproachRate, ModData)
-	local ODRate = converterTools.GetDifficultyValueAfterMod.OD(ReturnData.Difficulty.OverallDifficulty, ModData)
+	local ARRate, ARRate_NoSA = converterTools.GetDifficultyValueAfterMod.AR(ReturnData.Difficulty.ApproachRate, ModData)
+	local ODRate, ODRate_NoSA = converterTools.GetDifficultyValueAfterMod.OD(ReturnData.Difficulty.OverallDifficulty, ModData)
 	local SpeedAR = ARRate
 
 
@@ -381,16 +388,15 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 		local RPMRequire = 150
 		if ODRate < 5 then
-			RPMRequire = 150 - 60 * (5-ODRate)/5  -- 90 - 150RPM
+			RPMRequire = 150 - 60 * (5-ODRate)/5
 		else
-			RPMRequire = 150 + 75 * (ODRate-5)/5 -- 150 - 225RPM
+			RPMRequire = 150 + 75 * (ODRate-5)/5
 		end
 
-
 		local DetailARTime = 1200
-		local Detail300Timing = 100 - 8 * ODRate
-		local Detail100Timing = 175 - 10 * ODRate
-		local Detail50Timing = 250 - 12.5 * ODRate
+		local Detail300Timing = 100 - 8 * ODRate_NoSA
+		local Detail100Timing = 175 - 10 * ODRate_NoSA
+		local Detail50Timing = 250 - 12.5 * ODRate_NoSA
 		local DetailSpinRequirement = RPMRequire
 		local DetailHitObjRadius = 54.4 - 4.48 * CSRate
 
@@ -446,6 +452,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 			end
 		end
 	end
+	local mapListingMainFrame = game.Players.LocalPlayer.PlayerGui.BeatmapListing:WaitForChild("MainFrame")
 	spawn(function()
 		local BeatmapsetID = ReturnData.BeatmapSetsData.BeatmapsetID
 		local BeatmapID = ReturnData.BeatmapSetsData.BeatmapID
@@ -496,7 +503,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		mapCreators["set_"..tostring(BeatmapsetID)] = RelatedUsers[webData.user_id]
 
 
-		game.Players.LocalPlayer.PlayerGui.BeatmapListing.MainFrame:WaitForChild("MainFrame").WorkingScript.UpdateRelatedMapper:Fire(mapCreators)
+		mapListingMainFrame:WaitForChild("MainFrame").WorkingScript.UpdateRelatedMapper:Fire(mapCreators)
 
 
 		WebDetailedFrame.BeatmapID.Data.Text = tostring(BeatmapID)
@@ -569,6 +576,8 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	DetailedInterface.AccBonus.Data.Text = string.format("%.2fps",RewardedAccPS)
 	DetailedInterface.ModsBonus.Data.Text = string.format("%.2fps",ModPS)
 	DetailedInterface.TouchDeviceBonus.Data.Text = string.format("%.2fps",TouchDevicePS)
+	DetailedInterface.MaxCombo.Data.Text = `{ReturnData.Difficulty.MaxCombo}x`
+	DetailedInterface.MaxScoreV1.Data.Text = `{math.floor(ReturnData.Difficulty.MaxScoreV1.Total)}`
 
 	-- Gameplay Data
 	local ConstantHPDrainRate = 5
@@ -595,12 +604,12 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	DetailedInterface.MaxHealth.Data.Text = string.format("%s",ModData.EZ and "3 x 100%" or "100%")
 
 	local HitWindowData = {
-		h300 = 100 - 8 * ODRate,
-		h100 = 175 - 10 * ODRate,
-		h50 = 250 - 12.5 * ODRate,
-		TDh300 = 150 - 12 * ODRate,
-		TDh100 = 220 - 12.5 * ODRate,
-		TDh50 = 275 - 13.5 * ODRate
+		h300 = 100 - 8 * ODRate_NoSA,
+		h100 = 175 - 10 * ODRate_NoSA,
+		h50 = 250 - 12.5 * ODRate_NoSA,
+		TDh300 = 150 - 12 * ODRate_NoSA,
+		TDh100 = 220 - 12.5 * ODRate_NoSA,
+		TDh50 = 275 - 13.5 * ODRate_NoSA
 	}
 
 	DetailedInterface.HitWindow.Data.Text = string.format("%.1f/%.1f/%.1fms",
@@ -614,12 +623,18 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		HitWindowData.TDh100/SongSpeed,
 		HitWindowData.TDh50/SongSpeed
 	)
-
+	
+	local circleApproachTime = 1200
+	
+	if ARRate < 5 then
+		circleApproachTime = 1200 + 600 * (5 - ARRate) / 5
+	elseif ARRate > 5 then
+		circleApproachTime = 1200 - 750 * (ARRate - 5) / 5
+	end
+	
+	DetailedInterface.ApproachTime.Data.Text = string.format("%.2fms", circleApproachTime)
 
 	-- Difficulty strike
-	for i = 1,5 do
-		wait()
-	end
 
 	local ExpomentalRate = 2
 
@@ -908,9 +923,9 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 			end
 			local PreviewVolume = PreviewFrameBaseVolume
 			PreviewFrame.OverviewVolume.Value = PreviewVolume
-			TweenService:Create(PreviewFrame.OverviewSong,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = PreviewVolume*SongVolume*0.01}):Play()
+			TweenService:Create(PreviewFrame.OverviewSong,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = PreviewVolume*SongVolume*0.02}):Play()
 			if isExistSecondSong then
-				TweenService:Create(PreviewFrame.OverviewSong2,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = PreviewVolume*SongVolume*0.01}):Play()
+				TweenService:Create(PreviewFrame.OverviewSong2,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = PreviewVolume*SongVolume*0.02}):Play()
 			end
 			TweenService:Create(OldSongObj,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = 0}):Play()
 			if OldSongObj2 then
@@ -967,7 +982,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 	repeat until wait() <= 1/30
 	local Background = game.Players.LocalPlayer.PlayerGui.BG.Background.Background
-	local Background_Listing = game.Players.LocalPlayer.PlayerGui.BeatmapListing.MainFrame.MainFrame.BG_Ambient.Main.Backgrounds
+	local Background_Listing = mapListingMainFrame:WaitForChild("MainFrame").BG_Ambient.Main.Backgrounds
 
 	ReturnData.ImageId = ReturnData.CustomBackgroundFile or tostring(ReturnData.ImageId)
 	local NewBackground

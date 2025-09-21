@@ -15,7 +15,7 @@ export type ModData = {
 	TD:boolean?,	-- Touchdevice
 	DA:{Active:boolean?, Data:{
 		CS:number?, AR:number?, OD:number?, HP:number?
-	}?}?,			-- Difficulty adjust
+	}?}?,			-- Difficulty adjust	
 	-- osu!lazer possible mods
 	MG:{
 		Active:boolean?, 
