@@ -1,0 +1,120 @@
+Upcomming in the version V1.48 we will have many updates! Including:
+
+-> Bug fixes:
+    - [CRITICAL] Error handler for ReloadPreviewFrame got issue and failed to fully initiate data:
+        + This issue causes the player to play on a map but on a DIFFERENT beatmap leaderboard (and also send that score to a different leaderboard)
+        + This is the reason why many scores have different map when play
+    - [CRITICAL] Fix the timing not correctly when apply SpeedAdjust
+    - [CRITICAL] Tracking the datascope using direct ID gathering instead of rely on the "DatastoreKey"
+    - Error handler for AudioL and AudioR when it doesn't recognize the error
+    
+-> ScoreV1 update:
+    - Apply miss penalty to the scoreV1
+
+-> ScoreV2 gameplay update:
+    - Apply miss penalty to the scoreV1 and V2 (in the gameplay)
+    - Separate Accuracy and Consistency score in the game gameplay scorev2 calculation
+
+-> New StatisticV1:
+    - In the V1.48 we will have new statistic format, here's the stats to compare:
+        + Old (StatisticV0):
+            {
+                Version:number?,
+                HaveReplay:boolean,
+                Accurancy:string,
+                MaxCombo:number,
+                Grade:string,
+                Date:number,
+                ExtraAccurancy:{number},
+                Speed:number,
+                PS:number,
+                Mod:{
+                    FL:boolean,
+                    SL:boolean,
+                    NF:boolean,
+                    HD:boolean,
+                    HR:boolean,
+                    EZ:boolean,
+                    AT:boolean,
+                    TD:boolean
+                }
+            }
+
+        + New (StatisticV1):
+            {
+                Version:number,
+                HaveReplay:boolean,
+                Accuracy:number,
+                MaxCombo:number,
+                Date:number,
+                Statistic:{
+                    h300:number,
+                    h100:number,
+                    h50:number,
+                    missCount:number
+                },
+                ModData:{
+                    HD:boolean?,
+                    HR:boolean?,
+                    EZ:boolean?,
+                    NF:boolean?,
+                    NS:boolean?,
+                    SA:number?,
+                    FL:boolean?,
+                    RX:boolean?,
+                    AP:boolean?,
+                    AT:boolean?,
+                    SO:boolean?,
+                    V2:boolean?,
+                    TD:boolean?,
+                    DA:{Active:boolean?, Data:{
+                        CS:number?, AR:number?, OD:number?, HP:number?
+                    }?}?,
+                    MG:{
+                        Active:boolean?, 
+                        Strength:number?
+                    }?,	
+                    HC:boolean?,
+                    SL:boolean?,
+                },
+                Consistency:number,
+                Score:number,
+                ScoreV2:number,
+                Performance:number
+            }
+    
+    - All old statistic will be converted to V1 in-game (some stats might be not avaiable)
+    - Using the new grade system: Accuracy based:
+        + Old: 
+            SS    100% accuracy
+            S    Over 90% 300s, at most 1% 50s, and no misses
+            A    Over 80% 300s and no misses OR over 90% 300s
+            B    Over 70% 300s and no misses OR over 80% 300s
+            C    Over 60% 300s
+            D    Anything else
+
+        + New:
+            SS    100% accuracy
+            S    Over 95% accuracy and no misses
+            A    Over 90% accuracy
+            B    Over 80% accuracy
+            C    Over 70% accuracy
+            D    Anything else
+
+-> Difficulty/ Performance calculator:
+    - Buff rhythm difficulty
+    - Reduce rhythm difficulty if the note is doubletapable
+
+-> Beatmap moduler:
+    - No need to wait for new version to come for new map!
+    - Whenever avaiable, we will push a new map directly into the game without having to "publish" the game
+    - The game auto-check for new maps every 30 minutes (instantly check when the server started)
+    - Maps on the client will also be automatically update
+
+-> Other changes:
+    - Decrease intensity of the progress bar (the progress bar that move in the beat was somewhat too "intense")
+    - In-game song/effect base volume adjust
+    - Script performance improve
+    - Adjust the avg offset arrow to move "a little bit" instead of go straight into the hit
+    - Toggle autoplay on left control hold => You can hold left control to quick toggle auto-play
+    - New stats on beatmap statistic: Max combo, Max score V1, Circle approach time

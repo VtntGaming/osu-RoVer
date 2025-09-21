@@ -1,6 +1,7 @@
 local Log = {
 	URL = "https://raw.githubusercontent.com/VtntGaming/osu-RoVer/",
 	Location = {
+		{"V1.48","StablePlace/updatelog/V1_48.txt"},
 		{"V1.47","StablePlace/updatelog/V1_47.txt"},
 		{"V1.46","StablePlace/updatelog/V1_46.txt"},
 		{"V1.45","StablePlace/updatelog/V1_45.txt"},
