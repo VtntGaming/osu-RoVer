@@ -1155,6 +1155,7 @@ LoadLeaderboard = function()
 	end
 
 	lbLoadTask = task.spawn(function()
+		local PSLeaderboard = GameSettingManage.getSettings:Invoke("UsePSLeaderboard")
 		local OptimizedPerfomance = GameSettingManage.getSettings:Invoke("OptimizedPerfomance")
 		local LeaderboardInterface = PlayerGui.BG.BeatmapLeaderboard
 		local ThisLBSession = HttpService:GenerateGUID()
@@ -1220,8 +1221,7 @@ LoadLeaderboard = function()
 			Local = PersonalData,
 			PSLeaderboard = PSLeaderboard,
 			V2Leaderboard = ScoreV2Enabled
-		}	
-
+		}
 		script.Parent.GameplayData.LbStateAvaiable.LbDataProcess.Update:Fire(SendingData)
 		--script.Parent.GameplayData.LeaderboardData.Value = HttpService:JSONEncode(SendingData)
 		--CurrentPreviewFrame.Overview.LeaderboardDisplay.LBData.Value = HttpService:JSONEncode(SendingData)
@@ -5109,16 +5109,16 @@ spawn(function()
 		local GameplayRank = "D"
 		local misstotal = AccuracyData.miss
 
-		if GameAccurancy >= 0.7 then
+		if GameAccurancy >= 70 then
 			GameplayRank = "C"
 		end
-		if GameAccurancy >= 0.8 then
+		if GameAccurancy >= 80 then
 			GameplayRank = "B"
 		end
-		if GameAccurancy >= 0.9 then
+		if GameAccurancy >= 90 then
 			GameplayRank = "A"
 		end
-		if GameAccurancy >= 0.95 and misstotal <= 0 then
+		if GameAccurancy >= 95 and misstotal <= 0 then
 			GameplayRank = "S"
 		end
 		if GameAccurancy >= 100 then
@@ -5539,6 +5539,7 @@ function AddPerfomanceScore(HitObj):number
 		h50 = AccuracyData.h50, missCount = AccuracyData.miss
 	}
 	LivePlaySession:ProcessPerfomanceScore(HitObj and HitObj.PSValue or nil, HitObj and HitObj.Time or 0, _accData)
+	CurrentPerfomance = LivePlaySession.CurrentPerformance
 
 	return LivePlaySession.CurrentPerformance
 end
