@@ -4385,7 +4385,7 @@ function getScoreV2()
 	local missPenalty = getScoreMissPenaltyMultiplier(AccuracyData.miss, totalNotes)
 	local ActualAccScore = getAccuracyScore()
 	local ActualConsistencyScore = getConsistencyScore()
-	local maxAccScore, maxConsistencyScore = PreviewMapPS.MaxAccScore, PreviewMapPS.MaxConsistencyScore
+	local maxAccScore, maxConsistencyScore = ReturnData.Difficulty.MaxScoreV1.AccuracyScore, ReturnData.Difficulty.MaxScoreV1.ConsistencyScore
 
 	local MaxPossibleScore = require(ScriptComponent.Gameplay.GetMaxScore)(#BeatmapData, ReturnData.Difficulty.MaxCombo) --AccScoreMax + ConsistencyScoreMax
 	local ActualScore = ActualAccScore + ActualConsistencyScore
