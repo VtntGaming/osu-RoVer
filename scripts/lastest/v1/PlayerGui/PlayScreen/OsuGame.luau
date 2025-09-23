@@ -20,6 +20,7 @@ local modData = require(workspace.ModData)
 StreamingLoop = require(ScriptComponent.Perfomance.StreamingCode).create()
 SliderObjManage = require(ScriptComponent.Perfomance.SliderObjManage).init()
 local ScoreStaticticConverter = require(ScriptComponent.Gameplay.ScoreStatisticConverter)
+AnalyticsService = game:GetService("AnalyticsService")
 
 -- basic function
 function lerp(a, b, ratio)
@@ -2594,6 +2595,7 @@ local BeatmapData,ReturnData,TimingPoints,BeatmapComboColor = require(workspace.
 --	Initiate important stuff for the gameplay
 --------------------------------------------------------------------------------------------------------------------------------------------
 
+
 CurrentKey = ReturnData.BeatmapSetsData.BeatmapsetID.."-"..ReturnData.BeatmapSetsData.BeatmapID
 BeatmapKey = ReturnData.BeatmapSetsData.BeatmapID
 script.Parent.GameplayData.SongSpeed.Value = SongSpeed
@@ -3024,6 +3026,10 @@ function GameOver()
 	task.spawn(function()
 		if BeatmapFailed or NoFail or ReplayMode then
 			return
+		end
+		if PlayRanked then
+			AnalyticsService:LogCustomEvent(LocalPlayer, "Failcount")
+			AnalyticsService:LogCustomEvent(LocalPlayer,"DifficultyFailedDistribution", ReturnData.Difficulty.BeatmapDifficulty)
 		end
 
 		if OnMultiplayer then
@@ -3627,6 +3633,9 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 			--UserInputService.MouseIconEnabled = false
 			RblxNewCursor.Visible = false
 			PlayerMouse.Move:Connect(function()
+				if not PlayerGui.Parent or not PlayerGui:FindFirstChild("PlayScreen") then
+					return
+				end
 				local Offset = PlayerGui.PlayScreen.AbsolutePosition.Y
 				local NewPos = (Vector2.new(PlayerMouse.X-(script.Parent.AbsoluteSize.X-script.Parent.PlayFrame.AbsoluteSize.X)/2,(PlayerMouse.Y)-(script.Parent.AbsoluteSize.Y-script.Parent.PlayFrame.AbsoluteSize.Y)/2))+Vector2.new(0,10)
 				NewPos = UDim2.new(NewPos.X/script.Parent.PlayFrame.AbsoluteSize.X,0,(NewPos.Y-Offset)/script.Parent.PlayFrame.AbsoluteSize.Y,0)
@@ -6075,6 +6084,13 @@ function clearHitCircle(Circle)
 	end
 end
 
+-- Analytics
+
+if PlayRanked then
+	AnalyticsService:LogCustomEvent(LocalPlayer, "Playcount")
+	AnalyticsService:LogCustomEvent(LocalPlayer, "DifficultyPlayDistribution", ReturnData.Difficulty.BeatmapDifficulty)
+	AnalyticsService:LogFunnelStepEvent(LocalPlayer, "Played a map", 2)
+end
 
 -- HIT OBJ LINE
 function LetTheGameBegin()
@@ -8296,6 +8312,15 @@ OffsetFrame.MainFrame.UnstableRateArea.UnstableRateArea.Size = UDim2.new(Unstabl
 OffsetFrame.MainFrame.UnstableRateArea.UnstableRateArea.Position = UDim2.new(0.5+OffsetOverall/2200,0,0,0)
 
 OffsetFrame.MainFrame.DetailedDisplay.Text = "Unstable rate: "..tostring(UnstableRate).." | Error: "..tostring(OffsetNegative).."ms - "..tostring(OffsetPositive).."ms Avg | Overall Offset: "..tostring(OffsetOverall).."ms"
+
+-- Analytics
+if PlayRanked then
+	AnalyticsService:LogFunnelStepEvent(LocalPlayer, "Finished a map", 3)
+	AnalyticsService:LogCustomEvent(LocalPlayer, "Offset distribution", OffsetOverall)
+	AnalyticsService:LogCustomEvent(LocalPlayer, "Unstable rate distribution", UnstableRate)
+	AnalyticsService:LogCustomEvent(LocalPlayer, "Accuray distribution", GameAccuracy)
+	AnalyticsService:LogCustomEvent(LocalPlayer, "Difficulty finished distribution", ReturnData.Difficulty.BeatmapDifficulty)
+end
 
 -----
 
