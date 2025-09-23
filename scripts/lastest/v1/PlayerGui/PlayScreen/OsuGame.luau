@@ -22,6 +22,7 @@ SliderObjManage = require(ScriptComponent.Perfomance.SliderObjManage).init()
 local ScoreStaticticConverter = require(ScriptComponent.Gameplay.ScoreStatisticConverter)
 AnalyticsService = game:GetService("AnalyticsService")
 
+
 -- basic function
 function lerp(a, b, ratio)
 	return a + (b - a)*ratio
@@ -3028,7 +3029,7 @@ function GameOver()
 			return
 		end
 		if PlayRanked then
-			AnalyticsService:LogCustomEvent(LocalPlayer, "Failcount")
+			game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Failcount")
 			AnalyticsService:LogCustomEvent(LocalPlayer,"DifficultyFailedDistribution", ReturnData.Difficulty.BeatmapDifficulty)
 		end
 
@@ -6087,9 +6088,9 @@ end
 -- Analytics
 
 if PlayRanked then
-	AnalyticsService:LogCustomEvent(LocalPlayer, "Playcount")
-	AnalyticsService:LogCustomEvent(LocalPlayer, "DifficultyPlayDistribution", ReturnData.Difficulty.BeatmapDifficulty)
-	AnalyticsService:LogFunnelStepEvent(LocalPlayer, "Played a map", 2)
+	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Playcount")
+	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("DifficultyPlayDistribution", ReturnData.Difficulty.BeatmapDifficulty)
+	game.ReplicatedStorage.AnalyticFunnelEvent:FireServer("Played a map", 2)
 end
 
 -- HIT OBJ LINE
@@ -8315,11 +8316,11 @@ OffsetFrame.MainFrame.DetailedDisplay.Text = "Unstable rate: "..tostring(Unstabl
 
 -- Analytics
 if PlayRanked then
-	AnalyticsService:LogFunnelStepEvent(LocalPlayer, "Finished a map", 3)
-	AnalyticsService:LogCustomEvent(LocalPlayer, "Offset distribution", OffsetOverall)
-	AnalyticsService:LogCustomEvent(LocalPlayer, "Unstable rate distribution", UnstableRate)
-	AnalyticsService:LogCustomEvent(LocalPlayer, "Accuray distribution", GameAccuracy)
-	AnalyticsService:LogCustomEvent(LocalPlayer, "Difficulty finished distribution", ReturnData.Difficulty.BeatmapDifficulty)
+	game.ReplicatedStorage.AnalyticFunnelEvent:FireServer("Finished a map", 3)
+	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Offset distribution", OffsetOverall)
+	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Unstable rate distribution", UnstableRate)
+	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Accuray distribution", GameAccuracy)
+	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Difficulty finished distribution", ReturnData.Difficulty.BeatmapDifficulty)
 end
 
 -----
