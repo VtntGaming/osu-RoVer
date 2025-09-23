@@ -4094,10 +4094,10 @@ local AccTemplate = cloneTable(AccuracyData)
 for i = 1,50 do
 	local HitErrorGraph = AccuracyData.HitErrorGraph
 	if i == 1 then
-		HitErrorGraph[#HitErrorGraph+1] = {-2,2,0,0}
+		HitErrorGraph[#HitErrorGraph+1] = {-1,1,0,0}
 	else
-		HitErrorGraph[#HitErrorGraph+1] = {i*2,(i+1)*2,0,i-1}
-		HitErrorGraph[#HitErrorGraph+1] = {-(i+1)*2,-i*2,0,-i+1}
+		HitErrorGraph[#HitErrorGraph+1] = {i*2-1,(i+1)*2-1,0,i-1}
+		HitErrorGraph[#HitErrorGraph+1] = {-(i+1)*2+1,-i*2+1,0,-i+1}
 	end
 end
 
