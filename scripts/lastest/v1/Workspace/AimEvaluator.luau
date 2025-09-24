@@ -41,6 +41,14 @@ local function smoothstep(x: number, _start: number, _end: number)
 	return x * x * (3 - 2 * x)
 end
 
+local function calcWideAngleBonus(angle:number)
+	return smoothstep(angle, RAD_40, RAD_140)
+end
+
+local function calcAcuteAngleBonus(angle:number)
+	return smoothstep(angle, RAD_140, RAD_40)
+end
+
 -- Inlined the calc...Bonus functions as they were simple wrappers.
 -- The direct calls to smoothstep are just as clear with named angle constants.
 
@@ -97,22 +105,22 @@ local function getAimDiff(CrrObj: preprocessing.ObjectData)
 
 		-- Acute Angle Bonus
 		if prevStrainTime and math.max(crrStrainTime, prevStrainTime) < 1.25 * math.min(crrStrainTime, prevStrainTime) then
-			local acuteBonusFactor = smoothstep(crrAngle, RAD_140, RAD_40)
-			local lastAcuteBonusFactor = smoothstep(lastAngle, RAD_140, RAD_40)
+			local acuteBonusFactor = calcAcuteAngleBonus(crrAngle)
+			local lastAcuteBonusFactor = calcAcuteAngleBonus(lastAngle)
 
 			acuteAngleBonus = acuteBonusFactor
-			acuteAngleBonus *= 0.08 + 0.92 * (1 - math.min(acuteBonusFactor, lastAcuteBonusFactor ^ 3))
-			acuteAngleBonus *= angleBonus
-			acuteAngleBonus *= smootherstep(Evaluator.milisecondToBPM(crrStrainTime, 2), 300, 400)
-			acuteAngleBonus *= smootherstep(crrJumpDist, NORMALIZED_DIAMETER, NORMALIZED_DIAMETER * 2)
+			acuteAngleBonus *= 0.08 + 0.92 * (1 - math.min(acuteAngleBonus, lastAcuteBonusFactor ^ 3))
+			acuteAngleBonus *= angleBonus *
+								smootherstep(Evaluator.milisecondToBPM(crrStrainTime, 2), 300, 400) *
+								smootherstep(crrJumpDist, NORMALIZED_DIAMETER, NORMALIZED_DIAMETER * 2)
 		end
 
 		-- Wide Angle Bonus
-		local wideBonusFactor = smoothstep(crrAngle, RAD_40, RAD_140)
-		local lastWideBonusFactor = smoothstep(lastAngle, RAD_40, RAD_140)
+		local wideBonusFactor = calcWideAngleBonus(crrAngle)
+		local lastWideBonusFactor = calcWideAngleBonus(lastAngle)
 
 		wideAngleBonus = wideBonusFactor
-		wideAngleBonus *= 1 - math.min(wideBonusFactor, lastWideBonusFactor ^ 3)
+		wideAngleBonus *= 1 - math.min(wideAngleBonus, lastWideBonusFactor ^ 3)
 		wideAngleBonus *= angleBonus * smootherstep(crrJumpDist, 0, NORMALIZED_DIAMETER)
 
 		if Prev2Obj and Prev2Obj.CirclePosition then
@@ -124,9 +132,8 @@ local function getAimDiff(CrrObj: preprocessing.ObjectData)
 
 		-- Wiggle Bonus (broken down for readability)
 		local crrWiggleJumpFactor = smootherstep(crrJumpDist, NORMALIZED_RADIUS, NORMALIZED_DIAMETER)
-			* Evaluator.ReverseLerp(crrJumpDist, NORMALIZED_DIAMETER * 3, NORMALIZED_DIAMETER) ^ 1.8
+			* Evaluator.ReverseLerp(crrJumpDist, NORMALIZED_DIAMETER * 3, NORMALIZED_DIAMETER) ^ 1.8		
 		local crrWiggleAngleFactor = smootherstep(crrAngle, RAD_110, RAD_60)
-
 		local prevWiggleJumpFactor = smootherstep(prevJumpDist, NORMALIZED_RADIUS, NORMALIZED_DIAMETER)
 			* Evaluator.ReverseLerp(prevJumpDist, NORMALIZED_DIAMETER * 3, NORMALIZED_DIAMETER) ^ 1.8
 		local prevWiggleAngleFactor = smootherstep(lastAngle, RAD_110, RAD_60)

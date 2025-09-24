@@ -216,7 +216,7 @@ return function(baseList:{any}, baseData)
 					local v2 = prevCursorPosition - crrHeadPosition
 
 					local dot = v1:Dot(v2)
-					local det = v1.X * v2.X - v1.Y * v2.Y
+					local det = v1.X * v2.Y - v1.Y * v2.X
 
 					angle = math.abs(math.atan2(det, dot))
 				end
