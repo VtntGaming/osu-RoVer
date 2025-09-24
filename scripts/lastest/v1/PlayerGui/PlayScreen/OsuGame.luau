@@ -367,6 +367,64 @@ function checkDifficultyAdjustState()
 	ReloadPreviewFrame()
 end
 
+function getDifficultyNameByValue(diff:number):string
+	local format = "Difficulty - "
+	if diff < 2 then
+		format..= "Easy [0-2]"
+	elseif diff < 3 then
+		format..= "Normal [2-3]"
+	elseif diff < 4 then
+		format..= "Hard [3-4]"
+	elseif diff < 5.5 then
+		format..= "Insane [4-5.5]"
+	elseif diff < 6.5 then
+		format..= "Expert [5.5-6.5]"
+	elseif diff < 8.5 then
+		format..= "Expert+ [6.5-8.5]"
+	elseif diff < 10 then
+		format..= "Master [8.5-10]"
+	elseif diff < 25 then		
+		format..= "Master+ [10+]"
+	else
+		format..= "Aspire? [25+]"
+	end
+	return format
+end
+
+function getMapLengthNameByTime(t:number):string
+	local format = "Length - "
+	if t < 60 then
+		format..= "Short [<1:00]"
+	elseif t < 180 then
+		format..= "Medium [1:00-2:59]"
+	elseif t < 300 then
+		format..= "Long [3:00-4:59]"
+	else
+		format..= "Marathon [>5:00]"
+	end
+	return format
+end
+
+function getMapTypeByDiff(aim:number, speed:number, t:number):string
+	local format = "Map type - "
+	if aim ~= aim or speed ~= speed or math.abs(aim) > 999 or math.abs(speed) > 999 then
+		format..= "Unknown maps"
+	elseif t >= 300 and (aim/speed <= 0.8 and aim/speed <= 1.25) and speed >= 2.5 and aim >= 2.5 then
+		format..= "[Tiebreaker] maps [0.8<ratio<1.25 & length>5:00]"
+	elseif speed >= 2 or aim >= 2 then
+		if speed >= 0.9 * aim and speed <= 1.11 * aim then
+			format..= "Aim/Speed mixed maps [0.9<ratio<1.11]"
+		elseif speed > 1.11 * aim then
+			format..= "Speed maps [speed>111% aim]"
+		else
+			format..= "Aim maps [aim>111% speed]"
+		end
+	else
+		format..= "Easy maps [aim<2 & speed<2]"
+	end
+	return format
+end
+
 checkDifficultyAdjustState()
 
 -- Settings change detect
@@ -1155,6 +1213,7 @@ LoadLeaderboard = function()
 	end
 
 	lbLoadTask = task.spawn(function()
+		local PSLeaderboard = GameSettingManage.getSettings:Invoke("UsePSLeaderboard")
 		local OptimizedPerfomance = GameSettingManage.getSettings:Invoke("OptimizedPerfomance")
 		local LeaderboardInterface = PlayerGui.BG.BeatmapLeaderboard
 		local ThisLBSession = HttpService:GenerateGUID()
@@ -1220,8 +1279,7 @@ LoadLeaderboard = function()
 			Local = PersonalData,
 			PSLeaderboard = PSLeaderboard,
 			V2Leaderboard = ScoreV2Enabled
-		}	
-
+		}
 		script.Parent.GameplayData.LbStateAvaiable.LbDataProcess.Update:Fire(SendingData)
 		--script.Parent.GameplayData.LeaderboardData.Value = HttpService:JSONEncode(SendingData)
 		--CurrentPreviewFrame.Overview.LeaderboardDisplay.LBData.Value = HttpService:JSONEncode(SendingData)
@@ -2593,6 +2651,12 @@ local BeatmapData,ReturnData,TimingPoints,BeatmapComboColor = require(workspace.
 
 --	Initiate important stuff for the gameplay
 --------------------------------------------------------------------------------------------------------------------------------------------
+local customFields = {
+	[Enum.AnalyticsCustomFieldKeys.CustomField01.Name] = getDifficultyNameByValue(ReturnData.Difficulty.BeatmapDifficulty),
+	[Enum.AnalyticsCustomFieldKeys.CustomField02.Name] = getMapLengthNameByTime(ReturnData.Overview.MapLength/1000),
+	[Enum.AnalyticsCustomFieldKeys.CustomField03.Name] = getMapTypeByDiff(ReturnData.Difficulty.AimDifficulty,ReturnData.Difficulty.SpeedDifficulty,ReturnData.Overview.MapLength),
+}
+
 
 CurrentKey = ReturnData.BeatmapSetsData.BeatmapsetID.."-"..ReturnData.BeatmapSetsData.BeatmapID
 BeatmapKey = ReturnData.BeatmapSetsData.BeatmapID
@@ -3024,6 +3088,10 @@ function GameOver()
 	task.spawn(function()
 		if BeatmapFailed or NoFail or ReplayMode then
 			return
+		end
+		if PlayRanked then
+			game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Failcount", 1, customFields)
+			game.ReplicatedStorage.AnalyticCustomEvent:FireServer("DifficultyFailedDistribution", ReturnData.Difficulty.BeatmapDifficulty, customFields)
 		end
 
 		if OnMultiplayer then
@@ -3627,6 +3695,9 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 			--UserInputService.MouseIconEnabled = false
 			RblxNewCursor.Visible = false
 			PlayerMouse.Move:Connect(function()
+				if not PlayerGui.Parent or not PlayerGui:FindFirstChild("PlayScreen") then
+					return
+				end
 				local Offset = PlayerGui.PlayScreen.AbsolutePosition.Y
 				local NewPos = (Vector2.new(PlayerMouse.X-(script.Parent.AbsoluteSize.X-script.Parent.PlayFrame.AbsoluteSize.X)/2,(PlayerMouse.Y)-(script.Parent.AbsoluteSize.Y-script.Parent.PlayFrame.AbsoluteSize.Y)/2))+Vector2.new(0,10)
 				NewPos = UDim2.new(NewPos.X/script.Parent.PlayFrame.AbsoluteSize.X,0,(NewPos.Y-Offset)/script.Parent.PlayFrame.AbsoluteSize.Y,0)
@@ -4084,10 +4155,10 @@ local AccTemplate = cloneTable(AccuracyData)
 for i = 1,50 do
 	local HitErrorGraph = AccuracyData.HitErrorGraph
 	if i == 1 then
-		HitErrorGraph[#HitErrorGraph+1] = {-2,2,0,0}
+		HitErrorGraph[#HitErrorGraph+1] = {-1,1,0,0}
 	else
-		HitErrorGraph[#HitErrorGraph+1] = {i*2,(i+1)*2,0,i-1}
-		HitErrorGraph[#HitErrorGraph+1] = {-(i+1)*2,-i*2,0,-i+1}
+		HitErrorGraph[#HitErrorGraph+1] = {i*2-1,(i+1)*2-1,0,i-1}
+		HitErrorGraph[#HitErrorGraph+1] = {-(i+1)*2+1,-i*2+1,0,-i+1}
 	end
 end
 
@@ -4385,7 +4456,7 @@ function getScoreV2()
 	local missPenalty = getScoreMissPenaltyMultiplier(AccuracyData.miss, totalNotes)
 	local ActualAccScore = getAccuracyScore()
 	local ActualConsistencyScore = getConsistencyScore()
-	local maxAccScore, maxConsistencyScore = PreviewMapPS.MaxAccScore, PreviewMapPS.MaxConsistencyScore
+	local maxAccScore, maxConsistencyScore = ReturnData.Difficulty.MaxScoreV1.AccuracyScore, ReturnData.Difficulty.MaxScoreV1.ConsistencyScore
 
 	local MaxPossibleScore = require(ScriptComponent.Gameplay.GetMaxScore)(#BeatmapData, ReturnData.Difficulty.MaxCombo) --AccScoreMax + ConsistencyScoreMax
 	local ActualScore = ActualAccScore + ActualConsistencyScore
@@ -5109,16 +5180,16 @@ spawn(function()
 		local GameplayRank = "D"
 		local misstotal = AccuracyData.miss
 
-		if GameAccurancy >= 0.7 then
+		if GameAccurancy >= 70 then
 			GameplayRank = "C"
 		end
-		if GameAccurancy >= 0.8 then
+		if GameAccurancy >= 80 then
 			GameplayRank = "B"
 		end
-		if GameAccurancy >= 0.9 then
+		if GameAccurancy >= 90 then
 			GameplayRank = "A"
 		end
-		if GameAccurancy >= 0.95 and misstotal <= 0 then
+		if GameAccurancy >= 95 and misstotal <= 0 then
 			GameplayRank = "S"
 		end
 		if GameAccurancy >= 100 then
@@ -5539,6 +5610,7 @@ function AddPerfomanceScore(HitObj):number
 		h50 = AccuracyData.h50, missCount = AccuracyData.miss
 	}
 	LivePlaySession:ProcessPerfomanceScore(HitObj and HitObj.PSValue or nil, HitObj and HitObj.Time or 0, _accData)
+	CurrentPerfomance = LivePlaySession.CurrentPerformance
 
 	return LivePlaySession.CurrentPerformance
 end
@@ -6074,6 +6146,13 @@ function clearHitCircle(Circle)
 	end
 end
 
+-- Analytics
+
+if PlayRanked then
+	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Playcount", 1, customFields)
+	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("DifficultyPlayDistribution", ReturnData.Difficulty.BeatmapDifficulty, customFields)
+	game.ReplicatedStorage.AnalyticFunnelEvent:FireServer("Played a map", 2)
+end
 
 -- HIT OBJ LINE
 function LetTheGameBegin()
@@ -8295,6 +8374,15 @@ OffsetFrame.MainFrame.UnstableRateArea.UnstableRateArea.Size = UDim2.new(Unstabl
 OffsetFrame.MainFrame.UnstableRateArea.UnstableRateArea.Position = UDim2.new(0.5+OffsetOverall/2200,0,0,0)
 
 OffsetFrame.MainFrame.DetailedDisplay.Text = "Unstable rate: "..tostring(UnstableRate).." | Error: "..tostring(OffsetNegative).."ms - "..tostring(OffsetPositive).."ms Avg | Overall Offset: "..tostring(OffsetOverall).."ms"
+
+-- Analytics
+if PlayRanked then
+	game.ReplicatedStorage.AnalyticFunnelEvent:FireServer("Finished a map", 3)
+	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Offset distribution", OffsetOverall, customFields)
+	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Unstable rate distribution", UnstableRate, customFields)
+	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Accuracy distribution", GameAccuracy, customFields)
+	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Difficulty finished distribution", ReturnData.Difficulty.BeatmapDifficulty, customFields)
+end
 
 -----
 
