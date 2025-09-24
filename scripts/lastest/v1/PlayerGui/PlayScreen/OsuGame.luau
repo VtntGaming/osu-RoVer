@@ -409,8 +409,8 @@ function getMapTypeByDiff(aim:number, speed:number, t:number):string
 	local format = "Map type - "
 	if aim ~= aim or speed ~= speed or math.abs(aim) > 999 or math.abs(speed) > 999 then
 		format..= "Unknown maps"
-	elseif t >= 300 and (aim/speed <= 0.8 and aim/speed <= 1.25) and speed >= 2.5 and aim >= 2.5 then
-		format..= "[Tiebreaker] maps [0.8<ratio<1.25 & length>5:00]"
+	elseif t >= 300 and (aim/speed >= 0.75 and aim/speed <= 1.33) and speed >= 2.5 and aim >= 2.5 then
+		format..= "[Tiebreaker] maps [0.75<r<1.33|t>5:00]"
 	elseif speed >= 2 or aim >= 2 then
 		if speed >= 0.9 * aim and speed <= 1.11 * aim then
 			format..= "Aim/Speed mixed maps [0.9<ratio<1.11]"
@@ -2654,7 +2654,7 @@ local BeatmapData,ReturnData,TimingPoints,BeatmapComboColor = require(workspace.
 local customFields = {
 	[Enum.AnalyticsCustomFieldKeys.CustomField01.Name] = getDifficultyNameByValue(ReturnData.Difficulty.BeatmapDifficulty),
 	[Enum.AnalyticsCustomFieldKeys.CustomField02.Name] = getMapLengthNameByTime(ReturnData.Overview.MapLength/1000),
-	[Enum.AnalyticsCustomFieldKeys.CustomField03.Name] = getMapTypeByDiff(ReturnData.Difficulty.AimDifficulty,ReturnData.Difficulty.SpeedDifficulty,ReturnData.Overview.MapLength),
+	[Enum.AnalyticsCustomFieldKeys.CustomField03.Name] = getMapTypeByDiff(ReturnData.Difficulty.AimDifficulty,ReturnData.Difficulty.SpeedDifficulty,ReturnData.Overview.MapLength/1000),
 }
 
 
@@ -3801,16 +3801,16 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 					return
 				end
 
-
-
-
 				if InputData.UserInputType == Enum.UserInputType.MouseMovement then
 					local WindowSize = workspace.CurrentCamera.ViewportSize
 					local AbsoluteSize = script.Parent.PlayFrame.AbsoluteSize
 
 					--InputData.Delta
+					
+					local mouseDelta = UserInputService:GetMouseDelta()
 
-					local MouseMovement = Vector2.new(InputData.Delta.X/AbsoluteSize.X,InputData.Delta.Y/AbsoluteSize.Y)*CursorSensitivity
+					local MouseMovement = mouseDelta/AbsoluteSize*CursorSensitivity
+					--local MouseMovement = Vector2.new(InputData.Delta.X/AbsoluteSize.X,InputData.Delta.Y/AbsoluteSize.Y)*CursorSensitivity
 					local CurrentPos = CursorPosition
 					CurrentPos += MouseMovement*Vector2.new(512,384)
 
@@ -6147,12 +6147,14 @@ function clearHitCircle(Circle)
 end
 
 -- Analytics
-
-if PlayRanked then
-	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Playcount", 1, customFields)
-	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("DifficultyPlayDistribution", ReturnData.Difficulty.BeatmapDifficulty, customFields)
-	game.ReplicatedStorage.AnalyticFunnelEvent:FireServer("Played a map", 2)
-end
+task.spawn(function()
+	task.wait(3)
+	if PlayRanked then
+		game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Playcount", 1, customFields)
+		game.ReplicatedStorage.AnalyticCustomEvent:FireServer("DifficultyPlayDistribution", ReturnData.Difficulty.BeatmapDifficulty, customFields)
+		game.ReplicatedStorage.AnalyticFunnelEvent:FireServer("Played a map", 2)
+	end
+end)
 
 -- HIT OBJ LINE
 function LetTheGameBegin()
@@ -8382,6 +8384,7 @@ if PlayRanked then
 	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Unstable rate distribution", UnstableRate, customFields)
 	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Accuracy distribution", GameAccuracy, customFields)
 	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Difficulty finished distribution", ReturnData.Difficulty.BeatmapDifficulty, customFields)
+	game.ReplicatedStorage.AnalyticCustomEvent:FireServer("Performance distribution", TotalRewardedPS, customFields)
 end
 
 -----

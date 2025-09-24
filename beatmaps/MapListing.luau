@@ -2034,6 +2034,7 @@ return[[
 [6.18] USAO - Night sky (sukiNathan) [captin's Another]
 [6.36] USAO - Night sky (sukiNathan) [momoko's Extra]
 [6.49] USAO - Night sky (sukiNathan) [Bonzphyxia's Extra]
+[7.29] USAO - TAPIOCA (Realazy) [FURY]
 [5.71] USAO - USAO ULTIMATE HYPER MEGA MIX (Nathan) [PROBOX x TOYBOT's HEADSHOT GG NOOB INSANE]
 [6.78] USAO - USAO ULTIMATE HYPER MEGA MIX (Nathan) [NATHAN x RLC's TWERKING GAMER ONII-CHAN]
 [7.28] USAO - USAO ULTIMATE HYPER MEGA MIX (Realazy) [REAL x ALHEAK'S ULTIMATE HYPER MEGA COLLAB]
