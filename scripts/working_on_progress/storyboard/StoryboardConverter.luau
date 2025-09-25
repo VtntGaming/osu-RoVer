@@ -60,7 +60,7 @@ local LAYER_VALUE = {
 	Foreground = 3
 }
 
-type CommandData = {
+export type CommandData = {
 	CommandType:string,
 	Easing:number,
 	StartTime:number,
@@ -68,14 +68,14 @@ type CommandData = {
 	Params:{number}
 }
 
-type SpriteData = {
+export type SpriteData = {
 	Layer:number,
 	AnchorPoint:Vector2,
 	Filepath:string,
 	Position:Vector2
 }
 
-type spriteObject = {
+export type spriteObject = {
 	-- Currently support sprite only
 	Data: SpriteData,
 	Commands:{CommandData}
@@ -110,9 +110,9 @@ return function(file:ModuleScript)
 				local rawData = lineData:split()
 				local newcmdData:CommandData = {
 					CommandType = rawData[1]:sub(2,-1),
-					Easing = tonumber(rawData[2]),
-					StartTime = tonumber(rawData[3]),
-					EndTime = tonumber(rawData[4]),
+					Easing = tonumber(rawData[2]) or 0,
+					StartTime = tonumber(rawData[3]) or 0,
+					EndTime = tonumber(rawData[4]) or 0,
 					Params = {}
 				}
 				
