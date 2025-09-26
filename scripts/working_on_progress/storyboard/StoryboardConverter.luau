@@ -72,7 +72,8 @@ export type SpriteData = {
 	Layer:number,
 	AnchorPoint:Vector2,
 	Filepath:string,
-	Position:Vector2
+	Position:Vector2,
+	LayoutOrder:number
 }
 
 export type spriteObject = {
@@ -87,7 +88,8 @@ local function newSprite():spriteObject
 			Layer = 0,
 			AnchorPoint = ANCHOR_POINT_ORIGIN.TopLeft,
 			Filepath = "",
-			Position = Vector2.zero
+			Position = Vector2.zero,
+			LayoutOrder = 0
 		},
 		Commands = {}
 	}
@@ -95,15 +97,14 @@ local function newSprite():spriteObject
 	return spriteObj
 end
 
-return function(file:ModuleScript)
+return function(file:ModuleScript, difficultyFile:ModuleScript?)
 	local fileData = require(file)::string
 	local sprites = {}::{spriteObject}
 	local currentSprite:spriteObject? = nil
+	local crrOrder = 0
+	local crrOrder_diff = 0
 	
 	for i, lineData in pairs(fileData:split("\n")) do
-		if i % 10000 == 0 then
-			task.wait()
-		end
 		local firstChar = lineData:sub(1,1)
 		if table.find(COMMAND_DECLARE_CHARACTER, firstChar) then
 			if currentSprite then
@@ -129,12 +130,63 @@ return function(file:ModuleScript)
 				sprite.Data = {
 					Layer = LAYER_VALUE[rawData[2]],
 					AnchorPoint = ANCHOR_POINT_ORIGIN[rawData[3]],
-					Filepath = rawData[4],
-					Position = Vector2.new(rawData[5], rawData[6])
+					Filepath = rawData[4]:sub(2,-2),
+					Position = Vector2.new(rawData[5], rawData[6]),
+					LayoutOrder = crrOrder
 				}
 				
 				currentSprite = sprite
 				sprites[#sprites+1] = sprite
+				crrOrder -= 1
+			end
+		end
+	end
+	
+	if difficultyFile then
+		local diffFileData = require(difficultyFile)::string
+		local _, s = diffFileData:find("[Events]")
+		local e, _ = diffFileData:find("//Storyboard Sound Samples")
+		diffFileData = diffFileData:sub(s,e)
+		for i, lineData in pairs(diffFileData:split("\n")) do
+			local firstChar = lineData:sub(1,1)
+			if table.find(COMMAND_DECLARE_CHARACTER, firstChar) then
+				if currentSprite then
+					local rawData = lineData:split()
+					local newcmdData:CommandData = {
+						CommandType = rawData[1]:sub(2,-1),
+						Easing = tonumber(rawData[2]) or 0,
+						StartTime = tonumber(rawData[3]) or 0,
+						EndTime = tonumber(rawData[4]) or 0,
+						Params = {}
+					}
+
+					for i = 5, #rawData do
+						newcmdData.Params[#newcmdData.Params+1] = tonumber(rawData[i]) or 0
+					end
+					currentSprite.Commands[#currentSprite.Commands+1] = newcmdData
+				end
+			else
+				-- it's a sprite or animation
+				local rawData = lineData:split()
+				if rawData[1] == "Sprite" then
+					local sprite = newSprite()::spriteObject
+					local filePath = rawData[4]
+					local match = string.match(filePath, '"(.-)"')
+					if match then
+						filePath = match
+					end
+					sprite.Data = {
+						Layer = LAYER_VALUE[rawData[2]],
+						AnchorPoint = ANCHOR_POINT_ORIGIN[rawData[3]],
+						Filepath = filePath,
+						Position = Vector2.new(rawData[5], rawData[6]),
+						LayoutOrder = crrOrder_diff
+					}
+
+					currentSprite = sprite
+					sprites[#sprites+1] = sprite
+					crrOrder_diff -= 1
+				end
 			end
 		end
 	end
