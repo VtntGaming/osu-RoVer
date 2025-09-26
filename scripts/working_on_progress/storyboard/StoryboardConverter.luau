@@ -138,7 +138,7 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 				
 				currentSprite = sprite
 				sprites[#sprites+1] = sprite
-				crrOrder -= 1
+				crrOrder += 1
 			end
 		end
 	end
@@ -186,7 +186,7 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 
 					currentSprite = sprite
 					sprites[#sprites+1] = sprite
-					crrOrder_diff -= 1
+					crrOrder_diff += 1
 				end
 			end
 		end

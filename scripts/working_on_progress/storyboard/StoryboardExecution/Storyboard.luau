@@ -65,10 +65,13 @@ local callbacks = {}
 local callbacks_once = {}
 local callbacks_UI = {}
 local LayoutPlacement = {
-	[0] = script.Parent.Parent.Parent.MainFrame.Background,
+	[0] = script.Parent.Parent.Parent.MainFrame.RatioFrame.Background,
 	[1] = nil,
 	[2] = nil,
-	[3] = script.Parent.Parent.Parent.MainFrame.Foreground,
+	[3] = script.Parent.Parent.Parent.MainFrame.RatioFrame.Foreground,
+}
+local Stats = {
+	FPS = 0
 }
 
 task.spawn(function()
@@ -108,11 +111,19 @@ task.spawn(function()
 				errors += 1
 				warn(e)
 			end
-			callbacks_once[id] = nil
 		end
 		script.Parent.Parent.Parent.ActiveCommands.Text = `Active commands: {count} ({errors} errors)`
 		script.Parent.Parent.Parent.ObjectActiveCommands.Text = `Object commands: {commandsCount}`
+		Stats.FPS += 1
+		task.wait(1)
+		Stats.FPS -= 1
 	end)
+end)
+
+task.spawn(function()
+	while task.wait(0.1) do
+		script.Parent.Parent.Parent.FPS.Text = `FPS: {Stats.FPS}`
+	end
 end)
 
 local pi = math.pi
@@ -415,8 +426,8 @@ for i, spriteData in pairs(storyboardData) do
 	end
 
 	local crrObjectData = {
-		Position = objData.Position,
-		Scale = Vector2.new(1,1),
+		Position = {X = objData.Position.X, Y = objData.Position.Y},
+		Scale = {X = objData.Position.X, Y = objData.Position.Y},
 		Opacity = 0,
 		Color = Color3.new(1,1,1),
 		Rotation = 0,	-- radians
@@ -439,7 +450,7 @@ for i, spriteData in pairs(storyboardData) do
 	local parentDestination = LayoutPlacement[objData.Layer]
 	local UI_unquieId = HttpService:GenerateGUID()
 	local UI_funct = function()
-		local newPos = toUDim2(crrObjectData.Position)
+		local newPos = toUDim2(Vector2.new(crrObjectData.Position.X, crrObjectData.Position.Y))
 		local scaleX = crrObjectData.FlipX and -1 or 1
 		local scaleY = crrObjectData.FlipY and -1 or 1
 		local newScale = UDim2.fromScale(objectSize.X.Scale * crrObjectData.Scale.X * scaleX, objectSize.Y.Scale * crrObjectData.Scale.Y * scaleY)
@@ -512,9 +523,12 @@ for i, spriteData in pairs(storyboardData) do
 					local t = elapsed/commandDuration
 					if t ~= t then t = 0 end
 					local progress = easing(t)
-					local startPos = Vector2.new(params[1], params[2])
-					local endPos = Vector2.new(params[3], params[4])
-					crrObjectData.Position = startPos:Lerp(endPos, progress)
+					local startX = params[1] or 0
+					local startY = params[2] or 0
+					local endX = params[3] or 0
+					local endY = params[4] or 0
+					crrObjectData.Position.X = math.lerp(startX, endX, progress)
+					crrObjectData.Position.Y = math.lerp(startY, endY, progress)
 				end
 			elseif commandType == "MX" then
 				funct = function()
@@ -524,9 +538,9 @@ for i, spriteData in pairs(storyboardData) do
 					local t = elapsed/commandDuration
 					if t ~= t then t = 0 end
 					local progress = easing(t)
-					local startX = Vector2.new(params[1] or 0, crrObjectData.Position.Y)
-					local endX = Vector2.new(params[2] or 0, crrObjectData.Position.Y)
-					crrObjectData.Position = startX:Lerp(endX, progress)
+					local startX = params[1] or 0
+					local endX = params[2] or 0
+					crrObjectData.Position.X = math.lerp(startX, endX, progress)
 				end				
 			elseif commandType == "MY" then
 				funct = function()
@@ -536,9 +550,9 @@ for i, spriteData in pairs(storyboardData) do
 					local t = elapsed/commandDuration
 					if t ~= t then t = 0 end
 					local progress = easing(t)
-					local startY = Vector2.new(crrObjectData.Position.X, params[1] or 0)
-					local endY = Vector2.new(crrObjectData.Position.X, params[2] or 0)
-					crrObjectData.Position = startY:Lerp(endY, progress)
+					local startY = params[1] or 0
+					local endY = params[2] or 0
+					crrObjectData.Position.Y = math.lerp(startY, endY, progress)
 				end				
 			elseif commandType == "S" then
 				funct = function()
@@ -548,9 +562,10 @@ for i, spriteData in pairs(storyboardData) do
 					local t = elapsed/commandDuration
 					if t ~= t then t = 0 end
 					local progress = easing(t)
-					local startScale = params[1] or 0
-					local endScale = params[2] or 0					
-					crrObjectData.Scale = (Vector2.one * startScale):Lerp(Vector2.one * endScale, progress)
+					local startS = params[1] or 0
+					local endS = params[2] or 0
+					crrObjectData.Scale.X = math.lerp(startS, endS, progress)
+					crrObjectData.Scale.Y = math.lerp(startS, endS, progress)
 				end				
 			elseif commandType == "V" then
 				funct = function()
@@ -560,13 +575,12 @@ for i, spriteData in pairs(storyboardData) do
 					local t = elapsed/commandDuration
 					if t ~= t then t = 0 end
 					local progress = easing(t)
-					local startScaleX = params[1] or 0
-					local startScaleY = params[2] or 0
-					local endScaleX = params[3] or 0			
-					local endScaleY = params[4] or 0							
-					local startScale = Vector2.new(startScaleX,startScaleY)
-					local endScale = Vector2.new(endScaleX,endScaleY)				
-					crrObjectData.Scale = startScale:Lerp(endScale, progress)
+					local startX = params[1] or 0
+					local startY = params[2] or 0
+					local endX = params[3] or 0
+					local endY = params[4] or 0
+					crrObjectData.Scale.X = math.lerp(startX, endX, progress)
+					crrObjectData.Scale.Y = math.lerp(startY, endY, progress)
 				end				
 			elseif commandType == "C" then
 				funct = function()
@@ -630,11 +644,6 @@ for i, spriteData in pairs(storyboardData) do
 				elseif commandType == "P" then
 					-- Parmeter commands
 					-- This is a special command, unlike other commands, this only need to ran twice (start and end)
-
-					if os.clock() - startTime < command.StartTime/1000 then
-						repeat task.wait() until os.clock() - startTime >= command.StartTime/1000
-					end
-
 					local parmeter = params[1]
 					if parmeter == "H" then
 						crrObjectData.FlipX = true
@@ -644,7 +653,7 @@ for i, spriteData in pairs(storyboardData) do
 						crrObjectData.AdditiveColor = true
 					end
 
-					repeat task.wait(0.1) until (os.clock() - startTime > command.EndTime/1000 and commandHaveRanOnce) or not funct
+					repeat task.wait(0.1) until (os.clock() - startTime > command.EndTime/1000)
 
 					if parmeter == "H" then
 						crrObjectData.FlipX = false
@@ -653,8 +662,6 @@ for i, spriteData in pairs(storyboardData) do
 					elseif parmeter == "A" then
 						crrObjectData.AdditiveColor = false
 					end
-
-					warn(parmeter)
 				end				
 
 				finishedCommands += 1
