@@ -65,7 +65,7 @@ export type CommandData = {
 	Easing:number,
 	StartTime:number,
 	EndTime:number,
-	Params:{number}
+	Params:{number|string}
 }
 
 export type SpriteData = {
@@ -109,8 +109,9 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 		if table.find(COMMAND_DECLARE_CHARACTER, firstChar) then
 			if currentSprite then
 				local rawData = lineData:split()
+				local commandType = rawData[1]:sub(2,-1)
 				local newcmdData:CommandData = {
-					CommandType = rawData[1]:sub(2,-1),
+					CommandType = commandType,
 					Easing = tonumber(rawData[2]) or 0,
 					StartTime = tonumber(rawData[3]) or 0,
 					EndTime = tonumber(rawData[4]) or 0,
@@ -118,7 +119,7 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 				}
 				
 				for i = 5, #rawData do
-					newcmdData.Params[#newcmdData.Params+1] = tonumber(rawData[i]) or 0
+					newcmdData.Params[#newcmdData.Params+1] = commandType == "P" and tostring(rawData[i]) or (tonumber(rawData[i]) or 0)
 				end
 				currentSprite.Commands[#currentSprite.Commands+1] = newcmdData
 			end

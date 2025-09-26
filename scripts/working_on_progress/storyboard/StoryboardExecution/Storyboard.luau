@@ -63,6 +63,7 @@ local commandsCount = 0
 local completedCount = 0
 local callbacks = {}
 local callbacks_once = {}
+local callbacks_UI = {}
 local LayoutPlacement = {
 	[0] = script.Parent.Parent.Parent.MainFrame.Background,
 	[1] = nil,
@@ -98,20 +99,280 @@ task.spawn(function()
 			callbacks_once[id] = nil
 		end
 		task.synchronize()
+		for id, callback in pairs(callbacks_UI) do
+			local s,e = pcall(function()
+				callback()
+			end)
+			count += 1
+			if not s then
+				errors += 1
+				warn(e)
+			end
+			callbacks_once[id] = nil
+		end
 		script.Parent.Parent.Parent.ActiveCommands.Text = `Active commands: {count} ({errors} errors)`
 		script.Parent.Parent.Parent.ObjectActiveCommands.Text = `Object commands: {commandsCount}`
 	end)
 end)
 
+local pi = math.pi
+
+local function clamp01(t) return math.clamp(t, 0, 1) end
+
+local function bounceOut(t)
+	t = clamp01(t)
+	if t < 1 / 2.75 then
+		return 7.5625 * t * t
+	elseif t < 2 / 2.75 then
+		t = t - 1.5 / 2.75
+		return 7.5625 * t * t + 0.75
+	elseif t < 2.5 / 2.75 then
+		t = t - 2.25 / 2.75
+		return 7.5625 * t * t + 0.9375
+	else
+		t = t - 2.625 / 2.75
+		return 7.5625 * t * t + 0.984375
+	end
+end
+
 local EASING = {
-	Linear = function(t:number)
-		return math.clamp(t,0,1)
+	[0] = function(t) -- Linear
+		t = clamp01(t)
+		return t
+	end,
+
+	[1] = function(t) -- Easing Out (use cubic out)
+		t = clamp01(t)
+		return 1 - math.pow(1 - t, 3)
+	end,
+
+	[2] = function(t) -- Easing In (use cubic in)
+		t = clamp01(t)
+		return t * t * t
+	end,
+
+	[3] = function(t) -- Quad In
+		t = clamp01(t)
+		return t * t
+	end,
+
+	[4] = function(t) -- Quad Out
+		t = clamp01(t)
+		return t * (2 - t)
+	end,
+
+	[5] = function(t) -- Quad In/Out
+		t = clamp01(t)
+		if t < 0.5 then
+			return 2 * t * t
+		else
+			return 1 - math.pow(-2 * t + 2, 2) / 2
+		end
+	end,
+
+	[6] = function(t) -- Cubic In
+		t = clamp01(t)
+		return t * t * t
+	end,
+
+	[7] = function(t) -- Cubic Out
+		t = clamp01(t)
+		return 1 - math.pow(1 - t, 3)
+	end,
+
+	[8] = function(t) -- Cubic In/Out
+		t = clamp01(t)
+		if t < 0.5 then
+			return 4 * t * t * t
+		else
+			return 1 - math.pow(-2 * t + 2, 3) / 2
+		end
+	end,
+
+	[9] = function(t) -- Quart In
+		t = clamp01(t)
+		return math.pow(t, 4)
+	end,
+
+	[10] = function(t) -- Quart Out
+		t = clamp01(t)
+		return 1 - math.pow(1 - t, 4)
+	end,
+
+	[11] = function(t) -- Quart In/Out
+		t = clamp01(t)
+		if t < 0.5 then
+			return math.pow(2 * t, 4) / 2
+		else
+			return 1 - math.pow(-2 * t + 2, 4) / 2
+		end
+	end,
+
+	[12] = function(t) -- Quint In
+		t = clamp01(t)
+		return math.pow(t, 5)
+	end,
+
+	[13] = function(t) -- Quint Out
+		t = clamp01(t)
+		return 1 - math.pow(1 - t, 5)
+	end,
+
+	[14] = function(t) -- Quint In/Out
+		t = clamp01(t)
+		if t < 0.5 then
+			return math.pow(2 * t, 5) / 2
+		else
+			return 1 - math.pow(-2 * t + 2, 5) / 2
+		end
+	end,
+
+	[15] = function(t) -- Sine In
+		t = clamp01(t)
+		return 1 - math.cos((t * pi) / 2)
+	end,
+
+	[16] = function(t) -- Sine Out
+		t = clamp01(t)
+		return math.sin((t * pi) / 2)
+	end,
+
+	[17] = function(t) -- Sine In/Out
+		t = clamp01(t)
+		return -(math.cos(pi * t) - 1) / 2
+	end,
+
+	[18] = function(t) -- Expo In
+		t = clamp01(t)
+		if t == 0 then return 0 end
+		return math.pow(2, 10 * t - 10)
+	end,
+
+	[19] = function(t) -- Expo Out
+		t = clamp01(t)
+		if t == 1 then return 1 end
+		return 1 - math.pow(2, -10 * t)
+	end,
+
+	[20] = function(t) -- Expo In/Out
+		t = clamp01(t)
+		if t == 0 then return 0 end
+		if t == 1 then return 1 end
+		if t < 0.5 then
+			return math.pow(2, 20 * t - 10) / 2
+		else
+			return (2 - math.pow(2, -20 * t + 10)) / 2
+		end
+	end,
+
+	[21] = function(t) -- Circ In
+		t = clamp01(t)
+		return 1 - math.sqrt(1 - t * t)
+	end,
+
+	[22] = function(t) -- Circ Out
+		t = clamp01(t)
+		return math.sqrt(1 - math.pow(t - 1, 2))
+	end,
+
+	[23] = function(t) -- Circ In/Out
+		t = clamp01(t)
+		if t < 0.5 then
+			return (1 - math.sqrt(1 - (2 * t) ^ 2)) / 2
+		else
+			return (math.sqrt(1 - (-2 * t + 2) ^ 2) + 1) / 2
+		end
+	end,
+
+	[24] = function(t) -- Elastic In
+		t = clamp01(t)
+		if t == 0 then return 0 end
+		if t == 1 then return 1 end
+		local c = 2 * pi / 3
+		return -math.pow(2, 10 * t - 10) * math.sin((t * 10 - 10.75) * c)
+	end,
+
+	[25] = function(t) -- Elastic Out
+		t = clamp01(t)
+		if t == 0 then return 0 end
+		if t == 1 then return 1 end
+		local c = 2 * pi / 3
+		return math.pow(2, -10 * t) * math.sin((t * 10 - 0.75) * c) + 1
+	end,
+
+	[26] = function(t) -- ElasticHalf Out (faster oscillation)
+		t = clamp01(t)
+		if t == 0 then return 0 end
+		if t == 1 then return 1 end
+		local c = 2 * pi / 1.5
+		return math.pow(2, -10 * t) * math.sin((t * 10 - 0.75) * c) + 1
+	end,
+
+	[27] = function(t) -- ElasticQuarter Out (slower oscillation)
+		t = clamp01(t)
+		if t == 0 then return 0 end
+		if t == 1 then return 1 end
+		local c = 2 * pi / 6
+		return math.pow(2, -10 * t) * math.sin((t * 10 - 0.75) * c) + 1
+	end,
+
+	[28] = function(t) -- Elastic In/Out
+		t = clamp01(t)
+		if t == 0 then return 0 end
+		if t == 1 then return 1 end
+		local c = 2 * pi / 4.5
+		if t < 0.5 then
+			return -(math.pow(2, 20 * t - 10) * math.sin((20 * t - 11.125) * c)) / 2
+		else
+			return (math.pow(2, -20 * t + 10) * math.sin((20 * t - 11.125) * c)) / 2 + 1
+		end
+	end,
+
+	[29] = function(t) -- Back In
+		t = clamp01(t)
+		local s = 1.70158
+		return t * t * ((s + 1) * t - s)
+	end,
+
+	[30] = function(t) -- Back Out
+		t = clamp01(t)
+		local s = 1.70158
+		t = t - 1
+		return t * t * ((s + 1) * t + s) + 1
+	end,
+
+	[31] = function(t) -- Back In/Out
+		t = clamp01(t)
+		local s = 1.70158 * 1.525
+		if t < 0.5 then
+			return (math.pow(2 * t, 2) * ((s + 1) * 2 * t - s)) / 2
+		else
+			t = 2 * t - 2
+			return (t * t * ((s + 1) * t + s) + 2) / 2
+		end
+	end,
+
+	[32] = function(t) -- Bounce In
+		t = clamp01(t)
+		return 1 - bounceOut(1 - t)
+	end,
+
+	[33] = function(t) -- Bounce Out
+		return bounceOut(t)
+	end,
+
+	[34] = function(t) -- Bounce In/Out
+		t = clamp01(t)
+		if t < 0.5 then
+			return (1 - bounceOut(1 - 2 * t)) / 2
+		else
+			return (1 + bounceOut(2 * t - 1)) / 2
+		end
 	end,
 }
 
 function getEasing(easing:number)
-	-- TODO: Make a conversion here
-	return EASING.Linear
+	return EASING[easing] or EASING[0]
 end
 
 function toUDim2(v:Vector2):UDim2
@@ -147,18 +408,21 @@ for i, spriteData in pairs(storyboardData) do
 		script.Parent.Parent.Parent.Sound.TimePosition = os.clock() - startTime
 		script.Parent.Parent.Parent.Sound:Play()
 	end
-	
+
 	local objStartTime = firstCmd.StartTime/1000
 	if os.clock() - startTime < objStartTime then
 		repeat task.wait() until os.clock() - startTime >= objStartTime
 	end
-	
+
 	local crrObjectData = {
 		Position = objData.Position,
 		Scale = Vector2.new(1,1),
 		Opacity = 0,
 		Color = Color3.new(1,1,1),
-		Rotation = 0	-- radians
+		Rotation = 0,	-- radians
+		FlipX = false,
+		FlipY = false,
+		AdditiveColor = false
 	}
 	local _imgSize = ImageList[objData.Filepath] and ImageList[objData.Filepath].Size
 	local _imgId = ImageList[objData.Filepath] and ImageList[objData.Filepath].ImageId
@@ -170,42 +434,45 @@ for i, spriteData in pairs(storyboardData) do
 	objectFrame.Size = objectSize
 	objectFrame.AnchorPoint = objData.AnchorPoint
 	objectFrame.Position = toUDim2(objData.Position)
-	objectFrame.ZIndex = objData.Layer
 	objectFrame.Name = tostring(objData.Filepath)
 	objectFrame.ZIndex = objData.LayoutOrder
 	local parentDestination = LayoutPlacement[objData.Layer]
-	local thread = task.spawn(function()
-		while task.wait() do
-			local newPos = toUDim2(crrObjectData.Position)
-			local newScale = UDim2.fromScale(objectSize.X.Scale * crrObjectData.Scale.X, objectSize.Y.Scale * crrObjectData.Scale.Y)
-			local newTransparency = 1 - crrObjectData.Opacity
-			local newColor = crrObjectData.Color
-			local newRotation = math.round(math.deg(crrObjectData.Rotation))
-			if objectFrame.Position ~= newPos then
-				objectFrame.Position = newPos
-			end
-			
-			if objectFrame.Size ~= newScale then
-				objectFrame.Size = newScale
-			end
-			
-			if objectFrame.ImageTransparency ~= newTransparency then
-				objectFrame.ImageTransparency = newTransparency
-				local newPrt = newTransparency < 1 and parentDestination or nil
-				if objectFrame.Parent ~= newPrt then
-					objectFrame.Parent = newPrt
-				end
-			end
-			
-			if objectFrame.ImageColor3 ~= newColor then
-				objectFrame.ImageColor3 = newColor
-			end
-			
-			if objectFrame.Rotation ~= newRotation then
-				objectFrame.Rotation = newRotation
+	local UI_unquieId = HttpService:GenerateGUID()
+	local UI_funct = function()
+		local newPos = toUDim2(crrObjectData.Position)
+		local scaleX = crrObjectData.FlipX and -1 or 1
+		local scaleY = crrObjectData.FlipY and -1 or 1
+		local newScale = UDim2.fromScale(objectSize.X.Scale * crrObjectData.Scale.X * scaleX, objectSize.Y.Scale * crrObjectData.Scale.Y * scaleY)
+		local newTransparency = 1 - crrObjectData.Opacity
+		local newColor = crrObjectData.Color
+		local newRotation = math.round(math.deg(crrObjectData.Rotation))
+		if objectFrame.Position ~= newPos then
+			objectFrame.Position = newPos
+		end
+
+		if objectFrame.Size ~= newScale then
+			objectFrame.Size = newScale
+		end
+
+		if objectFrame.ImageTransparency ~= newTransparency then
+			objectFrame.ImageTransparency = newTransparency
+			local newPrt = newTransparency < 1 and parentDestination or nil
+			if objectFrame.Parent ~= newPrt then
+				objectFrame.Parent = newPrt
 			end
 		end
-	end)
+
+		if objectFrame.ImageColor3 ~= newColor then
+			objectFrame.ImageColor3 = newColor
+		end
+
+		if objectFrame.Rotation ~= newRotation then
+			objectFrame.Rotation = newRotation
+		end
+	end
+
+	callbacks_UI[UI_unquieId] = UI_funct
+
 	task.spawn(function()
 		local currentActiveCommand = 0
 		local finishedCommands = 0
@@ -214,7 +481,7 @@ for i, spriteData in pairs(storyboardData) do
 				finishedCommands += 1
 				continue
 			end
-			
+
 			local unquieId = HttpService:GenerateGUID()
 			local funct
 
@@ -224,13 +491,15 @@ for i, spriteData in pairs(storyboardData) do
 			local easing = getEasing(command.Easing)
 			local params = command.Params
 			local commandHaveRanOnce = false
-			
+
 			if commandType == "F" then
 				funct = function()
 					-- Fade
 					commandHaveRanOnce = true
 					local elapsed = (os.clock() - startTime)- command.StartTime/1000
-					local progress = easing(elapsed/commandDuration)
+					local t = elapsed/commandDuration
+					if t ~= t then t = 0 end
+					local progress = easing(t)
 					local startOpacity = params[1] or 0
 					local endOpacity = params[2] or 0
 					crrObjectData.Opacity = math.lerp(startOpacity, endOpacity, progress)
@@ -240,7 +509,9 @@ for i, spriteData in pairs(storyboardData) do
 					-- Move XY
 					commandHaveRanOnce = true
 					local elapsed = (os.clock() - startTime) - command.StartTime/1000
-					local progress = easing(elapsed/commandDuration)
+					local t = elapsed/commandDuration
+					if t ~= t then t = 0 end
+					local progress = easing(t)
 					local startPos = Vector2.new(params[1], params[2])
 					local endPos = Vector2.new(params[3], params[4])
 					crrObjectData.Position = startPos:Lerp(endPos, progress)
@@ -250,7 +521,9 @@ for i, spriteData in pairs(storyboardData) do
 					-- Move X
 					commandHaveRanOnce = true
 					local elapsed = (os.clock() - startTime) - command.StartTime/1000
-					local progress = easing(elapsed/commandDuration)
+					local t = elapsed/commandDuration
+					if t ~= t then t = 0 end
+					local progress = easing(t)
 					local startX = Vector2.new(params[1] or 0, crrObjectData.Position.Y)
 					local endX = Vector2.new(params[2] or 0, crrObjectData.Position.Y)
 					crrObjectData.Position = startX:Lerp(endX, progress)
@@ -260,7 +533,9 @@ for i, spriteData in pairs(storyboardData) do
 					-- Move Y
 					commandHaveRanOnce = true
 					local elapsed = (os.clock() - startTime) - command.StartTime/1000
-					local progress = easing(elapsed/commandDuration)
+					local t = elapsed/commandDuration
+					if t ~= t then t = 0 end
+					local progress = easing(t)
 					local startY = Vector2.new(crrObjectData.Position.X, params[1] or 0)
 					local endY = Vector2.new(crrObjectData.Position.X, params[2] or 0)
 					crrObjectData.Position = startY:Lerp(endY, progress)
@@ -270,7 +545,9 @@ for i, spriteData in pairs(storyboardData) do
 					-- Scale
 					commandHaveRanOnce = true
 					local elapsed = (os.clock() - startTime) - command.StartTime/1000
-					local progress = easing(elapsed/commandDuration)
+					local t = elapsed/commandDuration
+					if t ~= t then t = 0 end
+					local progress = easing(t)
 					local startScale = params[1] or 0
 					local endScale = params[2] or 0					
 					crrObjectData.Scale = (Vector2.one * startScale):Lerp(Vector2.one * endScale, progress)
@@ -280,21 +557,25 @@ for i, spriteData in pairs(storyboardData) do
 					-- Scale separated X, Y
 					commandHaveRanOnce = true
 					local elapsed = (os.clock() - startTime) - command.StartTime/1000
-					local progress = easing(elapsed/commandDuration)
+					local t = elapsed/commandDuration
+					if t ~= t then t = 0 end
+					local progress = easing(t)
 					local startScaleX = params[1] or 0
 					local startScaleY = params[2] or 0
 					local endScaleX = params[3] or 0			
 					local endScaleY = params[4] or 0							
 					local startScale = Vector2.new(startScaleX,startScaleY)
 					local endScale = Vector2.new(endScaleX,endScaleY)				
-					crrObjectData.Scale = (Vector2.one * startScale):Lerp(Vector2.one * endScale, progress)
+					crrObjectData.Scale = startScale:Lerp(endScale, progress)
 				end				
 			elseif commandType == "C" then
 				funct = function()
 					-- Colors
 					commandHaveRanOnce = true
 					local elapsed = (os.clock() - startTime) - command.StartTime/1000
-					local progress = easing(elapsed/commandDuration)
+					local t = elapsed/commandDuration
+					if t ~= t then t = 0 end
+					local progress = easing(t)
 
 					local startR = params[1] or 0
 					local startG = params[2] or 0
@@ -305,6 +586,9 @@ for i, spriteData in pairs(storyboardData) do
 
 					local startColor = Color3.fromRGB(startR, startG, startB)
 					local endColor = Color3.fromRGB(endR, endG, endB)
+					if crrObjectData.AdditiveColor then
+						endColor = Color3.fromRGB(startR+endR, startG+endG, startB+endB)
+					end
 
 					crrObjectData.Color = startColor:Lerp(endColor, progress)
 				end
@@ -313,24 +597,25 @@ for i, spriteData in pairs(storyboardData) do
 					-- Rotate in randians
 					commandHaveRanOnce = true
 					local elapsed = (os.clock() - startTime) - command.StartTime/1000
-					local progress = easing(elapsed/commandDuration)
-					
+					local t = elapsed/commandDuration
+					if t ~= t then t = 0 end
+					local progress = easing(t)
+
 					local startRotation = params[1] or 0
 					local endRotation = params[2] or 0
-					
+
 					crrObjectData.Rotation = math.lerp(startRotation, endRotation, progress)
-				end				
+				end
 			end
-			if not funct then
+			if not funct and commandType ~= "P" then
 				continue
 			end
 			currentActiveCommand += 1
 			task.spawn(function()
 				if os.clock() - startTime < command.StartTime/1000 then
 					repeat task.wait() until os.clock() - startTime >= command.StartTime/1000
-				end				
-				
-				
+				end
+
 				if funct then
 					callbacks[unquieId] = funct
 
@@ -341,21 +626,48 @@ for i, spriteData in pairs(storyboardData) do
 					callbacks[unquieId] = nil
 					callbacks_once[unquieId] = funct -- make sure it have finished it's progress
 
-					repeat task.wait(0.1) until not callbacks_once[unquieId] 
-				end
-				
-				
+					repeat task.wait(0.1) until not callbacks_once[unquieId]
+				elseif commandType == "P" then
+					-- Parmeter commands
+					-- This is a special command, unlike other commands, this only need to ran twice (start and end)
+
+					if os.clock() - startTime < command.StartTime/1000 then
+						repeat task.wait() until os.clock() - startTime >= command.StartTime/1000
+					end
+
+					local parmeter = params[1]
+					if parmeter == "H" then
+						crrObjectData.FlipX = true
+					elseif parmeter == "V" then
+						crrObjectData.FlipY = true
+					elseif parmeter == "A" then
+						crrObjectData.AdditiveColor = true
+					end
+
+					repeat task.wait(0.1) until (os.clock() - startTime > command.EndTime/1000 and commandHaveRanOnce) or not funct
+
+					if parmeter == "H" then
+						crrObjectData.FlipX = false
+					elseif parmeter == "V" then
+						crrObjectData.FlipY = false
+					elseif parmeter == "A" then
+						crrObjectData.AdditiveColor = false
+					end
+
+					warn(parmeter)
+				end				
+
 				finishedCommands += 1
 			end)
 		end
-		
+
 		while finishedCommands < currentActiveCommand do
 			task.wait(1)
 		end
-		task.cancel(thread)
+		callbacks_UI[UI_unquieId] = nil
 		objectFrame:Destroy()
 		completedCount += 1
 	end)
-	
+
 	script.Parent.Parent.Parent.SpriteIndex.Text = `Current sprite: {i}/{spritesCount} ({completedCount} completed)`
 end
