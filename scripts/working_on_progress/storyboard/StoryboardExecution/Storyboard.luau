@@ -116,11 +116,20 @@ for i = 1, 60 do
 	task.wait()
 end
 
+local deferEnabled = script.Parent.Parent.Parent.Core.ObjectsDeferEnabled.DeferEnabled
+
 for i, core in pairs(currentProcessCores) do
-	core:SendMessage("SetProcessPerFrame", PROCESS_PER_FRAME, UI_PROCESS_PER_FRAME)
+	core:SendMessage("SetProcessPerFrame", deferEnabled.Value and PROCESS_PER_FRAME or 99999999, deferEnabled.Value and UI_PROCESS_PER_FRAME or 99999999)
 	core:SendMessage("SetStartTime", startTime)
 	core:SendMessage("SetCoreIndex", i)
 end
+
+
+deferEnabled.Changed:Connect(function()
+	for i, core in pairs(currentProcessCores) do
+		core:SendMessage("SetProcessPerFrame", deferEnabled.Value and PROCESS_PER_FRAME or 99999999, deferEnabled.Value and UI_PROCESS_PER_FRAME or 99999999)
+	end
+end)
 
 script.Parent:BindToMessage("UpdateStats", function(index:number, statType:number, value:number)
 	Stats[statType][index] = value
