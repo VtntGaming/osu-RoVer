@@ -73,13 +73,30 @@ local LayoutPlacement = {
 local Stats = {
 	FPS = 0
 }
+local unused_objs = {}
+-- We need to analyse the device's speed rate to determine the Process rate
+for i = 1, 60 do task.wait() end
+local LOAD_TEST_RATE = 1000000
+local RATE_PER_COMMANDS = 300000	-- The requirement rate per command for a minimum 45fps 
+local test_s = os.clock()
+for i = 1,LOAD_TEST_RATE do end
+local load_t = os.clock() - test_s
+local commandSpeed = LOAD_TEST_RATE / load_t
+local CalculatedRateLimit = math.max(50, math.ceil(commandSpeed/RATE_PER_COMMANDS))
+
+print(`The speed of the device is {commandSpeed}, the calculated base rate limit is {CalculatedRateLimit}`)
+
+local PROCESS_PER_FRAME = CalculatedRateLimit	-- To prevent significant, when processed more than the limit, it will defer to the next frame
+local UI_PROCESS_PER_FRAME = math.ceil(CalculatedRateLimit * 0.75)	-- UI update also use a lot of rss, so it might need yield more
 
 task.spawn(function()
-	game:GetService("RunService").Heartbeat:ConnectParallel(function()
+	while task.wait() do
+		task.desynchronize()
 		local count = 0
+		local defer_count = 0
 		local errors = 0
 		-- TODO: Make sure this thing must not yield
-		-- It can load up to 1k commands at once
+		-- It can load up to 1k commands at one frame
 		for _, callback in pairs(callbacks) do
 			local s,e = pcall(function()
 				callback()
@@ -89,6 +106,13 @@ task.spawn(function()
 				errors += 1
 				warn(e)
 			end
+			if count % PROCESS_PER_FRAME == 0 and count > 0 then
+				task.synchronize()
+				defer_count += 1
+				task.wait()
+				task.desynchronize()
+			end
+			
 		end
 		for id, callback in pairs(callbacks_once) do
 			local s,e = pcall(function()
@@ -100,24 +124,56 @@ task.spawn(function()
 				warn(e)
 			end
 			callbacks_once[id] = nil
+			if count % PROCESS_PER_FRAME == 0 and count > 0 then
+				task.synchronize()
+				defer_count += 1
+				task.wait()
+				task.desynchronize()
+			end
 		end
 		task.synchronize()
+		script.Parent.Parent.Parent.ActiveCommands.Text = `Active commands: {count} [Defered: {defer_count} | Errors: {errors}]`
+		script.Parent.Parent.Parent.ObjectActiveCommands.Text = `Object commands: {commandsCount}`
+	end
+end)
+
+task.spawn(function()
+	local previous_count = 0
+	while true do
+		local count_ui = 0
+		local continue_count = 0
+		if previous_count % UI_PROCESS_PER_FRAME > UI_PROCESS_PER_FRAME * 0.5 or previous_count < UI_PROCESS_PER_FRAME then
+			task.wait()
+		else
+			continue_count = previous_count % UI_PROCESS_PER_FRAME
+		end
+		local errors = 0
+		local defer_count = 0
 		for id, callback in pairs(callbacks_UI) do
 			local s,e = pcall(function()
 				callback()
 			end)
-			count += 1
+			count_ui += 1
+			continue_count += 1
 			if not s then
 				errors += 1
 				warn(e)
 			end
+			if continue_count % UI_PROCESS_PER_FRAME == 0 and continue_count > 0 then
+				defer_count += 1
+				task.wait()
+			end
 		end
-		script.Parent.Parent.Parent.ActiveCommands.Text = `Active commands: {count} ({errors} errors)`
-		script.Parent.Parent.Parent.ObjectActiveCommands.Text = `Object commands: {commandsCount}`
-		Stats.FPS += 1
-		task.wait(1)
-		Stats.FPS -= 1
-	end)
+		
+		previous_count = continue_count
+		script.Parent.Parent.Parent.ActiveUICommands.Text = `UI Process: {count_ui} [Defered: {defer_count} | Errors: {errors}]`
+	end	
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+	Stats.FPS += 1
+	task.wait(1)
+	Stats.FPS -= 1
 end)
 
 task.spawn(function()
@@ -398,6 +454,15 @@ function toUDim2FromY(y:number, u:UDim2)
 	return UDim2.fromScale(u.X.Scale, y)
 end
 
+local function getObj():ImageLabel
+	local obj = unused_objs[1]
+	if obj then
+		table.remove(unused_objs, 1)
+		return obj
+	else
+		return Instance.new("ImageLabel")
+	end
+end
 
 for i, spriteData in pairs(storyboardData) do
 	local objData = spriteData.Data
@@ -438,7 +503,7 @@ for i, spriteData in pairs(storyboardData) do
 	local _imgSize = ImageList[objData.Filepath] and ImageList[objData.Filepath].Size
 	local _imgId = ImageList[objData.Filepath] and ImageList[objData.Filepath].ImageId
 	local objectSize =  toUDim2(_imgSize or DEFAULT_ASSET_SIZE)
-	local objectFrame = Instance.new("ImageLabel")
+	local objectFrame = getObj()
 	objectFrame.Image = _imgId or DEFAULT_ASSET_ID
 	objectFrame.Parent = nil
 	objectFrame.BackgroundTransparency = 1
@@ -450,28 +515,33 @@ for i, spriteData in pairs(storyboardData) do
 	local parentDestination = LayoutPlacement[objData.Layer]
 	local UI_unquieId = HttpService:GenerateGUID()
 	local UI_funct = function()
+		local newTransparency = 1 - crrObjectData.Opacity
+		
+		if objectFrame.ImageTransparency ~= newTransparency then
+			local newPrt = newTransparency < 1 and parentDestination or nil
+			if objectFrame.Parent ~= newPrt then
+				objectFrame.Parent = newPrt
+				if not newPrt then
+					return	-- It's alrady invisible, no need to process
+				end
+			end
+			objectFrame.ImageTransparency = newTransparency
+		end
+		
+		local newColor = crrObjectData.Color
+		local newRotation = math.round(math.deg(crrObjectData.Rotation))
 		local newPos = toUDim2(Vector2.new(crrObjectData.Position.X, crrObjectData.Position.Y))
 		local scaleX = crrObjectData.FlipX and -1 or 1
 		local scaleY = crrObjectData.FlipY and -1 or 1
-		local newScale = UDim2.fromScale(objectSize.X.Scale * crrObjectData.Scale.X * scaleX, objectSize.Y.Scale * crrObjectData.Scale.Y * scaleY)
-		local newTransparency = 1 - crrObjectData.Opacity
-		local newColor = crrObjectData.Color
-		local newRotation = math.round(math.deg(crrObjectData.Rotation))
+		local newScale = UDim2.fromScale(objectSize.X.Scale * crrObjectData.Scale.X * scaleX, objectSize.Y.Scale * crrObjectData.Scale.Y * scaleY)		
+		
 		if objectFrame.Position ~= newPos then
 			objectFrame.Position = newPos
 		end
 
 		if objectFrame.Size ~= newScale then
 			objectFrame.Size = newScale
-		end
-
-		if objectFrame.ImageTransparency ~= newTransparency then
-			objectFrame.ImageTransparency = newTransparency
-			local newPrt = newTransparency < 1 and parentDestination or nil
-			if objectFrame.Parent ~= newPrt then
-				objectFrame.Parent = newPrt
-			end
-		end
+		end		
 
 		if objectFrame.ImageColor3 ~= newColor then
 			objectFrame.ImageColor3 = newColor
@@ -672,7 +742,8 @@ for i, spriteData in pairs(storyboardData) do
 			task.wait(1)
 		end
 		callbacks_UI[UI_unquieId] = nil
-		objectFrame:Destroy()
+		objectFrame.Parent = nil
+		unused_objs[#unused_objs+1] = objectFrame
 		completedCount += 1
 	end)
 
