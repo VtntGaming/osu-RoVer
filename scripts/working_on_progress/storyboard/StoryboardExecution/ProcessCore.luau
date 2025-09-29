@@ -20,16 +20,20 @@ local LayoutPlacement = {
 	[3] = mainUI.MainFrame.RatioFrame.Foreground,
 }
 
-local startTime = os.clock() + 999999999999999
+local startTime = os.clock() - 999999999999999
 
 script.Parent:BindToMessage("SetProcessPerFrame", function(value1:number, value2:number)
 	PROCESS_PER_FRAME = value1
 	UI_PROCESS_PER_FRAME = value2
-	print("set to ", PROCESS_PER_FRAME, UI_PROCESS_PER_FRAME)
 end)
 
 script.Parent:BindToMessage("SetStartTime", function(t:number)
 	startTime = t
+end)
+
+local CORE_INDEX = -1
+script.Parent:BindToMessage("SetCoreIndex", function(i)
+	CORE_INDEX = i
 end)
 
 task.spawn(function()
@@ -80,6 +84,8 @@ task.spawn(function()
 			end
 		end
 		task.synchronize()
+		script.Parent.Parent.Parent.Actor:SendMessage("UpdateStats", CORE_INDEX, "ActiveCommands", count)
+		script.Parent.Parent.Parent.Actor:SendMessage("UpdateStats", CORE_INDEX, "ComputeTime", (os.clock() - _s) - defer_time)
 		--Stats.LastCommandTime = (os.clock() - _s) - defer_time
 		--mainUI.Stats.ActiveCommands.Text = `Active commands: {count} [Defered: {defer_count} | Errors: {errors}]`
 		--mainUI.Stats.ObjectActiveCommands.Text = `Object commands: {commandsCount}`
@@ -121,12 +127,21 @@ task.spawn(function()
 
 		--Stats.LastUITime = (os.clock() - _s) - defer_time
 		previous_count = continue_count
+		script.Parent.Parent.Parent.Actor:SendMessage("UpdateStats", CORE_INDEX, "UIActiveCommands", count_ui)
+		script.Parent.Parent.Parent.Actor:SendMessage("UpdateStats", CORE_INDEX, "ComputeTime_UI", (os.clock() - _s) - defer_time)
 		--mainUI.Stats.ActiveUICommands.Text = `UI Process: {count_ui} [Defered: {defer_count} | Errors: {errors}]`
 	end	
 end)
 
 local objectData = {}
 local unused_objs = {}
+local cmdsHaveRanOnce = {}
+
+task.spawn(function()
+	while task.wait(0.1) do
+		script.Parent.Parent.Parent.Actor:SendMessage("UpdateStats", CORE_INDEX, "ObjsNotInUse", #unused_objs)
+	end
+end)
 
 -- Functions
 
@@ -428,8 +443,6 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 	
 	local UI_funct = function()
 		local newTransparency = 1 - crrObjectData.Opacity
-		
-		print(crrObjectData)
 
 		if objectFrame.ImageTransparency ~= newTransparency then
 			local newPrt = newTransparency < 1 and parentDestination or nil
@@ -500,7 +513,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 	if commandType == "F" then
 		funct = function()
 			-- Fade
-			commandHaveRanOnce = true
+			cmdsHaveRanOnce[unquieId] = true
 			local elapsed = (os.clock() - startTime)- command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
@@ -512,7 +525,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 	elseif commandType == "M" then
 		funct = function()
 			-- Move XY
-			commandHaveRanOnce = true
+			cmdsHaveRanOnce[unquieId] = true
 			local elapsed = (os.clock() - startTime) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
@@ -533,7 +546,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 	elseif commandType == "MX" then
 		funct = function()
 			-- Move X
-			commandHaveRanOnce = true
+			cmdsHaveRanOnce[unquieId] = true
 			local elapsed = (os.clock() - startTime) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
@@ -548,7 +561,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 	elseif commandType == "MY" then
 		funct = function()
 			-- Move Y
-			commandHaveRanOnce = true
+			cmdsHaveRanOnce[unquieId] = true
 			local elapsed = (os.clock() - startTime) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
@@ -563,7 +576,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 	elseif commandType == "S" then
 		funct = function()
 			-- Scale
-			commandHaveRanOnce = true
+			cmdsHaveRanOnce[unquieId] = true
 			local elapsed = (os.clock() - startTime) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
@@ -579,7 +592,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 	elseif commandType == "V" then
 		funct = function()
 			-- Scale separated X, Y
-			commandHaveRanOnce = true
+			cmdsHaveRanOnce[unquieId] = true
 			local elapsed = (os.clock() - startTime) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
@@ -600,7 +613,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 	elseif commandType == "C" then
 		funct = function()
 			-- Colors
-			commandHaveRanOnce = true
+			cmdsHaveRanOnce[unquieId] = true
 			local elapsed = (os.clock() - startTime) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
@@ -624,7 +637,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 	elseif commandType == "R" then
 		funct = function()
 			-- Rotate in randians
-			commandHaveRanOnce = true
+			cmdsHaveRanOnce[unquieId] = true
 			local elapsed = (os.clock() - startTime) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
@@ -641,6 +654,10 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 end)
 
 script.Parent:BindToMessage("RemoveCommand", function(cmdUnquieId:string)
+	if not cmdsHaveRanOnce[cmdUnquieId] then
+		repeat task.wait() until cmdsHaveRanOnce[cmdUnquieId]
+	end
+	cmdsHaveRanOnce[cmdUnquieId] = nil
 	callbacks_once[cmdUnquieId] = callbacks[cmdUnquieId]
 	callbacks[cmdUnquieId] = nil
 end)

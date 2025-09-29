@@ -110,8 +110,10 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 			if currentSprite then
 				local rawData = lineData:split()
 				local commandType = rawData[1]:sub(2,-1)
+				local startTime = tonumber(rawData[3]) or 0
+				local endTime = tonumber(rawData[4]) or startTime
 				local newcmdData:CommandData = {
-					CommandType = commandType,
+					CommandType = rawData[1]:sub(2,-1),
 					Easing = tonumber(rawData[2]) or 0,
 					StartTime = tonumber(rawData[3]) or 0,
 					EndTime = tonumber(rawData[4]) or 0,
@@ -153,6 +155,8 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 			if table.find(COMMAND_DECLARE_CHARACTER, firstChar) then
 				if currentSprite then
 					local rawData = lineData:split()
+					local startTime = tonumber(rawData[3]) or 0
+					local endTime = tonumber(rawData[4]) or startTime
 					local newcmdData:CommandData = {
 						CommandType = rawData[1]:sub(2,-1),
 						Easing = tonumber(rawData[2]) or 0,

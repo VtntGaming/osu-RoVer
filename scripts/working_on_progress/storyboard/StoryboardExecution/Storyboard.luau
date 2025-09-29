@@ -41,6 +41,47 @@ end)
 
 print("Sort completed! took", os.clock()-s)
 
+-- Analytic
+
+local stackLoads = {}
+
+for _, item in pairs(storyboardData) do
+	for _, cmd in pairs(item.Commands) do
+		local sTime = cmd.StartTime
+		local eTime = cmd.EndTime
+		
+		local startIndex = sTime // 100 + 1
+		local endIndex = eTime // 100 + 1
+		
+		for i = startIndex, endIndex do
+			if not stackLoads[i] then
+				stackLoads[i] = 1
+			else
+				stackLoads[i] += 1
+			end
+		end
+	end
+end
+
+table.sort(stackLoads, function(a,b)
+	return a > b
+end)
+
+local BASE_COMMAND_PROCESS = 9500
+
+local avgLoad = 0
+local highestLoad = stackLoads[1]
+local highestTimelineLoad = highestLoad * BASE_COMMAND_PROCESS
+local timelineCount = 0
+
+for _, load in pairs(stackLoads) do
+	avgLoad += load
+	timelineCount += 1
+end
+
+avgLoad /= math.max(1, timelineCount)
+avgLoad *= BASE_COMMAND_PROCESS
+
 
 
 -- Load all of the image before going into the game
@@ -85,8 +126,9 @@ local unused_objs = {}
 -- We need to analyse the device's speed rate to determine the Process rate
 for i = 1, 120 do task.wait() end
 local LOAD_TEST_RATE = 1000000
-local RATE_PER_COMMANDS = 300000	-- The requirement rate per command for a minimum 45fps 
+local RATE_PER_COMMANDS = 300000	-- The requirement rate per command for a minimum 45fps
 local test_s = os.clock()
+local operation_count = 0
 for i = 1,LOAD_TEST_RATE do end
 local load_t = os.clock() - test_s
 local commandSpeed = LOAD_TEST_RATE / load_t
@@ -98,6 +140,11 @@ CalculatedRateLimit = math.max(5, math.ceil(CalculatedRateLimit/CORE_COUNT))
 
 local PROCESS_PER_FRAME = CalculatedRateLimit	-- To prevent significant, when processed more than the limit, it will defer to the next frame
 local UI_PROCESS_PER_FRAME = math.ceil(CalculatedRateLimit * 0.75)	-- UI update also use a lot of rss, so it might need yield more
+
+local highestLoadTime = highestTimelineLoad/commandSpeed
+local avgLoadTime = avgLoad/commandSpeed
+warn(`The storyboard might have an avg load of {string.format("%.2fms",avgLoadTime*1000)} and a highest load of {string.format("%.2fms",highestLoadTime*1000)}`)
+warn(`Which might drop the FPS down to {string.format("%.1ffps", 1/avgLoadTime)}, max to {string.format("%.1ffps", 1/highestLoadTime)}`)
 
 local currentProcessCores = {}
 
