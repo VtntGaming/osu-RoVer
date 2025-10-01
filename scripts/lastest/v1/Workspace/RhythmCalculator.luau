@@ -70,25 +70,25 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 
 	local startRatio = 0
 	local firstDeltaSwitch = false
-	local historicalNoteCount = math.min(CrrObj.objID, history_obj_max)
+	local historicalNoteCount = math.min(CrrObj.objID-1, history_obj_max)
 	local rhythmStart = 0
 
 	while rhythmStart < historicalNoteCount - 2 and CrrObj.Time - CrrObj.Previous(rhythmStart).Time < history_time_max do
 		rhythmStart += 1
 	end
 
-	local PrevObj = CrrObj.Previous(rhythmStart)
-	local LastObj = CrrObj.Previous(rhythmStart + 1)
+	local PrevObj = CrrObj.Previous(rhythmStart + 1)
+	local LastObj = CrrObj.Previous(rhythmStart + 2)
 
 	for i = rhythmStart, 1, -1 do
-		local currentObj = CrrObj.Previous(i - 1)
+		local currentObj = CrrObj.Previous(i)
 		local timeDecay = (history_time_max - (CrrObj.Time - currentObj.Time)) / history_time_max
 		local noteDecay = (historicalNoteCount - i) / historicalNoteCount
 
 		local currHistoricalDecay = math.min(noteDecay, timeDecay)
-		local currDelta = currentObj.StrainTime
-		local prevDelta = PrevObj.StrainTime
-		local lastDelta = LastObj.StrainTime
+		local currDelta = math.max(currentObj.DeltaTime, 1e-7)
+		local prevDelta = math.max(PrevObj.DeltaTime, 1e-7)
+		local lastDelta = math.max(LastObj.DeltaTime, 1e-7)
 
 		local deltaDifferenceRatio = math.min(prevDelta, currDelta) / math.max(prevDelta, currDelta)
 		local currRatio = 1.0 + rhythm_ratio_multiplier * math.min(0.5, math.pow(math.sin(math.pi / deltaDifferenceRatio), 2))
