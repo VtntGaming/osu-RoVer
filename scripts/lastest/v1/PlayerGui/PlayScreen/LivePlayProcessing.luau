@@ -228,6 +228,7 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 		local DifficultyAttributes:DifficultyCalculator.LiveDifficultyAttributes = {
 			AimPeak = _Append(self.StrainPeak.Aim, self.StrainCurrentPeak.Aim),
 			SpeedPeak = _Append(self.StrainPeak.Speed, self.StrainCurrentPeak.Speed),
+			FLPeak = _Append(self.StrainPeak.Flashlight, self.StrainCurrentPeak.Flashlight),
 			ARRate = self.ARRate,
 			ODRate = self.ODRate,
 			NoteCount = _noteCount,
@@ -237,6 +238,7 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 		local Attributes = DifficultyCalculator.GetDifficultyAttributesFromLiveData(DifficultyAttributes)
 		self.AimDiffFinal = Attributes.AimDifficulty
 		self.SpeedDiffFinal = Attributes.SpeedDifficulty
+		self.FLDiffFinal = Attributes.FlashlightDifficulty
 		self.CurrentStarRating = Attributes.StarRating
 	end
 
@@ -280,9 +282,10 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 
 	local LivePSDisplay = script.Parent.Parent.Parent.Parent.PSEarned
 	LivePSDisplay.Actor:SendMessage("Process",{
-		AimSpeed = AimSpeed,
-		AccFL = AccFL,
-		Mod = Mod
+		Aim = AimPS,
+		Speed = SpeedPS,
+		Acc = AccPS,
+		Flashlight = FlashlightPS
 	})
 end
 
@@ -291,6 +294,7 @@ function LivePlayProcessing:ProcessFinalResult(AccData:PerformanceCalculator.Acc
 	-- It will use the stats of pre-calculated instead of live-calculated
 	self.AimDiffFinal = self.BaseAimDiff
 	self.SpeedDiffFinal = self.BaseSpeedDiff
+	self.FLDiffFinal = self.BaseFlashlightDiff
 	self:ProcessPerfomanceScore(nil, nil, AccData)
 end
 
