@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.PerformanceCalculator.CombobreakConsistencyEstimatior]
 type Attributes = {
 	-- Score
 	ConsistencyScore: number,

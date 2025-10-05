@@ -1,4 +1,4 @@
---[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.Components.Gameplay.ScoreStaticticConverter]
+--[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.Components.Gameplay.ScoreStatisticConverter]
 --!strict
 
 --[[

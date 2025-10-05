@@ -1,3 +1,4 @@
+--[LOCATION]:[Workspace.DifficultyCalculator.DifficultyEvaluator.RhythmCalculator]
 local rhythmCalculator = {}
 
 local function getIslandCount(islandList, currentIsland)
