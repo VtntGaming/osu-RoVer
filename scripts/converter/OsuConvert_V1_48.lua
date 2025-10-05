@@ -679,7 +679,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		local AimDiff = evaluators.Aim.GetAimDiff(objectData) * aimSkillMultiplier
 		local SpeedDiff = evaluators.Speed.GetSpeedDiff(objectData) * speedSkillMultiplier
 		local RhythmDiff = evaluators.Rhythm.GetRhythmDiff(objectData)
-		local FLDiff = modData.FL and evaluators.Flashlight.getFlashLightDiff(objectData, modData.HD) * flashlightSkillMultiplier or 0
+		local FLDiff = modData.FL and evaluators.Flashlight.getFlashLightDiff(objectData, modData.HD) or 0
 		
 		local AimFLStrainDecay = math.pow(AimFLBaseStrainDecay,objectData.DeltaTime/1000)
 		AimStrain *= AimFLStrainDecay

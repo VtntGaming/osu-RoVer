@@ -81,6 +81,21 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 	return difficulty
 end
 
+function calculator.FLDifficultyValue(StrainData:{{number}})
+	table.sort(StrainData, function(a,b)
+		return a[2] < b[2]	-- Sort the timing to be perfect
+	end)
+	local StrainPeak = StrainSkills.GetStrainPeak(StrainData, "Flashlight")
+	
+	-- Since flashlight sum all the value so no need to sort
+	
+	local difficulty = 0
+	for _,strain in pairs(StrainPeak) do
+		difficulty += strain
+	end
+	return difficulty
+end
+
 function calculator.LiveDifficultyValue(StrainPeak:{number}):number
 	local reducedSelectionCount = 10
 	local weight = 1
@@ -110,15 +125,17 @@ function calculator.LiveDifficultyValue(StrainPeak:{number}):number
 	return difficulty
 end
 
-function calculator.DifficultyValueFlashlight(StrainData:{{number}})
+function calculator.LiveFLDifficultyValue(StrainPeak:{number}):number
 	local difficulty = 0
-	sortStrain(StrainData)
-	for i, strain in pairs(StrainData) do
-		if strain[1] <= 0 or i > 400 then break end
-		difficulty += strain[1]
+
+	StrainPeak = _DeepCopy(StrainPeak)::{number}
+	
+	for _,strain in pairs(StrainPeak) do
+		difficulty += strain
 	end
 	return difficulty
 end
+
 
 function calculator.RelevantNoteCount(strainData:{{number}})
 	strainData = _DeepCopy(strainData)
@@ -209,7 +226,7 @@ export type DifficultyAttributes = {
 }
 
 function calculateDifficultyRatingBase(value)
-	return math.pow(value , 1/2) * difficulty_multiplier
+	return math.sqrt(value) * difficulty_multiplier
 end
 
 function calculateStarRating(basePerfomance, multiplier)
@@ -342,6 +359,39 @@ function calculator.ComputeSpeedRating(speedDifficultyValue:number, modData:ModD
 	return speedRating * math.pow(ratingMultiplier, 1/3)
 end
 
+function calculator.ComputeFlashlightRating(flashlightDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number, attributes)
+	local flRating = calculateDifficultyRatingBase(flashlightDifficultyValue)
+	
+	if not modData.FL then
+		return 0
+	end
+	
+	if modData.TD then
+		flRating = math.pow(flRating, 0.8)
+	end
+	
+	if modData.RX then
+		flRating = 0.7
+	end
+	
+	if modData.MG then
+		local magnetisedStrength = modData.MG.Strength or 0
+		flRating *= 1 - magnetisedStrength
+	end
+	
+	-- TODO: Add deflate mod
+	--if modData.DF then	
+	--end
+	
+	local ratingMultiplier = 1
+	ratingMultiplier *= 0.7 + 0.1 * math.min(1.0, totalHit / 200.0) +
+		(totalHit > 200 and (0.2 * math.min(1.0, (totalHit - 200) / 200.0)) or 0.0)
+	
+	ratingMultiplier *= 0.98 + math.pow(math.max(0, OD), 2) / 2500
+	
+	return flRating * math.sqrt(ratingMultiplier)
+end
+
 function calculateMechanicalDifficultyRating(aimValue, speedValue)
 	local aim = basePerfomance(calculateDifficultyRatingBase(aimValue))
 	local speed = basePerfomance(calculateDifficultyRatingBase(speedValue))
@@ -375,12 +425,13 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	
 	local aimDifficultyValue = calculator.DifficultyValue(data.AimStrain, "Aim")
 	local speedDifficultyValue = calculator.DifficultyValue(data.SpeedStrain, "Speed")
+	local flashlightDifficultyValue = calculator.FLDifficultyValue(data.FlashlightStrain)
 	
 	local mechanicalDifficultyRating = calculateMechanicalDifficultyRating(aimDifficultyValue, speedDifficultyValue)
 	
 	local aimRating = calculator.ComputeAimRating(aimDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
 	local speedRating = calculator.ComputeSpeedRating(speedDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
-	local flashlightRating = 0	-- I will do this later
+	local flashlightRating = calculator.ComputeFlashlightRating(flashlightDifficultyValue, data.ModData, data.NoteCount.Total, ARRate, ODRate, {})
 	
 	local aimBasePerfomance = basePerfomance(aimRating)
 	local speedBasePerfomance = basePerfomance(speedRating)
@@ -410,6 +461,7 @@ end
 export type LiveDifficultyAttributes = {
 	AimPeak:{number},
 	SpeedPeak:{number},
+	FLPeak:{number},
 	ModData:modData.ModData,
 	ARRate:number,
 	ODRate:number,
@@ -424,23 +476,26 @@ export type LiveDifficultyAttributes = {
 export type LiveDifficultyReturnAttributes = {
 	AimDifficulty:number,
 	SpeedDifficulty:number,
+	FlashlightDifficulty:number,
 	StarRating:number
 }
 
 function calculator.GetDifficultyAttributesFromLiveData(Attributes:LiveDifficultyAttributes):LiveDifficultyReturnAttributes
 	local aimDifficultyValue = calculator.LiveDifficultyValue(Attributes.AimPeak)
 	local speedDifficultyValue = calculator.LiveDifficultyValue(Attributes.SpeedPeak)
+	local flashlightDifficultyValue = Attributes.ModData.FL and calculator.LiveFLDifficultyValue(Attributes.FLPeak) or 0
 	local mechanicalDifficultyRating = calculateMechanicalDifficultyRating(aimDifficultyValue, speedDifficultyValue)
 	
 	local aimRating = calculator.ComputeAimRating(aimDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
 	local speedRating = calculator.ComputeSpeedRating(speedDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
-	local flashlightRating = 0
+	local flashlightRating = calculator.ComputeFlashlightRating(flashlightDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate, {})
 	
 	local aimBasePerfomance = basePerfomance(aimRating)
 	local speedBasePerfomance = basePerfomance(speedRating)
+	local flashlightBasePerformance = basePerfomanceFL(flashlightRating)
 	
 	local basePerfomance = math.pow(
-		aimBasePerfomance ^ 1.1 + speedBasePerfomance ^ 1.1 + 0 ^ 1.1, 1 / 1.1
+		aimBasePerfomance ^ 1.1 + speedBasePerfomance ^ 1.1 + flashlightBasePerformance ^ 1.1, 1 / 1.1
 	)
 	
 	local multiplier = calculateDifficultyMultiplier(Attributes.ModData, Attributes.NoteCount.Total, Attributes.NoteCount.Spinner)
@@ -449,6 +504,7 @@ function calculator.GetDifficultyAttributesFromLiveData(Attributes:LiveDifficult
 	return {
 		AimDifficulty = aimRating,
 		SpeedDifficulty = speedRating,
+		FlashlightDifficulty = flashlightRating,
 		StarRating = starRating
 	}
 end

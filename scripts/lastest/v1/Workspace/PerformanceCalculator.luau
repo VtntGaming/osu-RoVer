@@ -342,7 +342,7 @@ function _GetPerfomanceAttributes(Attributes:GeneralAttributes):ReturnAttributes
 	
 	local totalPS = math.pow(
 		aimPS ^ 1.1 + speedPS ^ 1.1 + accPS ^ 1.1 + flashlightPS ^ 1.1, 1 / 1.1
-	)
+	) * multiplier
 	
 	local returnAttributes:ReturnAttributes = {
 		AimPS = aimPS,

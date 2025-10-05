@@ -505,6 +505,10 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 		mapListingMainFrame:WaitForChild("MainFrame").WorkingScript.UpdateRelatedMapper:Fire(mapCreators)
 
+		if not WebDetailedFrame:FindFirstChild("BeatmapID") then
+			return
+		end
+
 
 		WebDetailedFrame.BeatmapID.Data.Text = tostring(BeatmapID)
 		WebDetailedFrame.BeatmapsetID.Data.Text = tostring(BeatmapsetID)
