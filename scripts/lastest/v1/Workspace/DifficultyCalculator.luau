@@ -64,8 +64,8 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 	sortPeak(StrainPeak)
 	
 	for i,a in pairs(StrainPeak) do
-		local scale = math.log10(lerp(1,10,math.clamp((i-1)/reducedSelectionCount,0,1)))
-		StrainPeak[i] *= lerp(ReducedStrainBaseline, 1, scale)
+		local scale = math.log10(math.lerp(1,10,math.clamp((i-1)/reducedSelectionCount,0,1)))
+		StrainPeak[i] *= math.lerp(ReducedStrainBaseline, 1, scale)
 		if i > 10 then
 			break
 		end

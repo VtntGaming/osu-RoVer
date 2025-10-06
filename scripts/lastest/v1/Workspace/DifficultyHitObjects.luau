@@ -16,19 +16,28 @@ SLTravelDistance = SliderLength
 }]]
 local converterTool = require(workspace.OsuConvert.converterTools)
 
-function h300window(od)
-	local max = 64
-	local mid = 49
-	local min = 34
-	local rate = (5 - od)/5
-	
-	if od > 5 then
-		return mid + (max - mid)*rate
-	elseif od < 5 then
-		return mid + (mid - min)*rate
+function range(value:number):number
+	return (value - 5) / 5
+end
+
+function difficultyRange(diff:number, min:number, mid:number, max:number):number
+	if diff > 5 then
+		return mid + (max - mid) * range(diff)
+	elseif diff < 5 then
+		return mid + (mid - min) * range(diff)
 	else
 		return mid
 	end
+end
+
+function h300window(od)
+	local max = 80
+	local mid = 50
+	local min = 20
+	
+	local value = difficultyRange(od, min, mid, max)
+	
+	return math.floor(value) - 0.5
 end
 
 function positionOf(vectorTable):Vector2

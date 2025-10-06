@@ -663,10 +663,10 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	
 	-- Skills
 	
-	-- The aim difficulty is the most inaccurate thing to calculate in osu!RoVer
+	-- Sometime it would not be very easy to match everything with osu! difficulty system
 	-- I need to adjust it back to the original osu! standard
 	local aimAdjustedMultiplier = 1
-	local speedAdjustedMultiplier = 1
+	local speedAdjustedMultiplier = 1.18
 	local aimSkillMultiplier = 26 * aimAdjustedMultiplier
 	local speedSkillMultiplier = 1.47 * speedAdjustedMultiplier
 	local flashlightSkillMultiplier = 0.05512
@@ -690,7 +690,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		SpeedStrain += SpeedDiff
 		
 		FLStrain *= AimFLStrainDecay
-		FLStrain += FLDiff
+		FLStrain += FLDiff		
 		
 		ConvertedData[objectId].PSValue.Aim = AimDiff
 		ConvertedData[objectId].PSValue.Speed = SpeedDiff
