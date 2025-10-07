@@ -177,22 +177,13 @@ return function(baseList:{any}, baseData)
 		
 		if objID < 2 or crr.isSpinner or crrObj.Previous(1).isSpinner then
 			crrObj.getDoubletapness = function() return 0 end
-			local prevTime
-			if baseList[objID-1] and baseList[objID-1].Time then
-				prevTime =  baseList[objID-1].Time
-			end
-			if prevTime then
-				crrObj.DeltaTime = crr.Time - prevTime
-			else
-				crrObj.DeltaTime = 9999999999
-			end
 			crrObj.Time = crr.Time
 			crrObj.isInvalid = true
-			if objID < 2 then
-				crrObj.StrainTime = crr.Time
-			else
-				crrObj.StrainTime = crr.Time - crrObj.Previous(1).Time
-			end
+			local prevObj = crrObj.Previous(1)
+			local prevTime = prevObj and prevObj.Time or 0
+			crrObj.DeltaTime = crr.Time - prevTime
+			crrObj.StrainTime = math.max(crrObj.DeltaTime, MIN_DELTA_TIME)
+			crrObj.Hit300Value = 2 * h300window(baseData.OD)
 			DifficultyObjects[objID] = crrObj
 			continue
 		end

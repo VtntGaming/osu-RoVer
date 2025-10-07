@@ -4,7 +4,7 @@ local StrainSkills = {}
 
 local SECTION_LENGTH = 400
 local STRAIN_DECAY_AIMFL = 0.15
-local STRAIN_DECAY_SPEED = 0.3
+local STRAIN_DECAY_SPEED = 0.30
 local MINIMUM_DELTA_TIME = 25
 
 function StrainSkills.StrainDecay(t:number, _type:string):number

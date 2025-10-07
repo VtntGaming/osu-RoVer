@@ -55,6 +55,10 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 	local difficulty = 0
 	local ReducedStrainBaseline = 0.75
 	
+	if strainType == "Speed" then
+		reducedSelectionCount = 5
+	end
+	
 	table.sort(StrainData, function(a,b)
 		return a[2] < b[2]	-- Sort the timing to be perfect
 	end)
