@@ -46,7 +46,7 @@ end
 
 
 local MIN_DELTA_TIME = 25
-local EXTRA_MULTIPLIER = 2	-- This being added to ensure stability, until I found out a better way to calculate properly
+local EXTRA_MULTIPLIER = 1	-- This being added to ensure stability, until I found out a better way to calculate properly
 
 function rhythmCalculator.GetRhythmDiff(CrrObj)
 	-- This is the most complicate section I ever transfer
@@ -130,7 +130,7 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 		local differenceMultiplier = math.clamp(2 - deltaDifference / 8, 0, 1)
 
 		local windowPenalty = math.min(1, math.max(0, math.abs(prevDelta - currDelta) - deltaDifferenceEpsilon) / deltaDifferenceEpsilon)
-		local effectiveRatio = windowPenalty * currRatio * differenceMultiplier * EXTRA_MULTIPLIER
+		local effectiveRatio = windowPenalty * currRatio * differenceMultiplier
 
 		if firstDeltaSwitch then
 			if math.abs(prevDelta - currDelta) < deltaDifferenceEpsilon then
@@ -143,8 +143,7 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 				if PrevObj.isSlider then
 					effectiveRatio *= 0.3
 				end
-
-
+				
 				if Island:IsSimilarPolarity(PrevIsland) then
 					effectiveRatio *= 0.5
 				end
@@ -166,7 +165,7 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 					local power = Logistic(Island.delta, 58.33, 0.24, 2.75)
 					effectiveRatio *= math.min(3.0 / islandCount.Count, math.pow(1.0 / islandCount.Count, power))
 
-					--IslandList[countIndex+1] = islandCount
+					IslandList[countIndex+1] = islandCount
 				else
 					IslandList[#IslandList+1] = Island
 				end

@@ -153,10 +153,6 @@ local MIN_DELTA_TIME = 25
 local Maximum_Slider_Radius = NORMALISED_RADIUS * 2.4
 local Assumed_Slider_Radius = NORMALISED_RADIUS * 1.8
 
-function getTickListing()
-	
-end
-
 return function(baseList:{any}, baseData)
 	local DifficultyObjects:{ObjectData} = {}
 	for objID, crr in pairs(baseList) do
@@ -183,7 +179,7 @@ return function(baseList:{any}, baseData)
 			local prevTime = prevObj and prevObj.Time or 0
 			crrObj.DeltaTime = crr.Time - prevTime
 			crrObj.StrainTime = math.max(crrObj.DeltaTime, MIN_DELTA_TIME)
-			crrObj.Hit300Value = 2 * h300window(baseData.OD)
+			crrObj.Hit300Value = 0.75 * h300window(baseData.OD)
 			DifficultyObjects[objID] = crrObj
 			continue
 		end
@@ -243,7 +239,7 @@ return function(baseList:{any}, baseData)
 		local DeltaTime = crr.Time - prevobj.Time
 		local minimumDeltaTime = 25
 		local StrainTime = math.max(DeltaTime, minimumDeltaTime)
-		local Hit300Value = 2 * h300window(baseData.OD)
+		local Hit300Value = 0.75 * h300window(baseData.OD)
 		local lastCursorPosition:Vector2 = prevDiffObj.endCursorPosition
 		local currentPosition:Vector2 = positionOf(crr.Position)
 		local TailCirclePosition:Vector2?
