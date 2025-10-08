@@ -145,7 +145,7 @@ function _ComputeSpeedValue(Attributes:SpeedAttributes):number
 	end
 	
 	local accData = Attributes.AccuracyData	
-	local totalHit = accData.h300 + accData.h100 + accData.h50 + accData.missCount	
+	local totalHit = accData.h300 + accData.h100 + accData.h50 + accData.missCount
 	
 	local speedPS = basePerformance(Attributes.SpeedDiff)
 	

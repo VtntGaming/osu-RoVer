@@ -100,7 +100,7 @@ function calculator.FLDifficultyValue(StrainData:{{number}})
 	return difficulty
 end
 
-function calculator.LiveDifficultyValue(StrainPeak:{number}):number
+function calculator.LiveDifficultyValue(StrainPeak:{number}, strainType:string):number
 	local reducedSelectionCount = 10
 	local weight = 1
 	local decayWeight = 0.9
@@ -108,6 +108,10 @@ function calculator.LiveDifficultyValue(StrainPeak:{number}):number
 	local ReducedStrainBaseline = 0.75
 	
 	StrainPeak = _DeepCopy(StrainPeak)::{number}
+	
+	if strainType == "Speed" then
+		reducedSelectionCount = 5
+	end
 	
 	sortPeak(StrainPeak)
 	
@@ -485,8 +489,8 @@ export type LiveDifficultyReturnAttributes = {
 }
 
 function calculator.GetDifficultyAttributesFromLiveData(Attributes:LiveDifficultyAttributes):LiveDifficultyReturnAttributes
-	local aimDifficultyValue = calculator.LiveDifficultyValue(Attributes.AimPeak)
-	local speedDifficultyValue = calculator.LiveDifficultyValue(Attributes.SpeedPeak)
+	local aimDifficultyValue = calculator.LiveDifficultyValue(Attributes.AimPeak, "Aim")
+	local speedDifficultyValue = calculator.LiveDifficultyValue(Attributes.SpeedPeak, "Speed")
 	local flashlightDifficultyValue = Attributes.ModData.FL and calculator.LiveFLDifficultyValue(Attributes.FLPeak) or 0
 	local mechanicalDifficultyRating = calculateMechanicalDifficultyRating(aimDifficultyValue, speedDifficultyValue)
 	

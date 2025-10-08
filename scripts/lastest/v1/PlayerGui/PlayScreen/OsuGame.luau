@@ -832,7 +832,6 @@ function GetUserPlayUpdatedPS(Data:ScoreStatistic, externalData):(number, number
 
 
 	local ModData:modData.ModData = Data.ModData
-	ModData.SA = CurrentSpeed
 
 	local AccuracyData:PerformanceCalculator.AccuracyData = {
 		h300 = h300, h100 = h100, h50 = h50, missCount = MissCount, EffectiveMissCount = MissCount
@@ -1021,7 +1020,6 @@ function AddLeaderboardConnection(LeaderboardFrame,Data:ScoreStatistic,Score,UID
 			-- We re-calculate the map and update if the player's current mod data is difference than the current set
 			-- Player're not always set the NM mod to set so
 			local MapFile = PreviewMapPS.MapFile
-
 			local _, returnData = require(workspace.OsuConvert)(1, MapFile, 0, true, false, Data.ModData)
 			externalData = {
 				AimDiff = returnData.Difficulty.AimDifficulty,
@@ -1939,7 +1937,10 @@ game.ReplicatedStorage.Gameplay.GetSpectateData:InvokeServer(-1,-1)
 
 -- Replay data
 local ReplayDataRaw = ""
-FinaleReplayData = {Score = 0, MaxCombo = 0, Accuracy = {0,0,0,0}, User = "",Date = 0,PS = 0,FileName = "", Speed = 1}
+function replayDataDefault()
+	return {Score = 0, MaxCombo = 0, Accuracy = {0,0,0,0}, User = "",Date = 0,PS = 0,FileName = "", Speed = 1}
+end
+FinaleReplayData = replayDataDefault()
 
 ------- Check if the play ranked or not
 local Reporter = game.ReplicatedStorage:FindFirstChild("ExpoiltReport")
@@ -1995,7 +1996,7 @@ script.Parent.SpectateCall.Event:Connect(function(UID,Username)
 	script.Parent.StartGame:Fire()
 end)
 
-function ProcessReplayData(stringdata)
+function ProcessReplayData(stringdata):boolean
 	if string.find(stringdata,"USER") then
 		FinaleReplayData.User = string.sub(stringdata,6,#stringdata)
 	elseif string.find(stringdata,"DATE") then
@@ -2045,9 +2046,18 @@ function ProcessReplayData(stringdata)
 		local Filename = string.sub(stringdata,10,#stringdata)
 		FinaleReplayData.FileName = Filename
 		BeatmapStudio = workspace.Beatmaps:FindFirstChild(Filename) or workspace.ProcessingBeatmap:FindFirstChild(Filename)
+		if not BeatmapStudio then
+			FinaleReplayData = replayDataDefault()
+			PlayerGui.NotificationPopup.NotificationsPopup.ClientCreateNotification:Fire(
+				`Replay data load failed: Could not found beatmap {Filename} for the replay.`, 
+				Color3.fromRGB(255, 0, 0))
+			return false
+		end
 	elseif string.find(stringdata,"SPEED") then
 		FinaleReplayData.Speed = tonumber(string.sub(stringdata,7,#stringdata)) or 1
 	end
+	
+	return true
 end
 
 script.Parent.ReplayCall.Event:Connect(function(replaydata)
@@ -2061,7 +2071,11 @@ script.Parent.ReplayCall.Event:Connect(function(replaydata)
 			Finish = true
 			break
 		elseif i == 0 or not tonumber(string.sub(ReplayDataRaw,i,i)) then
-			ProcessReplayData(string.sub(ReplayDataRaw,i,Next-1))
+			local isOk = ProcessReplayData(string.sub(ReplayDataRaw,i,Next-1))
+			if not isOk then
+				-- failed to load replay
+				return
+			end
 			i = Next+1
 			continue
 		end
