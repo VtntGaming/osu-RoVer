@@ -21,6 +21,7 @@ function range(value:number):number
 end
 
 function difficultyRange(diff:number, min:number, mid:number, max:number):number
+	diff = 10 - diff	-- Why does the difficulty return oppositely???????
 	if diff > 5 then
 		return mid + (max - mid) * range(diff)
 	elseif diff < 5 then
@@ -179,7 +180,7 @@ return function(baseList:{any}, baseData)
 			local prevTime = prevObj and prevObj.Time or 0
 			crrObj.DeltaTime = crr.Time - prevTime
 			crrObj.StrainTime = math.max(crrObj.DeltaTime, MIN_DELTA_TIME)
-			crrObj.Hit300Value = 0.75 * h300window(baseData.OD)
+			crrObj.Hit300Value = 2 * h300window(baseData.OD)
 			DifficultyObjects[objID] = crrObj
 			continue
 		end
@@ -239,7 +240,7 @@ return function(baseList:{any}, baseData)
 		local DeltaTime = crr.Time - prevobj.Time
 		local minimumDeltaTime = 25
 		local StrainTime = math.max(DeltaTime, minimumDeltaTime)
-		local Hit300Value = 0.75 * h300window(baseData.OD)
+		local Hit300Value = 2 * h300window(baseData.OD)
 		local lastCursorPosition:Vector2 = prevDiffObj.endCursorPosition
 		local currentPosition:Vector2 = positionOf(crr.Position)
 		local TailCirclePosition:Vector2?
