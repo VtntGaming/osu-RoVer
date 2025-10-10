@@ -3095,7 +3095,6 @@ if not SliderMode then
 		end
 	end
 	local Multiplier = (TotalNote + TotalSliders)/TotalNote
-	MissDrain *= Multiplier
 end
 
 function GameOver()
