@@ -666,7 +666,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	-- Sometime it would not be very easy to match everything with osu! difficulty system
 	-- I need to adjust it back to the original osu! standard
 	local aimAdjustedMultiplier = 1
-	local speedAdjustedMultiplier = 1
+	local speedAdjustedMultiplier = 1.12
 	local aimSkillMultiplier = 26 * aimAdjustedMultiplier
 	local speedSkillMultiplier = 1.47 * speedAdjustedMultiplier
 	local flashlightSkillMultiplier = 0.05512
