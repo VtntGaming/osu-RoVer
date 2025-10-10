@@ -242,7 +242,7 @@ function calculateStarRating(basePerfomance, multiplier)
 		return 0
 	end
 	
-	return math.pow(multiplier, 1/3) * star_rating_multiplier * math.pow(100000 / math.pow(2, 1/1.1) * basePerfomance + 4 , 1/3)
+	return math.pow(multiplier, 1/3) * star_rating_multiplier * (math.pow(100000 / math.pow(2, 1/1.1) * basePerfomance, 1/3) + 4)
 end
 function calculator.CalculateVisibilityBonus(modData:ModData, AR:number, visibilityFactor:number)
 	if not visibilityFactor then
