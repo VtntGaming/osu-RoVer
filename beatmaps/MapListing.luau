@@ -351,6 +351,8 @@ return[[
 [10.28] | Camellia - Flamewall (Sotarks) [ETERNAL SACRED FIRE]
 [8.06] | Camellia - OOPARTS (Realazy) [Zenith]
 [11.25] | Camellia - OOPARTS (xArief) [CASUOZIZ]
+[10.71] | Camellia - Parallel Universe Shifter (iLyne) [To Infinity and Beyond]
+[10.38] | Camellia - Parallel Universe Shifter (ralsricat) [Singularity Collab]
 [8.39] | Camellia - R U Still xxxx? (captin1) [Extra]
 [5.39] | Camellia - Tornado (JeZag) [Insane]
 [6.34] | Camellia - Tornado (JeZag) [Uplift]
