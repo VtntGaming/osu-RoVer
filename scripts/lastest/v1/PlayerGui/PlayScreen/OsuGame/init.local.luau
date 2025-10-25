@@ -184,7 +184,7 @@ type Mod_DA = {
 DifficultyAdjust = {Active = false, Data = {}}::Mod_DA
 
 -- PreviewFrameScriptSettings
-PreviewFrameBaseVolume = 1
+PreviewFrameBaseVolume = 0.2
 
 -- Default settings
 BeatmapStudio = "playerchoose" --If test on studio, value to "playerchoose" if wanna set it to random
@@ -288,7 +288,7 @@ function IsTouchDeviceActive():boolean
 end
 
 -- blank function to prevent warnings and errors
-function ReloadPreviewFrame() end
+function ReloadPreviewFrame(isInit: boolean?) end
 function LoadLeaderboard() end
 
 function LoadMultiplier()
@@ -505,6 +505,7 @@ CurrentSetting.MainSettings.Hidden.MouseButton1Click:Connect(function()
 end)
 
 GameSettingManage.SubscribeSettingChange:Fire("MusicVolume", script, function(value)
+	TweenService:Create(CurrentPreviewFrame.OverviewSong,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{Volume = PreviewFrameBaseVolume*(value*0.01)}):Play()
 	TweenService:Create(CurrentPreviewFrame.OverviewSong,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{Volume = PreviewFrameBaseVolume*(value*0.01)}):Play()
 end)
 
@@ -1671,7 +1672,14 @@ PreviewMapPS = {
 	Aim = 0, Speed = 0, Mod = 0, AimFL = 0, Acc = 0, objCount = 0, MaxCombo = 0
 }
 
-ReloadPreviewFrame = function()
+previewFrameFirstLoad = false
+
+ReloadPreviewFrame = function(isInit: boolean?)
+	if isInit then
+		previewFrameFirstLoad = true
+	elseif not previewFrameFirstLoad then
+		return
+	end
 	local ModData:modData.ModData = {
 		HD = HiddenMod,
 		HR = HardRock,
@@ -1716,7 +1724,7 @@ end)
 wait()
 if StartupState == "Normal" then
 	spawn(function()
-		ReloadPreviewFrame()
+		ReloadPreviewFrame(true)
 		LoadLeaderboard()	
 	end)
 else
@@ -1986,12 +1994,14 @@ script.Parent.SpectateCall.Event:Connect(function(UID,Username)
 	SpectateRemote = SpectateData.Remote
 	SavedSpectateData = SpectateData
 	SpectatorCountRemote = SpectateData.SpectatorCountRemote
-	while wait() do
-		if game.Players:GetPlayerByUserId(UID) == nil then
-			require(PlayerGui:WaitForChild("NotificationPopup").NotificationsPopup.CreateNotification)("Player you spectate has left.",Color3.new(1,0,0))
-			break
+	task.spawn(function()
+		while wait() do
+			if game.Players:GetPlayerByUserId(UID) == nil then
+				require(PlayerGui:WaitForChild("NotificationPopup").NotificationsPopup.CreateNotification)("Player you spectate has left.",Color3.new(1,0,0))
+				break
+			end
 		end
-	end
+	end)	
 	game.ReplicatedStorage.Gameplay.UpdateStatus:FireServer(3)
 	script.Parent.StartGame:Fire()
 end)
@@ -3042,21 +3052,21 @@ if isSpectating == true then
 end
 
 function AdjustIngameSongVolume(volume)
-	print(volume, ReturnData.BeatmapVolume)
 	if tonumber(ReturnData.BeatmapVolume) ~= nil and ReturnData.BeatmapVolume > 0 and ReturnData.BeatmapVolume < 10 then
-		TweenService:Create(script.Parent.GameSong.Song, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = ReturnData.BeatmapVolume*(volume*0.02)}):Play()
-		TweenService:Create(script.Parent.GameSong.Song2, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = ReturnData.BeatmapVolume*(volume*0.02)}):Play()
+		TweenService:Create(script.Parent.GameSong.Song, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = ReturnData.BeatmapVolume*(volume*0.002)}):Play()
+		TweenService:Create(script.Parent.GameSong.Song2, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = ReturnData.BeatmapVolume*(volume*0.002)}):Play()
 	else
-		TweenService:Create(script.Parent.GameSong.Song, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = volume*0.02}):Play()
-		TweenService:Create(script.Parent.GameSong.Song2, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = volume*0.02}):Play()
+		TweenService:Create(script.Parent.GameSong.Song, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = volume*0.002}):Play()
+		TweenService:Create(script.Parent.GameSong.Song2, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {Volume = volume*0.002}):Play()
 	end
 end
 AdjustIngameSongVolume(SavedGameSettings.MusicVolume)
 
 timingPointEffectVolumeMultiplier = 1
 function AdjustIngameEffectVolume(volume)
+	--print("Adjust volume to: ", volume*0.004*timingPointEffectVolumeMultiplier)
 	for _,Hitsound in pairs(script.Hitsounds:GetChildren()) do
-		Hitsound.Volume = volume*0.02*timingPointEffectVolumeMultiplier
+		Hitsound.Volume = volume*0.004*timingPointEffectVolumeMultiplier
 	end
 end
 AdjustIngameEffectVolume(EffectVolume)
@@ -3850,6 +3860,11 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 			end)
 		end
 	end
+	
+	local limit = 0.0667	-- 15 clicks per sec on 1 btn
+	local lastMouseHit = {
+		M1 = 0, M2 = 0
+	}
 
 	task.spawn(function()
 		UserInputService.InputBegan:Connect(function(data)
@@ -3858,9 +3873,15 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 			elseif data.KeyCode == Key2Input and not (IsTouchDeviceActive()) then
 				MouseHitEvent:Fire(SecurityKey,2)
 			elseif data.UserInputType == Enum.UserInputType.MouseButton1 and MouseButtonEnabled == true and not (IsTouchDeviceActive()) then
-				MouseHitEvent:Fire(SecurityKey,3)
+				if os.clock() - lastMouseHit.M1 >= limit then
+					MouseHitEvent:Fire(SecurityKey,3)
+					lastMouseHit.M1 = os.clock()
+				end
 			elseif data.UserInputType == Enum.UserInputType.MouseButton2 and MouseButtonEnabled == true and not (IsTouchDeviceActive()) then
-				MouseHitEvent:Fire(SecurityKey,4)
+				if os.clock() - lastMouseHit.M2 >= limit then
+					MouseHitEvent:Fire(SecurityKey,4)
+					lastMouseHit.M1 = os.clock()
+				end
 			end
 		end)
 	end)
@@ -4071,11 +4092,6 @@ else
 	CircleApproachTime = 1200
 end
 
-
-
-
-
-
 local ZIndex = 999999999
 -- The default hit windows for Keyboard + Mouse/Tablet users
 local hit300 = (100 - 8 * OverallDifficulty) / SongSpeed -- 100 - 20
@@ -4122,10 +4138,10 @@ if (IsTouchDeviceActive()) or TouchDeviceDetected or Replay_TouchDevice then
 end
 
 
-EarlyMiss = math.min(EarlyMiss, CircleApproachTime/SongSpeed)
+EarlyMiss = math.min(EarlyMiss, CircleApproachTime)
 
-if CircleApproachTime/SongSpeed < hit50 then
-	local MissTiming = math.max(0,hit50 - CircleApproachTime/SongSpeed)
+if CircleApproachTime < hit50 then
+	local MissTiming = math.max(0,hit50 - CircleApproachTime)
 	script.Parent.HitError.MissArea.Size = UDim2.new(MissTiming/(hit50*2),0,0.25,0)
 end
 
@@ -5036,12 +5052,17 @@ spawn(function()
 				TweenService:Create(game.Lighting.Blur,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{Size = 0}):Play()
 			end
 		end)
-		if Duration > 3 then
-			BreakTimeFrame.Rotation = 20
+		if Duration > 2 then
+			local _rotation = 20
+			if math.random(0,1) == 1 then
+				_rotation = -20
+			end
+			BreakTimeFrame.Rotation = _rotation
+			local tInfoOut = TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out)
 			--TweenService:Create(BreakTimeFrame,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(0.5,0,0.5,-18)}):Play()
-			TweenService:Create(BreakTimeFrame,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(0,400,0,200),Rotation = 0,GroupTransparency = 0}):Play()
-			TweenService:Create(script.Parent.BreaktimeFrameOutline,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(0,400,0,200)}):Play()
-			TweenService:Create(script.Parent.BreaktimeFrameOutline.UIStroke,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Transparency = 0}):Play()
+			TweenService:Create(BreakTimeFrame,tInfoOut,{Size = UDim2.new(0,400,0,200),Rotation = 0,GroupTransparency = 0}):Play()
+			TweenService:Create(script.Parent.BreaktimeFrameOutline,tInfoOut,{Size = UDim2.new(0,400,0,200)}):Play()
+			TweenService:Create(script.Parent.BreaktimeFrameOutline.UIStroke,tInfoOut,{Transparency = 0}):Play()
 			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat,true)
 			local TotalNoteResult = AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss
 			local GameAccuracy = math.floor(((AccuracyData.h300*300+AccuracyData.h100*100+AccuracyData.h50*50)/(TotalNoteResult*300))*100*100)/100
@@ -5076,7 +5097,7 @@ spawn(function()
 				BreakTimeFrame.RankDisplay.TextColor3 = Color3.fromRGB(177,177,177)
 			end
 			BreakTimeFrame.MaxCombo.Text = tostring(AccuracyData.MaxCombo).."x"
-			BreakTimeFrame.MissTotal.Text = tostring(AccuracyData.miss).." miss"
+			BreakTimeFrame.MissTotal.Text = tostring(AccuracyData.miss).."x"
 			BreakTimeFrame.SS_Rank.Visible = SS and not (HiddenMod or Flashlight)
 			BreakTimeFrame.SSH_Rank.Visible = SS and (HiddenMod or Flashlight)
 			if AccuracyData.miss > 0 then
@@ -5094,33 +5115,36 @@ spawn(function()
 				if TimeLeft == 0 then
 					DisplayTime = 0
 				end
-				BreakTimeFrame.TimeDisplay.Text = "<b>"..tostring(math.floor(DisplayTime)).."</b>"
+				BreakTimeFrame.TimeDisplay.Text = tostring(math.floor(DisplayTime))
 				BreakTimeFrame.TimeProgress.Size = UDim2.new(((TimeLeft/Duration)*0.9),0,0,5)
 			end
-
-
-			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat,not DisableChatInGame)
 
 			spawn(function()
 				wait(0.5)
 				if Section == CurrentSection then
 					--BreakTimeFrame.Visible = false
 				end
-			end)
-			local FLSize = (AccuracyData.Combo <= 200 and 8-((AccuracyData.Combo/200)*3)) or 5
+			end)			
+			
+			local tInfoIn = TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.In)
 
-			if AccuracyData.Combo > 0 then
-				TweenService:Create(script.Parent.ComboFrameDisplay,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{GroupTransparency = 0}):Play()
-				TweenService:Create(script.Parent.ComboFade.ComboFade,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{GroupTransparency = 0}):Play()
-			end
-
-			TweenService:Create(FlashlightFrame,TweenInfo.new(2,Enum.EasingStyle.Linear),{Size = UDim2.new(FLSize,0,FLSize,0)}):Play()
-			TweenService:Create(BreakTimeFrame.TimeProgress,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{BackgroundTransparency = 1}):Play()
-			TweenService:Create(BreakTimeFrame,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(0,4,0,2),Rotation = -20,GroupTransparency = 1}):Play()
-			TweenService:Create(script.Parent.BreaktimeFrameOutline,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(1.067,0,0.8,0)}):Play()
-			TweenService:Create(script.Parent.BreaktimeFrameOutline.UIStroke,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Transparency = 1}):Play()
+			TweenService:Create(BreakTimeFrame.TimeProgress,tInfoIn,{BackgroundTransparency = 1}):Play()
+			TweenService:Create(BreakTimeFrame,tInfoIn,{Size = UDim2.new(0,4,0,2),Rotation = -_rotation,GroupTransparency = 1}):Play()
+			TweenService:Create(script.Parent.BreaktimeFrameOutline,tInfoIn,{Size = UDim2.new(1.067,0,0.8,0)}):Play()
+			TweenService:Create(script.Parent.BreaktimeFrameOutline.UIStroke,tInfoIn,{Transparency = 1}):Play()
 			--TweenService:Create(BreakTimeFrame,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Position = UDim2.new(0.5,0,-1.5,-18)}):Play()
+		else
+			while tick() - Start < (BreakTime[2]/1000)-1 do
+				wait()
+			end
 		end
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat,not DisableChatInGame)
+		if AccuracyData.Combo > 0 then
+			TweenService:Create(script.Parent.ComboFrameDisplay,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{GroupTransparency = 0}):Play()
+			TweenService:Create(script.Parent.ComboFade.ComboFade,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{GroupTransparency = 0}):Play()
+		end
+		local FLSize = (AccuracyData.Combo <= 200 and 8-((AccuracyData.Combo/200)*3)) or 5
+		TweenService:Create(FlashlightFrame,TweenInfo.new(2,Enum.EasingStyle.Linear),{Size = UDim2.new(FLSize,0,FLSize,0)}):Play()
 	end
 end)
 
@@ -5314,7 +5338,7 @@ task.spawn(function()
 	for i, TimingData in pairs(TimingPoints) do
 		if TimingData ~= nil and #TimingData > 0 then
 			repeat wait() until (tick() - Start) >= (TimingData[1] / 1000)
-			local volumeMultiplier = TimingData[6] / 100 * EffectVolume * 0.01
+			local volumeMultiplier = TimingData[6] / 100
 			timingPointEffectVolumeMultiplier = volumeMultiplier
 			AdjustIngameEffectVolume(EffectVolume)
 
@@ -6921,8 +6945,9 @@ function LetTheGameBegin()
 
 						-- Draw the slider
 						local newCurvePoint = SliderCurvePoints
+						local sliderTickData = HitObj.SliderTickData
 
-						local SliderObject = SliderComponent.new(newCurvePoint, Slides, CircleSize, ExtraLengthData, SliderObjManage)
+						local SliderObject = SliderComponent.new(newCurvePoint, sliderTickData, Slides, CircleSize, ExtraLengthData, SliderObjManage)
 						SliderObject.SliderBase.ZIndex = NoteZIndex-3
 
 						local FollowCircle = SliderObject.SliderFollowCircle
@@ -6951,6 +6976,7 @@ function LetTheGameBegin()
 						end
 
 						repeat wait() until tick() - Start >= (HitObj.Time - CircleApproachTime)/1000
+						SliderObject.ShowCurrentTickOnSlide(1, SliderTime * 1000, true)
 						while tick() - Start < (HitObj.Time - CircleApproachTime)/1000 + FadeInTime do
 							local t = ((tick() - Start) - (HitObj.Time - CircleApproachTime)/1000)/FadeInTime
 							local t2 = ((tick() - Start) - (HitObj.Time - CircleApproachTime)/1000)/SnakeInTime
@@ -6990,14 +7016,25 @@ function LetTheGameBegin()
 						end
 						task.spawn(function()
 							repeat wait() until (tick() - Start) >= HitObj.Time/1000 and SliderTime ~= -1
+							
+							local currentProcessingSlide = 1
+							local currentTickOnSlide = 1
 
 							task.spawn(function()
 								-- Slider tick handler
 								for i, tickData in pairs(HitObj.SliderTickData) do
 									local nextTick = tickData[1]
+									local nextTickSlide = tickData[2]
+									if nextTickSlide > currentProcessingSlide then
+										currentProcessingSlide = nextTickSlide
+										SliderObject.ShowCurrentTickOnSlide(nextTickSlide, SliderTime * 1000)
+										currentTickOnSlide = 1
+									end
 									if tick() - Start < nextTick/1000 then
 										repeat wait() until tick() - Start >= nextTick/1000
 									end
+									SliderObject.CleanTick(currentProcessingSlide, currentTickOnSlide)
+									currentTickOnSlide += 1
 									if Completed then
 										break 
 									end
@@ -8208,7 +8245,7 @@ OnlineResult.OnlineScore.Score.Text = GetNewNum(math.floor(Score))
 OnlineResult.OnlineAccuracy.Accuracy.Text = tostringAcc.."%"
 OnlineResult.OnlineMaxCombo.MaxCombo.Text = GetNewNum(AccuracyData.MaxCombo).."x"
 OnlineResult.OnlinePS.PerfomanceScore.Text = GetNewNum(math.floor(TotalRewardedPS)).."ps"
-OnlineResult.OverallPerfomance.TotalPS.Text = LocalPlayer.leaderstats.Perfomance.Value
+OnlineResult.OverallPerfomance.TotalPS.Text = LocalPlayer.leaderstats.Performance.Value
 
 -- AccurancyChart
 local AccurancyChartFrame = ResultFrame.AccurancyChart.MainFrame.MainFrame
@@ -8671,7 +8708,7 @@ if PlayRanked == true and CanbeSubmitted then
 
 		OnlineResult.OverallPerfomance.Improvement.Text = StringImprovement.."ps"
 	else
-		OnlineResult.OverallPerfomance.TotalPS.Text = LocalPlayer.leaderstats.Perfomance.Value
+		OnlineResult.OverallPerfomance.TotalPS.Text = LocalPlayer.leaderstats.Performance.Value
 		OnlineResult.OverallPerfomance.Improvement.Text = "-"
 	end
 
