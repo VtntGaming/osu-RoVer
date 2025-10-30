@@ -1029,6 +1029,7 @@ return[[
 [4.80] | Loki - Wizard's Tower (Taeyang) [Insane]
 [5.82] | Loki - Wizard's Tower (Taeyang) [Daycore's Extra]
 [6.38] | Loki - Wizard's Tower (Taeyang) [Ultimate Magic]
+[8.73] | Ludicin - Echoes of Memoria (hehe) [Hypermnesia]
 [2.89] | Luschka - Kami no Kotoba (byfar) [Advanced]
 [3.47] | Luschka - Kami no Kotoba (byfar) [Hard]
 [4.60] | Luschka - Kami no Kotoba (byfar) [Insane]
