@@ -64,6 +64,9 @@ for _, item in pairs(storyboardData) do
 end
 
 table.sort(stackLoads, function(a,b)
+	if not tonumber(a) then return false
+		elseif not tonumber(b) then return true
+	end
 	return a > b
 end)
 
@@ -262,6 +265,10 @@ local SUPPORTED_CMD = {
 	"F", "M", "MX", "MY", "S", "V", "C", "R"
 }
 
+-- Start the song
+script.Parent.Parent.Parent.Sound.TimePosition = os.clock() - startTime
+script.Parent.Parent.Parent.Sound:Play()
+
 for i, spriteData in pairs(storyboardData) do
 	local objData = spriteData.Data
 	local objCommands = spriteData.Commands
@@ -293,10 +300,6 @@ for i, spriteData in pairs(storyboardData) do
 	local firstCmd = objCommands[1]
 	if not firstCmd then
 		break
-	end
-	if i == 1 then
-		script.Parent.Parent.Parent.Sound.TimePosition = os.clock() - startTime
-		script.Parent.Parent.Parent.Sound:Play()
 	end
 
 	local objStartTime = firstCmd.StartTime/1000
