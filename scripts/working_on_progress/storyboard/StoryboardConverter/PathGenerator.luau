@@ -55,6 +55,7 @@ local data = require(workspace.StoryboardConverter)(storyboardFile,beatmapFile)
 local output = require(workspace.StoryboardConverter.PathGenerator)(data)
 
 local outputScript = Instance.new("ModuleScript")
+outputScript.Name = "ImageList"
 outputScript.Source = output
 outputScript.Parent = workspace
 ]]
