@@ -44,3 +44,17 @@ return function(sprites:{spriteObject})
 	output..= TEMPLATE.END
 	return output
 end
+
+
+--[[
+How to use:
+
+local storyboardFile = <storyboard file>
+local beatmapFile = <beatmap file>
+local data = require(workspace.StoryboardConverter)(storyboardFile,beatmapFile)
+local output = require(workspace.StoryboardConverter.PathGenerator)(data)
+
+local outputScript = Instance.new("ModuleScript")
+outputScript.Source = output
+outputScript.Parent = workspace
+]]
