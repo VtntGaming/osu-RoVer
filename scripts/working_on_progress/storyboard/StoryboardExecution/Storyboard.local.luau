@@ -4,8 +4,8 @@ local StoryboardConverter = require(workspace.StoryboardConverter)
 local PathListConverter = require(workspace.StoryboardConverter.PathGenerator)
 
 local s = os.clock()
-local difficultyFile = workspace.Beatmaps["Camellia - OOPARTS (xArief) [CASUOZIZ]"]
-local storyboardData = StoryboardConverter(workspace.Storyboards.OOPARTS, difficultyFile)
+local difficultyFile = workspace.Beatmaps["Ludicin - Echoes of Memoria (hehe) [Hypermnesia]"]
+local storyboardData = StoryboardConverter(workspace.Storyboards["Ludicin - Echoes of Memoria"], difficultyFile)
 print("Load completed, took", os.clock()-s)
 type SpriteObject = StoryboardConverter.spriteObject
 local DEFAULT_ASSET_ID = "rbxassetid://13227806914"
@@ -93,7 +93,9 @@ for _, item in pairs(ImageList) do
 	end
 end
 
-ContentProvider:PreloadAsync(loadList)
+for i = 1, 5 do
+	ContentProvider:PreloadAsync(loadList)
+end
 
 print("All preview image loaded")
 
