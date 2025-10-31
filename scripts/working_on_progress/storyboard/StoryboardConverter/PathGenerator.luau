@@ -3,19 +3,26 @@ type CommandData = {
 	Easing:number,
 	StartTime:number,
 	EndTime:number,
-	Params:{number}
+	Params:{number|string}
 }
 
 type SpriteData = {
 	Layer:number,
 	AnchorPoint:Vector2,
 	Filepath:string,
-	Position:Vector2
+	Position:Vector2,
+	LayoutOrder:number
+}
+
+type AnimationData = SpriteData & {
+	FrameCount: number,
+	FrameDelay: number,
+	IsForever: boolean
 }
 
 type spriteObject = {
-	-- Currently support sprite only
-	Data: SpriteData,
+	Type: string,
+	Data: SpriteData | AnimationData,
 	Commands:{CommandData}
 }
 
@@ -31,8 +38,18 @@ return function(sprites:{spriteObject})
 	
 	for _, obj in pairs(sprites) do
 		local pathName = obj.Data.Filepath
-		if not table.find(pathList, pathName) then
-			pathList[#pathList+1] = pathName
+		if obj.Type == "Sprite" then
+			if not table.find(pathList, pathName) then
+				pathList[#pathList+1] = pathName
+			end
+		elseif obj.Type == "Animation" then
+			local animData = obj.Data::AnimationData
+			for i = 0, animData.FrameCount-1 do
+				local path = `{pathName}{i}`
+				if not table.find(pathList, path) then
+					pathList[#pathList+1] = path
+				end
+			end
 		end
 	end
 	

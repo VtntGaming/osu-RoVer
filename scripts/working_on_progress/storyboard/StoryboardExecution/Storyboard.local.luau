@@ -14,7 +14,7 @@ local DEFAULT_ASSET_SIZE = Vector2.new(32,32)
 --local pathList = PathListConverter(storyboardData)
 --print(pathList)
 
-local ImageList = require(workspace.Storyboards.OOPARTS.ImageList)
+local ImageList = require(workspace.Storyboards["Ludicin - Echoes of Memoria"].ImageList)
 local appearCount = {}
 
 for _, sprite in pairs(storyboardData) do
@@ -97,12 +97,13 @@ for _, item in pairs(ImageList) do
 end
 
 for i = 1, 5 do
+	print("Loading audio... ", `({i}/5)`)
 	ContentProvider:PreloadAsync(loadList)
 end
 
 print("All preview image loaded")
 
-local startTime = os.clock()
+local startTime = os.clock() + 3
 local spritesCount = #storyboardData
 local processingSprites = 0
 local commandsCount = 0
@@ -266,8 +267,11 @@ local SUPPORTED_CMD = {
 }
 
 -- Start the song
-script.Parent.Parent.Parent.Sound.TimePosition = os.clock() - startTime
-script.Parent.Parent.Parent.Sound:Play()
+task.spawn(function()
+	repeat task.wait() until os.clock() - startTime >= 0
+	script.Parent.Parent.Parent.Sound.TimePosition = os.clock() - startTime
+	script.Parent.Parent.Parent.Sound:Play()
+end)
 
 for i, spriteData in pairs(storyboardData) do
 	local objData = spriteData.Data
@@ -284,7 +288,7 @@ for i, spriteData in pairs(storyboardData) do
 			lastCommandTime = cmd.EndTime
 		end
 	end
-	if os.clock() - startTime > lastCommandTime/1000 then
+	if os.clock() - startTime > (lastCommandTime/1000 + 1) then
 		-- No need to render this sprite
 		continue
 	end
@@ -322,10 +326,34 @@ for i, spriteData in pairs(storyboardData) do
 	local objectSize =  toUDim2(_imgSize or DEFAULT_ASSET_SIZE)
 	local parentDestination = LayoutPlacement[objData.Layer]
 	
+	local imageIdList = {}
+	local animData = {}
+	if spriteData.Type == "Animation" then
+		local animData = objData::StoryboardConverter.AnimationData
+		local raw = animData.Filepath:split(".")
+		local p = ""
+		for i = 1, #raw-1 do
+			p = p..raw[i]
+		end
+		local ex = raw[#raw]
+		for i = 0, animData.FrameCount-1 do
+			local path = `{p}{i}.{ex}`
+			local id = ImageList[path] and ImageList[path].ImageId
+			imageIdList[i] = id
+			if i == 0 then
+				_imgSize = ImageList[path] and ImageList[path].Size
+			end
+		end
+	end
+	
 	local extraData = {
 		ImageSize = _imgSize,
 		Image = _imgId,
-		Size = objectSize
+		Size = objectSize,
+		ImageIdList = imageIdList,
+		AnimData = animData,
+		Type = spriteData.Type,
+		StartTime = firstCmd.StartTime
 	}
 	
 	currentActor:SendMessage("AddObject", objUnquieId, objData, extraData)
@@ -334,7 +362,7 @@ for i, spriteData in pairs(storyboardData) do
 		local currentActiveCommand = 0
 		local finishedCommands = 0
 		for _, command in pairs(objCommands) do
-			if not command. StartTime then
+			if not command.StartTime then
 				finishedCommands += 1
 				continue
 			end

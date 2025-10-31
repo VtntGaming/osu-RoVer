@@ -5,6 +5,7 @@ local UI_PROCESS_PER_FRAME:number
 
 local DEFAULT_ASSET_ID = "rbxassetid://13227806914"
 local DEFAULT_ASSET_SIZE = Vector2.new(32,32)
+local ContentProvider = game:GetService("ContentProvider")
 
 local callbacks = {}
 local callbacks_once = {}
@@ -429,9 +430,10 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 		FlipY = false,
 		AdditiveColor = false
 	}
+	local imageList = extraData.ImageIdList
 	local objectSize =  toUDim2(extraData.ImageSize or DEFAULT_ASSET_SIZE)
 	local objectFrame = getObj()
-	objectFrame.Image = extraData.Image or DEFAULT_ASSET_ID
+	objectFrame.Image = extraData.Image or (imageList and imageList[0]) or DEFAULT_ASSET_ID
 	objectFrame.Parent = nil
 	objectFrame.BackgroundTransparency = 1
 	objectFrame.Size = extraData.Size
@@ -439,20 +441,66 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 	objectFrame.Position = toUDim2(objData.Position)
 	objectFrame.Name = tostring(objData.Filepath)
 	objectFrame.ZIndex = objData.LayoutOrder
+	objectFrame:SetAttribute("UnquieID", unquieId)
 	local parentDestination = LayoutPlacement[objData.Layer]
+	local objectType = extraData.Type
 	
-	local UI_funct = function()
-		local newTransparency = 1 - crrObjectData.Opacity
+	local objectFrameList = {}
+	local current = nil
+	if objectType == "Animation" then
+		for i = 0, objData.FrameCount - 1 do
+			local newClone = getObj()
+			newClone.Image = (imageList and imageList[i]) or DEFAULT_ASSET_ID
+			newClone.Parent = nil
+			newClone.BackgroundTransparency = 1
+			newClone.Size = extraData.Size
+			newClone.AnchorPoint = objData.AnchorPoint
+			newClone.Position = toUDim2(objData.Position)
+			newClone.Name = tostring(objData.Filepath)..tostring(i)
+			newClone.ZIndex = objData.LayoutOrder + objData.FrameCount - i
+			newClone:SetAttribute("UnquieID", unquieId)
+			objectFrameList[i] = newClone
+		end
+	end
+	local globalParentNull = false
+	
+	local UI_funct = function()		
+		if objectType == "Animation" then
+			local frameDelay = objData.FrameDelay :: number
+			local frameCount = objData.FrameCount :: number
+			local index = (((os.clock() - startTime) - extraData.StartTime) * 1000) // frameDelay
+			index = index % frameCount
 
+			local newObj = objectFrameList[index]
+			if current then
+				local old = current
+				task.spawn(function()
+					local s = os.clock()
+					while os.clock() - s < 0.5 and not globalParentNull do
+						old.Position = current.Position
+						old.Size = current.Size
+						task.wait()
+					end
+					if old:GetAttribute("UnquieID") == unquieId then
+						old.Parent = nil						
+					end			
+				end)
+			end			
+			current = objectFrame			
+			objectFrame = newObj
+		end
+		local newTransparency = 1 - crrObjectData.Opacity
 		if objectFrame.ImageTransparency ~= newTransparency then
-			local newPrt = newTransparency < 1 and parentDestination or nil
-			if objectFrame.Parent ~= newPrt then
-				objectFrame.Parent = newPrt
-				if not newPrt then
-					return	-- It's alrady invisible, no need to process
-				end
-			end
 			objectFrame.ImageTransparency = newTransparency
+		end
+
+		local newPrt = newTransparency < 1 and parentDestination or nil
+		globalParentNull = newPrt == nil
+		if objectFrame.Parent ~= newPrt then
+			objectFrame.Parent = newPrt
+			if not newPrt then					
+				return	-- It's alrady invisible, no need to process
+			end
 		end
 
 		local newColor = crrObjectData.Color
@@ -460,7 +508,7 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 		local newPos = toUDim2(Vector2.new(crrObjectData.Position.X, crrObjectData.Position.Y))
 		local scaleX = crrObjectData.FlipX and -1 or 1
 		local scaleY = crrObjectData.FlipY and -1 or 1
-		local newScale = UDim2.fromScale(objectSize.X.Scale * crrObjectData.Scale.X * scaleX, objectSize.Y.Scale * crrObjectData.Scale.Y * scaleY)		
+		local newScale = UDim2.fromScale(objectSize.X.Scale * crrObjectData.Scale.X * scaleX, objectSize.Y.Scale * crrObjectData.Scale.Y * scaleY)
 
 		if objectFrame.Position ~= newPos then
 			objectFrame.Position = newPos
@@ -482,7 +530,8 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 	callbacks_UI[unquieId] = UI_funct
 	
 	local data = {
-		Object = objectFrame, 
+		Object = objectFrame,
+		ObjectFrameList = objectFrameList,
 		Data = crrObjectData
 	}
 	objectData[unquieId] = data
@@ -491,7 +540,16 @@ end)
 script.Parent:BindToMessage("RemoveObject", function(unquieId:string)
 	callbacks_UI[unquieId] = nil
 	objectData[unquieId].Object.Parent = nil
+	objectData[unquieId].Object:SetAttribute("UnquieID", nil)
 	unused_objs[#unused_objs+1] = objectData[unquieId].Object
+	local frameList = objectData.ObjectFrameList
+	if frameList then
+		for _, item in pairs(frameList) do
+			item.Parent = nil
+			item:SetAttribute("UnquieID", nil)
+			unused_objs[#unused_objs+1] = item
+		end
+	end
 	objectData[unquieId] = nil
 end)
 

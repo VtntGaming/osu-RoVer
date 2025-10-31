@@ -76,14 +76,21 @@ export type SpriteData = {
 	LayoutOrder:number
 }
 
+export type AnimationData = SpriteData & {
+	FrameCount: number,
+	FrameDelay: number,
+	IsForever: boolean
+}
+
 export type spriteObject = {
-	-- Currently support sprite only
-	Data: SpriteData,
+	Type: string,
+	Data: SpriteData | AnimationData,
 	Commands:{CommandData}
 }
 
 local function newSprite():spriteObject
 	local spriteObj:spriteObject = {
+		Type = "",
 		Data = {
 			Layer = 0,
 			AnchorPoint = ANCHOR_POINT_ORIGIN.TopLeft,
@@ -109,17 +116,17 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 		if table.find(COMMAND_DECLARE_CHARACTER, firstChar) then
 			if currentSprite then
 				local rawData = lineData:split()
-				local commandType = rawData[1]:sub(2,-1)
 				local startTime = tonumber(rawData[3]) or 0
 				local endTime = tonumber(rawData[4]) or startTime
 				local newcmdData:CommandData = {
 					CommandType = rawData[1]:sub(2,-1),
 					Easing = tonumber(rawData[2]) or 0,
-					StartTime = tonumber(rawData[3]) or 0,
-					EndTime = tonumber(rawData[4]) or 0,
+					StartTime = startTime,
+					EndTime = endTime,
 					Params = {}
 				}
 				
+				local commandType = rawData[1]:sub(2,-1)
 				for i = 5, #rawData do
 					newcmdData.Params[#newcmdData.Params+1] = commandType == "P" and tostring(rawData[i]) or (tonumber(rawData[i]) or 0)
 				end
@@ -128,8 +135,10 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 		else
 			-- it's a sprite or animation
 			local rawData = lineData:split()
-			if rawData[1] == "Sprite" then
+			local objType = rawData[1]
+			if objType == "Sprite" or objType == "Animation" then
 				local sprite = newSprite()::spriteObject
+				sprite.Type = objType
 				sprite.Data = {
 					Layer = LAYER_VALUE[rawData[2]],
 					AnchorPoint = ANCHOR_POINT_ORIGIN[rawData[3]],
@@ -137,6 +146,13 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 					Position = Vector2.new(rawData[5], rawData[6]),
 					LayoutOrder = crrOrder
 				}
+				
+				if objType == "Animation" then
+					local animationData = sprite.Data::AnimationData
+					animationData.FrameCount = tonumber(rawData[7])
+					animationData.FrameDelay = tonumber(rawData[8])
+					animationData.IsForever = rawData[9] == "LoopForever"
+				end
 				
 				currentSprite = sprite
 				sprites[#sprites+1] = sprite
@@ -147,7 +163,7 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 	
 	if difficultyFile then
 		local diffFileData = require(difficultyFile)::string
-		local _, s = diffFileData:find("[Events]")
+		local _, s = diffFileData:find("[[Events]")
 		local e, _ = diffFileData:find("//Storyboard Sound Samples")
 		diffFileData = diffFileData:sub(s,e)
 		for i, lineData in pairs(diffFileData:split("\n")) do
@@ -160,8 +176,8 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 					local newcmdData:CommandData = {
 						CommandType = rawData[1]:sub(2,-1),
 						Easing = tonumber(rawData[2]) or 0,
-						StartTime = tonumber(rawData[3]) or 0,
-						EndTime = tonumber(rawData[4]) or 0,
+						StartTime = startTime,
+						EndTime = endTime,
 						Params = {}
 					}
 
