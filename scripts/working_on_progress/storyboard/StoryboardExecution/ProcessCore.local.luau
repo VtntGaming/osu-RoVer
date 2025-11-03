@@ -444,13 +444,13 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 	objectFrame:SetAttribute("UnquieID", unquieId)
 	local parentDestination = LayoutPlacement[objData.Layer]
 	local objectType = extraData.Type
-	
+
 	local objectFrameList = {}
-	local current = nil
+	local current: ImageLabel? = nil
 	if objectType == "Animation" then
 		for i = 0, objData.FrameCount - 1 do
 			local newClone = getObj()
-			newClone.Image = (imageList and imageList[i]) or DEFAULT_ASSET_ID
+			newClone.Image = (imageList and imageList[i+1]) or DEFAULT_ASSET_ID
 			newClone.Parent = nil
 			newClone.BackgroundTransparency = 1
 			newClone.Size = extraData.Size
@@ -463,7 +463,7 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 		end
 	end
 	local globalParentNull = false
-	
+
 	local UI_funct = function()		
 		if objectType == "Animation" then
 			local frameDelay = objData.FrameDelay :: number
@@ -471,19 +471,32 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 			local index = (((os.clock() - startTime) - extraData.StartTime) * 1000) // frameDelay
 			index = index % frameCount
 
+			local function _trySet(obj1, obj2, attribute)
+				if obj1[attribute] ~= obj2[attribute] then
+					obj1[attribute] = obj2[attribute]
+				end
+			end
+
 			local newObj = objectFrameList[index]
-			if current then
+			if current and newObj ~= current then
 				local old = current
 				task.spawn(function()
 					local s = os.clock()
-					while os.clock() - s < 0.5 and not globalParentNull do
-						old.Position = current.Position
-						old.Size = current.Size
+					local holdTime = 0.5 - frameDelay/1000
+					while os.clock() - s < holdTime and current.Parent do
+						--old.Position = current.Position
+						--old.Size = current.Size
+						--old.BackgroundTransparency = current.BackgroundTransparency
+						--old.ImageColor3 = current.ImageColor3
+						_trySet(old, current, "Position")
+						_trySet(old, current, "Size")
+						_trySet(old, current, "BackgroundTransparency")
+						_trySet(old, current, "ImageColor3")
 						task.wait()
 					end
 					if old:GetAttribute("UnquieID") == unquieId then
-						old.Parent = nil						
-					end			
+						old.Parent = nil
+					end
 				end)
 			end			
 			current = objectFrame			
@@ -528,7 +541,7 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 	end
 
 	callbacks_UI[unquieId] = UI_funct
-	
+
 	local data = {
 		Object = objectFrame,
 		ObjectFrameList = objectFrameList,
@@ -540,13 +553,11 @@ end)
 script.Parent:BindToMessage("RemoveObject", function(unquieId:string)
 	callbacks_UI[unquieId] = nil
 	objectData[unquieId].Object.Parent = nil
-	objectData[unquieId].Object:SetAttribute("UnquieID", nil)
 	unused_objs[#unused_objs+1] = objectData[unquieId].Object
-	local frameList = objectData.ObjectFrameList
+	local frameList = objectData[unquieId].ObjectFrameList
 	if frameList then
 		for _, item in pairs(frameList) do
 			item.Parent = nil
-			item:SetAttribute("UnquieID", nil)
 			unused_objs[#unused_objs+1] = item
 		end
 	end
@@ -565,7 +576,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 	local easing = getEasing(command.Easing)
 	local params = command.Params
 	local commandHaveRanOnce = false
-	
+
 	local crrObjectData = objectData[objUnquieId].Data
 
 	if commandType == "F" then
@@ -680,9 +691,9 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 			local startR = params[1] or 0
 			local startG = params[2] or 0
 			local startB = params[3] or 0
-			local endR = params[4] or 0
-			local endG = params[5] or 0
-			local endB = params[6] or 0
+			local endR = params[4] or startR
+			local endG = params[5] or startG
+			local endB = params[6] or startB
 
 			local startColor = Color3.fromRGB(startR, startG, startB)
 			local endColor = Color3.fromRGB(endR, endG, endB)
@@ -707,8 +718,12 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 			crrObjectData.Rotation = math.lerp(startRotation, endRotation, progress)
 		end
 	end
-	
-	callbacks[unquieId] = funct
+
+	if commandDuration == 0 then		
+		callbacks_once[unquieId] = funct
+	else
+		callbacks[unquieId] = funct
+	end	
 end)
 
 script.Parent:BindToMessage("RemoveCommand", function(cmdUnquieId:string)

@@ -65,7 +65,12 @@ export type CommandData = {
 	Easing:number,
 	StartTime:number,
 	EndTime:number,
-	Params:{number|string}
+	Params:{number|string},
+	InsideALoop: boolean
+}
+
+export type LoopCommand = CommandData & {
+	LoopCount: number
 }
 
 export type SpriteData = {
@@ -84,9 +89,26 @@ export type AnimationData = SpriteData & {
 
 export type spriteObject = {
 	Type: string,
+	StartTime: number,
+	EndTime: number,
+	ContainsLoop: boolean,
+	localLoop: boolean,
 	Data: SpriteData | AnimationData,
 	Commands:{CommandData}
 }
+
+local function deepCopy(t:{any}):{any}
+	local newT = {}
+	for key, value in pairs(t) do
+		if typeof(value) == "table" then
+			newT[key] = deepCopy(value)
+		else
+			newT[key] = value
+		end
+	end
+	
+	return newT
+end
 
 local function newSprite():spriteObject
 	local spriteObj:spriteObject = {
@@ -98,6 +120,10 @@ local function newSprite():spriteObject
 			Position = Vector2.zero,
 			LayoutOrder = 0
 		},
+		localLoop = false,
+		ContainsLoop = false,
+		StartTime = 0,
+		EndTime = 0,
 		Commands = {}
 	}
 	
@@ -117,16 +143,40 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 			if currentSprite then
 				local rawData = lineData:split()
 				local startTime = tonumber(rawData[3]) or 0
+				local secChar = lineData:sub(2,2)
+				if not table.find(COMMAND_DECLARE_CHARACTER, secChar) then
+					currentSprite.localLoop = false
+				end
+
 				local endTime = tonumber(rawData[4]) or startTime
+				local commandType = rawData[1]:sub(2,-1)
+				if currentSprite.localLoop then
+					commandType = rawData[1]:sub(3,-1)
+				end
 				local newcmdData:CommandData = {
-					CommandType = rawData[1]:sub(2,-1),
+					CommandType = commandType,
 					Easing = tonumber(rawData[2]) or 0,
 					StartTime = startTime,
 					EndTime = endTime,
-					Params = {}
+					Params = {},
+					InsideALoop = currentSprite.localLoop
 				}
 				
-				local commandType = rawData[1]:sub(2,-1)
+				if commandType == "L" then
+					currentSprite.localLoop = true
+					local loopCommand = newcmdData::LoopCommand
+					loopCommand.Easing = 0
+					loopCommand.StartTime = tonumber(rawData[2]) or 0
+					loopCommand.LoopCount = tonumber(rawData[3]) or 0
+					currentSprite.ContainsLoop = true
+				elseif commandType == "T" then
+					currentSprite.localLoop = true
+					local loopCommand = newcmdData::LoopCommand
+					loopCommand.Easing = 0
+					loopCommand.StartTime = tonumber(rawData[2]) or 0
+					loopCommand.LoopCount = 1
+					currentSprite.ContainsLoop = true
+				end
 				for i = 5, #rawData do
 					newcmdData.Params[#newcmdData.Params+1] = commandType == "P" and tostring(rawData[i]) or (tonumber(rawData[i]) or 0)
 				end
@@ -152,6 +202,7 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 					animationData.FrameCount = tonumber(rawData[7])
 					animationData.FrameDelay = tonumber(rawData[8])
 					animationData.IsForever = rawData[9] == "LoopForever"
+					crrOrder += animationData.FrameCount
 				end
 				
 				currentSprite = sprite
@@ -172,44 +223,166 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 				if currentSprite then
 					local rawData = lineData:split()
 					local startTime = tonumber(rawData[3]) or 0
+					local secChar = lineData:sub(2,2)
+					if not table.find(COMMAND_DECLARE_CHARACTER, secChar) then
+						currentSprite.localLoop = false
+					end
+
 					local endTime = tonumber(rawData[4]) or startTime
+					local commandType = rawData[1]:sub(2,-1)
+					if currentSprite.localLoop then
+						commandType = rawData[1]:sub(3,-1)
+					end
 					local newcmdData:CommandData = {
-						CommandType = rawData[1]:sub(2,-1),
+						CommandType = commandType,
 						Easing = tonumber(rawData[2]) or 0,
 						StartTime = startTime,
 						EndTime = endTime,
-						Params = {}
+						Params = {},
+						InsideALoop = currentSprite.localLoop
 					}
 
+					if commandType == "L" then
+						currentSprite.localLoop = true
+						local loopCommand = newcmdData::LoopCommand
+						loopCommand.Easing = 0
+						loopCommand.StartTime = tonumber(rawData[2]) or 0
+						loopCommand.LoopCount = tonumber(rawData[3]) or 0
+						currentSprite.ContainsLoop = true
+					elseif commandType == "T" then
+						currentSprite.localLoop = true
+						local loopCommand = newcmdData::LoopCommand
+						loopCommand.Easing = 0
+						loopCommand.StartTime = tonumber(rawData[2]) or 0
+						loopCommand.LoopCount = 1
+						currentSprite.ContainsLoop = true
+					end
 					for i = 5, #rawData do
-						newcmdData.Params[#newcmdData.Params+1] = tonumber(rawData[i]) or 0
+						newcmdData.Params[#newcmdData.Params+1] = commandType == "P" and tostring(rawData[i]) or (tonumber(rawData[i]) or 0)
 					end
 					currentSprite.Commands[#currentSprite.Commands+1] = newcmdData
 				end
 			else
 				-- it's a sprite or animation
 				local rawData = lineData:split()
-				if rawData[1] == "Sprite" then
+				local objType = rawData[1]
+				if objType == "Sprite" or objType == "Animation" then
 					local sprite = newSprite()::spriteObject
-					local filePath = rawData[4]
-					local match = string.match(filePath, '"(.-)"')
-					if match then
-						filePath = match
-					end
+					sprite.Type = objType
 					sprite.Data = {
 						Layer = LAYER_VALUE[rawData[2]],
 						AnchorPoint = ANCHOR_POINT_ORIGIN[rawData[3]],
-						Filepath = filePath,
+						Filepath = rawData[4]:sub(2,-2),
 						Position = Vector2.new(rawData[5], rawData[6]),
-						LayoutOrder = crrOrder_diff
+						LayoutOrder = crrOrder
 					}
+
+					if objType == "Animation" then
+						local animationData = sprite.Data::AnimationData
+						animationData.FrameCount = tonumber(rawData[7])
+						animationData.FrameDelay = tonumber(rawData[8])
+						animationData.IsForever = rawData[9] == "LoopForever"
+						crrOrder += animationData.FrameCount
+					end
 
 					currentSprite = sprite
 					sprites[#sprites+1] = sprite
-					crrOrder_diff += 1
+					crrOrder += 1
 				end
 			end
 		end
+	end
+	local f = false
+	-- Reprocess the loop commands
+	for _, item in pairs(sprites) do
+		if item.ContainsLoop then
+			local loops = {}
+			local remove_index = {}
+			local currentLoop = nil
+			
+			for i, cmd in pairs(item.Commands) do
+				if cmd.CommandType == "L" or cmd.CommandType == "T" then
+					currentLoop = {
+						LoopCount = cmd.LoopCount,
+						StartTime = cmd.StartTime,
+						Commands = {},
+						LoopMaxDuration = 0
+					}
+					remove_index[#remove_index+1] = i
+				else
+					if cmd.InsideALoop then
+						if currentLoop then
+							currentLoop.Commands[#currentLoop.Commands + 1] = cmd
+							currentLoop.LoopMaxDuration = math.max(currentLoop.LoopMaxDuration, cmd.EndTime)
+						end
+						remove_index[#remove_index+1] = i
+					else
+						if currentLoop then
+							loops[#loops+1] = currentLoop
+							currentLoop = nil
+						end
+					end
+				end
+			end
+			
+			if currentLoop then
+				loops[#loops+1] = currentLoop
+				currentLoop = nil
+			end
+			
+			-- Remove these related loop out of the command
+			
+			for j = #remove_index, 1, -1 do
+				local removeIndex = remove_index[j]
+				table.remove(item.Commands, removeIndex)
+			end
+			
+			-- Add the new format
+			
+			for _, loopData in pairs(loops) do
+				local startTime = loopData.StartTime
+				local loopDuration = loopData.LoopMaxDuration
+				local loopCount = loopData.LoopCount
+				
+				for i = 0, loopCount - 1 do
+					for _, cmd in pairs(loopData.Commands) do
+						local newCmd = deepCopy(cmd)
+						newCmd.StartTime = newCmd.StartTime + startTime + i * loopDuration
+						newCmd.EndTime = newCmd.EndTime + startTime + i * loopDuration
+						item.Commands[#item.Commands+1] = newCmd
+					end
+				end
+			end
+			if not f then
+				print(loops, item)
+				f = true
+			end
+		end
+	end	
+	
+	-- Reprocess all of the sprite
+	for i, item in pairs(sprites) do
+		local startTime = 999999999999
+		local endTime = 0
+		for _, cmd in pairs(item.Commands) do
+			startTime = math.min(startTime, cmd.StartTime)
+			endTime = math.max(endTime, cmd.EndTime)
+		end
+		
+		if startTime == 999999999999 then
+			startTime = 0
+		end
+		
+		table.sort(item.Commands, function(cmd1, cmd2)
+			if cmd1.StartTime == cmd2.StartTime then
+				return cmd1.EndTime < cmd2.EndTime
+			end
+			
+			return cmd1.StartTime < cmd2.StartTime
+		end)
+		
+		item.StartTime = startTime
+		item.EndTime = endTime
 	end
 	
 	return sprites

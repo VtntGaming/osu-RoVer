@@ -44,8 +44,15 @@ return function(sprites:{spriteObject})
 			end
 		elseif obj.Type == "Animation" then
 			local animData = obj.Data::AnimationData
+			local raw = pathName:split(".")
+			local p = ""
+			for i = 1, #raw-1 do
+				p = p..raw[i]
+			end
+			local ex = raw[#raw]
+			
 			for i = 0, animData.FrameCount-1 do
-				local path = `{pathName}{i}`
+				local path = `{p}{i}.{ex}`
 				if not table.find(pathList, path) then
 					pathList[#pathList+1] = path
 				end
