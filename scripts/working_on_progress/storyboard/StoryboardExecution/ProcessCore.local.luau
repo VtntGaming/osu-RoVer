@@ -503,6 +503,9 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 			objectFrame = newObj
 		end
 		local newTransparency = 1 - crrObjectData.Opacity
+		if crrObjectData.AdditiveColor then
+			newTransparency = math.min(0.5, newTransparency)
+		end
 		if objectFrame.ImageTransparency ~= newTransparency then
 			objectFrame.ImageTransparency = newTransparency
 		end
@@ -697,9 +700,9 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 
 			local startColor = Color3.fromRGB(startR, startG, startB)
 			local endColor = Color3.fromRGB(endR, endG, endB)
-			if crrObjectData.AdditiveColor then
-				endColor = Color3.fromRGB(startR+endR, startG+endG, startB+endB)
-			end
+			--if crrObjectData.AdditiveColor then
+			--	endColor = Color3.fromRGB(startR+endR, startG+endG, startB+endB)
+			--end
 
 			crrObjectData.Color = startColor:Lerp(endColor, progress)
 		end
