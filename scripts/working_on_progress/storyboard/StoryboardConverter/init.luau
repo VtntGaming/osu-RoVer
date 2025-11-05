@@ -292,7 +292,6 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 			end
 		end
 	end
-	local f = false
 	-- Reprocess the loop commands
 	for _, item in pairs(sprites) do
 		if item.ContainsLoop then
@@ -352,10 +351,6 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 						item.Commands[#item.Commands+1] = newCmd
 					end
 				end
-			end
-			if not f then
-				print(loops, item)
-				f = true
 			end
 		end
 	end	
