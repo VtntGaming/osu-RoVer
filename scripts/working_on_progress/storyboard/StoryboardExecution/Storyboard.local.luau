@@ -92,24 +92,31 @@ avgLoad *= BASE_COMMAND_PROCESS
 
 
 -- Load all of the image before going into the game
-
 local loadList = {}
 for _, item in pairs(ImageList) do
 	if item.ImageId and not table.find(loadList,item.ImageId) then
 		loadList[#loadList+1] = item.ImageId
 	end
 end
+
+local objLoad = {}
+
+for _, item in pairs(loadList) do
+	local img = Instance.new("ImageLabel")
+	img.Image = item
+	objLoad[#objLoad+1] = img
+end
 local loadDisplay = script.Parent.Parent.Parent.LoadingDisplay
 loadDisplay.Visible = true
 
 for i = 1, 5 do
 	local count = 0
-	ContentProvider:PreloadAsync(loadList, function()
+	ContentProvider:PreloadAsync(objLoad, function(id, status)
 		count += 1
 		if i == 1 then
-			loadDisplay.Text = `Loading asset: {count}/{#loadList}`
+			loadDisplay.Text = `Loading asset: {count}/{#objLoad}`
 		else
-			local progress = (i-1) * 0.2 + (count/#loadList)*0.2
+			local progress = (i-1) * 0.2 + (count/#objLoad)*0.2
 			loadDisplay.Text = `Preparing: {string.format("%.0f%%", progress * 100)}`
 		end
 	end)
@@ -408,9 +415,11 @@ for i, spriteData in pairs(storyboardData) do
 					-- Parmeter commands
 					-- This is a special command, unlike other commands, this only need to ran twice (start and end)
 					local parmeter = params[1]
-					currentActor:SendMessage("ToggleParmeterCommand", "P", parmeter, true)
+					currentActor:SendMessage("ToggleParmeterCommand", objUnquieId, "P", parmeter, true)
 					repeat task.wait() until (os.clock() - startTime > command.EndTime/1000)
-					currentActor:SendMessage("ToggleParmeterCommand", "P", parmeter, false)
+					if not command.StaysForever then
+						currentActor:SendMessage("ToggleParmeterCommand", objUnquieId, "P", parmeter, false)
+					end
 				end				
 
 				finishedCommands += 1

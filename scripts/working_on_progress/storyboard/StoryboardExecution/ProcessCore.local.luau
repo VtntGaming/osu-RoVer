@@ -420,10 +420,11 @@ function getEasing(easing:number)
 end
 
 script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extraData)
+	local initValue = objData.InitValue
 	local crrObjectData = {
-		Position = {X = objData.Position.X, Y = objData.Position.Y},
-		Scale = {X = objData.Position.X, Y = objData.Position.Y},
-		Opacity = 0,
+		Position = {X = initValue.PosX or objData.Position.X, Y = initValue.PosY or objData.Position.Y},
+		Scale = {X = initValue.ScaleX or objData.Position.X, Y = initValue.ScaleY or objData.Position.Y},
+		Opacity = initValue.Opacity or 1,
 		Color = Color3.new(1,1,1),
 		Rotation = 0,	-- radians
 		FlipX = false,
@@ -504,9 +505,9 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 		end
 		local newTransparency = 1 - crrObjectData.Opacity
 		if crrObjectData.AdditiveColor then
-			newTransparency = math.min(0.5, newTransparency)
+			newTransparency = math.max(0.5, newTransparency)
 		end
-		if objectFrame.ImageTransparency ~= newTransparency then
+		if objectFrame.ImageTransparency ~= newTransparency then			
 			objectFrame.ImageTransparency = newTransparency
 		end
 
@@ -520,12 +521,16 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 		end
 
 		local newColor = crrObjectData.Color
-		local newRotation = math.round(math.deg(crrObjectData.Rotation))
+		local newRotation = math.round(math.deg(crrObjectData.Rotation) * 100) / 100
 		local newPos = toUDim2(Vector2.new(crrObjectData.Position.X, crrObjectData.Position.Y))
-		local scaleX = crrObjectData.FlipX and -1 or 1
-		local scaleY = crrObjectData.FlipY and -1 or 1
-		local newScale = UDim2.fromScale(objectSize.X.Scale * crrObjectData.Scale.X * scaleX, objectSize.Y.Scale * crrObjectData.Scale.Y * scaleY)
+		local scaleX = 1--crrObjectData.FlipX and -1 or 1
+		local scaleY = 1--crrObjectData.FlipY and -1 or 1
+		local imgAbsSize = extraData.ImageSize or Vector2.zero
 
+		local rectOffset = imgAbsSize * Vector2.new(crrObjectData.FlipX and 1 or 0, crrObjectData.FlipY and 1 or 0)
+		local rectSize = imgAbsSize * Vector2.new(crrObjectData.FlipX and -1 or 1, crrObjectData.FlipY and -1 or 1)
+		local newScale = UDim2.fromScale(objectSize.X.Scale * crrObjectData.Scale.X * scaleX, objectSize.Y.Scale * crrObjectData.Scale.Y * scaleY)
+		
 		if objectFrame.Position ~= newPos then
 			objectFrame.Position = newPos
 		end
@@ -540,6 +545,14 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 
 		if objectFrame.Rotation ~= newRotation then
 			objectFrame.Rotation = newRotation
+		end
+		
+		if objectFrame.ImageRectSize ~= rectSize then
+			objectFrame.ImageRectSize = rectSize 
+		end
+		
+		if objectFrame.ImageRectOffset ~= rectOffset then
+			objectFrame.ImageRectOffset = rectOffset 
 		end
 	end
 
@@ -654,7 +667,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 			if t ~= t then t = 0 end
 			local progress = easing(t)
 			local startS = params[1] or 0
-			local endS = params[2]
+			local endS = params[2] or startS
 			if not endS	then
 				endS = startS
 			end
@@ -671,8 +684,8 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 			local progress = easing(t)
 			local startX = params[1] or 0
 			local startY = params[2] or 0
-			local endX = params[3]
-			local endY = params[4]
+			local endX = params[3] or startX
+			local endY = params[4] or startY
 			if not endX then
 				endX = startX
 			end
@@ -739,7 +752,7 @@ script.Parent:BindToMessage("RemoveCommand", function(cmdUnquieId:string)
 end)
 
 script.Parent:BindToMessage("ToggleParmeterCommand", function(objUnquieId:string, commandType, parmeter, stateEnable:boolean)
-	local crrObjectData = objectData[objUnquieId]
+	local crrObjectData = objectData[objUnquieId].Data
 	-- Parmeter commands
 	-- This is a special command, unlike other commands, this only need to ran twice (start and end)
 	if stateEnable then

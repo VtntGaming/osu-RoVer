@@ -73,7 +73,18 @@ export type LoopCommand = CommandData & {
 	LoopCount: number
 }
 
+export type ParmeterCommand = CommandData & {
+	StaysForever: boolean?
+}
+
 export type SpriteData = {
+	InitValue: {
+		PosX:number?,
+		PosY:number?,
+		ScaleX:number?,
+		ScaleY:number?,
+		Opacity:number?,
+	},
 	Layer:number,
 	AnchorPoint:Vector2,
 	Filepath:string,
@@ -118,13 +129,14 @@ local function newSprite():spriteObject
 			AnchorPoint = ANCHOR_POINT_ORIGIN.TopLeft,
 			Filepath = "",
 			Position = Vector2.zero,
-			LayoutOrder = 0
+			LayoutOrder = 0,
+			InitValue = {}
 		},
 		localLoop = false,
 		ContainsLoop = false,
 		StartTime = 0,
 		EndTime = 0,
-		Commands = {}
+		Commands = {},
 	}
 	
 	return spriteObj
@@ -176,6 +188,12 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 					loopCommand.StartTime = tonumber(rawData[2]) or 0
 					loopCommand.LoopCount = 1
 					currentSprite.ContainsLoop = true
+				elseif commandType == "P" then
+					if not tonumber(rawData[4]) then
+						-- The command stays forever
+						local parmeterCmd = newcmdData :: ParmeterCommand
+						parmeterCmd.StaysForever = true
+					end
 				end
 				for i = 5, #rawData do
 					newcmdData.Params[#newcmdData.Params+1] = commandType == "P" and tostring(rawData[i]) or (tonumber(rawData[i]) or 0)
@@ -359,9 +377,55 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 	for i, item in pairs(sprites) do
 		local startTime = 999999999999
 		local endTime = 0
+		local initValue = {} :: {}
 		for _, cmd in pairs(item.Commands) do
 			startTime = math.min(startTime, cmd.StartTime)
 			endTime = math.max(endTime, cmd.EndTime)
+			if cmd.CommandType == "F" and not initValue.Opacity then
+				local init = tonumber(cmd.Params[1])
+				if init then
+					initValue.Opacity = init
+				end
+			elseif cmd.CommandType == "MX" then
+				local initX = tonumber(cmd.Params[1])
+				if not initValue.PosX and initX then
+					initValue.PosX = initX
+				end
+			elseif cmd.CommandType == "MY" then
+				local initY = tonumber(cmd.Params[1])
+				if not initValue.PosY and initY then
+					initValue.PosY = initY
+				end
+			elseif cmd.CommandType == "M" then
+				local initX = tonumber(cmd.Params[1])
+				local initY = tonumber(cmd.Params[2])
+				if not initValue.PosX and initX then
+					initValue.PosX = initX
+				end
+				if not initValue.PosY and initY then
+					initValue.PosY = initY
+				end
+			elseif cmd.CommandType == "S" then
+				local init = tonumber(cmd.Params[1])
+				if init then
+					if not initValue.ScaleX then
+						initValue.ScaleX = init
+					end
+					if not initValue.ScaleY then
+						initValue.ScaleY = init
+					end
+				end				
+			elseif cmd.CommandType == "V" then
+				local initX = tonumber(cmd.Params[1])
+				local initY = tonumber(cmd.Params[2])
+
+				if not initValue.ScaleX and initX then
+					initValue.ScaleX = initX
+				end
+				if not initValue.ScaleY and initY then
+					initValue.ScaleY = initY
+				end
+			end
 		end
 		
 		if startTime == 999999999999 then
@@ -378,6 +442,7 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 		
 		item.StartTime = startTime
 		item.EndTime = endTime
+		item.Data.InitValue = initValue
 	end
 	
 	return sprites
