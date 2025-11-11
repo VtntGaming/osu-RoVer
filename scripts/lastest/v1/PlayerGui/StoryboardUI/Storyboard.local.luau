@@ -16,6 +16,7 @@ local DEFAULT_ASSET_SIZE = Vector2.new(32,32)
 --print(pathList)
 
 local ImageList = {}
+local currentSpeed = 1
 
 local storyBoardImgList = storyboardFile:FindFirstChild("ImageList")
 if storyBoardImgList then
@@ -314,14 +315,21 @@ script.Parent:BindToMessage("SetTime", function(t:number)
 		core:SendMessage("SetStartTime", startTime)
 	end
 end)
+
+script.Parent:BindToMessage("SetSpeed", function(speed:number)
+	currentSpeed = speed
+	for _, core in pairs(currentProcessCores) do
+		core:SendMessage("SetSpeed", speed)
+	end
+end)
 local SUPPORTED_CMD = {
 	"F", "M", "MX", "MY", "S", "V", "C", "R"
 }
 
 -- Start the song
 --task.spawn(function()
---	repeat task.wait() until os.clock() - startTime >= 0
---	script.Parent.Parent.Parent.Sound.TimePosition = os.clock() - startTime
+--	repeat task.wait() until (os.clock() - startTime) * currentSpeed >= 0
+--	script.Parent.Parent.Parent.Sound.TimePosition = (os.clock() - startTime) * currentSpeed
 --	script.Parent.Parent.Parent.Sound:Play()
 --end)
 
@@ -340,7 +348,7 @@ for i, spriteData in pairs(storyboardData) do
 			lastCommandTime = cmd.EndTime
 		end
 	end
-	if os.clock() - startTime > (lastCommandTime/1000 + 1) then
+	if (os.clock() - startTime) * currentSpeed > (lastCommandTime/1000 + 1) then
 		-- No need to render this sprite
 		continue
 	end
@@ -350,8 +358,8 @@ for i, spriteData in pairs(storyboardData) do
 	end
 
 	local objStartTime = firstCmd.StartTime/1000
-	if os.clock() - startTime < objStartTime then
-		repeat task.wait() until os.clock() - startTime >= objStartTime
+	if (os.clock() - startTime) * currentSpeed < objStartTime then
+		repeat task.wait() until (os.clock() - startTime) * currentSpeed >= objStartTime
 	end
 
 	local crrObjectData = {
@@ -419,8 +427,8 @@ for i, spriteData in pairs(storyboardData) do
 				continue
 			end
 			currentActiveCommand += 1
-			if os.clock() - startTime < command.StartTime/1000 then
-				repeat task.wait() until os.clock() - startTime >= command.StartTime/1000
+			if (os.clock() - startTime) * currentSpeed < command.StartTime/1000 then
+				repeat task.wait() until (os.clock() - startTime) * currentSpeed >= command.StartTime/1000
 			end
 			task.spawn(function()
 				if table.find(SUPPORTED_CMD, commandType) then
@@ -429,7 +437,7 @@ for i, spriteData in pairs(storyboardData) do
 
 					if command.StartTime ~= command.EndTime then
 						commandsCount += 1
-						repeat task.wait() until (os.clock() - startTime > command.EndTime/1000)
+						repeat task.wait() until ((os.clock() - startTime) * currentSpeed > command.EndTime/1000)
 						commandsCount -= 1
 						currentActor:SendMessage("RemoveCommand", commandUnquieId)
 					end
@@ -438,7 +446,7 @@ for i, spriteData in pairs(storyboardData) do
 					-- This is a special command, unlike other commands, this only need to ran twice (start and end)
 					local parmeter = params[1]
 					currentActor:SendMessage("ToggleParmeterCommand", objUnquieId, "P", parmeter, true)
-					repeat task.wait() until (os.clock() - startTime > command.EndTime/1000)
+					repeat task.wait() until ((os.clock() - startTime) * currentSpeed > command.EndTime/1000)
 					if not command.StaysForever then
 						currentActor:SendMessage("ToggleParmeterCommand", objUnquieId, "P", parmeter, false)
 					end
