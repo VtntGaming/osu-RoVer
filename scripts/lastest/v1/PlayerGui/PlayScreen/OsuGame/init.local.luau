@@ -3634,6 +3634,9 @@ spawn(function()
 			script.Parent.SongOffsetDisplay.Text = string.format("%.1fms", ((checkingSongObj.TimePosition + ExtraLength) - CurrentGameTime)*1000)
 			if (tick()-LastAudioTimeAdjust) >= CheckPeriod and CurrentGameTime >= 0 and math.abs((checkingSongObj.TimePosition + ExtraLength) - CurrentGameTime) > 0.05 and script.Parent.GameSong.Song.IsReady == true and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 and not BeatmapFailed then
 				checkingSongObj.TimePosition = (tick() - SongStart)*SongSpeed*ReturnData.SongSpeed - ExtraLength + Offset
+				if StoryboardAvailable then
+					storyboardUI.Scripts.Actor:SendMessage("SetTime", tick() - SongStart)
+				end
 				LastAudioTimeAdjust = tick()
 			end
 			if CurrentGameTime >= 0 and checkingSongObj.IsPlaying == false and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 then
@@ -8164,6 +8167,9 @@ script.Parent.Leaderboard.Visible = false
 script.Parent.RestartGame.Visible = false
 script.Parent.LiveDiffDisplay.Visible = false
 script.Parent.ProgressBar.Visible = false
+if StoryboardAvailable then
+	storyboardUI.Enabled = false
+end
 
 StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat,true)
 
