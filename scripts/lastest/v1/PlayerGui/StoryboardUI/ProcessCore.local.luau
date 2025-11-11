@@ -13,6 +13,7 @@ local callbacks_UI = {}
 local objectData = {}
 local commandsCount = 0
 local mainUI = script.Parent.Parent.Parent.Parent
+local currentSpeed = 1
 
 local LayoutPlacement = {
 	[0] = mainUI.MainFrame.RatioFrame.Background,
@@ -30,6 +31,10 @@ end)
 
 script.Parent:BindToMessage("SetStartTime", function(t:number)
 	startTime = t
+end)
+
+script.Parent:BindToMessage("SetSpeed", function(speed:number)
+	currentSpeed = speed
 end)
 
 local CORE_INDEX = -1
@@ -469,7 +474,7 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 		if objectType == "Animation" then
 			local frameDelay = objData.FrameDelay :: number
 			local frameCount = objData.FrameCount :: number
-			local index = (((os.clock() - startTime) - extraData.StartTime) * 1000) // frameDelay
+			local index = ((((os.clock() - startTime)*currentSpeed) - extraData.StartTime) * 1000) // frameDelay
 			index = index % frameCount
 
 			local function _trySet(obj1, obj2, attribute)
@@ -599,7 +604,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 		funct = function()
 			-- Fade
 			cmdsHaveRanOnce[unquieId] = true
-			local elapsed = (os.clock() - startTime)- command.StartTime/1000
+			local elapsed = ((os.clock() - startTime)*currentSpeed)- command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
 			local progress = easing(t)
@@ -611,7 +616,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 		funct = function()
 			-- Move XY
 			cmdsHaveRanOnce[unquieId] = true
-			local elapsed = (os.clock() - startTime) - command.StartTime/1000
+			local elapsed = ((os.clock() - startTime)*currentSpeed) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
 			local progress = easing(t)
@@ -632,7 +637,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 		funct = function()
 			-- Move X
 			cmdsHaveRanOnce[unquieId] = true
-			local elapsed = (os.clock() - startTime) - command.StartTime/1000
+			local elapsed = ((os.clock() - startTime)*currentSpeed) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
 			local progress = easing(t)
@@ -647,7 +652,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 		funct = function()
 			-- Move Y
 			cmdsHaveRanOnce[unquieId] = true
-			local elapsed = (os.clock() - startTime) - command.StartTime/1000
+			local elapsed = ((os.clock() - startTime)*currentSpeed) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
 			local progress = easing(t)
@@ -662,7 +667,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 		funct = function()
 			-- Scale
 			cmdsHaveRanOnce[unquieId] = true
-			local elapsed = (os.clock() - startTime) - command.StartTime/1000
+			local elapsed = ((os.clock() - startTime)*currentSpeed) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
 			local progress = easing(t)
@@ -678,7 +683,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 		funct = function()
 			-- Scale separated X, Y
 			cmdsHaveRanOnce[unquieId] = true
-			local elapsed = (os.clock() - startTime) - command.StartTime/1000
+			local elapsed = ((os.clock() - startTime)*currentSpeed) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
 			local progress = easing(t)
@@ -699,7 +704,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 		funct = function()
 			-- Colors
 			cmdsHaveRanOnce[unquieId] = true
-			local elapsed = (os.clock() - startTime) - command.StartTime/1000
+			local elapsed = ((os.clock() - startTime)*currentSpeed) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
 			local progress = easing(t)
@@ -723,7 +728,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 		funct = function()
 			-- Rotate in randians
 			cmdsHaveRanOnce[unquieId] = true
-			local elapsed = (os.clock() - startTime) - command.StartTime/1000
+			local elapsed = ((os.clock() - startTime)*currentSpeed) - command.StartTime/1000
 			local t = elapsed/commandDuration
 			if t ~= t then t = 0 end
 			local progress = easing(t)

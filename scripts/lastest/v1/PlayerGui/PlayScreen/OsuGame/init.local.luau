@@ -3107,6 +3107,7 @@ if StoryboardAvailable then
 	task.spawn(function()
 		task.wait(0.5)
 		storyboardUI.Scripts.Actor:SendMessage("SetTime", os.clock() - Start)
+		storyboardUI.Scripts.Actor:SendMessage("SetSpeed", SongSpeed)
 	end)
 end
 
@@ -3635,7 +3636,7 @@ spawn(function()
 			if (tick()-LastAudioTimeAdjust) >= CheckPeriod and CurrentGameTime >= 0 and math.abs((checkingSongObj.TimePosition + ExtraLength) - CurrentGameTime) > 0.05 and script.Parent.GameSong.Song.IsReady == true and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 and not BeatmapFailed then
 				checkingSongObj.TimePosition = (tick() - SongStart)*SongSpeed*ReturnData.SongSpeed - ExtraLength + Offset
 				if StoryboardAvailable then
-					storyboardUI.Scripts.Actor:SendMessage("SetTime", tick() - SongStart)
+					storyboardUI.Scripts.Actor:SendMessage("SetTime", (tick() - SongStart))
 				end
 				LastAudioTimeAdjust = tick()
 			end
