@@ -4,8 +4,8 @@ local StoryboardConverter = require(workspace.StoryboardConverter)
 local PathListConverter = require(workspace.StoryboardConverter.PathGenerator)
 
 local s = os.clock()
-local storyboardFile = workspace.Storyboards["Ludicin - Echoes of Memoria"]
-local difficultyFile = workspace.Beatmaps["Ludicin - Echoes of Memoria (hehe) [Hypermnesia]"]
+local storyboardFile = script.Parent.Parent.Parent.StoryboardMap.Value
+local difficultyFile = script.Parent.Parent.Parent.DifficultyMap.Value
 local storyboardData = StoryboardConverter(storyboardFile, difficultyFile)
 print("Load completed, took", os.clock()-s)
 type SpriteObject = StoryboardConverter.spriteObject
@@ -50,6 +50,8 @@ print("Sort completed! took", os.clock()-s)
 local stackLoads = {}
 
 for _, item in pairs(storyboardData) do
+	local minIndex = 9999
+	local maxIndex = 0
 	for _, cmd in pairs(item.Commands) do
 		local sTime = cmd.StartTime
 		local eTime = cmd.EndTime
@@ -57,12 +59,24 @@ for _, item in pairs(storyboardData) do
 		local startIndex = sTime // 100 + 1
 		local endIndex = eTime // 100 + 1
 
+		minIndex = math.min(startIndex, minIndex)
+		maxIndex = math.max(endIndex, maxIndex)
+
 		for i = startIndex, endIndex do
 			if not stackLoads[i] then
 				stackLoads[i] = 1
 			else
 				stackLoads[i] += 1
 			end
+		end
+	end
+
+	-- Add another for UI, UI process more than a normal command
+	for i = minIndex, maxIndex do
+		if not stackLoads[i] then
+			stackLoads[i] = 5
+		else
+			stackLoads[i] += 5
 		end
 	end
 end
@@ -74,7 +88,7 @@ table.sort(stackLoads, function(a,b)
 	return a > b
 end)
 
-local BASE_COMMAND_PROCESS = 9500
+local BASE_COMMAND_PROCESS = 1000	
 
 local avgLoad = 0
 local highestLoad = stackLoads[1]
@@ -113,6 +127,8 @@ for i = 1, 5 do
 	local count = 0
 	ContentProvider:PreloadAsync(objLoad, function(id, status)
 		count += 1
+		local progressValue = count/#objLoad * 0.2 + (i - 1) * 0.2
+		script.Parent.Parent.Parent.LoadProgress.Value = progressValue
 		if i == 1 then
 			loadDisplay.Text = `Loading asset: {count}/{#objLoad}`
 		else
@@ -190,6 +206,12 @@ end
 
 for i = 1, 60 do
 	task.wait()
+end
+
+local mainUI = script.Parent.Parent.Parent
+mainUI.StoryboardLoaded.Value = true
+if not mainUI.GameReady.Value then
+	repeat task.wait() until mainUI.GameReady.Value
 end
 
 local deferEnabled = script.Parent.Parent.Parent.Core.ObjectsDeferEnabled.DeferEnabled
@@ -297,11 +319,11 @@ local SUPPORTED_CMD = {
 }
 
 -- Start the song
-task.spawn(function()
-	repeat task.wait() until os.clock() - startTime >= 0
-	script.Parent.Parent.Parent.Sound.TimePosition = os.clock() - startTime
-	script.Parent.Parent.Parent.Sound:Play()
-end)
+--task.spawn(function()
+--	repeat task.wait() until os.clock() - startTime >= 0
+--	script.Parent.Parent.Parent.Sound.TimePosition = os.clock() - startTime
+--	script.Parent.Parent.Parent.Sound:Play()
+--end)
 
 for i, spriteData in pairs(storyboardData) do
 	local objData = spriteData.Data

@@ -171,6 +171,8 @@ LiveDifficultyDisplay = false
 Replay_TouchDevice = false
 AimAssist = false
 CursorRipplesEnabled = false
+StoryboardEnabled = true
+StoryboardAvailable = false
 type Mod_DA = {
 	Active:boolean?,
 	Data:{
@@ -2311,6 +2313,7 @@ EnableSliderShadow = SavedGameSettings.EnableSliderShadow
 KeyHistoryOverlayEnabled = SavedGameSettings.KeyHistoryOverlay
 SnakingInSlider = SavedGameSettings.SnakingInSliders
 SnakingOutSlider = SavedGameSettings.SnakingOutSlider
+StoryboardEnabled = SavedGameSettings.EnableStoryboard
 
 if OnMultiplayer then
 	ScoreV2Enabled = MPScoreV2Enabled
@@ -2822,8 +2825,31 @@ pcall(function()
 			TweenService:Create(ContentLoadingUI.ProgressBar.Progress,TweenInfo.new(0.1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
 				Size = UDim2.new(progress,0,1,0)
 			}):Play()
-
 		end)
+	end
+	if StoryboardEnabled then
+		local id = ReturnData.BeatmapSetsData.BeatmapsetID
+		local storyboardMap = workspace.Storyboards:FindFirstChild(id)
+		if storyboardMap then
+			StoryboardAvailable = true
+			local storyboardUI = game.Players.LocalPlayer.PlayerGui.StoryboardUI
+			storyboardUI.StoryboardMap.Value = storyboardMap
+			--storyboardUI.DifficultyMap.Value = Beatmap
+			storyboardUI.Scripts.Actor.Storyboard.Enabled = true
+			ContentLoadingUI.LoadUIDisplay.LoadText.Text = "Loading storyboard..."
+			print("Storyboard enabled...")
+			if not storyboardUI.StoryboardLoaded.Value then
+				local t = -1
+				repeat task.wait()
+					if storyboardUI.LoadProgress.Value ~= t then
+						t = storyboardUI.LoadProgress.Value
+						TweenService:Create(ContentLoadingUI.ProgressBar.Progress,TweenInfo.new(0.1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
+							Size = UDim2.new(t,0,1,0)
+						}):Play()
+					end
+				until storyboardUI.StoryboardLoaded.Value
+			end
+		end		
 	end
 
 	ContentLoadingUI.LoadUIDisplay.LoadText.Text = "Ready!"
@@ -3071,6 +3097,19 @@ function AdjustIngameEffectVolume(volume)
 end
 AdjustIngameEffectVolume(EffectVolume)
 
+-- storyboard
+local storyboardUI = game.Players.LocalPlayer.PlayerGui.StoryboardUI
+
+if StoryboardAvailable then
+	storyboardUI.Enabled = true
+	storyboardUI.GameReady.Value = true
+
+	task.spawn(function()
+		task.wait(0.5)
+		storyboardUI.Scripts.Actor:SendMessage("SetTime", os.clock() - Start)
+	end)
+end
+
 -- Cursor lock
 local CursorUnlocked = false
 
@@ -3127,6 +3166,8 @@ function GameOver()
 				return
 			end
 		end
+		
+		
 
 		CursorUnlocked = true
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
@@ -6035,6 +6076,10 @@ script.Parent.Development.TimeJump.Event:Connect(function(Time)
 
 	Start = New
 	SongStart = New
+	
+	if StoryboardAvailable then
+		storyboardUI.Scripts.Actor:SendMessage("SetTime", os.clock() - Start)
+	end
 
 
 	for i = 1,60 do wait() end
