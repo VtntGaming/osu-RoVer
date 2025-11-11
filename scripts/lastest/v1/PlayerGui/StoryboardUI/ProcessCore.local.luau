@@ -5,6 +5,7 @@ local UI_PROCESS_PER_FRAME:number
 
 local DEFAULT_ASSET_ID = "rbxassetid://13227806914"
 local DEFAULT_ASSET_SIZE = Vector2.new(32,32)
+local ContentProvider = game:GetService("ContentProvider")
 
 local callbacks = {}
 local callbacks_once = {}
@@ -419,19 +420,21 @@ function getEasing(easing:number)
 end
 
 script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extraData)
+	local initValue = objData.InitValue
 	local crrObjectData = {
-		Position = {X = objData.Position.X, Y = objData.Position.Y},
-		Scale = {X = objData.Position.X, Y = objData.Position.Y},
-		Opacity = 0,
+		Position = {X = initValue.PosX or objData.Position.X, Y = initValue.PosY or objData.Position.Y},
+		Scale = {X = initValue.ScaleX or objData.Position.X, Y = initValue.ScaleY or objData.Position.Y},
+		Opacity = initValue.Opacity or 1,
 		Color = Color3.new(1,1,1),
 		Rotation = 0,	-- radians
 		FlipX = false,
 		FlipY = false,
 		AdditiveColor = false
 	}
+	local imageList = extraData.ImageIdList
 	local objectSize =  toUDim2(extraData.ImageSize or DEFAULT_ASSET_SIZE)
 	local objectFrame = getObj()
-	objectFrame.Image = extraData.Image or DEFAULT_ASSET_ID
+	objectFrame.Image = extraData.Image or (imageList and imageList[0]) or DEFAULT_ASSET_ID
 	objectFrame.Parent = nil
 	objectFrame.BackgroundTransparency = 1
 	objectFrame.Size = extraData.Size
@@ -439,29 +442,95 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 	objectFrame.Position = toUDim2(objData.Position)
 	objectFrame.Name = tostring(objData.Filepath)
 	objectFrame.ZIndex = objData.LayoutOrder
+	objectFrame:SetAttribute("UnquieID", unquieId)
 	local parentDestination = LayoutPlacement[objData.Layer]
-	
-	local UI_funct = function()
-		local newTransparency = 1 - crrObjectData.Opacity
+	local objectType = extraData.Type
 
-		if objectFrame.ImageTransparency ~= newTransparency then
-			local newPrt = newTransparency < 1 and parentDestination or nil
-			if objectFrame.Parent ~= newPrt then
-				objectFrame.Parent = newPrt
-				if not newPrt then
-					return	-- It's alrady invisible, no need to process
+	local objectFrameList = {}
+	local current: ImageLabel? = nil
+	if objectType == "Animation" then
+		for i = 0, objData.FrameCount - 1 do
+			local newClone = getObj()
+			newClone.Image = (imageList and imageList[i+1]) or DEFAULT_ASSET_ID
+			newClone.Parent = nil
+			newClone.BackgroundTransparency = 1
+			newClone.Size = extraData.Size
+			newClone.AnchorPoint = objData.AnchorPoint
+			newClone.Position = toUDim2(objData.Position)
+			newClone.Name = tostring(objData.Filepath)..tostring(i)
+			newClone.ZIndex = objData.LayoutOrder + objData.FrameCount - i
+			newClone:SetAttribute("UnquieID", unquieId)
+			objectFrameList[i] = newClone
+		end
+	end
+	local globalParentNull = false
+
+	local UI_funct = function()		
+		if objectType == "Animation" then
+			local frameDelay = objData.FrameDelay :: number
+			local frameCount = objData.FrameCount :: number
+			local index = (((os.clock() - startTime) - extraData.StartTime) * 1000) // frameDelay
+			index = index % frameCount
+
+			local function _trySet(obj1, obj2, attribute)
+				if obj1[attribute] ~= obj2[attribute] then
+					obj1[attribute] = obj2[attribute]
 				end
 			end
+
+			local newObj = objectFrameList[index]
+			if current and newObj ~= current then
+				local old = current
+				task.spawn(function()
+					local s = os.clock()
+					local holdTime = 0.5 - frameDelay/1000
+					while os.clock() - s < holdTime and current.Parent do
+						--old.Position = current.Position
+						--old.Size = current.Size
+						--old.BackgroundTransparency = current.BackgroundTransparency
+						--old.ImageColor3 = current.ImageColor3
+						_trySet(old, current, "Position")
+						_trySet(old, current, "Size")
+						_trySet(old, current, "BackgroundTransparency")
+						_trySet(old, current, "ImageColor3")
+						task.wait()
+					end
+					if old:GetAttribute("UnquieID") == unquieId then
+						old.Parent = nil
+					end
+				end)
+			end			
+			current = objectFrame			
+			objectFrame = newObj
+		end
+		local newTransparency = 1 - crrObjectData.Opacity
+		if crrObjectData.AdditiveColor then
+			newTransparency = math.max(0.5, newTransparency)
+		end
+		if objectFrame.ImageTransparency ~= newTransparency then			
 			objectFrame.ImageTransparency = newTransparency
 		end
 
-		local newColor = crrObjectData.Color
-		local newRotation = math.round(math.deg(crrObjectData.Rotation))
-		local newPos = toUDim2(Vector2.new(crrObjectData.Position.X, crrObjectData.Position.Y))
-		local scaleX = crrObjectData.FlipX and -1 or 1
-		local scaleY = crrObjectData.FlipY and -1 or 1
-		local newScale = UDim2.fromScale(objectSize.X.Scale * crrObjectData.Scale.X * scaleX, objectSize.Y.Scale * crrObjectData.Scale.Y * scaleY)		
+		local newPrt = newTransparency < 1 and parentDestination or nil
+		globalParentNull = newPrt == nil
+		if objectFrame.Parent ~= newPrt then
+			objectFrame.Parent = newPrt
+			if not newPrt then					
+				return	-- It's alrady invisible, no need to process
+			end
+		end
 
+		local newColor = crrObjectData.Color
+		local newRotation = math.round(math.deg(crrObjectData.Rotation) * 100) / 100
+		local newPos = toUDim2(Vector2.new(crrObjectData.Position.X, crrObjectData.Position.Y))
+		local scaleX = 1--crrObjectData.FlipX and -1 or 1
+		local scaleY = 1--crrObjectData.FlipY and -1 or 1
+		local imgAbsSize = extraData.ImageSize or Vector2.zero
+
+		local rectOffset = imgAbsSize * Vector2.new(crrObjectData.FlipX and 1 or 0, crrObjectData.FlipY and 1 or 0)
+		local rectSize = imgAbsSize * Vector2.new(crrObjectData.FlipX and -1 or 1, crrObjectData.FlipY and -1 or 1)
+		local newScale = UDim2.fromScale(objectSize.X.Scale * crrObjectData.Scale.X * scaleX, objectSize.Y.Scale * crrObjectData.Scale.Y * scaleY)
+		
 		if objectFrame.Position ~= newPos then
 			objectFrame.Position = newPos
 		end
@@ -477,12 +546,21 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 		if objectFrame.Rotation ~= newRotation then
 			objectFrame.Rotation = newRotation
 		end
+		
+		if objectFrame.ImageRectSize ~= rectSize then
+			objectFrame.ImageRectSize = rectSize 
+		end
+		
+		if objectFrame.ImageRectOffset ~= rectOffset then
+			objectFrame.ImageRectOffset = rectOffset 
+		end
 	end
 
 	callbacks_UI[unquieId] = UI_funct
-	
+
 	local data = {
-		Object = objectFrame, 
+		Object = objectFrame,
+		ObjectFrameList = objectFrameList,
 		Data = crrObjectData
 	}
 	objectData[unquieId] = data
@@ -492,6 +570,13 @@ script.Parent:BindToMessage("RemoveObject", function(unquieId:string)
 	callbacks_UI[unquieId] = nil
 	objectData[unquieId].Object.Parent = nil
 	unused_objs[#unused_objs+1] = objectData[unquieId].Object
+	local frameList = objectData[unquieId].ObjectFrameList
+	if frameList then
+		for _, item in pairs(frameList) do
+			item.Parent = nil
+			unused_objs[#unused_objs+1] = item
+		end
+	end
 	objectData[unquieId] = nil
 end)
 
@@ -507,7 +592,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 	local easing = getEasing(command.Easing)
 	local params = command.Params
 	local commandHaveRanOnce = false
-	
+
 	local crrObjectData = objectData[objUnquieId].Data
 
 	if commandType == "F" then
@@ -582,7 +667,7 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 			if t ~= t then t = 0 end
 			local progress = easing(t)
 			local startS = params[1] or 0
-			local endS = params[2]
+			local endS = params[2] or startS
 			if not endS	then
 				endS = startS
 			end
@@ -599,8 +684,8 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 			local progress = easing(t)
 			local startX = params[1] or 0
 			local startY = params[2] or 0
-			local endX = params[3]
-			local endY = params[4]
+			local endX = params[3] or startX
+			local endY = params[4] or startY
 			if not endX then
 				endX = startX
 			end
@@ -622,15 +707,15 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 			local startR = params[1] or 0
 			local startG = params[2] or 0
 			local startB = params[3] or 0
-			local endR = params[4] or 0
-			local endG = params[5] or 0
-			local endB = params[6] or 0
+			local endR = params[4] or startR
+			local endG = params[5] or startG
+			local endB = params[6] or startB
 
 			local startColor = Color3.fromRGB(startR, startG, startB)
 			local endColor = Color3.fromRGB(endR, endG, endB)
-			if crrObjectData.AdditiveColor then
-				endColor = Color3.fromRGB(startR+endR, startG+endG, startB+endB)
-			end
+			--if crrObjectData.AdditiveColor then
+			--	endColor = Color3.fromRGB(startR+endR, startG+endG, startB+endB)
+			--end
 
 			crrObjectData.Color = startColor:Lerp(endColor, progress)
 		end
@@ -649,8 +734,12 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 			crrObjectData.Rotation = math.lerp(startRotation, endRotation, progress)
 		end
 	end
-	
-	callbacks[unquieId] = funct
+
+	if commandDuration == 0 then		
+		callbacks_once[unquieId] = funct
+	else
+		callbacks[unquieId] = funct
+	end	
 end)
 
 script.Parent:BindToMessage("RemoveCommand", function(cmdUnquieId:string)
@@ -663,7 +752,7 @@ script.Parent:BindToMessage("RemoveCommand", function(cmdUnquieId:string)
 end)
 
 script.Parent:BindToMessage("ToggleParmeterCommand", function(objUnquieId:string, commandType, parmeter, stateEnable:boolean)
-	local crrObjectData = objectData[objUnquieId]
+	local crrObjectData = objectData[objUnquieId].Data
 	-- Parmeter commands
 	-- This is a special command, unlike other commands, this only need to ran twice (start and end)
 	if stateEnable then

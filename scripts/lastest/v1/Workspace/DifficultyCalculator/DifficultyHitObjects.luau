@@ -16,19 +16,29 @@ SLTravelDistance = SliderLength
 }]]
 local converterTool = require(workspace.OsuConvert.converterTools)
 
-function h300window(od)
-	local max = 64
-	local mid = 49
-	local min = 34
-	local rate = (5 - od)/5
-	
-	if od > 5 then
-		return mid + (max - mid)*rate
-	elseif od < 5 then
-		return mid + (mid - min)*rate
+function range(value:number):number
+	return (value - 5) / 5
+end
+
+function difficultyRange(diff:number, min:number, mid:number, max:number):number
+	diff = 10 - diff	-- Why does the difficulty return oppositely???????
+	if diff > 5 then
+		return mid + (max - mid) * range(diff)
+	elseif diff < 5 then
+		return mid + (mid - min) * range(diff)
 	else
 		return mid
 	end
+end
+
+function h300window(od)
+	local max = 80
+	local mid = 50
+	local min = 20
+	
+	local value = difficultyRange(od, min, mid, max)
+	
+	return math.floor(value) - 0.5
 end
 
 function positionOf(vectorTable):Vector2
@@ -144,10 +154,6 @@ local MIN_DELTA_TIME = 25
 local Maximum_Slider_Radius = NORMALISED_RADIUS * 2.4
 local Assumed_Slider_Radius = NORMALISED_RADIUS * 1.8
 
-function getTickListing()
-	
-end
-
 return function(baseList:{any}, baseData)
 	local DifficultyObjects:{ObjectData} = {}
 	for objID, crr in pairs(baseList) do
@@ -168,22 +174,13 @@ return function(baseList:{any}, baseData)
 		
 		if objID < 2 or crr.isSpinner or crrObj.Previous(1).isSpinner then
 			crrObj.getDoubletapness = function() return 0 end
-			local prevTime
-			if baseList[objID-1] and baseList[objID-1].Time then
-				prevTime =  baseList[objID-1].Time
-			end
-			if prevTime then
-				crrObj.DeltaTime = crr.Time - prevTime
-			else
-				crrObj.DeltaTime = 9999999999
-			end
 			crrObj.Time = crr.Time
 			crrObj.isInvalid = true
-			if objID < 2 then
-				crrObj.StrainTime = crr.Time
-			else
-				crrObj.StrainTime = crr.Time - crrObj.Previous(1).Time
-			end
+			local prevObj = crrObj.Previous(1)
+			local prevTime = prevObj and prevObj.Time or 0
+			crrObj.DeltaTime = crr.Time - prevTime
+			crrObj.StrainTime = math.max(crrObj.DeltaTime, MIN_DELTA_TIME)
+			crrObj.Hit300Value = 2 * h300window(baseData.OD)
 			DifficultyObjects[objID] = crrObj
 			continue
 		end

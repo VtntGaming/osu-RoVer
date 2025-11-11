@@ -443,18 +443,18 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 				local _slidesCount = tonumber(ExtraData[3])
 				local _beatLength = tonumber(ExtraData[4])
 				local _slideTime = (SliderTime * 1000 / _slidesCount)
-				local _tickProgressLength = ((Time - _tickTime)%_slideTime)/_slideTime * _beatLength
+				local _tickProgressLength = (1 - ((Time - _tickTime)%_slideTime)/_slideTime) * tonumber(ExtraData[4])
 				if not isReverse then
 					local _currentLength = 0
 					for i = 1, #SLCurvePoints - 1 do
 						local _crr = SLCurvePoints[i]
 						local _next = SLCurvePoints[i+1]
-						local _nextLength = _currentLength + (_next - _crr).Magnitude
+						local _length = (_next - _crr).Magnitude
+						local _nextLength = _currentLength + _length
 						
-						if _tickProgressLength >= _currentLength then
-							local _ratio = math.min(1, (_tickProgressLength - _currentLength)/(_nextLength - _currentLength))
+						if _nextLength >= _tickProgressLength then
+							local _ratio = math.min(1, (_tickProgressLength-_currentLength)/_length)
 							local _pos = _crr:Lerp(_next, _ratio)
-							
 							return _pos
 						else
 							_currentLength = _nextLength
@@ -465,10 +465,11 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 					for i = #SLCurvePoints, 2, -1 do
 						local _crr = SLCurvePoints[i]
 						local _next = SLCurvePoints[i-1]
-						local _nextLength = _currentLength + (_next - _crr).Magnitude
+						local _length = (_next - _crr).Magnitude
+						local _nextLength = _currentLength + _length
 
-						if _tickProgressLength >= _currentLength then
-							local _ratio = math.min(1, (_tickProgressLength - _currentLength)/(_nextLength - _currentLength))
+						if _nextLength >= _tickProgressLength then
+							local _ratio = math.min(1, _tickProgressLength/_length)
 							local _pos = _crr:Lerp(_next, _ratio)
 
 							return _pos
@@ -477,6 +478,12 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 						end 
 					end
 				end
+				local lastPoint = SLCurvePoints[isReverse and 1 or #SLCurvePoints]
+				
+				if lastPoint then
+					return lastPoint -- return the last point instead...
+				end
+				
 				warn("Cannot find tick position from tick time!")
 				print(_tickTime, Time, SliderTime, _beatLength, _tickProgressLength, isReverse)
 				return nil
@@ -515,7 +522,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 					end
 					i += 1
 				end
-				
+								
 				-- Just to make sure it includes the slider end
 				if #SLDifficultyTickData == 0 or SLDifficultyTickData[#SLDifficultyTickData][4] ~= "Tail" then
 					local _tailPosition = SLCurvePoints[(slidesCount % 2 == 1) and #SLCurvePoints or 1]
@@ -663,10 +670,10 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	
 	-- Skills
 	
-	-- The aim difficulty is the most inaccurate thing to calculate in osu!RoVer
+	-- Sometime it would not be very easy to match everything with osu! difficulty system
 	-- I need to adjust it back to the original osu! standard
 	local aimAdjustedMultiplier = 1
-	local speedAdjustedMultiplier = 1
+	local speedAdjustedMultiplier = 1.12
 	local aimSkillMultiplier = 26 * aimAdjustedMultiplier
 	local speedSkillMultiplier = 1.47 * speedAdjustedMultiplier
 	local flashlightSkillMultiplier = 0.05512
@@ -690,7 +697,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		SpeedStrain += SpeedDiff
 		
 		FLStrain *= AimFLStrainDecay
-		FLStrain += FLDiff
+		FLStrain += FLDiff		
 		
 		ConvertedData[objectId].PSValue.Aim = AimDiff
 		ConvertedData[objectId].PSValue.Speed = SpeedDiff

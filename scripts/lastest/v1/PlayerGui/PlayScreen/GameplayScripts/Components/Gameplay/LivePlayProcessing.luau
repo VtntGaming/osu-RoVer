@@ -74,7 +74,7 @@ export type InputAttributes = {
 }
 
 type BasePSValue = {
-	Aim:number, Speed:number, Flashlight:number
+	Aim:number, Speed:number, Rhythm: number, Flashlight:number
 }
 local LivePlayProcessing:LivePlayProcessing = {}::LivePlayProcessing
 LivePlayProcessing.__index = LivePlayProcessing
@@ -179,13 +179,13 @@ function LivePlayProcessing:_ProcessCurrentStrain(Timing:number, PSValue:BasePSV
 	
 	while Timing > self.CurrentSectionEnd do
 		self:_SaveCurrentPeak()
-		self:_StartNewSection(self.CurrentSectionEnd, {Aim = PSValue.Aim, Speed = PSValue.Speed, Flashlight = PSValue.Flashlight})
+		self:_StartNewSection(self.CurrentSectionEnd, {Aim = PSValue.Aim, Speed = PSValue.Speed * PSValue.Rhythm, Flashlight = PSValue.Flashlight})
 		self.CurrentSectionEnd += SECTION_LENGTH
 	end
 	
 	self.StrainCurrentPeak = {
 		Aim = math.max(self.StrainCurrentPeak.Aim, PSValue.Aim),
-		Speed = math.max(self.StrainCurrentPeak.Speed, PSValue.Speed),
+		Speed = math.max(self.StrainCurrentPeak.Speed, PSValue.Speed * PSValue.Rhythm),
 		Flashlight = math.max(self.StrainCurrentPeak.Flashlight, PSValue.Flashlight)
 	}
 	
@@ -215,7 +215,8 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 			{
 				Aim = self.CurrentLiveDiffAim,
 				Speed = self.CurrentLiveDiffSpeed,
-				Flashlight = self.CurrentLiveDiffFL
+				Flashlight = self.CurrentLiveDiffFL,
+				Rhythm = PSValue.Rhythm
 			}
 		)
 		

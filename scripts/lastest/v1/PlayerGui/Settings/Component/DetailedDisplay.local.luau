@@ -1,3 +1,4 @@
+--[LOCATION]:[StarterGui.Settings.SettingFrame.BaseFrame.MainLayer.Component.DetailedDisplay]
 local TweenService = game:GetService("TweenService")
 
 type DescriptionFrame = Frame & {
@@ -8,7 +9,7 @@ local TWEEN_OUT = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirecti
 local TWEEN_LINEAR = TweenInfo.new(0.25, Enum.EasingStyle.Linear)
 
 function addBinding(obj: DescriptionFrame)
-	print("Binding added: ", obj)
+	--print("Binding added: ", obj)
 	local origin = obj.Size.Y.Offset
 	local desc = obj.Description
 	desc.Size = UDim2.new(0.75, 0, 0, 1000)

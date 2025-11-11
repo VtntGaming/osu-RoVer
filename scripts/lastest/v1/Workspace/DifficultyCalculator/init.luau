@@ -55,6 +55,10 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 	local difficulty = 0
 	local ReducedStrainBaseline = 0.75
 	
+	if strainType == "Speed" then
+		reducedSelectionCount = 5
+	end
+	
 	table.sort(StrainData, function(a,b)
 		return a[2] < b[2]	-- Sort the timing to be perfect
 	end)
@@ -64,8 +68,8 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 	sortPeak(StrainPeak)
 	
 	for i,a in pairs(StrainPeak) do
-		local scale = math.log10(lerp(1,10,math.clamp((i-1)/reducedSelectionCount,0,1)))
-		StrainPeak[i] *= lerp(ReducedStrainBaseline, 1, scale)
+		local scale = math.log10(math.lerp(1,10,math.clamp((i-1)/reducedSelectionCount,0,1)))
+		StrainPeak[i] *= math.lerp(ReducedStrainBaseline, 1, scale)
 		if i > 10 then
 			break
 		end
@@ -96,7 +100,7 @@ function calculator.FLDifficultyValue(StrainData:{{number}})
 	return difficulty
 end
 
-function calculator.LiveDifficultyValue(StrainPeak:{number}):number
+function calculator.LiveDifficultyValue(StrainPeak:{number}, strainType:string):number
 	local reducedSelectionCount = 10
 	local weight = 1
 	local decayWeight = 0.9
@@ -104,6 +108,10 @@ function calculator.LiveDifficultyValue(StrainPeak:{number}):number
 	local ReducedStrainBaseline = 0.75
 	
 	StrainPeak = _DeepCopy(StrainPeak)::{number}
+	
+	if strainType == "Speed" then
+		reducedSelectionCount = 5
+	end
 	
 	sortPeak(StrainPeak)
 	
@@ -234,7 +242,7 @@ function calculateStarRating(basePerfomance, multiplier)
 		return 0
 	end
 	
-	return math.pow(multiplier, 1/3) * star_rating_multiplier * math.pow(100000 / math.pow(2, 1/1.1) * basePerfomance + 4 , 1/3)
+	return math.pow(multiplier, 1/3) * star_rating_multiplier * (math.pow(100000 / math.pow(2, 1/1.1) * basePerfomance, 1/3) + 4)
 end
 function calculator.CalculateVisibilityBonus(modData:ModData, AR:number, visibilityFactor:number)
 	if not visibilityFactor then
@@ -481,8 +489,8 @@ export type LiveDifficultyReturnAttributes = {
 }
 
 function calculator.GetDifficultyAttributesFromLiveData(Attributes:LiveDifficultyAttributes):LiveDifficultyReturnAttributes
-	local aimDifficultyValue = calculator.LiveDifficultyValue(Attributes.AimPeak)
-	local speedDifficultyValue = calculator.LiveDifficultyValue(Attributes.SpeedPeak)
+	local aimDifficultyValue = calculator.LiveDifficultyValue(Attributes.AimPeak, "Aim")
+	local speedDifficultyValue = calculator.LiveDifficultyValue(Attributes.SpeedPeak, "Speed")
 	local flashlightDifficultyValue = Attributes.ModData.FL and calculator.LiveFLDifficultyValue(Attributes.FLPeak) or 0
 	local mechanicalDifficultyRating = calculateMechanicalDifficultyRating(aimDifficultyValue, speedDifficultyValue)
 	

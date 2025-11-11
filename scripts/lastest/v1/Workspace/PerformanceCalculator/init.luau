@@ -145,12 +145,15 @@ function _ComputeSpeedValue(Attributes:SpeedAttributes):number
 	end
 	
 	local accData = Attributes.AccuracyData	
-	local totalHit = accData.h300 + accData.h100 + accData.h50 + accData.missCount	
+	local totalHit = accData.h300 + accData.h100 + accData.h50 + accData.missCount
 	
 	local speedPS = basePerformance(Attributes.SpeedDiff)
 	
 	local lengthBonus = 0.95 + 0.4 * math.min(1, totalHit / 2000) + 
 		(totalHit > 2000 and math.log10(totalHit/2000) * 0.5 or 0)
+
+	speedPS *= lengthBonus
+	
 	if accData.EffectiveMissCount > 0 then
 		speedPS *= calculateMissPenalty(accData.EffectiveMissCount, Attributes.SpeedDifficultyStrainCount)
 	end

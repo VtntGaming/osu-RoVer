@@ -21,7 +21,14 @@ function sineOut(t)
 	return math.sin((t * math.pi) / 2)
 end
 
-function Slider.new(curvePoint:{ [any]: Vector2}, slideCount:number, circleRadius:number, ExtraLengthData:{[any]:number}, ObjManage)
+type TickData = {
+	Time: number,
+	Slide: number,
+	Position: Vector2,
+	Object: Instance
+}
+
+function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCount:number, circleRadius:number, ExtraLengthData:{[any]:number}, ObjManage)
 	local SliderObject = {
 		TotalLength = 0
 	} 
@@ -163,6 +170,87 @@ function Slider.new(curvePoint:{ [any]: Vector2}, slideCount:number, circleRadiu
 	end
 	
 	SliderObject.ReverseArrow = ReverseArrows
+	
+	-- Slider ticks
+	
+	local runtimeTickData:{[number]:{TickData}} = {}
+	
+	local TickSizeMultiplier = 0.25
+	local sizeScale = (TickSizeMultiplier*circleRadius)/384
+	local tickSize = UDim2.fromScale(sizeScale, sizeScale)
+	
+	for i, data in pairs(tickData) do
+		local appearTime = data[1]::number
+		local tickSlide = data[2]::number
+		local tickPosition = data[3]::Vector2
+		local newTick = script.SliderTick:Clone()
+		newTick.Parent = SliderBase.TickFrame
+		newTick.Visible = false
+		newTick.Position = UDim2.fromScale(tickPosition.X/512, tickPosition.Y/384)
+		newTick.Size = UDim2.fromScale(0,0)
+		
+		local _data:TickData = {
+			Time = appearTime,
+			Slide = tickSlide,
+			Position = tickPosition,
+			Object = newTick
+		}
+
+		if not runtimeTickData[tickSlide] then
+			runtimeTickData[tickSlide] = {}
+		end
+		local dataOfCurrentSlide = runtimeTickData[tickSlide]
+		dataOfCurrentSlide[#dataOfCurrentSlide+1] = _data
+	end
+	
+	local function enableTick(t:ImageLabel)
+		t.Visible = true
+		TweenService:Create(t,TweenInfo.new(0.25,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size = tickSize, ImageTransparency = 0}):Play()		
+	end
+	
+	local function disableTick(t:ImageLabel)
+		TweenService:Create(t,TweenInfo.new(0.1,Enum.EasingStyle.Back,Enum.EasingDirection.In),{Size = UDim2.fromScale(0,0), ImageTransparency = 1}):Play()
+		task.delay(0.25, function()
+			t.Visible = false
+		end)
+	end
+	
+	local currentTaskEnable:thread
+	
+	function SliderObject.ShowCurrentTickOnSlide(slide:number, movementTime:number, isInit: boolean?)
+		local holdTime = isInit and 250 or 500
+		if currentTaskEnable then
+			task.cancel(currentTaskEnable)
+		end
+		if slide > 1 then
+			local previoudSlideTick = runtimeTickData[slide-1]
+			if previoudSlideTick then
+				for _, tickData in pairs(previoudSlideTick) do
+					disableTick(tickData.Object)
+				end
+			end
+		end
+
+		local currentSlideTick = runtimeTickData[slide]
+		if currentSlideTick then
+			currentTaskEnable = task.spawn(function()
+				local _s = os.clock()
+				for tickOrder, tickData in pairs(currentSlideTick) do
+					local tickDisplayTime = math.max(0, 0 - holdTime + (1/#currentSlideTick*tickOrder) * movementTime/#runtimeTickData * 0.75)
+					repeat task.wait() until os.clock()-_s >= tickDisplayTime/1000
+					enableTick(tickData.Object)
+				end
+			end)
+		end
+	end
+	
+	function SliderObject.CleanTick(slide: number, index: number)
+		local crrSlideData = runtimeTickData[slide]
+		local tickData = crrSlideData and crrSlideData[index]
+		if tickData then
+			disableTick(tickData.Object)
+		end
+	end
 	
 	function SliderObject.CleanUp()
 		for _, data in pairs(PointData) do

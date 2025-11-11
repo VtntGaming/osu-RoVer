@@ -27,15 +27,11 @@ local MIN_STRAIN_TIME_FOR_BONUS = Evaluator.BPMToMilisecond(MIN_SPEED_BONUS_BPM)
 
 -- The main evaluation function, now declared as local
 local function getSpeedDiff(CrrObj: Preprocessing.ObjectData)
-	if CrrObj.isSpinner then
+	if CrrObj.isSpinner or CrrObj.objID < 3 then
 		return 0
 	end
 
 	local prevObj = CrrObj.Previous(1)
-	if not prevObj or prevObj.isSpinner then
-		return 0
-	end
-
 	local nextObj = CrrObj.Next(1)
 
 	-- Cache property access
@@ -53,8 +49,8 @@ local function getSpeedDiff(CrrObj: Preprocessing.ObjectData)
 	end
 
 	-- Calculate Distance Bonus
-	local travelDistance = prevObj.BaseTravelDistance or 0
-	local totalDistance = travelDistance + CrrObj.MinimumJumpDistance
+	local travelDistance = prevObj and prevObj.BaseTravelDistance or 0
+	local totalDistance = travelDistance + (CrrObj.MinimumJumpDistance or 0)
 
 	-- Scale the bonus based on how close the distance is to the threshold
 	local clampedDistance = math.min(SINGLE_SPACING_THRESHOLD, totalDistance)
@@ -62,7 +58,7 @@ local function getSpeedDiff(CrrObj: Preprocessing.ObjectData)
 	distanceBonus *= DISTANCE_MULTIPLIER
 
 	-- Apply a small bonus for smaller circle sizes
-	distanceBonus *= math.sqrt(CrrObj.SmallCircleBonus)
+	distanceBonus *= math.sqrt(CrrObj.SmallCircleBonus or 0)
 
 	local doubletapness = math.max(0, 1 - (CrrObj.getDoubletapness(nextObj)))
 

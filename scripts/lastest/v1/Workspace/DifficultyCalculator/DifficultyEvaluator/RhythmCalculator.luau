@@ -3,7 +3,7 @@ local rhythmCalculator = {}
 
 local function getIslandCount(islandList, currentIsland)
 	for i, island in pairs(islandList) do
-		if island.IsEqual(currentIsland) then
+		if island:IsEqual(currentIsland) then
 			return i-1, island
 		end
 	end
@@ -16,14 +16,45 @@ local function Logistic(x, midpointOffset, multiplier, maxValue)
 	return maxValue / (1 + math.exp(multiplier * (midpointOffset - x)))
 end
 
+local function smoothstep(x: number, _start: number, _end: number)
+	x = math.clamp((x - _start) / (_end - _start), 0, 1)
+	return x * x * (3 - 2 * x)
+end
+
+local function smoothstepBellCurve(x: number, mean: number?, width: number?) : number
+	mean = mean or 0.5
+	width = width or 0.5
+	
+	if mean and width then
+		x -= mean
+		x = (x > 0) and (width - x) or (width + x)
+
+		
+		return smoothstep(x, 0, width)
+	end
+
+	return 0
+end
+
+local function mathTruncate(x: number):number
+	if x >= 0 then
+		return math.floor(x)
+	else
+		return math.ceil(x)
+	end
+end
+
+
+local MIN_DELTA_TIME = 25
+local EXTRA_MULTIPLIER = 1	-- This being added to ensure stability, until I found out a better way to calculate properly
+
 function rhythmCalculator.GetRhythmDiff(CrrObj)
 	-- This is the most complicate section I ever transfer
 
 	local history_time_max = 5000 -- ms
 	local history_obj_max = 32
-	local rhythm_overall_multiplier = 0.95
-	local rhythm_ratio_multiplier = 12
-	local min_delta_time = 25
+	local rhythm_overall_multiplier = 1.00
+	local rhythm_ratio_multiplier = 15
 
 	local function newIsland(delta, epsilon) -- Initiate Island class
 		local island = {
@@ -34,25 +65,25 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 		}
 
 		if delta then
-			island.delta = math.max(delta, min_delta_time)
+			island.delta = math.max(delta, MIN_DELTA_TIME)
 			island.deltaCount += 1
 		end
 
-		function island.AddDelta(delta)
-			if island.delta == 9999999999999 then
-				island.delta = math.max(delta, min_delta_time)
+		function island:AddDelta(delta)
+			if self.delta == 9999999999999 then
+				self.delta = math.max(delta, MIN_DELTA_TIME)
 			end
-			island.deltaCount += 1
+			self.deltaCount += 1
 		end
 
-		function island.IsSimilarPolarity(otherDelta)
-			return island.deltaCount % 2 == otherDelta.deltaCount % 2
+		function island:IsSimilarPolarity(otherDelta)
+			return self.deltaCount % 2 == otherDelta.deltaCount % 2
 		end
 
-		function island.IsEqual(otherDelta)
+		function island:IsEqual(otherDelta)
 			if not otherDelta then return false	end
 
-			return math.abs(island.delta - otherDelta.delta) < island.deltaDifferenceEpsilon and island.deltaCount == otherDelta.deltaCount
+			return math.abs(self.delta - otherDelta.delta) < self.deltaDifferenceEpsilon and self.deltaCount == otherDelta.deltaCount
 		end
 
 		return island
@@ -71,15 +102,15 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 
 	local startRatio = 0
 	local firstDeltaSwitch = false
-	local historicalNoteCount = math.min(CrrObj.objID-1, history_obj_max)
+	local historicalNoteCount = math.min(CrrObj.objID - 1, history_obj_max)
 	local rhythmStart = 0
 
 	while rhythmStart < historicalNoteCount - 2 and CrrObj.Time - CrrObj.Previous(rhythmStart).Time < history_time_max do
 		rhythmStart += 1
 	end
 
-	local PrevObj = CrrObj.Previous(rhythmStart + 1)
-	local LastObj = CrrObj.Previous(rhythmStart + 2)
+	local PrevObj = CrrObj.Previous(rhythmStart)
+	local LastObj = CrrObj.Previous(rhythmStart + 1)
 
 	for i = rhythmStart, 1, -1 do
 		local currentObj = CrrObj.Previous(i)
@@ -91,18 +122,19 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 		local prevDelta = math.max(PrevObj.DeltaTime, 1e-7)
 		local lastDelta = math.max(LastObj.DeltaTime, 1e-7)
 
-		local deltaDifferenceRatio = math.min(prevDelta, currDelta) / math.max(prevDelta, currDelta)
-		local currRatio = 1.0 + rhythm_ratio_multiplier * math.min(0.5, math.pow(math.sin(math.pi / deltaDifferenceRatio), 2))
+		local deltaDifference = math.max(prevDelta, currDelta) / math.min(prevDelta, currDelta)
+		local deltaDifferenceFraction = deltaDifference - mathTruncate(deltaDifference)
 
-		local fraction = math.max(prevDelta / currDelta, currDelta / prevDelta)
-		local fractionMultiplier = math.clamp(2.0 - fraction / 8.0, 0.0, 1.0)
+		local currRatio = 1.0 + rhythm_ratio_multiplier * math.min(0.5, smoothstepBellCurve(deltaDifferenceFraction))
+
+		local differenceMultiplier = math.clamp(2 - deltaDifference / 8, 0, 1)
 
 		local windowPenalty = math.min(1, math.max(0, math.abs(prevDelta - currDelta) - deltaDifferenceEpsilon) / deltaDifferenceEpsilon)
-		local effectiveRatio = windowPenalty * currRatio * fractionMultiplier
+		local effectiveRatio = windowPenalty * currRatio * differenceMultiplier
 
 		if firstDeltaSwitch then
 			if math.abs(prevDelta - currDelta) < deltaDifferenceEpsilon then
-				Island.AddDelta(currDelta)
+				Island:AddDelta(currDelta)
 			else
 				if currentObj.isSlider then
 					effectiveRatio *= 0.125
@@ -111,13 +143,12 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 				if PrevObj.isSlider then
 					effectiveRatio *= 0.3
 				end
-
-
-				if Island.IsSimilarPolarity(PrevIsland) then
+				
+				if Island:IsSimilarPolarity(PrevIsland) then
 					effectiveRatio *= 0.5
 				end
 
-				if lastDelta > prevDelta + deltaDifferenceEpsilon and prevDelta > currDelta + deltaDifferenceEpsilon then
+				if (lastDelta > prevDelta + deltaDifferenceEpsilon) and (prevDelta > currDelta + deltaDifferenceEpsilon) then
 					effectiveRatio *= 0.125
 				end
 
@@ -127,14 +158,14 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 
 				local countIndex , islandCount = getIslandCount(IslandList, Island)
 				if islandCount then
-					if PrevIsland.IsEqual(Island) then
+					if PrevIsland:IsEqual(Island) then
 						islandCount.Count += 1
 					end
 
 					local power = Logistic(Island.delta, 58.33, 0.24, 2.75)
 					effectiveRatio *= math.min(3.0 / islandCount.Count, math.pow(1.0 / islandCount.Count, power))
 
-					IslandList[countIndex] = islandCount
+					IslandList[countIndex+1] = islandCount
 				else
 					IslandList[#IslandList+1] = Island
 				end
@@ -172,7 +203,10 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 		PrevObj = currentObj
 	end
 
-	return math.sqrt(4 + rhythmComplexitySum * rhythm_overall_multiplier) / 2.0
+	local diff = math.sqrt(4 + rhythmComplexitySum * rhythm_overall_multiplier) / 2
+	local doubletapness = 1 - CrrObj.getDoubletapness(CrrObj.Next(1))
+
+	return diff * doubletapness
 end
 
 return rhythmCalculator

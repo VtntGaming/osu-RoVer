@@ -890,7 +890,8 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 			local PreviewTime = (ReturnData.Overview.OverviewStartTime/1000)
 
-			if PreviewTime < 0 then PreviewTime = 0 end
+			if PreviewTime < 0 then PreviewTime = 0 end			
+
 
 			PreviewFrame.OverviewSong.StartTime.Value = PreviewTime
 			if isExistSecondSong then
@@ -901,10 +902,11 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 				game.Players.LocalPlayer.PlayerScripts.DataValue.FirstJoinMusic.Value = false
 				PreviewTime = 0
 			end
-
+			
 			if ReturnData.SongSpeed then
 				PreviewTime *= ReturnData.SongSpeed
 			end
+			
 			if PreviewTime <= PreviewFrame.OverviewSong.TimeLength then
 				PreviewFrame.OverviewSong.TimePosition = PreviewTime
 			elseif isExistSecondSong then
@@ -927,9 +929,9 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 			end
 			local PreviewVolume = PreviewFrameBaseVolume
 			PreviewFrame.OverviewVolume.Value = PreviewVolume
-			TweenService:Create(PreviewFrame.OverviewSong,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = PreviewVolume*SongVolume*0.02}):Play()
+			TweenService:Create(PreviewFrame.OverviewSong,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = PreviewVolume*SongVolume*0.01}):Play()
 			if isExistSecondSong then
-				TweenService:Create(PreviewFrame.OverviewSong2,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = PreviewVolume*SongVolume*0.02}):Play()
+				TweenService:Create(PreviewFrame.OverviewSong2,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = PreviewVolume*SongVolume*0.01}):Play()
 			end
 			TweenService:Create(OldSongObj,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = 0}):Play()
 			if OldSongObj2 then
@@ -941,7 +943,6 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 			end
 
 			if PreviewTime > PreviewFrame.OverviewSong.TimeLength and isExistSecondSong then
-				print(PreviewFrame.OverviewSong2.TimePosition)
 				PreviewFrame.OverviewSong2:Play()
 				PreviewFrame.OverviewSong:Stop()
 			else

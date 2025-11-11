@@ -4,8 +4,9 @@ local StoryboardConverter = require(workspace.StoryboardConverter)
 local PathListConverter = require(workspace.StoryboardConverter.PathGenerator)
 
 local s = os.clock()
-local difficultyFile = workspace.Beatmaps["Camellia - OOPARTS (xArief) [CASUOZIZ]"]
-local storyboardData = StoryboardConverter(workspace.Storyboards.OOPARTS, difficultyFile)
+local storyboardFile = script.Parent.Parent.Parent.StoryboardMap.Value
+local difficultyFile = script.Parent.Parent.Parent.DifficultyMap.Value
+local storyboardData = StoryboardConverter(storyboardFile, difficultyFile)
 print("Load completed, took", os.clock()-s)
 type SpriteObject = StoryboardConverter.spriteObject
 local DEFAULT_ASSET_ID = "rbxassetid://13227806914"
@@ -14,7 +15,13 @@ local DEFAULT_ASSET_SIZE = Vector2.new(32,32)
 --local pathList = PathListConverter(storyboardData)
 --print(pathList)
 
-local ImageList = require(workspace.Storyboards.OOPARTS.ImageList)
+local ImageList = {}
+
+local storyBoardImgList = storyboardFile:FindFirstChild("ImageList")
+if storyBoardImgList then
+	ImageList = require(storyBoardImgList)
+end
+
 local appearCount = {}
 
 for _, sprite in pairs(storyboardData) do
@@ -28,15 +35,12 @@ end
 print(appearCount)
 
 table.sort(storyboardData, function(sprite1:SpriteObject, sprite2:SpriteObject)
-	local sprite1Cmd = sprite1.Commands[1]
-	local sprite2Cmd = sprite2.Commands[1]
-	if not sprite1Cmd then
+	if not sprite1 or not sprite1.StartTime then
 		return false
-	elseif not sprite2Cmd then
+	elseif not sprite2 or not sprite2.StartTime then
 		return true
-	else
-		return sprite1Cmd.StartTime < sprite2Cmd.StartTime
 	end
+	return sprite1.StartTime < sprite2.StartTime
 end)
 
 print("Sort completed! took", os.clock()-s)
@@ -46,13 +50,18 @@ print("Sort completed! took", os.clock()-s)
 local stackLoads = {}
 
 for _, item in pairs(storyboardData) do
+	local minIndex = 9999
+	local maxIndex = 0
 	for _, cmd in pairs(item.Commands) do
 		local sTime = cmd.StartTime
 		local eTime = cmd.EndTime
-		
+
 		local startIndex = sTime // 100 + 1
 		local endIndex = eTime // 100 + 1
-		
+
+		minIndex = math.min(startIndex, minIndex)
+		maxIndex = math.max(endIndex, maxIndex)
+
 		for i = startIndex, endIndex do
 			if not stackLoads[i] then
 				stackLoads[i] = 1
@@ -61,13 +70,25 @@ for _, item in pairs(storyboardData) do
 			end
 		end
 	end
+
+	-- Add another for UI, UI process more than a normal command
+	for i = minIndex, maxIndex do
+		if not stackLoads[i] then
+			stackLoads[i] = 5
+		else
+			stackLoads[i] += 5
+		end
+	end
 end
 
 table.sort(stackLoads, function(a,b)
+	if not tonumber(a) then return false
+	elseif not tonumber(b) then return true
+	end
 	return a > b
 end)
 
-local BASE_COMMAND_PROCESS = 9500
+local BASE_COMMAND_PROCESS = 1000	
 
 local avgLoad = 0
 local highestLoad = stackLoads[1]
@@ -85,7 +106,6 @@ avgLoad *= BASE_COMMAND_PROCESS
 
 
 -- Load all of the image before going into the game
-
 local loadList = {}
 for _, item in pairs(ImageList) do
 	if item.ImageId and not table.find(loadList,item.ImageId) then
@@ -93,11 +113,36 @@ for _, item in pairs(ImageList) do
 	end
 end
 
-ContentProvider:PreloadAsync(loadList)
+local objLoad = {}
+
+for _, item in pairs(loadList) do
+	local img = Instance.new("ImageLabel")
+	img.Image = item
+	objLoad[#objLoad+1] = img
+end
+local loadDisplay = script.Parent.Parent.Parent.LoadingDisplay
+loadDisplay.Visible = true
+
+for i = 1, 5 do
+	local count = 0
+	ContentProvider:PreloadAsync(objLoad, function(id, status)
+		count += 1
+		local progressValue = count/#objLoad * 0.2 + (i - 1) * 0.2
+		script.Parent.Parent.Parent.LoadProgress.Value = progressValue
+		if i == 1 then
+			loadDisplay.Text = `Loading asset: {count}/{#objLoad}`
+		else
+			local progress = (i-1) * 0.2 + (count/#objLoad)*0.2
+			loadDisplay.Text = `Preparing: {string.format("%.0f%%", progress * 100)}`
+		end
+	end)
+end
+
+loadDisplay.Visible = false
 
 print("All preview image loaded")
 
-local startTime = os.clock()
+local startTime = os.clock() + 3
 local spritesCount = #storyboardData
 local processingSprites = 0
 local commandsCount = 0
@@ -163,6 +208,12 @@ for i = 1, 60 do
 	task.wait()
 end
 
+local mainUI = script.Parent.Parent.Parent
+mainUI.StoryboardLoaded.Value = true
+if not mainUI.GameReady.Value then
+	repeat task.wait() until mainUI.GameReady.Value
+end
+
 local deferEnabled = script.Parent.Parent.Parent.Core.ObjectsDeferEnabled.DeferEnabled
 
 for i, core in pairs(currentProcessCores) do
@@ -204,7 +255,7 @@ task.spawn(function()
 			end
 		end
 		script.Parent.Parent.Parent.Core.Stats.ActiveCommands.Text = outCmd
-		
+
 		local count_ui = 0
 		for i, data in pairs(Stats.UIActiveCommands) do
 			count_ui += data
@@ -224,7 +275,7 @@ task.spawn(function()
 			compute_ui += data*1000
 		end
 		script.Parent.Parent.Parent.Core.Stats.ComputeTime.Text = outCompute..` | UI : {string.format("%.2fms", compute_ui)}]`
-		
+
 		local out_unused = "Unused objects: "
 		for i, data in pairs(Stats.ObjsNotInUse) do
 			out_unused..= `[{i}]: {data}`
@@ -232,7 +283,7 @@ task.spawn(function()
 				out_unused..= " | "
 			end
 		end
-		
+
 		script.Parent.Parent.Parent.Core.Stats.UnuseObject.Text = out_unused
 	end
 end)
@@ -249,6 +300,13 @@ function toUDim2FromY(y:number, u:UDim2)
 	return UDim2.fromScale(u.X.Scale, y)
 end
 
+script.Parent:BindToMessage("Restart", function()
+	local oldUI = script.Parent.Parent.Parent
+	local newUI = game.StarterGui.StoryboardUI:Clone()
+	newUI.Parent = game.Players.LocalPlayer.PlayerGui
+	oldUI:Destroy()
+end)
+
 script.Parent:BindToMessage("SetTime", function(t:number)
 	startTime = os.clock() - t
 	script.Parent.Parent.Parent.Sound.TimePosition = t
@@ -259,6 +317,13 @@ end)
 local SUPPORTED_CMD = {
 	"F", "M", "MX", "MY", "S", "V", "C", "R"
 }
+
+-- Start the song
+--task.spawn(function()
+--	repeat task.wait() until os.clock() - startTime >= 0
+--	script.Parent.Parent.Parent.Sound.TimePosition = os.clock() - startTime
+--	script.Parent.Parent.Parent.Sound:Play()
+--end)
 
 for i, spriteData in pairs(storyboardData) do
 	local objData = spriteData.Data
@@ -275,26 +340,13 @@ for i, spriteData in pairs(storyboardData) do
 			lastCommandTime = cmd.EndTime
 		end
 	end
-	if os.clock() - startTime > lastCommandTime/1000 then
+	if os.clock() - startTime > (lastCommandTime/1000 + 1) then
 		-- No need to render this sprite
 		continue
 	end
-	table.sort(objCommands, function(c1, c2)
-		if not c1.StartTime then
-			return false
-		elseif not c2.StartTime then
-			return true
-		else
-			return c1.StartTime < c2.StartTime
-		end
-	end)
 	local firstCmd = objCommands[1]
 	if not firstCmd then
 		break
-	end
-	if i == 1 then
-		script.Parent.Parent.Parent.Sound.TimePosition = os.clock() - startTime
-		script.Parent.Parent.Parent.Sound:Play()
 	end
 
 	local objStartTime = firstCmd.StartTime/1000
@@ -316,21 +368,46 @@ for i, spriteData in pairs(storyboardData) do
 	local _imgId = ImageList[objData.Filepath] and ImageList[objData.Filepath].ImageId
 	local objectSize =  toUDim2(_imgSize or DEFAULT_ASSET_SIZE)
 	local parentDestination = LayoutPlacement[objData.Layer]
-	
+
+	local imageIdList = {}
+	local animData = {}
+	if spriteData.Type == "Animation" then
+		local animData = objData::StoryboardConverter.AnimationData
+		local raw = animData.Filepath:split(".")
+		local p = ""
+		for i = 1, #raw-1 do
+			p = p..raw[i]
+		end
+		local ex = raw[#raw]
+		for i = 0, animData.FrameCount-1 do
+			local path = `{p}{i}.{ex}`
+			local id = ImageList[path] and ImageList[path].ImageId
+			imageIdList[i+1] = id
+			if i == 0 then
+				_imgSize = ImageList[path] and ImageList[path].Size
+			end
+		end
+	end
+
 	local extraData = {
 		ImageSize = _imgSize,
 		Image = _imgId,
-		Size = objectSize
+		Size = objectSize,
+		ImageIdList = imageIdList,
+		AnimData = animData,
+		Type = spriteData.Type,
+		StartTime = firstCmd.StartTime
 	}
-	
+
 	currentActor:SendMessage("AddObject", objUnquieId, objData, extraData)
 
 	task.spawn(function()
 		local currentActiveCommand = 0
 		local finishedCommands = 0
 		for _, command in pairs(objCommands) do
-			if not command. StartTime then
+			if not command.StartTime then
 				finishedCommands += 1
+				print("Where is the start time?")
 				continue
 			end
 			local commandType = command.CommandType
@@ -338,38 +415,43 @@ for i, spriteData in pairs(storyboardData) do
 			local params = command.Params
 			local commandHaveRanOnce = false
 			if not table.find(SUPPORTED_CMD, commandType) and commandType ~= "P" then
+				print("Command not supported!", commandType)
 				continue
 			end
 			currentActiveCommand += 1
+			if os.clock() - startTime < command.StartTime/1000 then
+				repeat task.wait() until os.clock() - startTime >= command.StartTime/1000
+			end
 			task.spawn(function()
-				if os.clock() - startTime < command.StartTime/1000 then
-					repeat task.wait() until os.clock() - startTime >= command.StartTime/1000
-				end
-
 				if table.find(SUPPORTED_CMD, commandType) then
 					local commandUnquieId = HttpService:GenerateGUID()
 					currentActor:SendMessage("AddCommand", objUnquieId, commandUnquieId, command)
 
-					commandsCount += 1
-					repeat task.wait() until (os.clock() - startTime > command.EndTime/1000)
-					commandsCount -= 1
-					currentActor:SendMessage("RemoveCommand", commandUnquieId)
+					if command.StartTime ~= command.EndTime then
+						commandsCount += 1
+						repeat task.wait() until (os.clock() - startTime > command.EndTime/1000)
+						commandsCount -= 1
+						currentActor:SendMessage("RemoveCommand", commandUnquieId)
+					end
 				elseif commandType == "P" then
 					-- Parmeter commands
 					-- This is a special command, unlike other commands, this only need to ran twice (start and end)
 					local parmeter = params[1]
-					currentActor:SendMessage("ToggleParmeterCommand", "P", parmeter, true)
+					currentActor:SendMessage("ToggleParmeterCommand", objUnquieId, "P", parmeter, true)
 					repeat task.wait() until (os.clock() - startTime > command.EndTime/1000)
-					currentActor:SendMessage("ToggleParmeterCommand", "P", parmeter, false)
+					if not command.StaysForever then
+						currentActor:SendMessage("ToggleParmeterCommand", objUnquieId, "P", parmeter, false)
+					end
 				end				
 
 				finishedCommands += 1
 			end)
 		end
 
-		while finishedCommands < currentActiveCommand do
+		while finishedCommands < currentActiveCommand do			
 			task.wait(1)
 		end
+
 		currentActor:SendMessage("RemoveObject", objUnquieId)
 		completedCount += 1
 	end)
