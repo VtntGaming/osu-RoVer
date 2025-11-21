@@ -6510,8 +6510,10 @@ function LetTheGameBegin()
 
 
 				if Ratio >= 0.25 or SpinnerTime < 0.2 then
-					AccuracyData.Combo += 1
-					EstimatedCombo += 1
+					if not isPaused then
+						AccuracyData.Combo += 1
+						EstimatedCombo += 1
+					end
 
 					AccuracyData.BaseConsistency += AccuracyData.Combo
 					AccuracyData.MaxConsistency += EstimatedCombo
@@ -7107,11 +7109,13 @@ function LetTheGameBegin()
 										if AccuracyData.Combo >= 20 then
 											script.Parent.ComboBreak:Play()
 										end
-										AccuracyData.Combo = 0
-										EstimatedCombo += 1
-										AccuracyData.MaxConsistency += EstimatedCombo
-										AccuracyData.PerfomanceCombo = 0
-										DrainHP(-0.02, -0.075, -0.14)
+										if not isPaused then
+											AccuracyData.Combo = 0
+											EstimatedCombo += 1
+											AccuracyData.MaxConsistency += EstimatedCombo
+											AccuracyData.PerfomanceCombo = 0
+											DrainHP(-0.02, -0.075, -0.14)
+										end
 									end
 								end
 							end)
@@ -7217,13 +7221,15 @@ function LetTheGameBegin()
 										if AccuracyData.Combo >= 20 then
 											script.Parent.ComboBreak:Play()
 										end
-										AccuracyData.Combo = 0
-										EstimatedCombo += 1
-										AccuracyData.MaxConsistency += EstimatedCombo
-										AccuracyData.PerfomanceCombo = 0
-										AddPerfomanceScore(HitObj)
-										for i = 1, Multiplier do
-											DrainHP(-0.02, -0.075, -0.14)
+										if not isPaused then
+											AccuracyData.Combo = 0
+											EstimatedCombo += 1
+											AccuracyData.MaxConsistency += EstimatedCombo
+											AccuracyData.PerfomanceCombo = 0
+											AddPerfomanceScore(HitObj)
+											for i = 1, Multiplier do
+												DrainHP(-0.02, -0.075, -0.14)
+											end
 										end
 									end
 									AddHealthDrainMultiplier(0.7*Multiplier)
@@ -7794,8 +7800,10 @@ function LetTheGameBegin()
 										Circle.ApproachCircle.Visible = false
 									end
 
-									AccuracyData.Combo += 1
-									EstimatedCombo += 1
+									if not isPaused then
+										AccuracyData.Combo += 1
+										EstimatedCombo += 1										
+									end
 									AccuracyData.BaseConsistency += AccuracyData.Combo
 									AccuracyData.MaxConsistency += EstimatedCombo
 									TickCollected += 1
