@@ -7095,16 +7095,18 @@ function LetTheGameBegin()
 											Score += 10
 											TotalScoreEstimated += 10
 										end
-										AccuracyData.Combo+=1
-										EstimatedCombo += 1
-										AccuracyData.BaseConsistency += AccuracyData.Combo
-										AccuracyData.MaxConsistency += EstimatedCombo
-										TickCollected += 1
-										AddHP(0.015)
-										if AccuracyData.Combo > AccuracyData.MaxCombo then
-											AccuracyData.MaxCombo = AccuracyData.Combo
+										if not isPaused then
+											AccuracyData.Combo+=1
+											EstimatedCombo += 1
+											AccuracyData.BaseConsistency += AccuracyData.Combo
+											AccuracyData.MaxConsistency += EstimatedCombo
+											TickCollected += 1
+											AddHP(0.015)
+											if AccuracyData.Combo > AccuracyData.MaxCombo then
+												AccuracyData.MaxCombo = AccuracyData.Combo
+											end
+											CreateHitSound(5)
 										end
-										CreateHitSound(5)
 									else
 										if AccuracyData.Combo >= 20 then
 											script.Parent.ComboBreak:Play()
@@ -7203,19 +7205,22 @@ function LetTheGameBegin()
 
 								local function checkSlides(Multiplier, CurrentSlide)
 									if (isInFollowCircle(Slides%2) == true and script.Parent.KeyDown.Value == true) or tick() - LastHold <= 0.1 then
-										Score += 30 * Multiplier
-										TotalScoreEstimated += 30 * Multiplier
-										AccuracyData.Combo+=Multiplier
-										EstimatedCombo += Multiplier
-										AccuracyData.BaseConsistency += AccuracyData.Combo
-										AccuracyData.MaxConsistency += EstimatedCombo
-										TickCollected += Multiplier
-										AddHP(0.02*Multiplier)
-										if AccuracyData.Combo > AccuracyData.MaxCombo then
-											AccuracyData.MaxCombo = AccuracyData.Combo
-										end
-										if CurrentSlide then
-											CreateHitSound(0,NoteNormalSampleSet,math.clamp(SLPositionData[CurrentSlide%2].X,0,1))
+										
+										if not isPaused then
+											Score += 30 * Multiplier
+											TotalScoreEstimated += 30 * Multiplier
+											AccuracyData.Combo+=Multiplier
+											EstimatedCombo += Multiplier
+											AccuracyData.BaseConsistency += AccuracyData.Combo
+											AccuracyData.MaxConsistency += EstimatedCombo
+											TickCollected += Multiplier
+											AddHP(0.02*Multiplier)
+											if AccuracyData.Combo > AccuracyData.MaxCombo then
+												AccuracyData.MaxCombo = AccuracyData.Combo
+											end
+											if CurrentSlide then
+												CreateHitSound(0,NoteNormalSampleSet,math.clamp(SLPositionData[CurrentSlide%2].X,0,1))
+											end
 										end
 									else -- Combo break when player released
 										if AccuracyData.Combo >= 20 then
@@ -7268,36 +7273,38 @@ function LetTheGameBegin()
 
 								if (isInFollowCircle(Slides%2) == true and script.Parent.KeyDown.Value == true) or tick() - LastHold <= 0.1 then
 									-- Now we check the slider tail
-									AccuracyData.Combo+=1
-									EstimatedCombo += 1
-									AccuracyData.BaseConsistency += AccuracyData.Combo
-									AccuracyData.MaxConsistency += EstimatedCombo
-									TickCollected += 1
-									AddHP(0.02)
-									if AccuracyData.Combo > AccuracyData.MaxCombo then
-										AccuracyData.MaxCombo = AccuracyData.Combo
-									end
-									local raw = tonumber(HitObj.ExtraData[1])::number
-									local raw2 = {}
-									while raw > 0 do
-										raw2[#raw2+1] = raw%2
-										raw = math.floor(raw/2)
-									end
+									if not isPaused then
+										AccuracyData.Combo+=1
+										EstimatedCombo += 1
+										AccuracyData.BaseConsistency += AccuracyData.Combo
+										AccuracyData.MaxConsistency += EstimatedCombo
+										TickCollected += 1
+										AddHP(0.02)
+										if AccuracyData.Combo > AccuracyData.MaxCombo then
+											AccuracyData.MaxCombo = AccuracyData.Combo
+										end
+										local raw = tonumber(HitObj.ExtraData[1])::number
+										local raw2 = {}
+										while raw > 0 do
+											raw2[#raw2+1] = raw%2
+											raw = math.floor(raw/2)
+										end
 
-									local HitsoundSampleset = {}
-									for i = #raw2, 1, -1 do
-										HitsoundSampleset[#HitsoundSampleset+1] = raw2[i]
-									end
+										local HitsoundSampleset = {}
+										for i = #raw2, 1, -1 do
+											HitsoundSampleset[#HitsoundSampleset+1] = raw2[i]
+										end
 
-									CreateHitSound(0,NoteNormalSampleSet) -- normal
-									if HitsoundSampleset[2]==1 then -- whistle
-										CreateHitSound(2,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1))
-									end
-									if HitsoundSampleset[3]==1 then -- finish
-										CreateHitSound(1,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1))
-									end
-									if HitsoundSampleset[4]==1 then -- clap
-										CreateHitSound(3,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1))
+										CreateHitSound(0,NoteNormalSampleSet) -- normal
+										if HitsoundSampleset[2]==1 then -- whistle
+											CreateHitSound(2,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1))
+										end
+										if HitsoundSampleset[3]==1 then -- finish
+											CreateHitSound(1,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1))
+										end
+										if HitsoundSampleset[4]==1 then -- clap
+											CreateHitSound(3,NoteAditionSampleSet,math.clamp(HitObj.Position.X/512,0,1))
+										end
 									end
 								else
 									DrainHP(-0.02, -0.075, -0.14)
