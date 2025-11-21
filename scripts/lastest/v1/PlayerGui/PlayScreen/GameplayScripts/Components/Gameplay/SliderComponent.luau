@@ -287,80 +287,88 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 	end
 	
 	function SliderObject.SetSnakingIn(t, inReverse)
-		local lastRotation = 0
-		for _, data in pairs(PointData) do
-			local obj = data[1]
-			local objOuter = data[2]
-			local tStart = data[7]
-			local tEnd = tStart+data[8]
-			if t >= tStart then
-				obj.Visible = true
-				objOuter.Visible = true
-				local Ratio = math.min(1, (t - tStart) / data[8])
-				obj.Body.Overlay.Size = UDim2.fromScale(Ratio,1)
-				objOuter.Body.Overlay.Size = UDim2.fromScale(Ratio,1)
-				lastRotation = Rotate180(data[6])
-			else
-				obj.Visible = false
-				objOuter.Visible = false
-			end
-			if t <= tEnd then
-				lastRotation = Rotate180(data[6])
-				if inReverse then
-					continue
-				else
-					break
-				end
-			end
-		end
-		local Position = SliderObject.PositionOf(t)
-		if slideCount > 1 and not inReverse then -- animate the first arrow object
-			local firstReverseArrow = ReverseArrows[1]
-			firstReverseArrow.Position = UDim2.fromScale(Position.X, Position.Y)
-			firstReverseArrow.Rotation = lastRotation
-			firstReverseArrow.ReverseArrow.ImageTransparency = 0
-		end
-		SliderCoverInner.Position = UDim2.fromScale(Position.X, Position.Y)
-		SliderCoverOuter.Position = UDim2.fromScale(Position.X, Position.Y)
-	end
-	
-	function SliderObject.SetSnakingOut(t)
-		local isLastSlideReverse = (slideCount % 2 == 0)
-		
-		if isLastSlideReverse then
-			-- This is easy, just do the SetSnakingIn and done
-			SliderObject.SetSnakingIn(1-t, true)
-		else
-			-- But this isn't...
+		xpcall(function()				
+			local lastRotation = 0
 			for _, data in pairs(PointData) do
 				local obj = data[1]
 				local objOuter = data[2]
 				local tStart = data[7]
 				local tEnd = tStart+data[8]
-				if t-tStart > data[8] then
+				if t >= tStart then
+					obj.Visible = true
+					objOuter.Visible = true
+					local Ratio = math.min(1, (t - tStart) / data[8])
+					obj.Body.Overlay.Size = UDim2.fromScale(Ratio,1)
+					objOuter.Body.Overlay.Size = UDim2.fromScale(Ratio,1)
+					lastRotation = Rotate180(data[6])
+				else
 					obj.Visible = false
 					objOuter.Visible = false
-					continue
-				else
-					local Ratio = math.clamp((t-tStart) / (data[8]), 0, 1)
-					obj.Body.Overlay.Size = UDim2.fromScale(1-Ratio,1)
-					objOuter.Body.Overlay.Size = UDim2.fromScale(1-Ratio,1)
-					local Pos = PositionPoint(data[3],data[4], Ratio)
-					obj.Position = UDim2.fromScale(Pos.X, Pos.Y)
-					objOuter.Position = UDim2.fromScale(Pos.X, Pos.Y)
-					if Ratio < tEnd and Ratio >= tStart then
-						obj.InnerHead.Visible = false
-						objOuter.BackgroundTransparency = 1
+				end
+				if t <= tEnd then
+					lastRotation = Rotate180(data[6])
+					if inReverse then
+						continue
+					else
 						break
 					end
 				end
 			end
 			local Position = SliderObject.PositionOf(t)
-			newEndSliderInner.Visible = true
-			newEndSliderOuter.Visible = true
-			newEndSliderInner.Position = UDim2.fromScale(Position.X, Position.Y)
-			newEndSliderOuter.Position = UDim2.fromScale(Position.X, Position.Y)
-		end
+			if slideCount > 1 and not inReverse then -- animate the first arrow object
+				local firstReverseArrow = ReverseArrows[1]
+				firstReverseArrow.Position = UDim2.fromScale(Position.X, Position.Y)
+				firstReverseArrow.Rotation = lastRotation
+				firstReverseArrow.ReverseArrow.ImageTransparency = 0
+			end
+			SliderCoverInner.Position = UDim2.fromScale(Position.X, Position.Y)
+			SliderCoverOuter.Position = UDim2.fromScale(Position.X, Position.Y)
+		end, function(e)
+			warn(e)
+		end)
+	end
+	
+	function SliderObject.SetSnakingOut(t)
+		xpcall(function()
+			local isLastSlideReverse = (slideCount % 2 == 0)
+			
+			if isLastSlideReverse then
+				-- This is easy, just do the SetSnakingIn and done
+				SliderObject.SetSnakingIn(1-t, true)
+			else
+				-- But this isn't...
+				for _, data in pairs(PointData) do
+					local obj = data[1]
+					local objOuter = data[2]
+					local tStart = data[7]
+					local tEnd = tStart+data[8]
+					if t-tStart > data[8] then
+						obj.Visible = false
+						objOuter.Visible = false
+						continue
+					else
+						local Ratio = math.clamp((t-tStart) / (data[8]), 0, 1)
+						obj.Body.Overlay.Size = UDim2.fromScale(1-Ratio,1)
+						objOuter.Body.Overlay.Size = UDim2.fromScale(1-Ratio,1)
+						local Pos = PositionPoint(data[3],data[4], Ratio)
+						obj.Position = UDim2.fromScale(Pos.X, Pos.Y)
+						objOuter.Position = UDim2.fromScale(Pos.X, Pos.Y)
+						if Ratio < tEnd and Ratio >= tStart then
+							obj.InnerHead.Visible = false
+							objOuter.BackgroundTransparency = 1
+							break
+						end
+					end
+				end
+				local Position = SliderObject.PositionOf(t)
+				newEndSliderInner.Visible = true
+				newEndSliderOuter.Visible = true
+				newEndSliderInner.Position = UDim2.fromScale(Position.X, Position.Y)
+				newEndSliderOuter.Position = UDim2.fromScale(Position.X, Position.Y)
+			end
+		end, function(e)
+			warn(e)
+		end)
 	end
 	
 	function SliderObject.setFollowCirclePosition(t, isReverse)
