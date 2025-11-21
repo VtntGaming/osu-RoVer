@@ -12,7 +12,6 @@ PlayerGui = LocalPlayer.PlayerGui
 ObjectManagement_Actor = game.Players.LocalPlayer.PlayerScripts.ObjectManagement_Actor
 ExternalFunction_Actor = game.Players.LocalPlayer.PlayerScripts.ExternalFunction_Actor
 ParallelProcessingFolder = game.Players.LocalPlayer.PlayerScripts.ParallelProcessing
-local wait = task.wait
 local tick = os.clock
 local PerformanceCalculator = require(workspace.PerformanceCalculator)
 SliderComponent = require(ScriptComponent.Gameplay.SliderComponent)
@@ -20,14 +19,12 @@ local modData = require(workspace.ModData)
 StreamingLoop = require(ScriptComponent.Perfomance.StreamingCode).create()
 SliderObjManage = require(ScriptComponent.Perfomance.SliderObjManage).init()
 local ScoreStaticticConverter = require(ScriptComponent.Gameplay.ScoreStatisticConverter)
+local PauseScreenUtils = require(ScriptComponent.Gameplay.PauseScreen)
 
 -- basic function
-function lerp(a, b, ratio)
-	return a + (b - a)*ratio
-end
 
 if script.Parent.StartupState.Value == "Waiting" then
-	repeat wait() until script.Parent.StartupState.Value ~= "Waiting"
+	repeat task.wait() until script.Parent.StartupState.Value ~= "Waiting"
 end
 
 local StartupState = script.Parent.StartupState.Value
@@ -60,7 +57,7 @@ end)
 --RunService.RenderStepped:Connect(function()
 workspace.ClientWaitModule.AccurateEvent.Event:Connect(function()
 	GameplayFPS += 1
-	wait(1)
+	task.wait(1)
 	GameplayFPS -= 1
 end)
 
@@ -542,9 +539,6 @@ CurrentSetting.MainSettings.Easy.MouseButton1Click:Connect(function()
 	LoadMultiplier()
 	ReloadPreviewFrame()
 end)
--- Process function [Loop function]
-
-local spawn = task.spawn
 
 -- Leaderboard
 
@@ -928,15 +922,6 @@ local DisplayLBInformationValue = {
 	calculatedMaxPS = Instance.new("NumberValue")
 }
 
-local RankColor = {
-	SS = Color3.fromRGB(255, 255, 0),
-	S = Color3.fromRGB(255, 255, 0),
-	A = Color3.fromRGB(0, 255, 0),
-	B = Color3.fromRGB(0, 85, 255),
-	C = Color3.fromRGB(170, 0, 127),
-	D = Color3.fromRGB(255, 0, 0)
-}
-
 function updateLBStaistic()
 	local LbInformation = PlayerGui.BG.BeatmapLeaderboard.UserPlayInformation
 	local MainFrame = LbInformation.MainFrame
@@ -1053,7 +1038,7 @@ function AddLeaderboardConnection(LeaderboardFrame,Data:ScoreStatistic,Score,UID
 			TweenService:Create(MainFrame.Parent, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 300, 0, 115)}):Play()
 			TweenService:Create(ReplayOption, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {GroupTransparency = 1}):Play()
 			task.spawn(function()
-				wait(0.25)
+				task.wait(0.25)
 				if UserPlayInformationAnimateID == crrID then
 					ReplayOption.Visible = false
 				end
@@ -1107,7 +1092,7 @@ function AddLeaderboardConnection(LeaderboardFrame,Data:ScoreStatistic,Score,UID
 			LeaderboardFrame.MainFrame.Score.Text = string.format("Score: %s (%dx)", GetScore(DisplayScore), Data.MaxCombo)
 		end
 	end
-	wait()
+	task.wait()
 	Check()
 	LeaderboardFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(Check)
 end
@@ -1120,7 +1105,7 @@ local _RefreshEvent = Instance.new("BindableEvent")
 function AddLBTweenConnection(Tween,DelayedTime)
 	local Key = HttpService:GenerateGUID(false)
 	LBTweenConnection[Key] = _RefreshEvent.Event:Connect(function()
-		wait(DelayedTime)
+		task.wait(DelayedTime)
 		if Tween == nil or Tween.Instance == nil and LBTweenConnection[Key] then
 			LBTweenConnection[Key]:Disconnect()
 			LBTweenConnection[Key] = nil
@@ -1140,7 +1125,7 @@ function AddLBTweenConnection(Tween,DelayedTime)
 end
 
 task.spawn(function()
-	while script.Parent:FindFirstChild("GameStarted") == nil and wait(1.5) do
+	while script.Parent:FindFirstChild("GameStarted") == nil and task.wait(1.5) do
 		_RefreshEvent:Fire()
 	end
 end)
@@ -1337,11 +1322,11 @@ LoadLeaderboard = function()
 		--LeaderboardInterface.LoadingText.Visible = false
 		task.spawn(function()
 			LeaderboardInterface.UILoad.LoadingUI.Frame.CloseRequest:Fire()
-			wait(0.15)
+			task.wait(0.15)
 			TweenService:Create(LeaderboardInterface.UILoad,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{GroupTransparency = 1}):Play()
 		end)
 
-		wait(0.4)
+		task.wait(0.4)
 		if not script.Parent:FindFirstChild("GameStarted") then
 			local function GetScore(CurrentScore)
 				CurrentScore = tostring(CurrentScore)
@@ -1439,7 +1424,7 @@ LoadLeaderboard = function()
 								local isLoaded = false
 								local isFriend = false
 								while isLoaded == false do
-									wait()
+									task.wait()
 									if pcall(function()
 											isFriend = LocalPlayer:IsFriendsWith(game.Players:GetUserIdFromNameAsync(Data.Name))
 										end) == true then
@@ -1461,14 +1446,14 @@ LoadLeaderboard = function()
 						warn(output)
 					end
 					for i = 1,10 do
-						wait()
+						task.wait()
 					end
 					Loaded += 1
 					if Loaded < Total then
-						repeat wait() until Loaded >= Total
+						repeat task.wait() until Loaded >= Total
 					end
 
-					wait((i-1)*0.05)
+					task.wait((i-1)*0.05)
 					if NewLBFrame.Parent then
 						if not OptimizedPerfomance then
 							TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0,0,0,0),BackgroundTransparency = 0.9}):Play()
@@ -1478,7 +1463,7 @@ LoadLeaderboard = function()
 							NewLBFrame.MainFrame.BackgroundTransparency = 0.9
 							NewLBFrame.Size = UDim2.new(1,0,0,40)
 						end
-						wait(0.5)
+						task.wait(0.5)
 						if NewLBFrame.Parent then
 							for _,a in pairs(NewLBFrame.MainFrame:GetChildren()) do
 								if a:IsA("TextLabel") then
@@ -1501,7 +1486,7 @@ LoadLeaderboard = function()
 				LeaderboardInterface.NoRecord.Visible = true
 			end
 
-			spawn(function()
+			task.spawn(function()
 				TweenService:Create(Leaderboard.Parent.PersonalBestTitle,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
 				local Data = PersonalData
 				if tonumber(Data.Score) ~= nil then
@@ -1579,13 +1564,13 @@ LoadLeaderboard = function()
 					--NewLBFrame.MainFrame.PlayerImage.Image = Data.ThumbnailId
 					AddLeaderboardConnection(NewLBFrame,Data.ExtraData,Data.Score,Data.UID,GetDate(Data.ExtraData.Date))
 					for i = 1,10 do
-						wait()
+						task.wait()
 					end
 					Loaded += 1
 					if Loaded < Total then
-						repeat wait() until Loaded >= Total
+						repeat task.wait() until Loaded >= Total
 					end
-					wait(WaitTime)
+					task.wait(WaitTime)
 					NewLBFrame.Size = UDim2.new(1,0,0,40)
 					if not OptimizedPerfomance then
 						TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.75,Enum.EasingStyle.Quart),{Position = UDim2.new(0,0,0,0),BackgroundTransparency = 0.9}):Play()
@@ -1593,7 +1578,7 @@ LoadLeaderboard = function()
 						NewLBFrame.MainFrame.Position = UDim2.new(0,0,0,0)
 					end
 
-					wait(0.25)
+					task.wait(0.25)
 					for _,a in pairs(NewLBFrame.MainFrame:GetChildren()) do
 						if a:IsA("TextLabel") then
 							if a.Name ~= "UserName" then
@@ -1603,7 +1588,7 @@ LoadLeaderboard = function()
 							TweenService:Create(a,TweenInfo.new(0.75,Enum.EasingStyle.Linear),{ImageTransparency = 0.95}):Play()
 						end
 					end
-					wait(0.5)
+					task.wait(0.5)
 					if not OptimizedPerfomance then
 						AddLBTweenConnection(TweenService:Create(NewLBFrame.MainFrame,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0.8}),WaitTime)
 					end
@@ -1723,14 +1708,14 @@ GameSettingManage.SubscribeSettingChange:Fire("EnableSpeedPitch", script, functi
 	ReloadPreviewFrame()
 end)
 
-wait()
+task.wait()
 if StartupState == "Normal" then
-	spawn(function()
+	task.spawn(function()
 		ReloadPreviewFrame(true)
 		LoadLeaderboard()	
 	end)
 else
-	spawn(function()
+	task.spawn(function()
 		local MapData = require(BeatmapStudio)
 
 		local _,firstb = string.find(MapData,"BeatmapID:")
@@ -1867,7 +1852,7 @@ end)
 
 script.Parent.MapLbUpdate.Event:Connect(function()
 	if ChangingQueue > 0 then
-		repeat wait() until ChangingQueue == 0
+		repeat task.wait() until ChangingQueue == 0
 	end
 	LoadLeaderboard()
 end)
@@ -1919,7 +1904,7 @@ script.Parent.Parent.BG.StartButton.MouseButton1Click:Connect(function()
 			AutoPlay = true	-- Right control to toggle auto-play
 			print("Toggle autoplay")
 		end
-		wait(0.5)
+		task.wait(0.5)
 		script.Parent.StartGame:Fire()
 		StreamingLoop:AddLoop(function() return not BeatmapStarted end, 0.5, function()
 			script.Parent.StartGame:Fire()
@@ -1960,7 +1945,7 @@ if Reporter == nil then
 	script.Disabled = true
 else
 	task.spawn(function()
-		repeat wait(0.1) until Reporter.Parent == nil
+		repeat task.wait(0.1) until Reporter.Parent == nil
 		warn("[Client] An error occured, please rejoin to fix this issue")
 		require(PlayerGui:WaitForChild("NotificationPopup").NotificationsPopup.CreateNotification)("An error occured, please rejoin to fix this issue.",Color3.new(1, 0, 0))
 		script.Disabled = true
@@ -1997,7 +1982,7 @@ script.Parent.SpectateCall.Event:Connect(function(UID,Username)
 	SavedSpectateData = SpectateData
 	SpectatorCountRemote = SpectateData.SpectatorCountRemote
 	task.spawn(function()
-		while wait() do
+		while task.wait() do
 			if game.Players:GetPlayerByUserId(UID) == nil then
 				require(PlayerGui:WaitForChild("NotificationPopup").NotificationsPopup.CreateNotification)("Player you spectate has left.",Color3.new(1,0,0))
 				break
@@ -2098,7 +2083,7 @@ script.Parent.ReplayCall.Event:Connect(function(replaydata)
 
 	script.Parent.GameplayData.LeaderboardData.Value = "[]"
 
-	spawn(function()
+	task.spawn(function()
 		local MapData = require(BeatmapStudio)
 
 		local _,firstb = string.find(MapData,"BeatmapID:")
@@ -2120,11 +2105,11 @@ script.Parent.ReplayCall.Event:Connect(function(replaydata)
 	game.ReplicatedStorage.Gameplay.UpdateStatus:FireServer(3)
 	script.Parent.StartGame:Fire()
 end)
-spawn(function()
+task.spawn(function()
 	--script.Parent:WaitForChild("_FastRestart",math.huge)
 	if StartupState == "FastRestart" then
 		if not StateReady then
-			repeat wait() until StateReady
+			repeat task.wait() until StateReady
 		end
 		script.Parent.StartGame:Fire()
 	end
@@ -2180,9 +2165,9 @@ local isLoaded = false
 BeatmapStarted = true
 
 task.spawn(function()
-	repeat wait() until isLoaded
+	repeat task.wait() until isLoaded
 	for i = 1,30 do
-		wait()
+		task.wait()
 	end
 	--TweenService:Create(script.Parent.Interface.BG,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,false),{BackgroundTransparency = 1}):Play()
 	TweenService:Create(CurrentPreviewFrame.OverviewSong.EqualizerSoundEffect,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{HighGain = 0,MidGain = 0}):Play()
@@ -2193,7 +2178,7 @@ task.spawn(function()
 		TweenService:Create(CurrentPreviewFrame.OverviewSong2,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{Volume = 0}):Play()
 	end
 	TweenService:Create(script.Parent.Interface.Background,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{GroupTransparency = 1}):Play()
-	wait(0.25)
+	task.wait(0.25)
 	script.Parent.Interface.Background.Visible = false
 	CurrentPreviewFrame.OverviewSong:Stop()
 	if CurrentPreviewFrame:FindFirstChild("OverviewSong2") then
@@ -2217,7 +2202,7 @@ do
 	script.Parent.Interface.Background.Visible = true
 	if StartupState == "Normal" then	
 		TweenService:Create(script.Parent.Interface.Background,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{GroupTransparency = 0}):Play()
-		wait(1)
+		task.wait(1)
 	else
 		script.Parent.Interface.Background.GroupTransparency = 0
 	end
@@ -2243,7 +2228,7 @@ if BackgroundBlurEnabled == true then
 end
 
 task.spawn(function()
-	wait()
+	task.wait()
 	BackgroundFrame.Position = UDim2.new(0.5,0,0.5,0)
 	BackgroundFrame.Size = UDim2.new(1,0,1,0)
 end)
@@ -2567,7 +2552,7 @@ else
 	FileType = SavedSpectateData.FileType
 	Beatmap = workspace.Beatmaps[SavedSpectateData.FileName]
 
-	spawn(function()
+	task.spawn(function()
 		local MapData = require(Beatmap)
 
 		local _,firstb = string.find(MapData,"BeatmapID:")
@@ -2625,7 +2610,7 @@ if OnMultiplayer and not isHost then
 
 	SongSpeed = MultiplayerData.MatchData.Speed
 	Beatmap = workspace.Beatmaps[MultiplayerData.MatchData.Filename]
-	spawn(function()
+	task.spawn(function()
 		local MapData = require(Beatmap)
 
 		local _,firstb = string.find(MapData,"BeatmapID:")
@@ -2695,8 +2680,8 @@ local Background = PlayerGui.BG.Background.Background
 for _,Obj in pairs(Background:GetChildren()) do 
 	if Obj:IsA("ImageLabel") then
 		TweenService:Create(Obj,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
-		spawn(function()
-			wait(0.25)
+		task.spawn(function()
+			task.wait(0.25)
 			Obj:Destroy()
 		end)
 	end
@@ -2781,7 +2766,7 @@ for _,obj in pairs(script.Parent:GetDescendants()) do
 end
 
 pcall(function()
-	for i = 1,10 do wait() end
+	for i = 1,10 do task.wait() end
 	local ContentLoadingUI = script.Parent.ContentLoadingUI
 	ContentLoadingUI.Visible = true
 
@@ -2856,7 +2841,7 @@ pcall(function()
 	TweenService:Create(ContentLoadingUI.ProgressBar.Progress,TweenInfo.new(0.1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
 		Size = UDim2.new(1,0,1,0)
 	}):Play()
-	wait(2)
+	task.wait(2)
 
 	TweenService:Create(ContentLoadingUI,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{
 		Size = UDim2.new(1,0,0.17,0),GroupTransparency = 1
@@ -2877,8 +2862,8 @@ pcall(function()
 	TweenService:Create(StartButton._Text,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{ImageTransparency = 1}):Play()
 	TweenService:Create(StartButton._Text2,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{ImageTransparency = 1}):Play()
 
-	spawn(function()
-		wait(1)
+	task.spawn(function()
+		task.wait(1)
 		script.Parent.Parent.BG.StartButtonBeatAnimation:Destroy()
 		StartButton:Destroy()
 		ContentLoadingUI.Visible = false
@@ -2915,7 +2900,7 @@ local RankedRequirement = {
 }
 
 task.spawn(function()
-	wait(2)
+	task.wait(2)
 	for _,Requirement in pairs(RankedRequirement) do
 		if not Requirement then
 			PlayRanked = false
@@ -2947,6 +2932,7 @@ end
 
 local PlayingRemote
 local StartPlayingTick = tick()
+local isPaused = false
 
 function isActivelyPlaying()
 	-- Return if the player is playing or not
@@ -3166,9 +3152,9 @@ function GameOver()
 			else
 				return
 			end
-		end
-		
-		
+		end	
+		PauseScreenUtils.Toggle(false, false, {})	-- Just in case they are doing it....
+		script.Parent.GameplayData.PauseAllowed.Value = false
 
 		CursorUnlocked = true
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
@@ -3178,6 +3164,8 @@ function GameOver()
 
 		local hpLeftTween = TweenService:Create(script.Parent.HealthBar.Overlay.HPLeft, TweenInfo.new(0.25, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0) })
 		hpLeftTween:Play()
+		
+		
 
 		for _, tween in pairs(HitnoteAnimations) do
 			task.spawn(function()
@@ -3218,7 +3206,7 @@ function GameOver()
 		end
 
 		TweenService:Create(script.Parent.GameSong.Song, TweenInfo.new(3, Enum.EasingStyle.Linear), {Volume = 0, PlaybackSpeed = 0 }):Play()
-		wait(0.5)
+		task.wait(0.5)
 
 		for _, TweenObj in pairs(script.Parent.PlayFrame:GetDescendants()) do
 			if TweenObj.Name ~= "Cursor" and TweenObj.Name ~= "Flashlight" and TweenObj.Parent.Name ~= "MessagePatch" and TweenObj.Parent.Name ~= "CursorFade" and TweenObj:IsA("GuiObject") then
@@ -3228,45 +3216,31 @@ function GameOver()
 			end
 		end
 
-		wait(1.5)
+		task.wait(1.5)
 
 		local restartGameTween = TweenService:Create(script.Parent.RestartGame, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { TextTransparency = 1, BackgroundTransparency = 1 })
 		restartGameTween:Play()
 
 		task.spawn(function()
-			wait(0.5)
+			task.wait(0.5)
 			script.Parent.RestartGame.Visible = false
 		end)
-
-		local FailedScreen = script.Parent.FailedScreen
-
-		FailedScreen.RestartBeatmap.Visible = true
-		FailedScreen.ReturnGame_Failed.Visible = true
-
-		local restartBeatmapTween = TweenService:Create(FailedScreen.RestartBeatmap, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0.5,0,0.5,-5),TextTransparency = 0, BackgroundTransparency = 0.1 })
-		local returnGameFailedTween = TweenService:Create(FailedScreen.ReturnGame_Failed, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0.5,0,0.5,5), TextTransparency = 0, BackgroundTransparency = 0.1 })
-
-		restartBeatmapTween:Play()
-		returnGameFailedTween:Play()
-
+		
+		local pauseScreenArgs:PauseScreenUtils.Args = {}
+		
+		
 		if AutoPlay == true then
-			FailedScreen.Hint.HintText.Text = "Autoplay could fail sometimes, isn't it?"
+			pauseScreenArgs.CustomText = "Player failed"
 		elseif isSpectating then
-			FailedScreen.Hint.HintText.Text = "Player failed"
-			script.Parent.RestartBeatmap.Visible = false
+			pauseScreenArgs.CustomText = "Player failed"
+			pauseScreenArgs.DisableRestart = true
 		else
-			FailedScreen.Hint.HintText.Text = "You've failed, retry?"
+			-- do nothing xd
 		end
+		
+		PauseScreenUtils.Toggle(true, true, pauseScreenArgs)
 
-		local failedScreenTween = TweenService:Create(FailedScreen, TweenInfo.new(0.5, Enum.EasingStyle.Linear), {BackgroundTransparency = 0.25 })
-		local hintTextTween = TweenService:Create(FailedScreen.Hint.HintText, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {TextTransparency = 0, Position = UDim2.new(0, 0, 0, 0) })
-		local titleTween = TweenService:Create(FailedScreen.Title, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {TextTransparency = 0 })
-
-		failedScreenTween:Play()
-		hintTextTween:Play()
-		titleTween:Play()
-
-		wait(1)
+		task.wait(1)
 
 		for _, a in pairs(script.Parent.PlayFrame:GetChildren()) do
 			if a.Name ~= "FlashLight" then
@@ -3304,7 +3278,7 @@ task.spawn(function()
 	end
 	DrainSpeed*= SongSpeed
 	StreamingLoop:AddLoop(function() return true end, function() return 0 end, function(t)
-		if isDrain and not isSpectating then
+		if isDrain and not isSpectating and not isPaused then
 			-- do not drain while on break
 			-- when spectating, it get the host's HP instead
 			if HealthDrainMultiplier > 10 then
@@ -3467,11 +3441,12 @@ end)
 
 ReplayRecordEnabled = true
 
-spawn(function()
+task.spawn(function()
 	StreamingLoop:AddLoop(function() return true end, function() return 0 end, function(t)
 		script.Parent.GameplayPause.Event:Wait()
+		isPaused = true
 		AdjustIngameSongVolume(0)
-		wait(0.25)
+		task.wait(0.25)
 		local TimeElapsed = tick() - Start
 		Start = Start + 100000
 		SongStart = Start
@@ -3479,20 +3454,24 @@ spawn(function()
 		AdjustIngameSongVolume(SavedGameSettings.MusicVolume)
 		Start = tick() - TimeElapsed
 		SongStart = tick() - TimeElapsed
+		isPaused = false
 	end)
 end)
 
 script.Parent.ProgressBar.Visible = true
-spawn(function()
+task.spawn(function()
 	local TimeBreak = 3+BeatmapData[1].Time/1000
-	repeat TweenService:Create(script.Parent.ProgressBar.Time,TweenInfo.new(0.05,Enum.EasingStyle.Linear),{Size = UDim2.new(-((tick()-Start) - BeatmapData[1].Time/1000)/TimeBreak,0,1,0)}):Play() wait() until (tick()-Start)*1000 >= BeatmapData[1].Time
+	repeat
+		TweenService:Create(script.Parent.ProgressBar.Time,TweenInfo.new(0.05,Enum.EasingStyle.Linear),{Size = UDim2.new(-((tick()-Start) - BeatmapData[1].Time/1000)/TimeBreak,0,1,0)}):Play()
+		task.wait() 
+	until (tick()-Start)*1000 >= BeatmapData[1].Time
 	script.Parent.ProgressBar.Time.BackgroundColor3 = Color3.new(1,1,1)
 	TweenService:Create(script.Parent.ProgressBar.TimeLeft.Time,TweenInfo.new(0.75,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{TextTransparency = 0}):Play()
 	--TweenService:Create(script.Parent.ProgressBar.Time,TweenInfo.new((BeatmapData[#BeatmapData].Time-BeatmapData[1].Time)/1000,Enum.EasingStyle.Linear),{Size = UDim2.new(1,0,1,0)}):Play()
 
 	local TotalTime = (BeatmapData[#BeatmapData].Time-BeatmapData[1].Time)/1000
 	while tick() - Start < BeatmapData[#BeatmapData].Time/1000 and not ScoreResultDisplay do
-		wait()
+		task.wait()
 		local FullTimeLeft = BeatmapData[#BeatmapData].Time/1000 - (tick() - Start)
 		local maxTime = (BeatmapData[#BeatmapData].Time - BeatmapData[1].Time)/1000
 		local TimeLeft = math.ceil(FullTimeLeft)
@@ -3524,8 +3503,8 @@ end)
 
 
 if AutoPlay == true and ReplayMode ~= true then
-	spawn(function()
-		repeat wait() until (tick()-Start)*1000 >= BeatmapData[1].Time-1000
+	task.spawn(function()
+		repeat task.wait() until (tick()-Start)*1000 >= BeatmapData[1].Time-1000
 		TweenService:Create(ATVC,TweenInfo.new(0.5,Enum.EasingStyle.Sine),{Position = UDim2.new(0.5,0,0.5,0)}):Play()
 	end)
 end
@@ -3533,8 +3512,8 @@ end
 local Connection
 local Connection2
 
-spawn(function()
-	wait(2)
+task.spawn(function()
+	task.wait(2)
 	if BeatmapData[1].Time > 4000 then
 		script.Parent.SkipButton.Visible = true
 		TweenService:Create(script.Parent.SkipButton,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0.5,0,0.8,0),GroupTransparency = 0}):Play()
@@ -3552,7 +3531,7 @@ spawn(function()
 			Connection:Disconnect()
 			Connection2:Disconnect()
 			TweenService:Create(script.Parent.GameSong.Song,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{Volume = 0}):Play()
-			wait(0.25)
+			task.wait(0.25)
 			if not script.Parent.GameSong.Song.IsPlaying then
 				script.Parent.GameSong.Song:Play()
 			end
@@ -3561,7 +3540,7 @@ spawn(function()
 			TweenService:Create(script.Parent.ProgressBar.Time,TweenInfo.new(2,Enum.EasingStyle.Linear),{Size = UDim2.new(0,0,1,0)}):Play()
 			TweenService:Create(script.Parent.SkipButton,TweenInfo.new(0.5,Enum.EasingStyle.Sine		,Enum.EasingDirection.Out),{Position = UDim2.new(0.5,0,0.8,40),GroupTransparency = 1}):Play()
 			task.spawn(function()
-				wait(0.5)
+				task.wait(0.5)
 				script.Parent.SkipButton.Visible = false
 			end)
 		end
@@ -3587,7 +3566,7 @@ spawn(function()
 				Trigger()
 			end
 		end)
-		repeat wait() until (tick()-Start)*1000 >= BeatmapData[1].Time-3250
+		repeat task.wait() until (tick()-Start)*1000 >= BeatmapData[1].Time-3250
 		if not SkipAlvaiable then
 			return
 		end
@@ -3605,8 +3584,8 @@ end
 LastAudioTimeAdjust = tick()
 
 -- align the song with the time
-spawn(function()	
-	repeat wait(0.1) until script.Parent.GameSong.Song.IsReady == true
+task.spawn(function()	
+	repeat task.wait(0.1) until script.Parent.GameSong.Song.IsReady == true
 	StreamingLoop:AddLoop(function() return true end, 0.1, function(t)
 		local s,e = pcall(function()
 			local checkingSongObj = script.Parent.GameSong.Song
@@ -3705,7 +3684,7 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 	end
 
 	if UserInputService.TouchEnabled and EnableTouchDevice == true then
-		script.Parent.RestartGame.Text = "Exit (Hold)"
+		script.Parent.RestartGame.Text = "Menu (Hold)"
 		if HitZoneEnabled then
 			TweenService:Create(script.Parent.MobileHit,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(HitZoneArea,0,1,0)}):Play()
 			if MobileModeRightHitZone == true then
@@ -3777,9 +3756,9 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 			--Cursor.Position = UDim2.new(0.5,0,0.5,0)
 			-- Get current mouse position from the menu then apply it into the gameplay
 			task.spawn(function()
-				wait(0.5)
+				task.wait(0.5)
 				TweenService:Create(script.Parent.VirtualMouseReminder,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{TextTransparency = 0.5}):Play()
-				wait(2.5)
+				task.wait(2.5)
 				TweenService:Create(script.Parent.VirtualMouseReminder,TweenInfo.new(1,Enum.EasingStyle.Linear),{TextTransparency = 1}):Play()
 			end)
 
@@ -3808,7 +3787,7 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 				end
 			end)
 
-			spawn(function()
+			task.spawn(function()
 				StreamingLoop:AddLoop(function() return true end, function() return 0 end, function(t)
 					if UserInputService.MouseBehavior == Enum.MouseBehavior.Default and ShiftEnabled == false and CursorUnlocked == false then
 						UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
@@ -3820,7 +3799,7 @@ if AutoPlay == false and ReplayMode ~= true and isSpectating == false then
 			local prevtick = tick()
 			local GamepadDelta = Vector2.new(0,0)
 			task.spawn(function()
-				while ScoreResultDisplay == false and wait() do
+				while ScoreResultDisplay == false and task.wait() do
 					if not CursorUnlocked and UserInputService.GamepadEnabled then
 						local WindowSize = workspace.CurrentCamera.ViewportSize
 						local MouseMovement = GamepadDelta * (tick()-prevtick)
@@ -4023,7 +4002,7 @@ local DownKey = {
 
 local KeyHistory = script.Parent.HitKey.KeyHistory
 
-spawn(function()
+task.spawn(function()
 	local LastTick = tick()
 	local count = 0
 	StreamingLoop:AddLoop(function() return true end, function() return 0 end, function(t)
@@ -4063,7 +4042,7 @@ function clearOldCurrentHistory(Crr)
 	end
 end
 
-spawn(function()
+task.spawn(function()
 	local KeyTweenInfo = TweenInfo.new(0.1,Enum.EasingStyle.Sine,Enum.EasingDirection.Out)
 	local ChangeIn1 = {--[[Size = UDim2.new(0.18,0,0.18,0),]]BackgroundColor3 = Color3.new(1, 1, 0.72549),BackgroundTransparency = 0}
 	-- local ChangeIn2 = {--[[Size = UDim2.new(0.18,0,0.18,0),]]BackgroundColor3 = Color3.new(0.862745, 1, 1),BackgroundTransparency = 0}
@@ -4117,7 +4096,7 @@ end)
 
 
 
---wait(2)
+--task.wait(2)
 --CircleSize = 54.4 - 4.48 * CS
 --3
 
@@ -4210,7 +4189,7 @@ AccuracyData = {
 
 function getConsistency()
 	local Consistency = math.pow(AccuracyData.BaseConsistency/math.max(1,AccuracyData.MaxConsistency), 0.5) * 100
-	Consistency = math.max(Consistency, lerp(AccuracyData.MaxCombo/math.max(EstimatedCombo or 1, 1), 1, 1/(AccuracyData.miss+1)) * 100)
+	Consistency = math.max(Consistency, math.lerp(AccuracyData.MaxCombo/math.max(EstimatedCombo or 1, 1), 1, 1/(AccuracyData.miss+1)) * 100)
 	Consistency = math.max(Consistency, AccuracyData.MaxCombo/math.max(EstimatedCombo or 1, 1) * 100)
 	return Consistency
 end
@@ -4280,7 +4259,7 @@ script.Parent.ComboDisplay:GetPropertyChangedSignal("Text"):Connect(function()
 		--[[
 		TweenService:Create(script.Parent.ComboFrameDisplay.ComboFrameDisplay,TweenInfo.new(1/SongSpeed,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(0.09,0,0.09,0)}):Play()
 		task.spawn(function()
-			wait(0.05)
+			task.wait(0.05)
 			if _currentfadecomboid ~= id then return end
 			TweenService:Create(script.Parent.ComboFrameDisplay.ComboFrameDisplay,TweenInfo.new(0.1/SongSpeed,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(0.075,0,0.075,0)}):Play()
 		end)]]
@@ -4288,7 +4267,7 @@ script.Parent.ComboDisplay:GetPropertyChangedSignal("Text"):Connect(function()
 		if OldInterface == true then
 			TweenService:Create(script.Parent.ComboDisplay,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextSize = 60}):Play()
 			task.spawn(function()
-				wait(0.05)
+				task.wait(0.05)
 				TweenService:Create(script.Parent.ComboDisplay,TweenInfo.new(0.1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextSize = 50}):Play()
 			end)
 			task.spawn(function()
@@ -4299,7 +4278,7 @@ script.Parent.ComboDisplay:GetPropertyChangedSignal("Text"):Connect(function()
 				NewFadeCombo.TextTransparency = 0.25
 
 				TweenService:Create(NewFadeCombo,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{TextSize = script.Parent.ComboDisplay.TextSize*1.5,TextTransparency = 1}):Play()
-				wait(0.5)
+				task.wait(0.5)
 				NewFadeCombo:Destroy()
 			end)
 		end
@@ -4316,7 +4295,7 @@ script.Parent.ComboDisplay:GetPropertyChangedSignal("Text"):Connect(function()
 				TweenService:Create(obj,TweenInfo.new(0.5/SongSpeed,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
 			end
 		end
-		wait(0.5)
+		task.wait(0.5)
 		NewFadeCombo:Destroy()
 	elseif NewCombo == 0 and LastCombo >= 20 then
 		local _brokenCombo = LastComboCapture:Clone()
@@ -4330,8 +4309,8 @@ local CurrentAccuracy = 10000
 
 local LastComboDisplay = 0
 
-spawn(function() --Accurancy caculation
-	repeat wait() until tick() - SongStart >= 0
+task.spawn(function() --Accurancy caculation
+	repeat task.wait() until tick() - SongStart >= 0
 
 	local WaitTime = 0
 	if OptimizedPerfomance then
@@ -4377,7 +4356,7 @@ end)
 
 TweenService:Create(script.Parent.GameplayData.Accuracy,TweenInfo.new(2.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Value = 10000}):Play()
 
-spawn(function()
+task.spawn(function()
 	local WaitTime = 0
 	if OptimizedPerfomance then
 		WaitTime = 0.25
@@ -4547,7 +4526,7 @@ function getScoreV2()
 	return math.round(ScoreV2)
 end
 
-spawn(function()
+task.spawn(function()
 	local PrevScore = 0
 	local PrevScoreV2 = 1
 	local PrevMaxCombo = 0
@@ -4597,7 +4576,7 @@ spawn(function()
 	end)
 end)
 
-spawn(function()
+task.spawn(function()
 	local ScoreVisibleData = {
 		[-1] = 0
 	}
@@ -4713,8 +4692,8 @@ if Flashlight == true then
 	ScoreMultiplier.Mod *= 1.12
 	ScoreMultiplier.ModV2 *= 1.12
 	script.Parent.PlayFrame.ZIndex = 0
-	spawn(function()
-		wait(2.5)
+	task.spawn(function()
+		task.wait(2.5)
 		TweenService:Create(FlashlightFrame,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{Size = UDim2.new(7,0,7,0),ImageTransparency = 0}):Play()
 
 		local CurrentCombo = 0
@@ -4741,16 +4720,16 @@ local SpectateGotFirstData = false
 function FindForSpectateSignal()
 	local UserId = SavedSpectateData.SpectateUID
 	local SearchStartTime = tick()
-	repeat wait() until PlayerGui.MenuInterface.PlayerListFrame.PlayerList.GetUserStatus:Invoke(UserId,true) == 1 or tick() - SearchStartTime > 10 -- Player need to be out, but there would be some delay
-	wait(0.5)
-	repeat wait() until PlayerGui.MenuInterface.PlayerListFrame.PlayerList.GetUserStatus:Invoke(UserId,true) == 2
-	while wait(0.1) do
+	repeat task.wait() until PlayerGui.MenuInterface.PlayerListFrame.PlayerList.GetUserStatus:Invoke(UserId,true) == 1 or tick() - SearchStartTime > 10 -- Player need to be out, but there would be some delay
+	task.wait(0.5)
+	repeat task.wait() until PlayerGui.MenuInterface.PlayerListFrame.PlayerList.GetUserStatus:Invoke(UserId,true) == 2
+	while task.wait(0.1) do
 		script.Parent.RestartGame.SpectateReturn:Fire(UserId)
 	end
 end
 
 if isSpectating == true then
-	spawn(function()
+	task.spawn(function()
 		SpecDelayFrame.Visible = true
 		SpecDelayFrame.DelayDisplay.Text = tostring(SpectateDelay)
 		local function ChangeSpecValue(Value)
@@ -4793,12 +4772,12 @@ if isSpectating == true then
 		-- we will keep reading from the queue list
 		-- read from the first, remove that data until there's no queue
 
-		spawn(function()
+		task.spawn(function()
 			SpecStartTickChange = tick()
 			while true do
 				local Data = queue[1]
 				if not Data then
-					wait()
+					task.wait()
 					continue
 				end
 				table.remove(queue,1)
@@ -4815,14 +4794,14 @@ if isSpectating == true then
 					print(HostLatency)
 					if HostLatency > SpectateDelay/1000 + 0.5 or HostLatency < SpectateDelay/1000 then -- more than 500ms then update
 						if HostLatency < SpectateDelay/1000 then
-							repeat wait() until (workspace.ServerStatus.ServerTick.Value - HostTime) >= SpectateDelay/1000
+							repeat task.wait() until (workspace.ServerStatus.ServerTick.Value - HostTime) >= SpectateDelay/1000
 						end
 						StartTick = HostStartTick
 					end
 				end
 				if SpecStartTickChange ~= 0 then
 					if tick() - StartTick < CurrentSpecTime and SpectateDelay > 0 then
-						repeat wait() until tick() - StartTick >= CurrentSpecTime or SpectateDelay <= 0
+						repeat task.wait() until tick() - StartTick >= CurrentSpecTime or SpectateDelay <= 0
 					end
 				end
 
@@ -4950,16 +4929,16 @@ MouseHitEndEvent.Event:Connect(function(CurrentSecurityKey,data)
 	end
 end)
 
-spawn(function()
+task.spawn(function()
 	if isActivelyPlaying() and onTutorial ~= true then
 		local MetaData = ReturnData.Overview.Metadata
 		game.ReplicatedStorage.Gameplay.UpdateStatus:FireServer(2,{BeatmapPlaying = MetaData.SongCreator.." - "..MetaData.MapName.." ["..MetaData.DifficultyName.."]"})
 		StreamingLoop:AddLoop(function() return true end, 1/60, function() -- record cursor movement at most 60FPS
 			if #game.Players:GetPlayers() > 1 then -- for better perfomance, data should only send when there's more than 1 player in the server.
 				if gameEnded then
-					wait(1)
+					task.wait(1)
 				end
-				spawn(function()
+				task.spawn(function()
 					PostPlayingDataSignal()
 				end)
 			end
@@ -5029,7 +5008,7 @@ function AutoClick()
 			MouseHitEvent:Fire(SecurityKey,3)
 			local CurrentSession = HttpService:GenerateGUID()
 			KeySession.K1 = CurrentSession
-			wait(0.05)
+			task.wait(0.05)
 			if KeySession.K1 == CurrentSession then
 				MouseHitEndEvent:Fire(SecurityKey,3)
 			end
@@ -5040,7 +5019,7 @@ function AutoClick()
 				MouseHitEvent:Fire(SecurityKey,3)
 				local CurrentSession = HttpService:GenerateGUID()
 				KeySession.K1 = CurrentSession
-				wait(0.05)
+				task.wait(0.05)
 				if KeySession.K1 == CurrentSession then
 					MouseHitEndEvent:Fire(SecurityKey,3)
 				end
@@ -5050,7 +5029,7 @@ function AutoClick()
 				local CurrentSession = HttpService:GenerateGUID()
 				KeySession.K2 = CurrentSession
 				MouseHitEvent:Fire(SecurityKey,4)
-				wait(0.05)
+				task.wait(0.05)
 				if KeySession.K2 == CurrentSession then
 					MouseHitEndEvent:Fire(SecurityKey,4)
 				end
@@ -5061,13 +5040,13 @@ end
 
 local BreakTimeFrame = script.Parent.BreakTimeFrame
 
-spawn(function()
+task.spawn(function()
 	if isSpectating then
-		repeat wait() until SpectateGotFirstData
+		repeat task.wait() until SpectateGotFirstData
 	end
 	local Section = ""
 	for _,BreakTime in pairs(ReturnData.BreakTime) do
-		repeat wait() until tick() - Start >= BreakTime[1]/1000
+		repeat task.wait() until tick() - Start >= BreakTime[1]/1000
 		script.Parent.Leaderboard.LbTrigger:Fire(true)
 		script.Parent.MultiplayerLeaderboard.LbTrigger:Fire(true)
 		local CurrentSection = HttpService:GenerateGUID()
@@ -5088,7 +5067,7 @@ spawn(function()
 		end
 		task.spawn(function()
 			isDrain = false
-			repeat wait() until tick() - Start >= (BreakTime[2]/1000)
+			repeat task.wait() until tick() - Start >= (BreakTime[2]/1000)
 			script.Parent.Leaderboard.LbTrigger:Fire(false)
 			script.Parent.MultiplayerLeaderboard.LbTrigger:Fire(false)
 			isDrain = true
@@ -5153,7 +5132,7 @@ spawn(function()
 
 
 			while tick() - Start < (BreakTime[2]/1000)-1 do
-				wait()
+				task.wait()
 				local TimeElapsed = (tick() - Start) - BreakTime[1]/1000
 				local TimeLeft = ((TimeElapsed+0.5 < Duration and (Duration - TimeElapsed)-1) or 0)
 				local DisplayTime = TimeLeft + 1
@@ -5164,8 +5143,8 @@ spawn(function()
 				BreakTimeFrame.TimeProgress.Size = UDim2.new(((TimeLeft/Duration)*0.9),0,0,5)
 			end
 
-			spawn(function()
-				wait(0.5)
+			task.spawn(function()
+				task.wait(0.5)
 				if Section == CurrentSection then
 					--BreakTimeFrame.Visible = false
 				end
@@ -5180,7 +5159,7 @@ spawn(function()
 			--TweenService:Create(BreakTimeFrame,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Position = UDim2.new(0.5,0,-1.5,-18)}):Play()
 		else
 			while tick() - Start < (BreakTime[2]/1000)-1 do
-				wait()
+				task.wait()
 			end
 		end
 		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat,not DisableChatInGame)
@@ -5246,9 +5225,9 @@ local TimeAccurancy = {}
 local TimePerfomance = {}
 local MissedInCurrentTime = false
 
-spawn(function()
+task.spawn(function()
 	for i = 1,101 do
-		repeat wait() until (tick() - Start)*1000 > AvgLength*i
+		repeat task.wait() until (tick() - Start)*1000 > AvgLength*i
 
 		-- Accuracy
 
@@ -5306,12 +5285,12 @@ HighestPerfomance = 100
 --local DefaultBackgroundTrans = --[[PlayerGui.BG.Background.Background.BackgroundDim.BackgroundTransparency]] 0.2
 -- BackgroundTrans = 1-(BackgroundDim/100)
 
-spawn(function()
+task.spawn(function()
 	TweenService:Create(PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans+0.2}):Play()
-	repeat wait() until tick() - Start > (BeatmapData[1].Time/1000 - 1.2)
+	repeat task.wait() until tick() - Start > (BeatmapData[1].Time/1000 - 1.2)
 	HealthPoint = MaxHealthPoint
 	TweenService:Create(PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans}):Play()
-	repeat wait() until tick() - Start > (BeatmapData[1].Time/1000)
+	repeat task.wait() until tick() - Start > (BeatmapData[1].Time/1000)
 	isDrain = true
 end)
 
@@ -5371,7 +5350,7 @@ function CreateHitSound(HitsoundType,CustomSampleSet, AmbientRatio)
 		CurrentHitsound:Play()
 		CurrentHitsound2:Play()
 		task.spawn(function()
-			wait(0.5)
+			task.wait(0.5)
 			CurrentHitsound:Destroy()
 			CurrentHitsound2:Destroy()
 		end)
@@ -5382,7 +5361,7 @@ end
 task.spawn(function()
 	for i, TimingData in pairs(TimingPoints) do
 		if TimingData ~= nil and #TimingData > 0 then
-			repeat wait() until (tick() - Start) >= (TimingData[1] / 1000)
+			repeat task.wait() until (tick() - Start) >= (TimingData[1] / 1000)
 			local volumeMultiplier = TimingData[6] / 100
 			timingPointEffectVolumeMultiplier = volumeMultiplier
 			AdjustIngameEffectVolume(EffectVolume)
@@ -5444,12 +5423,12 @@ task.spawn(function()
 
 			if TimingData[8] == 1 then
 				if not Flashlight and DefaultBackgroundTrans > 0 then
-					spawn(function()
+					task.spawn(function()
 						local BackgroundDim = PlayerGui.BG.Background.Background.BackgroundDim
 						local transparencyValue = DefaultBackgroundTrans + 0.1
 
 						TweenService:Create(BackgroundDim, TweenInfo.new(0.1, Enum.EasingStyle.Linear), { BackgroundTransparency = transparencyValue }):Play()
-						wait(0.1)
+						task.wait(0.1)
 						TweenService:Create(BackgroundDim, TweenInfo.new(0.5, Enum.EasingStyle.Linear), { BackgroundTransparency = DefaultBackgroundTrans }):Play()
 					end)
 				end
@@ -5497,7 +5476,7 @@ end
 
 
 if isSpectating == true then
-	repeat wait() until Start ~= tick()+2
+	repeat task.wait() until Start ~= tick()+2
 end
 
 --------    Perfomance score - This will effect alot on player's online rank
@@ -5650,7 +5629,7 @@ task.spawn(function()
 		if gameEnded then return "break" end -- no need to load anymore 
 		script.Parent.LiveDiffDisplay.Visible = LiveDifficultyDisplay
 		if not LiveDifficultyDisplay then
-			wait(1)
+			task.wait(1)
 			return "continue"
 		end
 		if OptimizedPerfomance and waittime == 0 then
@@ -5707,7 +5686,7 @@ task.spawn(function()
 			TweenService:Create(script.Parent.HitError.CurrentDelay.Delay,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{ImageTransparency = 1}):Play()
 			TweenService:Create(script.Parent.HitError.CurrentDelay.UnstableRate,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{TextTransparency = 1}):Play()
 			TweenService:Create(script.Parent.HitError,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{AnchorPoint = Vector2.new(0.5,0)}):Play()
-			wait(0.5)
+			task.wait(0.5)
 		end
 	end)
 end)
@@ -5754,9 +5733,9 @@ function CreateHitDelay(Color,HitDelay)
 	NewHitDelay.BackgroundColor3 = Color
 	task.spawn(function()
 		TweenService:Create(NewHitDelay,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{Size = UDim2.new(0,2,0.75,0), BackgroundTransparency = 0.1}):Play()
-		wait(0.25)
+		task.wait(0.25)
 		TweenService:Create(NewHitDelay,TweenInfo.new(9.75,Enum.EasingStyle.Linear),{BackgroundTransparency = 1}):Play()
-		wait(9.75)
+		task.wait(9.75)
 		NewHitDelay:Destroy()
 	end)
 end
@@ -5769,15 +5748,15 @@ FramePerSec = 0
 
 RunService.Stepped:Connect(function()
 	FramePerSec += 1
-	wait(1)
+	task.wait(1)
 	FramePerSec -= 1
 end)
 
 
 local MetaDataFrame = script.Parent.MetaData
 
-spawn(function()
-	wait(1)
+task.spawn(function()
+	task.wait(1)
 	MetaDataFrame.Artist.Text = ReturnData.Overview.Metadata.SongCreatorUnicode
 	MetaDataFrame.SongName.Text = "<b>"..ReturnData.Overview.Metadata.MapNameUnicode.."</b>"
 
@@ -5786,7 +5765,7 @@ spawn(function()
 
 	TweenService:Create(MetaDataFrame.Artist,_1,{TextTransparency = 0, Position = UDim2.new(0.5,0,0,0)}):Play()
 	TweenService:Create(MetaDataFrame.SongName,_1,{TextTransparency = 0, Position = UDim2.new(0.5,0,0,22)}):Play()
-	wait(2.75)
+	task.wait(2.75)
 	TweenService:Create(MetaDataFrame.Artist,_2,{TextTransparency = 1, Position = UDim2.new(0.5,50,0,0)}):Play()
 	TweenService:Create(MetaDataFrame.SongName,_2,{TextTransparency = 1, Position = UDim2.new(0.5,-100,0,22)}):Play()
 end)
@@ -5907,7 +5886,7 @@ MouseHitEvent.Event:Connect(function()
 	new.Position = UDim2.new(CursorLocation.X/512,0,CursorLocation.Y/384,0)
 	
 	TweenService:Create(new, TweenInfo.new(2, Enum.EasingStyle.Linear), {BackgroundTransparency = 1}):Play()
-	wait(2)
+	task.wait(2)
 	new:Destroy()
 end)
 ]]
@@ -5967,7 +5946,7 @@ if ReplayMode then
 						disabled = true
 
 						replayReady = true
-						repeat wait() until not replayReRun
+						repeat task.wait() until not replayReRun
 						play()
 					end
 				end)
@@ -5980,7 +5959,7 @@ if ReplayMode then
 					HitTiming += 100
 				end
 				if (tick() - Start) + (1/GameplayFPS) < (HitTiming/1000+SongDelay/1000/SongSpeed) + ReplayDelay/1000 then
-					repeat wait() until (tick() - Start) + (1/GameplayFPS) >= (HitTiming/1000+SongDelay/1000/SongSpeed) + ReplayDelay/1000
+					repeat task.wait() until (tick() - Start) + (1/GameplayFPS) >= (HitTiming/1000+SongDelay/1000/SongSpeed) + ReplayDelay/1000
 				end
 				task.spawn(function()
 					--print(math.floor(((tick() - Start) - data[1]/1000)*1000))
@@ -6069,7 +6048,7 @@ script.Parent.Development.TimeJump.Event:Connect(function(Time)
 		isIn_GameQuickRestart = true
 	end
 
-	repeat wait() until not isIn_GameQuickRestart
+	repeat task.wait() until not isIn_GameQuickRestart
 	AccuracyData = cloneTable(AccTemplate)
 
 	for _,obj in pairs(script.Parent.PlayFrame:GetChildren()) do
@@ -6086,7 +6065,7 @@ script.Parent.Development.TimeJump.Event:Connect(function(Time)
 	end
 
 
-	for i = 1,60 do wait() end
+	for i = 1,60 do task.wait() end
 	HealthPoint = MaxHealthPoint
 	HealthDrainMultiplier = 1
 
@@ -6242,8 +6221,27 @@ task.spawn(function()
 	end
 end)
 
+-- Check if pause is allowed
+if not (OnMultiplayer or isSpectating or ReplayMode or AutoPlay) then
+	script.Parent.GameplayData.PauseAllowed.Value = true
+else
+	script.Parent.RestartGame.Text = "Menu (Hold)"	-- Hold to exit to main menu
+end
+
+local conn = {} :: thread
+
+function clearTasks()
+	for _,t in pairs(conn) do
+		task.cancel(t)
+	end
+	conn = {}
+end
+
 -- HIT OBJ LINE
 function LetTheGameBegin()
+	if #conn > 0 then
+		clearTasks()
+	end
 	for i,HitObj in pairs(BeatmapData) do
 		local NoteZIndex = ZIndex
 		ZIndex -= 5
@@ -6280,24 +6278,26 @@ function LetTheGameBegin()
 		local HitObjProperties = ObjectTools.GetObjectProperties(CurrentType)
 
 		if HitObjProperties.isSpinner then  --- spinner
-			repeat wait() until (tick()-Start) >= (HitObj.Time-1500)/1000
+			repeat task.wait() until (tick()-Start) >= (HitObj.Time-1500)/1000
 		else
 			if i == 1 then -- the very first note
-				repeat wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime-NoteBasePreloadTime)/1000
+				repeat task.wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime-NoteBasePreloadTime)/1000
 			elseif (tick()-Start)*1000 < HitObj.Time-CircleApproachTime then	-- yield until the next note avaiable
-				repeat wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime-NoteBasePreloadTime)/1000
+				repeat task.wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime-NoteBasePreloadTime)/1000
 			end
 		end
 
 
 		if TotalNotes > NoteDisplayLimit then -- The note count should not exceed the display limit
-			repeat wait() until TotalNotes <= NoteDisplayLimit
+			repeat task.wait() until TotalNotes <= NoteDisplayLimit
 		end
 		NoteCompleted += 1
 
 		task.spawn(function()
-			wait((HitObj.Time)/1000 - (tick()-Start))
-			NPS += 1 wait(1/SongSpeed) NPS -= 1
+			task.wait((HitObj.Time)/1000 - (tick()-Start))
+			NPS += 1
+			task.wait(1/SongSpeed)
+			NPS -= 1
 			AddHealthDrainMultiplier(1)
 		end)
 
@@ -6359,7 +6359,7 @@ function LetTheGameBegin()
 							CurrentCursorPos = HitNoteID + 1
 							return
 						end
-						repeat wait() until (tick() - Start) >= HitObj.Time/1000
+						repeat task.wait() until (tick() - Start) >= HitObj.Time/1000
 						local SpinnerTime = (HitObj.SpinTime - HitObj.Time)/1000
 						if tick() - LastClick > 0.25 then
 							RightClick = false
@@ -6406,9 +6406,9 @@ function LetTheGameBegin()
 							task.wait()
 						end
 
-						--wait(SpinnerTime-0.1)
+						--task.wait(SpinnerTime-0.1)
 						--Connection:Disconnect()
-						wait(0.1)
+						task.wait(0.1)
 						MouseHitEndEvent:Fire(SecurityKey,SpinKey)
 						CurrentCursorPos = HitNoteID + 1
 					end)
@@ -6419,7 +6419,7 @@ function LetTheGameBegin()
 
 
 				task.spawn(function()
-					repeat wait() until CurrentHitnote == HitNoteID
+					repeat task.wait() until CurrentHitnote == HitNoteID
 					CurrentHitnote = HitNoteID + 1
 				end)
 
@@ -6455,7 +6455,7 @@ function LetTheGameBegin()
 				Spinner.Spinner.SpinnerScript.Disabled = false
 
 
-				repeat wait() until tick() - Start >= (HitObj.SpinTime)/1000
+				repeat task.wait() until tick() - Start >= (HitObj.SpinTime)/1000
 
 				local Ratio = Spinner.Spinner.RoundSpinned.Value/Spinner.RoundRequired.Value
 
@@ -6479,10 +6479,10 @@ function LetTheGameBegin()
 							NewHitResult.Position = UDim2.new(0.5,0,0.5,0)
 							TweenService:Create(NewHitResult,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{Size = UDim2.new((CircleSize/384)*0.6,0,(CircleSize/384)*0.6,0)}):Play()
 							TweenService:Create(NewHitResult.Image,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{ImageTransparency = 0}):Play()
-							wait(0.5)
+							task.wait(0.5)
 							if BeatmapFailed then return end
 							AddHitnoteAnimation(TweenService:Create(NewHitResult.Image,TweenInfo.new(0.2,Enum.EasingStyle.Sine),{ImageTransparency = 1,Position = UDim2.new(0.5,0,0.6,0)})):Play()
-							wait(0.2)
+							task.wait(0.2)
 							if BeatmapFailed then return end
 							NewHitResult:Destroy()
 						else
@@ -6497,11 +6497,11 @@ function LetTheGameBegin()
 							NewHitResult.Rotation = CurrentRotation
 							local CurrentPos = NewHitResult.Position
 							AddHitnoteAnimation(TweenService:Create(NewHitResult.Image,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{ImageTransparency = 0,Size = UDim2.new(2,0,2,0)})):Play()
-							wait(0.1)
+							task.wait(0.1)
 							if BeatmapFailed then return end
 							AddHitnoteAnimation(TweenService:Create(NewHitResult,TweenInfo.new(1,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Rotation = CurrentRotation+(Positive*15),Position = CurrentPos+UDim2.new(0,0,0.15,0)})):Play()
 							AddHitnoteAnimation(TweenService:Create(NewHitResult.Image,TweenInfo.new(1,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{ImageTransparency = 1})):Play()
-							wait(1)
+							task.wait(1)
 							if BeatmapFailed then return end
 							NewHitResult:Destroy()
 						end
@@ -6522,7 +6522,7 @@ function LetTheGameBegin()
 					if AccuracyData.Combo > AccuracyData.MaxCombo then
 						AccuracyData.MaxCombo = AccuracyData.Combo
 					end
-					spawn(function()
+					task.spawn(function()
 						local HitSoundType = tonumber(HitObj.ExtraData[1])
 						CreateHitSound(0,NoteNormalSampleSet) -- normal
 						if HitSoundType == 2 or HitSoundType == 14 or HitSoundType == 6 or HitSoundType == 10 then
@@ -6575,14 +6575,14 @@ function LetTheGameBegin()
 					HitMiss = true
 				end
 				if not OptimizedPerfomance then
-					wait(1)
+					task.wait(1)
 				end
 				Spinner:Destroy()
 			else -- HitNote and Slider
 				LastNoteData = {Slider = false}
 				local function waitUntil(condition)
 					while not condition() do
-						wait()
+						task.wait()
 					end
 				end
 
@@ -6615,11 +6615,11 @@ function LetTheGameBegin()
 						local CursorTweenTime = math.abs((TimeWithAR > 0 and 0) or (TimeWithAR > -500 and -TimeWithAR) or 500)
 
 						if TimeUntilNoteClicked < 0 then
-							wait(math.max((-TimeUntilNoteClicked - CursorTweenTime) / 1000, 0))
+							task.wait(math.max((-TimeUntilNoteClicked - CursorTweenTime) / 1000, 0))
 						end
 
-						local TimeUntilNoteClicked = math.min((tick() - Start) * 1000 - (HitObj.Time + bonustiming), 0)
-						local CursorTweenTime = math.abs((TimeUntilNoteClicked > 0 and 0) or (TimeUntilNoteClicked > -500 and -TimeUntilNoteClicked) or 500)
+						TimeUntilNoteClicked = math.min((tick() - Start) * 1000 - (HitObj.Time + bonustiming), 0)
+						CursorTweenTime = math.abs((TimeUntilNoteClicked > 0 and 0) or (TimeUntilNoteClicked > -500 and -TimeUntilNoteClicked) or 500)
 
 						local AvgFrameTime = (1 / FramePerSec) * 1000
 						local Tween = TweenService:Create(ATVC, TweenInfo.new(CursorTweenTime / 1000, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), { Position = UDim2.new(HitObj.Position.X / 512, 0, HitObj.Position.Y / 384, 0) })
@@ -6687,7 +6687,7 @@ function LetTheGameBegin()
 						local HitObjPos = Vector2.new(HitObj.Position.X,HitObj.Position.Y)
 
 						if SliderMode and HitObjProperties.isSlider then
-							repeat wait() until SLEndPos
+							repeat task.wait() until SLEndPos
 							--if HardRock then
 							--	HitObjPos = Vector2.new(SLEndPos.X,384-SLEndPos.Y)
 							--else
@@ -6732,8 +6732,8 @@ function LetTheGameBegin()
 							local EndPos = UDim2.new((NextHitObjPos.X-LookVector.X)/512,0,(NextHitObjPos.Y-LookVector.Y)/384,0)
 
 							local scalingFactor = CircleSize / 80
-							local Pos = UDim2.new(Pos.X/512,0,Pos.Y/384,0)
-							local Size = UDim2.new(Size/512,0,0.01 * scalingFactor,0)
+							Pos = UDim2.new(Pos.X/512,0,Pos.Y/384,0)
+							Size = UDim2.new(Size/512,0,0.01 * scalingFactor,0)
 
 							Connection.Parent = script.Parent.PlayFrame
 							Connection.Position = FirstPos
@@ -6744,25 +6744,25 @@ function LetTheGameBegin()
 							--Connection.RemoveTime.Value = NextHitObj.Time
 
 							task.spawn(function()
-								wait((NextHitObj.Time/1000+2) - (tick()-Start))
+								task.wait((NextHitObj.Time/1000+2) - (tick()-Start))
 								if Connection and Connection.Parent ~= nil then
 									Connection:Destroy()
 								end
 							end)
 							local TweenTime = (NextHitObj.Time-HitObj.Time > 50/SongSpeed and NextHitObj.Time-HitObj.Time) or 50/SongSpeed
 							task.spawn(function()
-								repeat wait() until tick() - Start >= (HitObj.Time - CircleApproachTime)/1000
+								repeat task.wait() until tick() - Start >= (HitObj.Time - CircleApproachTime)/1000
 								local ct_ = TweenService:Create(Connection,TweenInfo.new(TweenTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{BackgroundTransparency = 0.5,Position = Pos,Size = Size})
 								AddHitnoteAnimation(ct_)
 								ct_:Play()
 							end)
 							if (tick() - Start)*1000 < NextHitObj.Time-250/SongSpeed then
-								wait((NextHitObj.Time-250/SongSpeed)/1000 - (tick()-Start))
+								task.wait((NextHitObj.Time-250/SongSpeed)/1000 - (tick()-Start))
 								local ct_ = TweenService:Create(Connection,TweenInfo.new(0.25/SongSpeed,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{BackgroundTransparency = 0.5,Position = EndPos,Size = UDim2.new(0,0,0.01 * scalingFactor,0)})
 								AddHitnoteAnimation(ct_)
 								ct_:Play()
 							end
-							wait(NextHitObj.Time/1000 - (tick()-Start))
+							task.wait(NextHitObj.Time/1000 - (tick()-Start))
 							Connection:Destroy()
 						end
 					elseif BeatmapData[i+1] ~= nil and BeatmapData[i+1].Type ~= 8 then
@@ -6826,7 +6826,7 @@ function LetTheGameBegin()
 				if tick() - Start < (HitObj.Time - CircleApproachTime)/1000 then
 					task.spawn(function()
 						Circle.Visible = false
-						repeat wait() until tick() - Start >= (HitObj.Time - CircleApproachTime)/1000
+						repeat task.wait() until tick() - Start >= (HitObj.Time - CircleApproachTime)/1000
 						Circle.Visible = true
 					end)
 				end
@@ -6862,10 +6862,10 @@ function LetTheGameBegin()
 							NewHitResult.Position = UDim2.new(HitObj.Position.X/512,0,HitObj.Position.Y/384,0)
 							TweenService:Create(NewHitResult,TweenInfo.new(0.1/SongSpeed,Enum.EasingStyle.Linear),{Size = UDim2.new((CircleSize/384)*0.6,0,(CircleSize/384)*0.6,0)}):Play()
 							TweenService:Create(NewHitResult.Image,TweenInfo.new(0.1/SongSpeed,Enum.EasingStyle.Linear),{ImageTransparency = 0}):Play()
-							wait(0.5/SongSpeed)
+							task.wait(0.5/SongSpeed)
 							if BeatmapFailed then return end
 							AddHitnoteAnimation(TweenService:Create(NewHitResult.Image,TweenInfo.new(0.2/SongSpeed,Enum.EasingStyle.Sine),{ImageTransparency = 1,Position = UDim2.new(0.5,0,0.6,0)})):Play()
-							wait(0.2/SongSpeed)
+							task.wait(0.2/SongSpeed)
 							if BeatmapFailed then return end
 							NewHitResult:Destroy()
 						else
@@ -6880,11 +6880,11 @@ function LetTheGameBegin()
 							end 
 							NewHitResult.Rotation = CurrentRotation
 							AddHitnoteAnimation(TweenService:Create(NewHitResult.Image,TweenInfo.new(0.1/SongSpeed,Enum.EasingStyle.Linear),{ImageTransparency = 0,Size = UDim2.new(2,0,2,0)})):Play()
-							wait(0.1/SongSpeed)
+							task.wait(0.1/SongSpeed)
 							if BeatmapFailed then return end
 							AddHitnoteAnimation(TweenService:Create(NewHitResult,TweenInfo.new(1/SongSpeed,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Rotation = CurrentRotation+(Positive*15),Position = HitResultPosition+UDim2.new(0,0,0.15,0)})):Play()
 							AddHitnoteAnimation(TweenService:Create(NewHitResult.Image,TweenInfo.new(1/SongSpeed,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{ImageTransparency = 1})):Play()
-							wait(1/SongSpeed)
+							task.wait(1/SongSpeed)
 							if BeatmapFailed then return end
 							NewHitResult:Destroy()
 						end
@@ -6908,10 +6908,10 @@ function LetTheGameBegin()
 							NewHitResult.Position = UDim2.new(Pos.X/512,0,Pos.Y/384,0)
 							TweenService:Create(NewHitResult,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{Size = UDim2.new((CircleSize/384)*0.6,0,(CircleSize/384)*0.6,0)}):Play()
 							TweenService:Create(NewHitResult.Image,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{ImageTransparency = 0}):Play()
-							wait(0.5)
+							task.wait(0.5)
 							if BeatmapFailed then return end
 							AddHitnoteAnimation(TweenService:Create(NewHitResult.Image,TweenInfo.new(0.2,Enum.EasingStyle.Sine),{ImageTransparency = 1,Position = UDim2.new(0.5,0,0.6,0)})):Play()
-							wait(0.2)
+							task.wait(0.2)
 							if BeatmapFailed then return end
 							NewHitResult:Destroy()
 						else
@@ -6926,10 +6926,10 @@ function LetTheGameBegin()
 							NewHitResult.Rotation = CurrentRotation
 							local CurrentPos = NewHitResult.Position
 							TweenService:Create(NewHitResult.Image,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{ImageTransparency = 0,Size = UDim2.new(2,0,2,0)}):Play()
-							wait(0.1)
+							task.wait(0.1)
 							TweenService:Create(NewHitResult,TweenInfo.new(1,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Rotation = CurrentRotation+(Positive*15),Position = CurrentPos+UDim2.new(0,0,0.15,0)}):Play()
 							TweenService:Create(NewHitResult.Image,TweenInfo.new(1,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{ImageTransparency = 1}):Play()
-							wait(1)
+							task.wait(1)
 							NewHitResult:Destroy()
 						end
 					end)
@@ -7024,7 +7024,7 @@ function LetTheGameBegin()
 							SliderObject.SetSnakingIn(1)
 						end
 
-						repeat wait() until tick() - Start >= (HitObj.Time - CircleApproachTime)/1000
+						repeat task.wait() until tick() - Start >= (HitObj.Time - CircleApproachTime)/1000
 						SliderObject.ShowCurrentTickOnSlide(1, SliderTime * 1000, true)
 						while tick() - Start < (HitObj.Time - CircleApproachTime)/1000 + FadeInTime do
 							local t = ((tick() - Start) - (HitObj.Time - CircleApproachTime)/1000)/FadeInTime
@@ -7032,7 +7032,7 @@ function LetTheGameBegin()
 							if SnakingInSlider then
 								SliderObject.SetSnakingIn(t2)
 							end
-							SliderObject.SetTransparency(lerp(1, 0.2, t))
+							SliderObject.SetTransparency(math.lerp(1, 0.2, t))
 							task.wait()
 						end
 
@@ -7046,7 +7046,7 @@ function LetTheGameBegin()
 								end
 								while tick() - Start < HitObj.Time/1000 + FadeTime do
 									local t = ((tick() - Start) - HitObj.Time/1000)/FadeTime
-									SliderObject.SetTransparency(lerp(0.2, 1, t))
+									SliderObject.SetTransparency(math.lerp(0.2, 1, t))
 									task.wait()
 								end
 								SliderObject.SetTransparency(1)		
@@ -7064,7 +7064,7 @@ function LetTheGameBegin()
 							return SliderObject.isCursorInFollowCircle(CursorPosition, t, currentSlide%2==0)
 						end
 						task.spawn(function()
-							repeat wait() until (tick() - Start) >= HitObj.Time/1000 and SliderTime ~= -1
+							repeat task.wait() until (tick() - Start) >= HitObj.Time/1000 and SliderTime ~= -1
 							
 							local currentProcessingSlide = 1
 							local currentTickOnSlide = 1
@@ -7080,7 +7080,7 @@ function LetTheGameBegin()
 										currentTickOnSlide = 1
 									end
 									if tick() - Start < nextTick/1000 then
-										repeat wait() until tick() - Start >= nextTick/1000
+										repeat task.wait() until tick() - Start >= nextTick/1000
 									end
 									SliderObject.CleanTick(currentProcessingSlide, currentTickOnSlide)
 									currentTickOnSlide += 1
@@ -7154,7 +7154,7 @@ function LetTheGameBegin()
 
 						task.spawn(function()
 							if (tick() - Start) < HitObj.Time/1000 or SliderTime == -1 then
-								repeat wait() until (tick() - Start) >= HitObj.Time/1000 and SliderTime ~= -1
+								repeat task.wait() until (tick() - Start) >= HitObj.Time/1000 and SliderTime ~= -1
 							end
 							task.spawn(function()
 								-- Slider holding handler
@@ -7373,12 +7373,12 @@ function LetTheGameBegin()
 									end
 									TweenService:Create(SliderObject.SliderBase,TweenInfo.new(SliderFadeOutTime/SongSpeed,Enum.EasingStyle.Linear),{GroupTransparency = 1}):Play()
 									TweenService:Create(FollowCircle.isFollow,TweenInfo.new(0,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Size = UDim2.new(2.25,0,2.25,0)}):Play()
-									wait()
+									task.wait()
 									TweenService:Create(FollowCircle.isFollow,TweenInfo.new(0.2/SongSpeed,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Size = UDim2.new(1.5,0,1.5,0),ImageTransparency = 1}):Play()
 									FollowCircle.isFollow.Visible = tick() - LastHold <= 0.1
 									TweenService:Create(FollowCircle.SliderFollowCircle,TweenInfo.new(0.015/SongSpeed,Enum.EasingStyle.Linear),{ImageTransparency = 1}):Play()
 									FollowCircle.SliderFollowCircle:Destroy()
-									wait(0.3/SongSpeed)
+									task.wait(0.3/SongSpeed)
 								else
 									FollowCircle.SliderFollowCircle:Destroy()
 								end
@@ -7436,21 +7436,6 @@ function LetTheGameBegin()
 						--AddHitnoteAnimation(ApproachCircleTween)
 						--ApproachCircleTween:Play()
 					end)
-
-					local ApproachCircleTween
-
-					while not IsHitted do
-						script.Parent.GameplayPause.Event:Wait()
-						ApproachCircleTween:Pause()
-						script.Parent.GameplayResume.Event:Wait()
-						if IsHitted then break end
-						local FixedApproachTime = -((tick()-Start)*1000 - HitObj.Time)
-						local ApproachSize = (1-(CircleApproachTime-FixedApproachTime)/CircleApproachTime)*3 + 1.1
-						Circle.ApproachCircle.Size = UDim2.new(ApproachSize,0,ApproachSize,0)
-						ApproachCircleTween = TweenService:Create(Circle.ApproachCircle,TweenInfo.new(FixedApproachTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Size = UDim2.new(1.1,0,1.1,0)})
-						AddHitnoteAnimation(ApproachCircleTween)
-						ApproachCircleTween:Play()
-					end
 				end)
 
 
@@ -7460,7 +7445,7 @@ function LetTheGameBegin()
 
 				task.spawn(function()
 					if not AimAssist then return end
-					repeat wait() until CurrentHitnote == HitNoteID or (tick()-Start) >= ((HitObj.Time+hit50)/1000)
+					repeat task.wait() until CurrentHitnote == HitNoteID or (tick()-Start) >= ((HitObj.Time+hit50)/1000)
 					if (tick()-Start) >= ((HitObj.Time+hit50)/1000)  then
 						return --skip
 					end
@@ -7469,18 +7454,18 @@ function LetTheGameBegin()
 
 				task.spawn(function()
 					if (HitObj.Time/1000) - (tick()-Start) > 0 then -- prevent high delay
-						wait((HitObj.Time/1000) - (tick()-Start))
+						task.wait((HitObj.Time/1000) - (tick()-Start))
 						if tick() - Start < 10000 then
-							repeat wait() until (tick()-Start) >= (HitObj.Time/1000)
+							repeat task.wait() until (tick()-Start) >= (HitObj.Time/1000)
 						end
 					end
 					if IsHitted == false and not BeatmapFailed then
 						Circle.ApproachCircle.Visible = false
 						if not HitObjProperties.isSlider or not SliderMode then
 							if ((HitObj.Time+hit50)/1000) - (tick()-Start) > 0 then
-								wait(((HitObj.Time+hit50)/1000) - (tick()-Start))
+								task.wait(((HitObj.Time+hit50)/1000) - (tick()-Start))
 								if tick() - Start < 10000 then
-									repeat wait() until (tick()-Start) >= ((HitObj.Time+hit50)/1000) 
+									repeat task.wait() until (tick()-Start) >= ((HitObj.Time+hit50)/1000) 
 								end
 							end
 						else
@@ -7540,7 +7525,7 @@ function LetTheGameBegin()
 								SliderHitTime = hit300/1000
 							end
 							if ((HitObj.Time+SliderHitTime*1000)/1000) - (tick()-Start) > 0 then
-								wait(((HitObj.Time+SliderHitTime*1000)/1000) - (tick()-Start))
+								task.wait(((HitObj.Time+SliderHitTime*1000)/1000) - (tick()-Start))
 							end
 						end
 						if IsHitted == false then
@@ -7596,7 +7581,7 @@ function LetTheGameBegin()
 											end
 										end)
 									end
-									wait(0.5)
+									task.wait(0.5)
 								end
 								clearHitCircle(Circle)
 								--Circle:Destroy()
@@ -7614,7 +7599,7 @@ function LetTheGameBegin()
 					end
 				end)
 				task.spawn(function()
-					wait(((HitObj.Time+hit50+1000)/1000) - (tick()-Start))
+					task.wait(((HitObj.Time+hit50+1000)/1000) - (tick()-Start))
 					-- everything in this note should be done by now
 					for _,tweenid in pairs(AnimationIdList) do
 						HitnoteAnimations[tweenid] = nil
@@ -7667,7 +7652,7 @@ function LetTheGameBegin()
 							-- I'm leaving a chance of hit for TD mod
 							while (ReplayMode or isSpectating) and (HitDelay <= hit50 and not isincircle()) and spectatingRetryCount < 5 do
 								spectatingRetryCount+= 1
-								wait()
+								task.wait()
 							end]]
 							if ClassicNotelock == true then -- osu!stable notelock
 								-- Prevent players from hitting note without clearing previous note
@@ -7746,7 +7731,7 @@ function LetTheGameBegin()
 								IsHitted = true
 								DisplayingHitnote[HitNoteID].IsHitted = true
 								task.spawn(function()
-									wait()
+									task.wait()
 									DisplayingHitnote[HitNoteID] = nil
 								end)
 
@@ -7796,7 +7781,7 @@ function LetTheGameBegin()
 													end
 												end)
 											end
-											wait(0.5)
+											task.wait(0.5)
 										end
 										clearHitCircle(Circle)
 										--Circle:Destroy()
@@ -7939,7 +7924,7 @@ function LetTheGameBegin()
 												end
 											end)
 										end
-										wait(0.25)
+										task.wait(0.25)
 									end
 									clearHitCircle(Circle)
 									--Circle:Destroy()
@@ -7957,7 +7942,7 @@ function LetTheGameBegin()
 			replayReady = false
 			replayReRun = true
 
-			repeat wait() until replayReady
+			repeat task.wait() until replayReady
 			replayReRun = false
 		end
 
@@ -7984,18 +7969,18 @@ function checkSSAnim()
 
 	if AccuracyData.h100 == 0 and AccuracyData.h50 == 0 and AccuracyData.miss == 0 then
 		script.Parent.SS_Animation.MainFrame.StartAnimation.Disabled = false
-		wait(1.5)
+		task.wait(1.5)
 	end 
 end
 
 if isSpectating == false then
-	repeat wait() until tick() - Start > (BeatmapData[#BeatmapData].Time + hit50)/1000
+	repeat task.wait() until tick() - Start > (BeatmapData[#BeatmapData].Time + hit50)/1000
 
 	local Type = BeatmapData[#BeatmapData].Type
 
 
 	if ObjectTools.GetObjectProperties(Type).isSpinner then
-		repeat wait() until (tick()-Start) >= BeatmapData[#BeatmapData].SpinTime/1000
+		repeat task.wait() until (tick()-Start) >= BeatmapData[#BeatmapData].SpinTime/1000
 		TweenService:Create(PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.4}):Play()
 		script.Parent.Leaderboard.LbTrigger:Fire(true)
 		script.Parent.MultiplayerLeaderboard.LbTrigger:Fire(true)
@@ -8003,11 +7988,11 @@ if isSpectating == false then
 		TweenService:Create(FlashlightFrame,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{Size = UDim2.new(30,0,30,0),ImageTransparency = 0}):Play()
 		doAnim()
 		checkSSAnim()
-		wait(2)
+		task.wait(2)
 	else
-		repeat wait() until LastNoteData ~= "NotLoaded"
+		repeat task.wait() until LastNoteData ~= "NotLoaded"
 		if LastNoteData.Slider == true then
-			wait(LastNoteData.SliderTime)
+			task.wait(LastNoteData.SliderTime)
 		end
 		TweenService:Create(PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.4}):Play()
 		script.Parent.Leaderboard.LbTrigger:Fire(true)
@@ -8016,10 +8001,10 @@ if isSpectating == false then
 		TweenService:Create(FlashlightFrame,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{Size = UDim2.new(30,0,30,0),ImageTransparency = 0}):Play()
 		checkSSAnim()
 		doAnim()
-		wait(2)
+		task.wait(2)
 	end
 else
-	repeat wait() until ScoreResultDisplay == true
+	repeat task.wait() until ScoreResultDisplay == true
 	FLAnimate = false
 	TweenService:Create(FlashlightFrame,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{Size = UDim2.new(30,0,30,0),ImageTransparency = 0}):Play()
 	TweenService:Create(PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.4}):Play()
@@ -8052,11 +8037,11 @@ if ReplayMode == false then
 	script.Parent.Replay.Value = Data
 end
 
-spawn(function()
+task.spawn(function()
 	TweenService:Create(script.Parent.GameSong.Song,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{Volume = 0.5}):Play()
 end)
 --TweenService:Create(script.Parent.Interface.BG,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,true),{BackgroundTransparency = 0}):Play()
-wait(0.25)
+task.wait(0.25)
 script.Parent.Interface.Background.ReturnButton.Visible = false
 script.Parent.Interface.Background.Visible = false
 
@@ -8078,7 +8063,7 @@ TweenService:Create(ResultFrame.Parent.Parent.UIStroke,TweenInfo.new(0.5,Enum.Ea
 
 
 task.spawn(function()
-	wait(1.1)
+	task.wait(1.1)
 	local NewResultFrame = PlayerGui.BG.ResultFrame_EndRender
 	local OldResultFrame = PlayerGui.BG.ResultFrame
 
@@ -8140,7 +8125,7 @@ task.spawn(function()
 		AccuracyValue = 0.85 + (GameAccuracy-95)/5*0.15
 	end
 
-	wait(0.5)
+	task.wait(0.5)
 	local AccuracyLine = ResultFrame.AccuracyLine.DisplayLine
 
 	for _,obj in pairs(AccuracyLine:GetChildren()) do
@@ -8212,7 +8197,7 @@ end
 
 MetaData = ReturnData.Overview.Metadata
 OnlineResult = ResultFrame.Parent.OnlineDisplayFrame
-local Score = getScoreV1() -- overwrite the current score
+Score = getScoreV1() -- overwrite the current score
 
 if ScoreV2Enabled then
 	--local ScoreV2AccScore = math.pow((AccuracyData.h300*300+AccuracyData.h100*300+AccuracyData.h50*300+AccuracyData.miss*300)/300,2.265) * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.3
@@ -8231,9 +8216,9 @@ task.spawn(function()
 	GradeFrame.BaseDisplay.Image = RankingDisplayID
 	GradeFrame.EffectDisplay.Image = RankingDisplayID
 
-	wait(1.75)
+	task.wait(1.75)
 	TweenService:Create(GradeFrame.BaseDisplay,TweenInfo.new(0.75,Enum.EasingStyle.Exponential,Enum.EasingDirection.In),{Size = UDim2.new(1,0,1,0),ImageTransparency = 0}):Play()
-	wait(0.75)
+	task.wait(0.75)
 	GradeFrame.EffectDisplay.Visible = true
 	TweenService:Create(GradeFrame.EffectDisplay,TweenInfo.new(2,Enum.EasingStyle.Exponential,Enum.EasingDirection.Out),{Size = UDim2.new(1.5,0,1.5,0)}):Play()
 	TweenService:Create(GradeFrame.EffectDisplay,TweenInfo.new(2,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
@@ -8339,7 +8324,7 @@ for i,ChartFrame in pairs(FrameList) do
 			local Rotation = math.deg(math.atan2(Point.Y,Point.X))
 			task.spawn(function()
 				if value ~= 1 then
-					wait(((i-1)/#FrameList)*3)
+					task.wait(((i-1)/#FrameList)*3)
 					if ChartFrame.Miss.Visible then
 						TweenService:Create(ChartFrame.Miss,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.5}):Play()
 					end
@@ -8355,7 +8340,7 @@ for i,ChartFrame in pairs(FrameList) do
 		change()
 
 		task.spawn(function()
-			wait(3)
+			task.wait(3)
 			change(1)
 			local currentpos = workspace.CurrentCamera.ViewportSize
 			StreamingLoop:AddLoop(function() return true end, 2, function()
@@ -8409,9 +8394,9 @@ for i,ChartFrame in pairs(PerfomanceFrameList) do
 			local Point = NextPointPos-CurrentPointPos
 			local Rotation = math.deg(math.atan2(Point.Y,Point.X))
 
-			spawn(function()
+			task.spawn(function()
 				if value ~= 1 then
-					wait(((i-1)/#PerfomanceFrameList)*3)
+					task.wait(((i-1)/#PerfomanceFrameList)*3)
 					TweenService:Create(ChartFrame.ConnectionFrame,TweenInfo.new((1/#PerfomanceFrameList)*3,Enum.EasingStyle.Linear),{Position = UDim2.new(0.5,0,AvgPos,0),Size = UDim2.new(0,ConnectionLength+2,0,2),Rotation = Rotation}):Play()
 					TweenService:Create(ChartFrame.GraphFrame,TweenInfo.new((1/#FrameList)*3,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.9}):Play()
 				else
@@ -8423,7 +8408,7 @@ for i,ChartFrame in pairs(PerfomanceFrameList) do
 		change()
 
 		task.spawn(function()
-			wait(3)
+			task.wait(3)
 			change(1)
 			local currentpos = workspace.CurrentCamera.ViewportSize
 			StreamingLoop:AddLoop(function() return true end, 2, function()
@@ -8676,7 +8661,7 @@ if PlayRanked == true and CanbeSubmitted then
 
 	local OldScore = ReturnResult.Score
 
-	repeat wait() until OnlineResult.Visible == true
+	repeat task.wait() until OnlineResult.Visible == true
 
 	if OldScore == nil then
 		TweenService:Create(OnlineResult.OnlineScore,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundColor3 = Color3.fromRGB(0,200,200)}):Play()
