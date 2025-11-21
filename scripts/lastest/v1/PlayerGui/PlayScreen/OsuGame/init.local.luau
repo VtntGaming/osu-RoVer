@@ -7204,6 +7204,10 @@ function LetTheGameBegin()
 								}
 
 								local function checkSlides(Multiplier, CurrentSlide)
+									if Multiplier > 100 then
+										-- it is NOT SUPPOSE to be that high
+										return
+									end
 									if (isInFollowCircle(Slides%2) == true and script.Parent.KeyDown.Value == true) or tick() - LastHold <= 0.1 then
 										
 										if not isPaused then
