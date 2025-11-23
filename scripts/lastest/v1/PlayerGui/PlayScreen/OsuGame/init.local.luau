@@ -20,6 +20,7 @@ StreamingLoop = require(ScriptComponent.Perfomance.StreamingCode).create()
 SliderObjManage = require(ScriptComponent.Perfomance.SliderObjManage).init()
 local ScoreStaticticConverter = require(ScriptComponent.Gameplay.ScoreStatisticConverter)
 local PauseScreenUtils = require(ScriptComponent.Gameplay.PauseScreen)
+local TimeUtils = require(ScriptComponent.Gameplay.GameplayTimeUtils)
 
 -- basic function
 
@@ -2932,7 +2933,6 @@ end
 
 local PlayingRemote
 local StartPlayingTick = tick()
-local isPaused = false
 
 function isActivelyPlaying()
 	-- Return if the player is playing or not
@@ -3029,6 +3029,7 @@ ToggleDirectChange("ComboColorList", function(CustomComboColor)
 	end
 end)
 --------
+TimeUtils.InitTimeClock(2)
 local Start = tick()+2
 local SongStart = tick()+2
 
@@ -3175,6 +3176,7 @@ function GameOver()
 			end)
 		end
 		BeatmapFailed = true
+		TimeUtils.PauseTime()
 		Start = 1e20
 		SongStart = 1e20
 
@@ -3278,7 +3280,7 @@ task.spawn(function()
 	end
 	DrainSpeed*= SongSpeed
 	StreamingLoop:AddLoop(function() return true end, function() return 0 end, function(t)
-		if isDrain and not isSpectating and not isPaused then
+		if isDrain and not isSpectating and not TimeUtils.IsPaused() then
 			-- do not drain while on break
 			-- when spectating, it get the host's HP instead
 			if HealthDrainMultiplier > 10 then
@@ -3300,7 +3302,7 @@ task.spawn(function()
 			local HealthDrain = (((tick() - LastTick)*DrainSpeed))
 			HealthPoint -= HealthDrain
 
-			if HealthPoint < 10 and DrainSpeed >= 15 and NoFail and ReturnData.Difficulty.BeatmapDifficulty >= 6 and tick() - Start >= 60 then
+			if HealthPoint < 10 and DrainSpeed >= 15 and NoFail and ReturnData.Difficulty.BeatmapDifficulty >= 6 and TimeUtils.GetTime() >= 60 then
 				BadgeCondition.CloseOne = true
 			end
 
@@ -3336,7 +3338,7 @@ local ImmortalTime = 0
 
 function DrainHP(min, mid, max)
 	if not ConditionFailed.AllComboGone and BeatmapData[#BeatmapData].Time > 120000 and ReturnData.Difficulty.BeatmapDifficulty >= 5 then
-		local Progress = (tick() - SongStart) / (BeatmapData[#BeatmapData].Time/1000)
+		local Progress = (TimeUtils.GetTime()) / (BeatmapData[#BeatmapData].Time/1000)
 		if Progress < 0.9 and AccuracyData.miss > 1 then
 			ConditionFailed.AllComboGone = true
 		elseif Progress >= 0.9 and AccuracyData.miss > 1 then
@@ -3444,17 +3446,13 @@ ReplayRecordEnabled = true
 task.spawn(function()
 	StreamingLoop:AddLoop(function() return true end, function() return 0 end, function(t)
 		script.Parent.GameplayPause.Event:Wait()
-		isPaused = true
 		AdjustIngameSongVolume(0)
 		task.wait(0.25)
-		local TimeElapsed = tick() - Start
-		Start = Start + 100000
-		SongStart = Start
+		TimeUtils.PauseTime()
+		local TimeElapsed = TimeUtils.GetTime()
 		script.Parent.GameplayResume.Event:Wait()
 		AdjustIngameSongVolume(SavedGameSettings.MusicVolume)
-		Start = tick() - TimeElapsed
-		SongStart = tick() - TimeElapsed
-		isPaused = false
+		TimeUtils.ResumeTime()
 	end)
 end)
 
@@ -3462,17 +3460,17 @@ script.Parent.ProgressBar.Visible = true
 task.spawn(function()
 	local TimeBreak = 3+BeatmapData[1].Time/1000
 	repeat
-		TweenService:Create(script.Parent.ProgressBar.Time,TweenInfo.new(0.05,Enum.EasingStyle.Linear),{Size = UDim2.new(-((tick()-Start) - BeatmapData[1].Time/1000)/TimeBreak,0,1,0)}):Play()
+		TweenService:Create(script.Parent.ProgressBar.Time,TweenInfo.new(0.05,Enum.EasingStyle.Linear),{Size = UDim2.new(-((TimeUtils.GetTime()) - BeatmapData[1].Time/1000)/TimeBreak,0,1,0)}):Play()
 		task.wait() 
-	until (tick()-Start)*1000 >= BeatmapData[1].Time
+	until (TimeUtils.GetTime())*1000 >= BeatmapData[1].Time
 	script.Parent.ProgressBar.Time.BackgroundColor3 = Color3.new(1,1,1)
 	TweenService:Create(script.Parent.ProgressBar.TimeLeft.Time,TweenInfo.new(0.75,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{TextTransparency = 0}):Play()
 	--TweenService:Create(script.Parent.ProgressBar.Time,TweenInfo.new((BeatmapData[#BeatmapData].Time-BeatmapData[1].Time)/1000,Enum.EasingStyle.Linear),{Size = UDim2.new(1,0,1,0)}):Play()
 
 	local TotalTime = (BeatmapData[#BeatmapData].Time-BeatmapData[1].Time)/1000
-	while tick() - Start < BeatmapData[#BeatmapData].Time/1000 and not ScoreResultDisplay do
+	while TimeUtils.GetTime() < BeatmapData[#BeatmapData].Time/1000 and not ScoreResultDisplay do
 		task.wait()
-		local FullTimeLeft = BeatmapData[#BeatmapData].Time/1000 - (tick() - Start)
+		local FullTimeLeft = BeatmapData[#BeatmapData].Time/1000 - (TimeUtils.GetTime())
 		local maxTime = (BeatmapData[#BeatmapData].Time - BeatmapData[1].Time)/1000
 		local TimeLeft = math.ceil(FullTimeLeft)
 
@@ -3485,7 +3483,7 @@ task.spawn(function()
 
 		local StringOutput = string.format("%d:%.2d", Min, Sec)
 		local StringOutput_max = string.format("%d:%.2d", Min_max, Sec_max)
-		if tick() - Start > -0.5 then
+		if TimeUtils.GetTime() > -0.5 then
 			script.Parent.ProgressBar.TimeLeft.Time.Text = StringOutput.."/"..StringOutput_max
 		else
 			script.Parent.ProgressBar.TimeLeft.Time.Text = ""
@@ -3504,7 +3502,7 @@ end)
 
 if AutoPlay == true and ReplayMode ~= true then
 	task.spawn(function()
-		repeat task.wait() until (tick()-Start)*1000 >= BeatmapData[1].Time-1000
+		repeat task.wait() until (TimeUtils.GetTime())*1000 >= BeatmapData[1].Time-1000
 		TweenService:Create(ATVC,TweenInfo.new(0.5,Enum.EasingStyle.Sine),{Position = UDim2.new(0.5,0,0.5,0)}):Play()
 	end)
 end
@@ -3535,8 +3533,9 @@ task.spawn(function()
 			if not script.Parent.GameSong.Song.IsPlaying then
 				script.Parent.GameSong.Song:Play()
 			end
-			Start = tick()-((BeatmapData[1].Time/1000)-2)
-			SongStart = tick()-((BeatmapData[1].Time/1000)-2)
+			local timeSet = (BeatmapData[1].Time/1000)-2
+			print("Set the time to ", timeSet)
+			TimeUtils.TimeJump(timeSet)
 			TweenService:Create(script.Parent.ProgressBar.Time,TweenInfo.new(2,Enum.EasingStyle.Linear),{Size = UDim2.new(0,0,1,0)}):Play()
 			TweenService:Create(script.Parent.SkipButton,TweenInfo.new(0.5,Enum.EasingStyle.Sine		,Enum.EasingDirection.Out),{Position = UDim2.new(0.5,0,0.8,40),GroupTransparency = 1}):Play()
 			task.spawn(function()
@@ -3566,7 +3565,7 @@ task.spawn(function()
 				Trigger()
 			end
 		end)
-		repeat task.wait() until (tick()-Start)*1000 >= BeatmapData[1].Time-3250
+		repeat task.wait() until (TimeUtils.GetTime())*1000 >= BeatmapData[1].Time-3250
 		if not SkipAlvaiable then
 			return
 		end
@@ -3579,7 +3578,7 @@ end)
 
 script.Parent.Development.GetCurrentAudioLatency.OnInvoke = function()
 	-- return the latency result in ms
-	return ((tick() - SongStart)*SongSpeed*ReturnData.SongSpeed - script.Parent.GameSong.Song.TimePosition) * 1000
+	return ((TimeUtils.GetTime())*SongSpeed*ReturnData.SongSpeed - script.Parent.GameSong.Song.TimePosition) * 1000
 end
 LastAudioTimeAdjust = tick()
 
@@ -3594,7 +3593,7 @@ task.spawn(function()
 			if SongSpeed > 1 then
 				Offset = 0.1 * SongSpeed
 			end
-			if ExistSecondSong and ((tick() - SongStart)*SongSpeed*ReturnData.SongSpeed > script.Parent.GameSong.Song.TimeLength) then
+			if ExistSecondSong and ((TimeUtils.GetTime())*SongSpeed*ReturnData.SongSpeed > script.Parent.GameSong.Song.TimeLength) then
 				ExtraLength = script.Parent.GameSong.Song.TimeLength
 				checkingSongObj = script.Parent.GameSong.Song2
 				if script.Parent.GameSong.Song.IsPlaying then
@@ -3605,21 +3604,21 @@ task.spawn(function()
 			elseif script.Parent.GameSong.Song2.IsPlaying then
 				script.Parent.GameSong.Song2:Stop()
 			end
-			local CurrentGameTime = ((tick() - SongStart)*SongSpeed*ReturnData.SongSpeed)
+			local CurrentGameTime = ((TimeUtils.GetTime())*SongSpeed*ReturnData.SongSpeed)
 			local CheckPeriod = 1
 			if CurrentGameTime < 1 then
 				CheckPeriod = 0.1
 			end
 
 			script.Parent.SongOffsetDisplay.Text = string.format("%.1fms", ((checkingSongObj.TimePosition + ExtraLength) - CurrentGameTime)*1000)
-			if (tick()-LastAudioTimeAdjust) >= CheckPeriod and CurrentGameTime >= 0 and math.abs((checkingSongObj.TimePosition + ExtraLength) - CurrentGameTime) > 0.05 and script.Parent.GameSong.Song.IsReady == true and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 and not BeatmapFailed then
-				checkingSongObj.TimePosition = (tick() - SongStart)*SongSpeed*ReturnData.SongSpeed - ExtraLength + Offset
+			if (tick()-LastAudioTimeAdjust) >= CheckPeriod and CurrentGameTime >= 0 and math.abs((checkingSongObj.TimePosition + ExtraLength) - CurrentGameTime) > 0.05 and script.Parent.GameSong.Song.IsReady == true and (TimeUtils.GetTime()) <= BeatmapData[#BeatmapData].Time/1000 and not BeatmapFailed then
+				checkingSongObj.TimePosition = (TimeUtils.GetTime())*SongSpeed*ReturnData.SongSpeed - ExtraLength + Offset
 				if StoryboardAvailable then
-					storyboardUI.Scripts.Actor:SendMessage("SetTime", (tick() - SongStart))
+					storyboardUI.Scripts.Actor:SendMessage("SetTime", (TimeUtils.GetTime()))
 				end
 				LastAudioTimeAdjust = tick()
 			end
-			if CurrentGameTime >= 0 and checkingSongObj.IsPlaying == false and (tick() - Start) <= BeatmapData[#BeatmapData].Time/1000 then
+			if CurrentGameTime >= 0 and checkingSongObj.IsPlaying == false and (TimeUtils.GetTime()) <= BeatmapData[#BeatmapData].Time/1000 then
 				checkingSongObj:Play()
 			end
 			if CurrentPreviewFrame.OverviewSong.IsPlaying == true and tick()-SongStart >= 0.5 then
@@ -3632,7 +3631,7 @@ task.spawn(function()
 		end)
 		if not s then warn(e) end
 		if not isSpectating then
-			CurrentSetting.VirtualSettings.PrevMapTime.Value = (tick()-Start)*SongSpeed
+			CurrentSetting.VirtualSettings.PrevMapTime.Value = (TimeUtils.GetTime())*SongSpeed
 		end
 	end)
 end)
@@ -4310,7 +4309,7 @@ local CurrentAccuracy = 10000
 local LastComboDisplay = 0
 
 task.spawn(function() --Accurancy caculation
-	repeat task.wait() until tick() - SongStart >= 0
+	repeat task.wait() until TimeUtils.GetTime() >= 0
 
 	local WaitTime = 0
 	if OptimizedPerfomance then
@@ -4816,9 +4815,8 @@ if isSpectating == true then
 
 				SpecDelayFrame.HostDelay.Text = tostring(HostDelay).."ms"
 				SpecDelayFrame.HostFPS.Text = tostring(HostFPS).." FPS"
-
-				Start = tick() - TimeProcess
-				SongStart = tick() - TimeProcess
+				
+				TimeUtils.TimeJump(TimeProcess)
 				ScoreResultDisplay = Data.ScoreResult
 				SpectateGotFirstData = true
 
@@ -4885,7 +4883,7 @@ function PostPlayingDataSignal(data)
 	PlayingRemote:FireServer({
 		StartTime = Start,
 		ScoreResult = ScoreResultDisplay,
-		TimeProcess = tick()-Start,
+		TimeProcess = TimeUtils.GetTime(),
 		SpecTime = tick() - StartPlayingTick,
 		HostFPS = GameplayFPS,
 		HostTime = workspace.ServerStatus.ServerTick.Value,
@@ -5046,7 +5044,7 @@ task.spawn(function()
 	end
 	local Section = ""
 	for _,BreakTime in pairs(ReturnData.BreakTime) do
-		repeat task.wait() until tick() - Start >= BreakTime[1]/1000
+		repeat task.wait() until TimeUtils.GetTime() >= BreakTime[1]/1000
 		script.Parent.Leaderboard.LbTrigger:Fire(true)
 		script.Parent.MultiplayerLeaderboard.LbTrigger:Fire(true)
 		local CurrentSection = HttpService:GenerateGUID()
@@ -5067,7 +5065,7 @@ task.spawn(function()
 		end
 		task.spawn(function()
 			isDrain = false
-			repeat task.wait() until tick() - Start >= (BreakTime[2]/1000)
+			repeat task.wait() until TimeUtils.GetTime() >= (BreakTime[2]/1000)
 			script.Parent.Leaderboard.LbTrigger:Fire(false)
 			script.Parent.MultiplayerLeaderboard.LbTrigger:Fire(false)
 			isDrain = true
@@ -5131,9 +5129,9 @@ task.spawn(function()
 			end
 
 
-			while tick() - Start < (BreakTime[2]/1000)-1 do
+			while TimeUtils.GetTime() < (BreakTime[2]/1000)-1 do
 				task.wait()
-				local TimeElapsed = (tick() - Start) - BreakTime[1]/1000
+				local TimeElapsed = (TimeUtils.GetTime()) - BreakTime[1]/1000
 				local TimeLeft = ((TimeElapsed+0.5 < Duration and (Duration - TimeElapsed)-1) or 0)
 				local DisplayTime = TimeLeft + 1
 				if TimeLeft == 0 then
@@ -5158,7 +5156,7 @@ task.spawn(function()
 			TweenService:Create(script.Parent.BreaktimeFrameOutline.UIStroke,tInfoIn,{Transparency = 1}):Play()
 			--TweenService:Create(BreakTimeFrame,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.In),{Position = UDim2.new(0.5,0,-1.5,-18)}):Play()
 		else
-			while tick() - Start < (BreakTime[2]/1000)-1 do
+			while TimeUtils.GetTime() < (BreakTime[2]/1000)-1 do
 				task.wait()
 			end
 		end
@@ -5227,7 +5225,7 @@ local MissedInCurrentTime = false
 
 task.spawn(function()
 	for i = 1,101 do
-		repeat task.wait() until (tick() - Start)*1000 > AvgLength*i
+		repeat task.wait() until (TimeUtils.GetTime())*1000 > AvgLength*i
 
 		-- Accuracy
 
@@ -5287,10 +5285,10 @@ HighestPerfomance = 100
 
 task.spawn(function()
 	TweenService:Create(PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans+0.2}):Play()
-	repeat task.wait() until tick() - Start > (BeatmapData[1].Time/1000 - 1.2)
+	repeat task.wait() until TimeUtils.GetTime() > (BeatmapData[1].Time/1000 - 1.2)
 	HealthPoint = MaxHealthPoint
 	TweenService:Create(PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = DefaultBackgroundTrans}):Play()
-	repeat task.wait() until tick() - Start > (BeatmapData[1].Time/1000)
+	repeat task.wait() until TimeUtils.GetTime() > (BeatmapData[1].Time/1000)
 	isDrain = true
 end)
 
@@ -5361,7 +5359,7 @@ end
 task.spawn(function()
 	for i, TimingData in pairs(TimingPoints) do
 		if TimingData ~= nil and #TimingData > 0 then
-			repeat task.wait() until (tick() - Start) >= (TimingData[1] / 1000)
+			repeat task.wait() until (TimeUtils.GetTime()) >= (TimingData[1] / 1000)
 			local volumeMultiplier = TimingData[6] / 100
 			timingPointEffectVolumeMultiplier = volumeMultiplier
 			AdjustIngameEffectVolume(EffectVolume)
@@ -5740,7 +5738,7 @@ function CreateHitDelay(Color,HitDelay)
 	end)
 end
 
---warn((tick()-Start)*1000 - HitObj.Time,hit50)
+--warn((TimeUtils.GetTime())*1000 - HitObj.Time,hit50)
 
 
 
@@ -5782,7 +5780,7 @@ task.spawn(function()
 	StreamingLoop:AddLoop(function() return true end, 0.5, function()
 		if gameEnded then return "break" end
 		for id, data in pairs(DisplayingHitnote) do
-			if tick() - Start > data.Time/1000 + 10 then
+			if TimeUtils.GetTime() > data.Time/1000 + 10 then
 				DisplayingHitnote[id] = nil
 			end 
 		end
@@ -5842,7 +5840,7 @@ if not ReplayMode and not isSpectating and not onTutorial then
 			end
 			LastRecord = tick()
 			task.spawn(function()
-				local CurrentTime = math.round((tick() - Start)*1000-SongDelay/SongSpeed)
+				local CurrentTime = math.round((TimeUtils.GetTime())*1000-SongDelay/SongSpeed)
 				local CursorPosition = Cursor.Position
 				if PastPosition ~= CursorPosition then
 					--local DecodedPosition = {X=math.floor(CursorPosition.X.Scale*512+0.5),Y=math.floor(CursorPosition.Y.Scale*384+0.5)}
@@ -5857,7 +5855,7 @@ if not ReplayMode and not isSpectating and not onTutorial then
 	end)
 
 	MouseHitEvent.Event:Connect(function(_,KeyHit)
-		local CurrentTime = math.round((tick() - Start)*1000-SongDelay/SongSpeed)
+		local CurrentTime = math.round((TimeUtils.GetTime())*1000-SongDelay/SongSpeed)
 		--local FullData = {H = true,T = CurrentTime}
 
 		--UploadReplay(2,FullData,2,KeyHit)
@@ -5865,7 +5863,7 @@ if not ReplayMode and not isSpectating and not onTutorial then
 	end)
 
 	MouseHitEndEvent.Event:Connect(function(_,KeyHit)
-		local CurrentTime = math.round((tick() - Start)*1000-SongDelay/SongSpeed)
+		local CurrentTime = math.round((TimeUtils.GetTime())*1000-SongDelay/SongSpeed)
 		--local FullData = {H = false,T = CurrentTime}
 
 		--UploadReplay(2,FullData,2,KeyHit)
@@ -5958,11 +5956,11 @@ if ReplayMode then
 					-- add a timing for TD replay
 					HitTiming += 100
 				end
-				if (tick() - Start) + (1/GameplayFPS) < (HitTiming/1000+SongDelay/1000/SongSpeed) + ReplayDelay/1000 then
-					repeat task.wait() until (tick() - Start) + (1/GameplayFPS) >= (HitTiming/1000+SongDelay/1000/SongSpeed) + ReplayDelay/1000
+				if (TimeUtils.GetTime()) + (1/GameplayFPS) < (HitTiming/1000+SongDelay/1000/SongSpeed) + ReplayDelay/1000 then
+					repeat task.wait() until (TimeUtils.GetTime()) + (1/GameplayFPS) >= (HitTiming/1000+SongDelay/1000/SongSpeed) + ReplayDelay/1000
 				end
 				task.spawn(function()
-					--print(math.floor(((tick() - Start) - data[1]/1000)*1000))
+					--print(math.floor(((TimeUtils.GetTime()) - data[1]/1000)*1000))
 					CursorPosition = Vector2.new(data[3]-5000,data[4]-5000)
 					--MouseHitEvent
 					--MouseHitEndEvent
@@ -6043,7 +6041,7 @@ isOnTimeJump = false
 script.Parent.Development.TimeJump.Event:Connect(function(Time)
 	if not (tonumber(Time)) or Time < -3 or Time > 999 or Time ~= Time or OnMultiplayer then return end
 	isOnTimeJump = true
-	local New = Start + (tick() - Start) - Time
+	local New = Start + (TimeUtils.GetTime()) - Time
 	if New > Start then
 		isIn_GameQuickRestart = true
 	end
@@ -6056,9 +6054,8 @@ script.Parent.Development.TimeJump.Event:Connect(function(Time)
 			obj:Destroy()
 		end
 	end
-
-	Start = New
-	SongStart = New
+	
+	TimeUtils.TimeJump(Time)
 	
 	if StoryboardAvailable then
 		storyboardUI.Scripts.Actor:SendMessage("SetTime", os.clock() - Start)
@@ -6278,12 +6275,12 @@ function LetTheGameBegin()
 		local HitObjProperties = ObjectTools.GetObjectProperties(CurrentType)
 
 		if HitObjProperties.isSpinner then  --- spinner
-			repeat task.wait() until (tick()-Start) >= (HitObj.Time-1500)/1000
+			repeat task.wait() until (TimeUtils.GetTime()) >= (HitObj.Time-1500)/1000
 		else
 			if i == 1 then -- the very first note
-				repeat task.wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime-NoteBasePreloadTime)/1000
-			elseif (tick()-Start)*1000 < HitObj.Time-CircleApproachTime then	-- yield until the next note avaiable
-				repeat task.wait() until (tick()-Start) >= (HitObj.Time-CircleApproachTime-NoteBasePreloadTime)/1000
+				repeat task.wait() until (TimeUtils.GetTime()) >= (HitObj.Time-CircleApproachTime-NoteBasePreloadTime)/1000
+			elseif (TimeUtils.GetTime())*1000 < HitObj.Time-CircleApproachTime then	-- yield until the next note avaiable
+				repeat task.wait() until (TimeUtils.GetTime()) >= (HitObj.Time-CircleApproachTime-NoteBasePreloadTime)/1000
 			end
 		end
 
@@ -6294,7 +6291,7 @@ function LetTheGameBegin()
 		NoteCompleted += 1
 
 		task.spawn(function()
-			task.wait((HitObj.Time)/1000 - (tick()-Start))
+			task.wait((HitObj.Time)/1000 - (TimeUtils.GetTime()))
 			NPS += 1
 			task.wait(1/SongSpeed)
 			NPS -= 1
@@ -6320,7 +6317,7 @@ function LetTheGameBegin()
 		TotalNotes += 1
 		task.spawn(function()
 			-- Start processing the note
-			if (isSpectating == true or isOnTimeJump) and tick() - Start > (HitObj.Time+hit50)/1000 then
+			if (isSpectating == true or isOnTimeJump) and TimeUtils.GetTime() > (HitObj.Time+hit50)/1000 then
 				Combo = 1
 				CurrentCursorPos = HitNoteID + 1
 				CurrentHitnote = HitNoteID + 1
@@ -6359,7 +6356,7 @@ function LetTheGameBegin()
 							CurrentCursorPos = HitNoteID + 1
 							return
 						end
-						repeat task.wait() until (tick() - Start) >= HitObj.Time/1000
+						repeat task.wait() until (TimeUtils.GetTime()) >= HitObj.Time/1000
 						local SpinnerTime = (HitObj.SpinTime - HitObj.Time)/1000
 						if tick() - LastClick > 0.25 then
 							RightClick = false
@@ -6396,8 +6393,8 @@ function LetTheGameBegin()
 						local ATSpinnerSPR = 1/(ATSpinnerRPM/60)
 						local origin = Vector2.new(256, 192)
 						local Distance = 144
-						while tick() - Start <= HitObj.Time/1000 + SpinnerTime do
-							local t = 1-(tick() - Start % ATSpinnerSPR)/ATSpinnerSPR
+						while TimeUtils.GetTime() <= HitObj.Time/1000 + SpinnerTime do
+							local t = 1-(TimeUtils.GetTime() % ATSpinnerSPR)/ATSpinnerSPR
 							local r = t * math.pi * 2
 							local offsetX = math.cos(r) * Distance
 							local offsetY = math.sin(r) * Distance
@@ -6455,7 +6452,7 @@ function LetTheGameBegin()
 				Spinner.Spinner.SpinnerScript.Disabled = false
 
 
-				repeat task.wait() until tick() - Start >= (HitObj.SpinTime)/1000
+				repeat task.wait() until TimeUtils.GetTime() >= (HitObj.SpinTime)/1000
 
 				local Ratio = Spinner.Spinner.RoundSpinned.Value/Spinner.RoundRequired.Value
 
@@ -6510,7 +6507,7 @@ function LetTheGameBegin()
 
 
 				if Ratio >= 0.25 or SpinnerTime < 0.2 then
-					if not isPaused then
+					if not TimeUtils.IsPaused() then
 						AccuracyData.Combo += 1
 						EstimatedCombo += 1
 					end
@@ -6593,7 +6590,7 @@ function LetTheGameBegin()
 					task.spawn(function()
 						local EarlyRequired = false
 
-						if (CurrentCursorPos < HitNoteID or CurrentHitnote < HitNoteID) and (tick() - Start) * 1000 <= HitObj.Time then
+						if (CurrentCursorPos < HitNoteID or CurrentHitnote < HitNoteID) and (TimeUtils.GetTime()) * 1000 <= HitObj.Time then
 							waitUntil(function()
 								return CurrentCursorPos >= HitNoteID and CurrentHitnote >= HitNoteID
 							end)
@@ -6610,7 +6607,7 @@ function LetTheGameBegin()
 							end)
 						end
 
-						local TimeUntilNoteClicked = (tick() - Start) * 1000 - HitObj.Time
+						local TimeUntilNoteClicked = (TimeUtils.GetTime()) * 1000 - HitObj.Time
 
 						local bonustiming = (EarlyRequired and hit300 * 0.5) or 0
 						local TimeWithAR = TimeUntilNoteClicked - CircleApproachTime
@@ -6620,7 +6617,7 @@ function LetTheGameBegin()
 							task.wait(math.max((-TimeUntilNoteClicked - CursorTweenTime) / 1000, 0))
 						end
 
-						TimeUntilNoteClicked = math.min((tick() - Start) * 1000 - (HitObj.Time + bonustiming), 0)
+						TimeUntilNoteClicked = math.min((TimeUtils.GetTime()) * 1000 - (HitObj.Time + bonustiming), 0)
 						CursorTweenTime = math.abs((TimeUntilNoteClicked > 0 and 0) or (TimeUntilNoteClicked > -500 and -TimeUntilNoteClicked) or 500)
 
 						local AvgFrameTime = (1 / FramePerSec) * 1000
@@ -6632,9 +6629,9 @@ function LetTheGameBegin()
 							ATVC.Position = UDim2.new(HitObj.Position.X / 512, 0, HitObj.Position.Y / 384, 0)
 						end
 
-						if CursorTweenTime > AvgFrameTime and (tick() - Start) <= (HitObj.Time + hit300) / 1000 then
+						if CursorTweenTime > AvgFrameTime and (TimeUtils.GetTime()) <= (HitObj.Time + hit300) / 1000 then
 							waitUntil(function()
-								return (tick() - Start) > (HitObj.Time-1000/GameplayFPS*0.5) / 1000 or (tick() - Start) >= (HitObj.Time) / 1000
+								return (TimeUtils.GetTime()) > (HitObj.Time-1000/GameplayFPS*0.5) / 1000 or (TimeUtils.GetTime()) >= (HitObj.Time) / 1000
 							end)
 						end
 
@@ -6746,25 +6743,25 @@ function LetTheGameBegin()
 							--Connection.RemoveTime.Value = NextHitObj.Time
 
 							task.spawn(function()
-								task.wait((NextHitObj.Time/1000+2) - (tick()-Start))
+								task.wait((NextHitObj.Time/1000+2) - (TimeUtils.GetTime()))
 								if Connection and Connection.Parent ~= nil then
 									Connection:Destroy()
 								end
 							end)
 							local TweenTime = (NextHitObj.Time-HitObj.Time > 50/SongSpeed and NextHitObj.Time-HitObj.Time) or 50/SongSpeed
 							task.spawn(function()
-								repeat task.wait() until tick() - Start >= (HitObj.Time - CircleApproachTime)/1000
+								repeat task.wait() until TimeUtils.GetTime() >= (HitObj.Time - CircleApproachTime)/1000
 								local ct_ = TweenService:Create(Connection,TweenInfo.new(TweenTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{BackgroundTransparency = 0.5,Position = Pos,Size = Size})
 								AddHitnoteAnimation(ct_)
 								ct_:Play()
 							end)
-							if (tick() - Start)*1000 < NextHitObj.Time-250/SongSpeed then
-								task.wait((NextHitObj.Time-250/SongSpeed)/1000 - (tick()-Start))
+							if (TimeUtils.GetTime())*1000 < NextHitObj.Time-250/SongSpeed then
+								task.wait((NextHitObj.Time-250/SongSpeed)/1000 - (TimeUtils.GetTime()))
 								local ct_ = TweenService:Create(Connection,TweenInfo.new(0.25/SongSpeed,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{BackgroundTransparency = 0.5,Position = EndPos,Size = UDim2.new(0,0,0.01 * scalingFactor,0)})
 								AddHitnoteAnimation(ct_)
 								ct_:Play()
 							end
-							task.wait(NextHitObj.Time/1000 - (tick()-Start))
+							task.wait(NextHitObj.Time/1000 - (TimeUtils.GetTime()))
 							Connection:Destroy()
 						end
 					elseif BeatmapData[i+1] ~= nil and BeatmapData[i+1].Type ~= 8 then
@@ -6825,10 +6822,10 @@ function LetTheGameBegin()
 				HitObj.ComboColor = ComboColor[CurrentComboColor]
 
 
-				if tick() - Start < (HitObj.Time - CircleApproachTime)/1000 then
+				if TimeUtils.GetTime() < (HitObj.Time - CircleApproachTime)/1000 then
 					task.spawn(function()
 						Circle.Visible = false
-						repeat task.wait() until tick() - Start >= (HitObj.Time - CircleApproachTime)/1000
+						repeat task.wait() until TimeUtils.GetTime() >= (HitObj.Time - CircleApproachTime)/1000
 						Circle.Visible = true
 					end)
 				end
@@ -7012,9 +7009,9 @@ function LetTheGameBegin()
 							if Slides > 1 then
 								local SliderBPMStartTime = HitObj.SliderBPMStartTime/100
 								local SliderBeatTime = 1/(HitObj.SliderBPM/60)
-								StreamingLoop:AddLoop(function() return tick() - Start <= HitObj.Time/1000 + SliderTime end, 0, function()
+								StreamingLoop:AddLoop(function() return TimeUtils.GetTime() <= HitObj.Time/1000 + SliderTime end, 0, function()
 									-- Reverse arrow beat handler
-									local t = ((tick() - Start - SliderBPMStartTime)/SliderBeatTime)%1
+									local t = ((TimeUtils.GetTime() - SliderBPMStartTime)/SliderBeatTime)%1
 
 									SliderObject.setReverseArrowBeat(t)
 									task.wait()
@@ -7026,11 +7023,11 @@ function LetTheGameBegin()
 							SliderObject.SetSnakingIn(1)
 						end
 
-						repeat task.wait() until tick() - Start >= (HitObj.Time - CircleApproachTime)/1000
+						repeat task.wait() until TimeUtils.GetTime() >= (HitObj.Time - CircleApproachTime)/1000
 						SliderObject.ShowCurrentTickOnSlide(1, SliderTime * 1000, true)
-						while tick() - Start < (HitObj.Time - CircleApproachTime)/1000 + FadeInTime do
-							local t = ((tick() - Start) - (HitObj.Time - CircleApproachTime)/1000)/FadeInTime
-							local t2 = ((tick() - Start) - (HitObj.Time - CircleApproachTime)/1000)/SnakeInTime
+						while TimeUtils.GetTime() < (HitObj.Time - CircleApproachTime)/1000 + FadeInTime do
+							local t = ((TimeUtils.GetTime()) - (HitObj.Time - CircleApproachTime)/1000)/FadeInTime
+							local t2 = ((TimeUtils.GetTime()) - (HitObj.Time - CircleApproachTime)/1000)/SnakeInTime
 							if SnakingInSlider then
 								SliderObject.SetSnakingIn(t2)
 							end
@@ -7046,8 +7043,8 @@ function LetTheGameBegin()
 								if FadeTime <= 0.25 then
 									FadeTime = 0.25
 								end
-								while tick() - Start < HitObj.Time/1000 + FadeTime do
-									local t = ((tick() - Start) - HitObj.Time/1000)/FadeTime
+								while TimeUtils.GetTime() < HitObj.Time/1000 + FadeTime do
+									local t = ((TimeUtils.GetTime()) - HitObj.Time/1000)/FadeTime
 									SliderObject.SetTransparency(math.lerp(0.2, 1, t))
 									task.wait()
 								end
@@ -7058,15 +7055,15 @@ function LetTheGameBegin()
 						local InSliderTickRequired = HitObj.SliderTickData and #HitObj.SliderTickData or 0
 						local function isInFollowCircle(t)
 							if not t then
-								t = ((((tick() - Start) - HitObj.Time/1000) / SliderTime)  % (1/Slides)) / (1/Slides)
+								t = ((((TimeUtils.GetTime()) - HitObj.Time/1000) / SliderTime)  % (1/Slides)) / (1/Slides)
 							end
-							local currentSlide = math.floor(((tick() - Start - HitObj.Time/1000) / SliderTime) / (1/Slides)) + 1
+							local currentSlide = math.floor(((TimeUtils.GetTime() - HitObj.Time/1000) / SliderTime) / (1/Slides)) + 1
 
 
 							return SliderObject.isCursorInFollowCircle(CursorPosition, t, currentSlide%2==0)
 						end
 						task.spawn(function()
-							repeat task.wait() until (tick() - Start) >= HitObj.Time/1000 and SliderTime ~= -1
+							repeat task.wait() until (TimeUtils.GetTime()) >= HitObj.Time/1000 and SliderTime ~= -1
 							
 							local currentProcessingSlide = 1
 							local currentTickOnSlide = 1
@@ -7081,8 +7078,8 @@ function LetTheGameBegin()
 										SliderObject.ShowCurrentTickOnSlide(nextTickSlide, SliderTime * 1000)
 										currentTickOnSlide = 1
 									end
-									if tick() - Start < nextTick/1000 then
-										repeat task.wait() until tick() - Start >= nextTick/1000
+									if TimeUtils.GetTime() < nextTick/1000 then
+										repeat task.wait() until TimeUtils.GetTime() >= nextTick/1000
 									end
 									SliderObject.CleanTick(currentProcessingSlide, currentTickOnSlide)
 									currentTickOnSlide += 1
@@ -7095,7 +7092,7 @@ function LetTheGameBegin()
 											Score += 10
 											TotalScoreEstimated += 10
 										end
-										if not isPaused then
+										if not TimeUtils.IsPaused() then
 											AccuracyData.Combo+=1
 											EstimatedCombo += 1
 											AccuracyData.BaseConsistency += AccuracyData.Combo
@@ -7111,7 +7108,7 @@ function LetTheGameBegin()
 										if AccuracyData.Combo >= 20 then
 											script.Parent.ComboBreak:Play()
 										end
-										if not isPaused then
+										if not TimeUtils.IsPaused() then
 											AccuracyData.Combo = 0
 											EstimatedCombo += 1
 											AccuracyData.MaxConsistency += EstimatedCombo
@@ -7128,14 +7125,14 @@ function LetTheGameBegin()
 
 							local PreviousSlide = 0
 
-							while tick() - Start < HitObj.Time/1000 + SliderTime do
+							while TimeUtils.GetTime() < HitObj.Time/1000 + SliderTime do
 								if Completed then
 									-- if somehow the slider is completed, we will add up all at once
 									AddHealthDrainMultiplier(0.7 * (Slides - PreviousSlide))
 									break
 								end
-								local t = (tick() - Start - HitObj.Time/1000) % (SliderTime/Slides) / (SliderTime/Slides)  --(((tick() - Start) - HitObj.Time/1000) / SliderTime) % (1/Slides)
-								local CurrentSlide = math.floor((tick() - Start - HitObj.Time/1000)/(SliderTime/Slides)) + 1
+								local t = (TimeUtils.GetTime() - HitObj.Time/1000) % (SliderTime/Slides) / (SliderTime/Slides)  --(((TimeUtils.GetTime()) - HitObj.Time/1000) / SliderTime) % (1/Slides)
+								local CurrentSlide = math.floor((TimeUtils.GetTime() - HitObj.Time/1000)/(SliderTime/Slides)) + 1
 								local isReverse = CurrentSlide % 2 == 0
 								SliderObject.setFollowCirclePosition(t, isReverse)
 								if CurrentSlide == Slides and SnakingOutSlider then
@@ -7159,8 +7156,8 @@ function LetTheGameBegin()
 						end)
 
 						task.spawn(function()
-							if (tick() - Start) < HitObj.Time/1000 or SliderTime == -1 then
-								repeat task.wait() until (tick() - Start) >= HitObj.Time/1000 and SliderTime ~= -1
+							if (TimeUtils.GetTime()) < HitObj.Time/1000 or SliderTime == -1 then
+								repeat task.wait() until (TimeUtils.GetTime()) >= HitObj.Time/1000 and SliderTime ~= -1
 							end
 							task.spawn(function()
 								-- Slider holding handler
@@ -7210,7 +7207,7 @@ function LetTheGameBegin()
 									end
 									if (isInFollowCircle(Slides%2) == true and script.Parent.KeyDown.Value == true) or tick() - LastHold <= 0.1 then
 										
-										if not isPaused then
+										if not TimeUtils.IsPaused() then
 											Score += 30 * Multiplier
 											TotalScoreEstimated += 30 * Multiplier
 											AccuracyData.Combo+=Multiplier
@@ -7230,7 +7227,7 @@ function LetTheGameBegin()
 										if AccuracyData.Combo >= 20 then
 											script.Parent.ComboBreak:Play()
 										end
-										if not isPaused then
+										if not TimeUtils.IsPaused() then
 											AccuracyData.Combo = 0
 											EstimatedCombo += 1
 											AccuracyData.MaxConsistency += EstimatedCombo
@@ -7254,9 +7251,9 @@ function LetTheGameBegin()
 									end
 								end
 
-								while tick() - Start < HitObj.Time/1000 + SliderTime and not Completed do
+								while TimeUtils.GetTime() < HitObj.Time/1000 + SliderTime and not Completed do
 									if Slides > 1 then  -- If slides <= 1, just wait
-										local CurrentSlide = math.floor((tick() - Start - HitObj.Time/1000)/(SliderTime/Slides))+1
+										local CurrentSlide = math.floor((TimeUtils.GetTime() - HitObj.Time/1000)/(SliderTime/Slides))+1
 										if CurrentSlide > previousSlide then
 											local Multiplier = math.max(1, CurrentSlide - previousSlide) -- If it somehow passed more than 1 slides, the current hold will judge for the previous slide
 											checkSlides(Multiplier, CurrentSlide)
@@ -7277,7 +7274,7 @@ function LetTheGameBegin()
 
 								if (isInFollowCircle(Slides%2) == true and script.Parent.KeyDown.Value == true) or tick() - LastHold <= 0.1 then
 									-- Now we check the slider tail
-									if not isPaused then
+									if not TimeUtils.IsPaused() then
 										AccuracyData.Combo+=1
 										EstimatedCombo += 1
 										AccuracyData.BaseConsistency += AccuracyData.Combo
@@ -7419,8 +7416,8 @@ function LetTheGameBegin()
 				end
 
 				task.spawn(function()
-					StreamingLoop:AddLoop(function() return (tick()-Start)*1000 < HitObj.Time and Circle.Parent and not IsHitted end, 0, function()
-						local TimeLeft = (HitObj.Time)/1000 - (tick() - Start)
+					StreamingLoop:AddLoop(function() return (TimeUtils.GetTime())*1000 < HitObj.Time and Circle.Parent and not IsHitted end, 0, function()
+						local TimeLeft = (HitObj.Time)/1000 - (TimeUtils.GetTime())
 						local TimePassed = CircleApproachTime/1000 - TimeLeft
 						local Size = 1+3*TimeLeft/(CircleApproachTime/1000)
 
@@ -7446,7 +7443,7 @@ function LetTheGameBegin()
 				task.spawn(function()
 					LagStrikeEvent.Event:Connect(function()
 						if IsHitted then return end
-						--local FixedApproachTime = -((tick()-Start)*1000 - HitObj.Time)
+						--local FixedApproachTime = -((TimeUtils.GetTime())*1000 - HitObj.Time)
 						--local ApproachSize = (1-(CircleApproachTime-FixedApproachTime)/CircleApproachTime)*3 + 1.1
 						--Circle.ApproachCircle.Size = UDim2.new(ApproachSize,0,ApproachSize,0)
 						--local ApproachCircleTween = TweenService:Create(Circle.ApproachCircle,TweenInfo.new(FixedApproachTime/1000,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Size = UDim2.new(1.1,0,1.1,0)})
@@ -7462,27 +7459,27 @@ function LetTheGameBegin()
 
 				task.spawn(function()
 					if not AimAssist then return end
-					repeat task.wait() until CurrentHitnote == HitNoteID or (tick()-Start) >= ((HitObj.Time+hit50)/1000)
-					if (tick()-Start) >= ((HitObj.Time+hit50)/1000)  then
+					repeat task.wait() until CurrentHitnote == HitNoteID or (TimeUtils.GetTime()) >= ((HitObj.Time+hit50)/1000)
+					if (TimeUtils.GetTime()) >= ((HitObj.Time+hit50)/1000)  then
 						return --skip
 					end
 					TweenService:Create(script.Parent.CursorField.AimAssitTarget,TweenInfo.new(0.25,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(HitObj.Position.X/512,0,HitObj.Position.Y/384,0)}):Play()
 				end)
 
 				task.spawn(function()
-					if (HitObj.Time/1000) - (tick()-Start) > 0 then -- prevent high delay
-						task.wait((HitObj.Time/1000) - (tick()-Start))
-						if tick() - Start < 10000 then
-							repeat task.wait() until (tick()-Start) >= (HitObj.Time/1000)
+					if (HitObj.Time/1000) - (TimeUtils.GetTime()) > 0 then -- prevent high delay
+						task.wait((HitObj.Time/1000) - (TimeUtils.GetTime()))
+						if TimeUtils.GetTime() < 10000 then
+							repeat task.wait() until (TimeUtils.GetTime()) >= (HitObj.Time/1000)
 						end
 					end
 					if IsHitted == false and not BeatmapFailed then
 						Circle.ApproachCircle.Visible = false
 						if not HitObjProperties.isSlider or not SliderMode then
-							if ((HitObj.Time+hit50)/1000) - (tick()-Start) > 0 then
-								task.wait(((HitObj.Time+hit50)/1000) - (tick()-Start))
-								if tick() - Start < 10000 then
-									repeat task.wait() until (tick()-Start) >= ((HitObj.Time+hit50)/1000) 
+							if ((HitObj.Time+hit50)/1000) - (TimeUtils.GetTime()) > 0 then
+								task.wait(((HitObj.Time+hit50)/1000) - (TimeUtils.GetTime()))
+								if TimeUtils.GetTime() < 10000 then
+									repeat task.wait() until (TimeUtils.GetTime()) >= ((HitObj.Time+hit50)/1000) 
 								end
 							end
 						else
@@ -7541,8 +7538,8 @@ function LetTheGameBegin()
 							elseif SliderHitTime <= hit300/1000 then
 								SliderHitTime = hit300/1000
 							end
-							if ((HitObj.Time+SliderHitTime*1000)/1000) - (tick()-Start) > 0 then
-								task.wait(((HitObj.Time+SliderHitTime*1000)/1000) - (tick()-Start))
+							if ((HitObj.Time+SliderHitTime*1000)/1000) - (TimeUtils.GetTime()) > 0 then
+								task.wait(((HitObj.Time+SliderHitTime*1000)/1000) - (TimeUtils.GetTime()))
 							end
 						end
 						if IsHitted == false then
@@ -7616,7 +7613,7 @@ function LetTheGameBegin()
 					end
 				end)
 				task.spawn(function()
-					task.wait(((HitObj.Time+hit50+1000)/1000) - (tick()-Start))
+					task.wait(((HitObj.Time+hit50+1000)/1000) - (TimeUtils.GetTime()))
 					-- everything in this note should be done by now
 					for _,tweenid in pairs(AnimationIdList) do
 						HitnoteAnimations[tweenid] = nil
@@ -7660,7 +7657,7 @@ function LetTheGameBegin()
 							-- Player's input will be half frame earlier
 							FramerateFix = (tick() - LastFramerate) * 1000 * 0.5
 						end
-						local CurrentTime = (tick()-Start)*1000 - FramerateFix
+						local CurrentTime = (TimeUtils.GetTime())*1000 - FramerateFix
 						local HitDelay = CurrentTime - HitObj.Time
 						if IsHitted == false then
 							-- local spectatingRetryCount = 10
@@ -7811,7 +7808,7 @@ function LetTheGameBegin()
 										Circle.ApproachCircle.Visible = false
 									end
 
-									if not isPaused then
+									if not TimeUtils.IsPaused() then
 										AccuracyData.Combo += 1
 										EstimatedCombo += 1										
 									end
@@ -7993,13 +7990,13 @@ function checkSSAnim()
 end
 
 if isSpectating == false then
-	repeat task.wait() until tick() - Start > (BeatmapData[#BeatmapData].Time + hit50)/1000
+	repeat task.wait() until TimeUtils.GetTime() > (BeatmapData[#BeatmapData].Time + hit50)/1000
 
 	local Type = BeatmapData[#BeatmapData].Type
 
 
 	if ObjectTools.GetObjectProperties(Type).isSpinner then
-		repeat task.wait() until (tick()-Start) >= BeatmapData[#BeatmapData].SpinTime/1000
+		repeat task.wait() until (TimeUtils.GetTime()) >= BeatmapData[#BeatmapData].SpinTime/1000
 		TweenService:Create(PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.4}):Play()
 		script.Parent.Leaderboard.LbTrigger:Fire(true)
 		script.Parent.MultiplayerLeaderboard.LbTrigger:Fire(true)
