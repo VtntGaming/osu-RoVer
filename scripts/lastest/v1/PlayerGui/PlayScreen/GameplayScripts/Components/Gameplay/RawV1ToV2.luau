@@ -1,9 +1,9 @@
 --[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.Components.Gameplay.RawV1ToV2]
 function getScoreMissPenaltyMultiplier(missCount, noteCount)
 	-- miss penalty can take up to 25% of the current score
-	local penaltyMax = 0.25
-
-	return (1 - penaltyMax) + penaltyMax / ((missCount / (4 * math.pow(math.log(noteCount), 0.94))) + 1)
+	local penaltyMax = 0.25	
+	local penalty = math.min((1 - penaltyMax) + penaltyMax / ((missCount / (4 * math.pow(math.log(noteCount), 0.94))) + 1), (noteCount - missCount)/math.max(1, noteCount))
+	return penalty
 end
 
 function getAccuracyScore(AccuracyData, NoteCount, MaxCombo)

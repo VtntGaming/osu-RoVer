@@ -3483,10 +3483,14 @@ task.spawn(function()
 
 		local StringOutput = string.format("%d:%.2d", Min, Sec)
 		local StringOutput_max = string.format("%d:%.2d", Min_max, Sec_max)
-		if TimeUtils.GetTime() > -0.5 then
+		if TimeUtils.GetTime() > 0 then
 			script.Parent.ProgressBar.TimeLeft.Time.Text = StringOutput.."/"..StringOutput_max
 		else
-			script.Parent.ProgressBar.TimeLeft.Time.Text = ""
+			local t = -TimeUtils.GetTime()
+			local p_m = t//60
+			local p_s = t%60
+			local stringOutput_prepare = string.format("-%d:%.2d", p_m, p_s)
+			script.Parent.ProgressBar.TimeLeft.Time.Text = stringOutput_prepare.."/"..StringOutput_max
 		end
 
 
@@ -4480,18 +4484,18 @@ function getAccuracyScore()
 	-- prevent players just "chilling out" and watching the score keep increasing
 	local ExtraAccPoint = math.max(0, ExtraCombo * Accuracy - AccuracyData.miss)
 
-	return math.pow(ExtraAccPoint + (AccuracyData.h300*300+AccuracyData.h100*100+AccuracyData.h50*50)/300,2.265) * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.3
+	return math.pow(ExtraAccPoint + (AccuracyData.h300*300+AccuracyData.h100*100+AccuracyData.h50*50)/300,2.265) * ScoreMultiplier.Difficulty * 0.3
 end
 
 function getConsistencyScore()
-	return math.pow(AccuracyData.BaseConsistency, 1.1704417) * 1.2255 * ScoreMultiplier.Difficulty * ScoreMultiplier.Mod * 0.7
+	return math.pow(AccuracyData.BaseConsistency, 1.1704417) * 1.2255 * ScoreMultiplier.Difficulty * 0.7
 end
 
 function getScoreMissPenaltyMultiplier(missCount, noteCount)
 	-- miss penalty can take up to 25% of the current score
-	local penaltyMax = 0.25
-
-	return (1 - penaltyMax) + penaltyMax / ((missCount / (4 * math.pow(math.log(noteCount), 0.94))) + 1)
+	local penaltyMax = 0.25	
+	local penalty = math.min((1 - penaltyMax) + penaltyMax / ((missCount / (4 * math.pow(math.log(noteCount), 0.94))) + 1), (noteCount - missCount)/math.max(1, noteCount))
+	return penalty
 end
 
 function getScoreV1()
@@ -4500,7 +4504,8 @@ function getScoreV1()
 	local AccuracyScore = getAccuracyScore() * missPenalty
 	local ConsistencyScore = getConsistencyScore() * missPenalty
 	-- Spinner score provide fixed value
-	return math.round(ConsistencyScore+AccuracyScore+AccuracyData.SpinnerScore)
+	local ScoreV1 = ConsistencyScore+AccuracyScore+AccuracyData.SpinnerScore
+	return math.round(ScoreV1 * ScoreMultiplier.Mod)
 end
 
 function getScoreV2()
@@ -4522,7 +4527,7 @@ function getScoreV2()
 	local ScoreV2 = accScore + consistencyScore + AccuracyData.SpinnerScore * 0.1
 	--local ScoreV2 = math.pow(ActualScore/MaxPossibleScore,exRate) * 1000000 * ScoreMultiplier.Mod * missPenalty
 
-	return math.round(ScoreV2)
+	return math.round(ScoreV2 * ScoreMultiplier.ModV2)
 end
 
 task.spawn(function()
