@@ -957,7 +957,7 @@ function updateLBStaistic()
 	local Total = (h300+h100+h50+miss)
 	local Acc = (h300*3+h100+h50*0.5)/(Total*3)*100
 	local GameplayRank = "D"
-	
+
 	local misstotal = miss
 
 	if Acc >= 70 then
@@ -1258,11 +1258,11 @@ LoadLeaderboard = function()
 		for _, data in pairs(GlobalData) do
 			data.ExtraData = ScoreStaticticConverter.ConvertStatictic(data.ExtraData)
 		end
-		
+
 		if PersonalData.ExtraData then
 			PersonalData.ExtraData = ScoreStaticticConverter.ConvertStatictic(PersonalData.ExtraData)
 		end
-	
+
 
 		-- prevent duplicating request
 		if SessionChanged == true or CurrentLeaderboardSession ~= ThisLBSession then return end
@@ -3134,8 +3134,8 @@ function GameOver()
 
 		local hpLeftTween = TweenService:Create(script.Parent.HealthBar.Overlay.HPLeft, TweenInfo.new(0.25, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0) })
 		hpLeftTween:Play()
-		
-		
+
+
 
 		for _, tween in pairs(HitnoteAnimations) do
 			task.spawn(function()
@@ -3196,10 +3196,10 @@ function GameOver()
 			task.wait(0.5)
 			script.Parent.RestartGame.Visible = false
 		end)
-		
+
 		local pauseScreenArgs = {}
-		
-		
+
+
 		if coreConfig.AutoPlay == true then
 			pauseScreenArgs.CustomText = "Player failed"
 		elseif isSpectating then
@@ -3208,7 +3208,7 @@ function GameOver()
 		else
 			-- do nothing xd
 		end
-		
+
 		PauseScreenUtils.Toggle(true, true, pauseScreenArgs)
 
 		task.wait(1)
@@ -3825,7 +3825,7 @@ if coreConfig.AutoPlay == false and coreConfig.ReplayMode ~= true and isSpectati
 					local AbsoluteSize = script.Parent.PlayFrame.AbsoluteSize
 
 					--InputData.Delta
-					
+
 					local mouseDelta = UserInputService:GetMouseDelta()
 
 					local MouseMovement = mouseDelta/AbsoluteSize*CursorSensitivity
@@ -3856,7 +3856,7 @@ if coreConfig.AutoPlay == false and coreConfig.ReplayMode ~= true and isSpectati
 			end)
 		end
 	end
-	
+
 	local limit = 0.0667	-- 15 clicks per sec on 1 btn
 	local lastMouseHit = {
 		M1 = 0, M2 = 0
@@ -4285,13 +4285,13 @@ task.spawn(function() --Accurancy caculation
 	repeat task.wait() until TimeUtils.GetTime() >= 0
 
 	local WaitTime = 0
-		if coreConfig.OptimizedPerfomance then
+	if coreConfig.OptimizedPerfomance then
 		WaitTime = 0.1
 	end
 	StreamingLoop:AddLoop(function() return true end, function() return 0 end, function(t)
-			if coreConfig.OptimizedPerfomance and WaitTime == 0 then
+		if coreConfig.OptimizedPerfomance and WaitTime == 0 then
 			WaitTime = 0.1
-			elseif not coreConfig.OptimizedPerfomance and WaitTime == 0.1 then
+		elseif not coreConfig.OptimizedPerfomance and WaitTime == 0.1 then
 			WaitTime = 0
 		end
 		local h300 = AccuracyData.h300
@@ -4789,7 +4789,7 @@ if isSpectating == true then
 
 				SpecDelayFrame.HostDelay.Text = tostring(HostDelay).."ms"
 				SpecDelayFrame.HostFPS.Text = tostring(HostFPS).." FPS"
-				
+
 				TimeUtils.TimeJump(TimeProcess)
 				ScoreResultDisplay = Data.ScoreResult
 				SpectateGotFirstData = true
@@ -5037,7 +5037,7 @@ task.spawn(function()
 		if coreConfig.BackgroundBlurEnabled == true then
 			TweenService:Create(game.Lighting.Blur,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{Size = 15}):Play()
 		end
-			task.spawn(function()
+		task.spawn(function()
 			isDrain = false
 			repeat task.wait() until TimeUtils.GetTime() >= (BreakTime[2]/1000)
 			script.Parent.Leaderboard.LbTrigger:Fire(false)
@@ -5121,7 +5121,7 @@ task.spawn(function()
 					--BreakTimeFrame.Visible = false
 				end
 			end)			
-			
+
 			local tInfoIn = TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.In)
 
 			TweenService:Create(BreakTimeFrame.TimeProgress,tInfoIn,{BackgroundTransparency = 1}):Play()
@@ -6028,9 +6028,9 @@ script.Parent.Development.TimeJump.Event:Connect(function(Time)
 			obj:Destroy()
 		end
 	end
-	
+
 	TimeUtils.TimeJump(Time)
-	
+
 	if coreConfig.StoryboardAvailable then
 		storyboardUI.Scripts.Actor:SendMessage("SetTime", os.clock() - Start)
 	end
@@ -7044,7 +7044,7 @@ function LetTheGameBegin()
 						end
 						task.spawn(function()
 							repeat task.wait() until (TimeUtils.GetTime()) >= HitObj.Time/1000 and SliderTime ~= -1
-							
+
 							local currentProcessingSlide = 1
 							local currentTickOnSlide = 1
 
@@ -7186,7 +7186,7 @@ function LetTheGameBegin()
 										return
 									end
 									if (isInFollowCircle(Slides%2) == true and script.Parent.KeyDown.Value == true) or tick() - LastHold <= 0.1 then
-										
+
 										if not TimeUtils.IsPaused() then
 											Score += 30 * Multiplier
 											TotalScoreEstimated += 30 * Multiplier
@@ -8770,10 +8770,12 @@ end
 
 -- Script note: Some value name may spell incorrectly (And it may take ages to change bk .-.)
 
--->   2021 - 2025 osu!RoVer   <--
--- osu!corescript by VtntGaming
--- String size: 303.14KB (V1.47)
+--------------->	2021 - 2026 osu!RoVer	<---------------
+-- osu!corescript (OsuGame) by VtntGaming
+-- String size: 315.14KB (V1.49)
 
--- Source code used as a backup script, if you're not VtntOsu and see this please use it right :>
--- Some mathmethic is inspired/taken from osu! and osu!Lazer github source
+-- Gameplay inspired by osu! and osu!lazer from ppy
+-- Source code mostly used as a backup script.
+-- Some mechanic might be taken from osu! github open source.
+-- Hope some future Roblox developer can take this "spaghetti code" and improve.
 ----------------- End script -----------------
