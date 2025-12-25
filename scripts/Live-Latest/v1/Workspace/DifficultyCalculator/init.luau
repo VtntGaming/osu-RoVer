@@ -4,6 +4,7 @@
 -- Even though I have to transfer code from C# to lua all by myself
 -- The calculator might different compare to the original one
 
+local workspace = game:GetService("Workspace")
 local basePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
 local basePerfomanceFL = require(workspace.PerformanceCalculator.BasePerfomanceFL)
 local evaluator = require(script.DifficultyEvaluator)
@@ -400,9 +401,7 @@ function calculator.ComputeFlashlightRating(flashlightDifficultyValue:number, mo
 	return flRating * math.sqrt(ratingMultiplier)
 end
 
-function calculateMechanicalDifficultyRating(aimValue, speedValue)
-	local aim = basePerfomance(calculateDifficultyRatingBase(aimValue))
-	local speed = basePerfomance(calculateDifficultyRatingBase(speedValue))
+function calculateMechanicalDifficultyRating(aimValue: number, speedValue: number): number
 	
 	local totalValue = math.pow(aimValue ^ 1.1 + speedValue ^ 1.1, 1/1.1)
 	
@@ -428,8 +427,6 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	
 	local ARRate = data.DifficultyValue.AR
 	local ODRate = data.DifficultyValue.OD
-	
-	local TotalHit = data.NoteCount.Total
 	
 	local aimDifficultyValue = calculator.DifficultyValue(data.AimStrain, "Aim")
 	local speedDifficultyValue = calculator.DifficultyValue(data.SpeedStrain, "Speed")

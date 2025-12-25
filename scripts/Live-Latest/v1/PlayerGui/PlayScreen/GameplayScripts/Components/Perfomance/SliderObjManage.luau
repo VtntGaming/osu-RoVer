@@ -37,6 +37,6 @@ function obj.init()
 	return manage
 end
 
-
+export type ObjectManage = typeof(obj.init(...))
 
 return obj

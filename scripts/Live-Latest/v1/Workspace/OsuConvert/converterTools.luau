@@ -1,6 +1,7 @@
 --[LOCATION]:[Workspace.OsuConvert.converterTools]
 --!strict
-local diffCalculator = require(workspace.DifficultyCalculator)
+local workspace = game:GetService("Workspace")
+-- local diffCalculator = require(workspace.DifficultyCalculator)
 local modData = require(workspace.ModData)
 local tool = {}
 

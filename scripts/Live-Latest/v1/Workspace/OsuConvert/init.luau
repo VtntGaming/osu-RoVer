@@ -3,8 +3,8 @@
 -- convert raw osu file into readable and excutable lua data
 -- V1.47 (Size: 27.69KB)
 
+local workspace = game:GetService("Workspace")
 local BasePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
-local basePerformanceFL = require(workspace.PerformanceCalculator.BasePerfomanceFL)
 local calculator = require(workspace.DifficultyCalculator)
 local tool = require(script.converterTools)
 local sliderTools = require(script.sliderTools)
@@ -78,7 +78,10 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			-- ignore storyboard line processing
 			if currentIndex == "Events" then
 				if onStoryboardLine then continue
-				elseif string.find(crrLine,"Storyboard Layer") then	onStoryboardLine = true continue end
+				elseif string.find(crrLine,"Storyboard Layer") then
+					onStoryboardLine = true
+					continue
+				end
 			end
 			
 			MapData[currentIndex][#MapData[currentIndex] + 1] = crrLine
@@ -503,14 +506,14 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 				local i = 0
 				local tickCount = 0
 				local slidesCount = tonumber(ExtraData[3])
-				local SliderTime = SliderTime * 1000
-				local SLSlideTime = SliderTime / slidesCount
-				while StartTick + tickDuration * i < (Time + SliderTime) do
+				local sliderTimeSec = SliderTime * 1000
+				local SLSlideTime = sliderTimeSec / slidesCount
+				while StartTick + tickDuration * i < (Time + sliderTimeSec) do
 					local currentTime = StartTick + tickDuration * i
 					local TimeSinceNoteStart = currentTime - Time
 					local TimeBetweenTail = TimeSinceNoteStart%(SLSlideTime)
-					local CurrentSlide = math.floor(TimeSinceNoteStart/SliderTime)+1
-					if currentTime > Time and currentTime < Time + SliderTime and TimeBetweenTail > 20 and TimeBetweenTail < SliderTime-20 then
+					local CurrentSlide = math.floor(TimeSinceNoteStart/sliderTimeSec)+1
+					if currentTime > Time and currentTime < Time + sliderTimeSec and TimeBetweenTail > 20 and TimeBetweenTail < SliderTime-20 then
 						tickCount += 1
 						local tickPosition = _getTickPosition(currentTime, CurrentSlide%2==0)
 						SLTickData[#SLTickData+1] = {currentTime, CurrentSlide, tickPosition}
@@ -530,7 +533,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 					SLDifficultyTickData[#SLDifficultyTickData+1] = {_tailTime, slidesCount, _tailPosition, "Tail"}
 				end
 			end
-			local HitObjData = {
+			local objData = {
 				ObjId = objectID,
 				Position = HitPos,
 				Time = Time,
@@ -566,7 +569,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 				for i = #ConvertedData, 1, -1 do
 					-- we roll back to check the stack leniency
 					
-					local crr = ConvertedData[i+1] or HitObjData
+					local crr = ConvertedData[i+1] or objData
 					local prev = ConvertedData[i]
 					if prev.isSpinner or prev.isSlider then
 						break
@@ -582,7 +585,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 					end
 				end
 			end
-			ConvertedData[#ConvertedData+1] = HitObjData
+			ConvertedData[#ConvertedData+1] = objData
 		end
 
 		local RemoveList = {}

@@ -1,4 +1,5 @@
 --[LOCATION]:[Workspace.PerformanceCalculator]
+local workspace = game:GetService("Workspace")
 local basePerformance = require(script.BasePerfomance)
 local basePerformanceFL = require(script.BasePerfomanceFL)
 local DifficultyCalculationUtils = require(workspace.DifficultyCalculator.DifficultyEvaluator.DifficultyCalculationUtils)
@@ -52,7 +53,7 @@ type AimAttributes = {
 
 function _ComputeAimValue(Attributes:AimAttributes):number
 	local aimDiff = Attributes.AimDiff
-	local estimateImproperlyFollowedDifficultSliders = 0	-- We will calculate this later
+	-- local estimateImproperlyFollowedDifficultSliders = 0	-- We will calculate this later
 	local sliderNerfFactor = 1
 	aimDiff *= sliderNerfFactor
 	
@@ -398,8 +399,8 @@ return function(
 	local SLCount = NoteCount.Slider
 	local SPCount = NoteCount.Spinner
 	local ObjectCount = CRCount + SLCount + SPCount
-	local AccuracyNoteCount = CRCount	
-	local SongSpeed = ModData.SA
+	-- local AccuracyNoteCount = CRCount	
+	-- local SongSpeed = ModData.SA
 	
 	local PerfectScoreAttribute:GeneralAttributes = {
 		AimValue = AimValue,

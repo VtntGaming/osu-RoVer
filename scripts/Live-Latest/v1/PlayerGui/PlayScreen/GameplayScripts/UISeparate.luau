@@ -1,7 +1,6 @@
 --[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.UISeparate]
 return function(TargetObject)
 	local Count = 3
-	local runservice = game:GetService("RunService")
 	local wait = require(workspace.WaitModule)
 
 	local function CreateUI(SourceFrame)
@@ -69,7 +68,7 @@ return function(TargetObject)
 		local PositiveValue = X >= 0.5 and 1 or -1
 		local TargetRotation = math.random(0, 20) * PositiveValue
 		wait(0.05)
-		spawn(function()
+		task.spawn(function()
 			TweenService:Create(a,TweenInfo.new(3-i*0.05, Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{Position = UDim2.new(TargetX,0,TargetY,0), Rotation = TargetRotation}):Play()
 			TweenService:Create(a,TweenInfo.new(3-i*0.05, Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{GroupTransparency = 1}):Play()
 		end)

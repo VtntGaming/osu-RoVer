@@ -40,7 +40,10 @@ function streaming.create()
 		for id, data in pairs(self.FunctionData) do
 			if data[5] then continue end
 			task.spawn(function()
-				if not data[1]() then self:RemoveLoop(id) return end -- the condition is met, finishing the loop
+				if not data[1]() then
+					self:RemoveLoop(id)
+					return
+				end -- the condition is met, finishing the loop
 				local deltaTime = tick() - data[4]
 				if data[3]() > 0 and deltaTime < data[3]() then
 					return
@@ -67,12 +70,9 @@ function streaming.create()
 	end
 	
 	function streamData:Start()
-		local s = tick()
 		task.spawn(function()
-			while true do
-				
-				streamData:tick()
-				
+			while true do				
+				streamData:tick()				
 				task.wait()
 			end
 		end)

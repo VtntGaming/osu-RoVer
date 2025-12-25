@@ -10,14 +10,14 @@ local _wait = require(6425776099) --Note that you can ONLY use this on the serve
 wait(3)
 ]]
 
-function callMethod()
-	if game:GetService("RunService"):IsClient() then
-		return workspace.ClientWaitModule.AccurateEvent.Event:Wait()
-		--return game:GetService("RunService").RenderStepped:Wait()
-	else
-		return game:GetService("RunService").Heartbeat:Wait()
-	end
-end
+-- function callMethod()
+-- 	if game:GetService("RunService"):IsClient() then
+-- 		return workspace.ClientWaitModule.AccurateEvent.Event:Wait()
+-- 		--return game:GetService("RunService").RenderStepped:Wait()
+-- 	else
+-- 		return game:GetService("RunService").Heartbeat:Wait()
+-- 	end
+-- end
 
 return function(t)
 	return task.wait(t)

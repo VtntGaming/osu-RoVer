@@ -55,6 +55,7 @@
 		}::ScoreStatistic,
 ]]
 
+local workspace = game:GetService("Workspace")
 local modData = require(workspace.ModData)
 local converter = {}
 local CURRENT_VERSION = 1

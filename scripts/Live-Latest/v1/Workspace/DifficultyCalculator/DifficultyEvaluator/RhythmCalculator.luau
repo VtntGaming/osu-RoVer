@@ -46,7 +46,7 @@ end
 
 
 local MIN_DELTA_TIME = 25
-local EXTRA_MULTIPLIER = 1	-- This being added to ensure stability, until I found out a better way to calculate properly
+-- local EXTRA_MULTIPLIER = 1	-- This being added to ensure stability, until I found out a better way to calculate properly
 
 function rhythmCalculator.GetRhythmDiff(CrrObj)
 	-- This is the most complicate section I ever transfer

@@ -1,5 +1,6 @@
 --[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.Components.Gameplay.LivePlayProcessing]
 --!strict
+local workspace = game:GetService("Workspace")
 local modData = require(workspace.ModData)
 local DifficultyCalculator = require(workspace.DifficultyCalculator)
 local PerformanceCalculator = require(workspace.PerformanceCalculator)
@@ -200,7 +201,6 @@ end
 
 function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:number?, AccData:PerformanceCalculator.AccuracyData)
 	if PSValue and Timing then
-		local RhythmDiff = PSValue.Rhythm
 		self.CurrentLiveDiffAim *= PSValue.AimStrainDecay
 		self.CurrentLiveDiffAim += PSValue.Aim
 		self.CurrentLiveDiffSpeed *= PSValue.SpeedStrainDecay
@@ -243,16 +243,6 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 		self.CurrentStarRating = Attributes.StarRating
 	end
 
-	local ODRate = self.ODRate
-	local ARRate = self.ARRate
-	local ModData:modData.ModData = self.ModData
-	local Multiplier = {
-		Aim = 1, Speed = 1, Flashlight = 1, Accuracy = 1
-	}
-	local AimDiffStrainCount = self.AimDiffStrainCount
-	local SpeedDiffStrainCount = self.SpeedDiffStrainCount
-	local SpeedRelevantNoteCount = self.SpeedRelevantNoteCount
-
 	local PSData = PerformanceCalculator(
 		self.AimDiffFinal, 
 		self.SpeedDiffFinal, 
@@ -273,13 +263,8 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 	local SpeedPS = PSData.Current.SpeedPS
 	local AccPS = PSData.Current.AccPS
 	local FlashlightPS = PSData.Current.FlashlightPS
-	local ModPS = 0
 
 	self.CurrentPerformance = TotalPS
-
-	local AimSpeed = math.round(AimPS * 10) * 1000000 +  math.round(SpeedPS * 10)
-	local AccFL = math.round(AccPS * 10) * 1000000 + math.round(FlashlightPS * 10)
-	local Mod = math.round(ModPS * 10)
 
 	local LivePSDisplay = script.Parent.Parent.Parent.Parent.PSEarned
 	LivePSDisplay.Actor:SendMessage("Process",{

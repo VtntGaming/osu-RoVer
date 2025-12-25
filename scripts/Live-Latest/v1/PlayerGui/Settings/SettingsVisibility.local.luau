@@ -9,9 +9,6 @@ local keybindLayerSwitch = script.Parent.KeybindLayerSwitch
 local skinCustomizeLayerSwitch = script.Parent.SkinCustomizeLayerSwitch
 local isVisible = false
 
-local animateId
-
-
 function toggle(state, isForce)
 	-- isForce is avaiable when there's a critical process that force you to close the entire settings
 	if state == false then
@@ -22,7 +19,7 @@ function toggle(state, isForce)
 			if not isForce then
 				return
 			else
-				wait(0.5)
+				task.wait(0.5)
 			end
 		end
 		
@@ -31,18 +28,15 @@ function toggle(state, isForce)
 			if not isForce then
 				return
 			else
-				wait(0.5)
+				task.wait(0.5)
 			end
 		end
 	end
 	
 	isVisible = state
-	local crrID = game.HttpService:GenerateGUID()
-	animateId = crrID
 	
 	local baseTweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 	local baseInTweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
-	local linearTweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Linear)
 
 	MainFrame.Interactable = isVisible
 	if isVisible then

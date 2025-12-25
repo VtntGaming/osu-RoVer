@@ -38,7 +38,7 @@ return function(Data,Target)
 		
 		local newObj
 		
-		local s,E_msg = pcall(function()
+		local s,_ = pcall(function()
 			newObj = Instance.new(c_name,VirtualData[P_id])
 		end)
 		

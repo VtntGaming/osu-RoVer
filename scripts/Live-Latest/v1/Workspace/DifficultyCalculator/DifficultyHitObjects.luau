@@ -47,38 +47,8 @@ function positionOf(vectorTable):Vector2
 	end
 	return Vector2.new(vectorTable.X, vectorTable.Y)
 end
-function toSLPathData(rawData, basePos)
-	local data = string.split(rawData)
-	local totalLength = 0
-	for i, a in pairs(data) do
-		if i > 1 then
-			local pos = string.split(a,":")
-			data[i] = Vector2.new(pos[1], pos[2])
-		end
-	end
-	data[1] = basePos
-	-- {position, time, length}
-	local returnData = {}
-	
-	for i, a in pairs(data) do
-		local l = 0
-		if i > 1 then
-			l = (data[i-1] - a).Magnitude
-		end
 
-		totalLength += l
-		returnData[#returnData+1] = {a,totalLength,l}
-	end
-	
-	for i, a in pairs(returnData) do
-		a[2] /= totalLength
-		a[3] /= totalLength
-	end
-	
-	return returnData, totalLength
-end
-
-function toSLPathData_New(curvePoints:{Vector2})
+function toSLPathData(curvePoints:{Vector2})
 	local returnData = {}
 	local totalLength = 0
 
@@ -115,6 +85,8 @@ function SLpositionAt(data, lengthRatio)
 			return a[1] + (nextData[1] - a[1]) * (lengthRatio - a[2])/nextData[3]
 		end
 	end
+
+	return nil
 end
 
 export type ObjectData = {
@@ -149,7 +121,7 @@ export type ObjectData = {
 }
 
 local NORMALISED_RADIUS = 50
-local NORMALISED_DIAMETER = NORMALISED_RADIUS * 2
+-- local NORMALISED_DIAMETER = NORMALISED_RADIUS * 2
 local MIN_DELTA_TIME = 25
 local Maximum_Slider_Radius = NORMALISED_RADIUS * 2.4
 local Assumed_Slider_Radius = NORMALISED_RADIUS * 1.8
@@ -253,8 +225,8 @@ return function(baseList:{any}, baseData)
 		
 		-- Slider travel distance
 
-		local maxSLRadius = normalisedRadius * 2.4
-		local assumedSLRadius = normalisedRadius * 1.8
+		-- local maxSLRadius = normalisedRadius * 2.4
+		-- local assumedSLRadius = normalisedRadius * 1.8
 		
 		local lazySLTravelTime
 		local SLTickData = {}
@@ -291,7 +263,7 @@ return function(baseList:{any}, baseData)
 						
 			lazySLTravelTime = trackingEndTime - crr.Time
 			local _curvePoints = crr.SliderCurvePoints::{Vector2}
-			local SliderPathData, SLActualTotalLength = toSLPathData_New(_curvePoints)
+			local SliderPathData, _ = toSLPathData(_curvePoints)
 			local slidesCount = tonumber(crr.ExtraData[3])
 			SLRepeatCount = math.max(0, slidesCount - 1)
 			if slidesCount%2 == 0 then -- if it ends as a reverse state

@@ -147,7 +147,6 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 	local sprites = {}::{spriteObject}
 	local currentSprite:spriteObject? = nil
 	local crrOrder = 0
-	local crrOrder_diff = 0
 	
 	for i, lineData in pairs(fileData:split("\n")) do
 		local firstChar = lineData:sub(1,1)
@@ -195,8 +194,8 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 						parmeterCmd.StaysForever = true
 					end
 				end
-				for i = 5, #rawData do
-					newcmdData.Params[#newcmdData.Params+1] = commandType == "P" and tostring(rawData[i]) or (tonumber(rawData[i]) or 0)
+				for r_index = 5, #rawData do
+					newcmdData.Params[#newcmdData.Params+1] = commandType == "P" and tostring(rawData[r_index]) or (tonumber(rawData[r_index]) or 0)
 				end
 				currentSprite.Commands[#currentSprite.Commands+1] = newcmdData
 			end
@@ -275,8 +274,8 @@ return function(file:ModuleScript, difficultyFile:ModuleScript?)
 						loopCommand.LoopCount = 1
 						currentSprite.ContainsLoop = true
 					end
-					for i = 5, #rawData do
-						newcmdData.Params[#newcmdData.Params+1] = commandType == "P" and tostring(rawData[i]) or (tonumber(rawData[i]) or 0)
+					for r_index = 5, #rawData do
+						newcmdData.Params[#newcmdData.Params+1] = commandType == "P" and tostring(rawData[r_index]) or (tonumber(rawData[r_index]) or 0)
 					end
 					currentSprite.Commands[#currentSprite.Commands+1] = newcmdData
 				end

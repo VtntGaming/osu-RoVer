@@ -87,12 +87,12 @@ local MainFrame = script.Parent.Parent
 
 local function GetObjFromSetting(data)
 	local obj
-	local success, data = pcall(function()
+	local success, err = pcall(function()
 		obj = MainFrame[data[1]].Base[data[2]].Base[data[3]][data[4]]
 	end)
 	if not success then
 		warn("[CLIENT] Setting failed to load")
-		warn(data)
+		warn(err)
 		return nil
 	else
 		return obj

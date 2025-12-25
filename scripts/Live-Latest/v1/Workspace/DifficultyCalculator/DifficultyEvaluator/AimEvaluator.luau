@@ -2,6 +2,7 @@
 --!strict
 
 -- Pre-load required modules
+local workspace = game:GetService("Workspace")
 local Evaluator = require(script.Parent)
 local preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
 

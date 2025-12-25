@@ -3,9 +3,14 @@
   "tree": {
     "$className": "DataModel",
     "Workspace": {
-      "$className": "Workspace",
       "$ignoreUnknownInstances": true,
-      "$path": "scripts/latest/v1/Workspace"
+      "$path": "scripts/Live-Latest/v1/Workspace",
+      "OsuConvert": {
+        "$path": "scripts/Live-Latest/v1/Workspace/OsuConvert"
+      },
+      "ModData": {
+        "$path": "scripts/Live-Latest/v1/Workspace/ModData.luau"
+      }
     },
     "ReplicatedFirst": {
       "$ignoreUnknownInstances": true
@@ -21,7 +26,7 @@
     },
     "StarterGui": {
       "$ignoreUnknownInstances": true,
-      "$path": "scripts/latest/v1/PlayerGui"
+      "$path": "scripts/Live-Latest/v1/PlayerGui"
     }
   }
 }
