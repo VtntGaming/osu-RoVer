@@ -1,0 +1,9 @@
+{
+    "luau-lsp.ignoreGlobs": [
+		"**/_Index/**",
+        "**/updatelog/**",
+        "**/scripts/Component**",
+        "**/scripts/Converter/**",
+        "**/scripts/Corescript/**"
+	],
+}

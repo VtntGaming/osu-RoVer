@@ -6,6 +6,7 @@ local DifficultyCalculator = require(workspace.DifficultyCalculator)
 local ConverterTools = require(workspace.OsuConvert.converterTools)
 local modData = require(workspace.ModData)
 
+
 function calculateMissPenalty(missCount:number, diffStrainCount:number):number
 	if missCount <= 0 then
 		return 1
