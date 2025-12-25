@@ -4,13 +4,7 @@
     "$className": "DataModel",
     "Workspace": {
       "$ignoreUnknownInstances": true,
-      "$path": "scripts/Live-Latest/v1/Workspace",
-      "OsuConvert": {
-        "$path": "scripts/Live-Latest/v1/Workspace/OsuConvert"
-      },
-      "ModData": {
-        "$path": "scripts/Live-Latest/v1/Workspace/ModData.luau"
-      }
+      "$path": "scripts/Live-Latest/v1/Workspace"
     },
     "ReplicatedFirst": {
       "$ignoreUnknownInstances": true
