@@ -27,9 +27,9 @@ function update()
 				obj.ForceStop:Fire()
 			end
 		end
-		spawn(function()
+		task.spawn(function()
 			script.Parent.MainSettings.ScrollingEnabled = true
-			wait(0.5)
+			task.wait(0.5)
 			if crrId ~= animateId then
 				return
 			end

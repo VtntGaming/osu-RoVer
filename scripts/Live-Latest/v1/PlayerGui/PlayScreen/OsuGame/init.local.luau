@@ -4,6 +4,7 @@ TweenService = game:GetService("TweenService")
 UserInputService = game:GetService("UserInputService")
 RunService = game:GetService("RunService")
 HttpService = game:GetService("HttpService")
+local workspace = game:GetService("Workspace")
 StarterGui = game.StarterGui
 ScriptComponent = script.Parent.GameplayScripts.Components
 ObjectTools = require(ScriptComponent.Gameplay.CircleObject)

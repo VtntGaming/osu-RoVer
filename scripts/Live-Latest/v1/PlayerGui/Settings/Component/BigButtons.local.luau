@@ -1,5 +1,4 @@
 --[LOCATION]:[StarterGui.Settings.SettingFrame.BaseFrame.MainLayer.Component.BigButtons]
-local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
 local _tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Linear)

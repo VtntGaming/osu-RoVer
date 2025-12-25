@@ -1,19 +1,19 @@
 --[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.Components.Gameplay.SliderComponent]
-local Slider = {}
+--!strict
+local Players = game:GetService("Players")
+local script = script :: typeof(script) & typeof(Players.LocalPlayer.PlayerGui.PlayScreen.GameplayScripts.Components.Gameplay.SliderComponent)
 local PlayFrame = script.Parent.Parent.Parent.Parent.PlayFrame
+local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
+local SliderObjManage = require(StarterGui.PlayScreen.GameplayScripts.Components.Perfomance.SliderObjManage)
+local Slider = {}
 
-
-function PositionPoint(p1, p2, t)
-	return p1 + (p2-p1)*t
+function PositionPoint(p1: Vector2, p2: Vector2, t: number): Vector2
+	return p1:Lerp(p2, t)
 end
 
-function Rotate180(r)
+function Rotate180(r: number): number
 	return (r + 180)%360
-end
-
-function lerp(a, b, ratio)
-	return a + (b - a)*ratio
 end
 
 function sineOut(t)
@@ -28,11 +28,22 @@ type TickData = {
 	Object: Instance
 }
 
-function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCount:number, circleRadius:number, ExtraLengthData:{[any]:number}, ObjManage)
+type PointData = {
+	InnerObject: typeof(script.SliderCoverInner),
+	OuterObject: typeof(script.SliderCoverOuter),
+	StartPos: Vector2,
+	EndPos: Vector2,
+	BodySize: number,
+	Rotation: number,
+	Start: number,
+	Duration: number
+}
+
+function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCount:number, circleRadius:number, ExtraLengthData:{[any]:number}, ObjManage:SliderObjManage.ObjectManage)
 	local SliderObject = {
 		TotalLength = 0
 	} 
-	local PointData = {} -- {point object inner, point object outer, start pos, end pos, body size, rotation (degree), start, duration
+	local PointData:{[number]:PointData} = {}
 	-- preprocessing the data before draw
 	for i, currentPoint in pairs(curvePoint) do
 		local nextPoint = curvePoint[i+1]
@@ -58,14 +69,23 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 				length += extra
 			end
 		end
-		PointData[#PointData+1] = {-1, -1, currentPoint/Vector2.new(512,384), nextPoint/Vector2.new(512,384), lengthRatio, Rotation, SliderObject.TotalLength, length}
+		PointData[#PointData+1] = {
+			InnerObject = nil :: any,
+			OuterObject = nil :: any,
+			StartPos = currentPoint/Vector2.new(512,384),
+			EndPos = nextPoint/Vector2.new(512,384),
+			BodySize = lengthRatio,
+			Rotation = Rotation,
+			Start = SliderObject.TotalLength,
+			Duration = length
+		}
 		SliderObject.TotalLength += length
 	end
 	
 	-- normalise the length
 	for i, data in pairs(PointData) do
-		data[7] /= SliderObject.TotalLength
-		data[8] /= SliderObject.TotalLength
+		data.Start /= SliderObject.TotalLength
+		data.Duration /= SliderObject.TotalLength
 	end
 	
 	-- predraw the slider
@@ -84,8 +104,8 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 	local SliderCoverOuter = script.SliderCoverOuter:Clone()
 	SliderCoverInner.Size = UDim2.fromScale(RadiusBase*0.85,RadiusBase*0.85)
 	SliderCoverOuter.Size = UDim2.fromScale(RadiusBase,RadiusBase)
-	SliderCoverInner.Position = UDim2.fromScale(PointData[1][3].X, PointData[1][3].Y)
-	SliderCoverOuter.Position = UDim2.fromScale(PointData[1][3].X, PointData[1][3].Y)
+	SliderCoverInner.Position = UDim2.fromScale(PointData[1].StartPos.X, PointData[1].StartPos.Y)
+	SliderCoverOuter.Position = UDim2.fromScale(PointData[1].StartPos.X, PointData[1].StartPos.Y)
 	SliderCoverInner.Parent = SliderBase.BaseInner
 	SliderCoverOuter.Parent = SliderBase.BaseOuter
 
@@ -98,20 +118,20 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 	
 	for i, data in pairs(PointData) do
 		local newPoint, _isReused = ObjManage:GetFromCollection(script.SliderPoint, true)  --script.SliderPoint:Clone()
-		newPoint.Position = UDim2.fromScale(data[3].X, data[3].Y)
+		newPoint.Position = UDim2.fromScale(data.StartPos.X, data.StartPos.Y)
 		newPoint.Size = UDim2.fromScale(RadiusBase,RadiusBase)		
-		newPoint.Body.Size = UDim2.fromScale(data[5], 1)
-		newPoint.Rotation = data[6]
+		newPoint.Body.Size = UDim2.fromScale(data.BodySize, 1)
+		newPoint.Rotation = data.Rotation
 		newPoint.ZIndex = i
 		if _isReused then
 			newPoint.InnerHead.Visible = true
 		end
 		local newPointOuter, isReused = ObjManage:GetFromCollection(newPoint, false) --  newPoint:Clone()
 		if isReused then
-			newPointOuter.Position = UDim2.fromScale(data[3].X, data[3].Y)
+			newPointOuter.Position = UDim2.fromScale(data.StartPos.X, data.StartPos.Y)
 			newPointOuter.Size = UDim2.fromScale(RadiusBase,RadiusBase)		
-			newPointOuter.Body.Size = UDim2.fromScale(data[5], 1)
-			newPointOuter.Rotation = data[6]
+			newPointOuter.Body.Size = UDim2.fromScale(data.BodySize, 1)
+			newPointOuter.Rotation = data.Rotation
 			newPointOuter.ZIndex = i
 			newPointOuter.BackgroundTransparency = 0
 		end
@@ -122,8 +142,8 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 		newPointOuter.Body.Overlay.Body.Visible = false
 		newPoint.Parent = SliderBase.BaseInner
 		newPointOuter.Parent = SliderBase.BaseOuter
-		data[1] = newPoint
-		data[2] = newPointOuter
+		data.InnerObject = newPoint
+		data.OuterObject = newPointOuter
 	end
 	
 	local PointDataReverse = {}
@@ -134,7 +154,16 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 	if slideCount > 1 then
 		for i = #PointData, 1, -1 do
 			local data = PointData[i]
-			PointDataReverse[#PointDataReverse] = {data[1], data[2], data[4], data[3], data[5], Rotate180(data[6]), data[7], data[8]}
+			PointDataReverse[#PointDataReverse+1] = {
+				InnerObject = data.InnerObject,
+				OuterObject = data.OuterObject,
+				StartPos = data.EndPos,
+				EndPos = data.StartPos,
+				BodySize = data.BodySize,
+				Rotation = Rotate180(data.Rotation),
+				Start = data.Start,
+				Duration = data.Duration
+			}
 		end
 		
 		-- Reverse arrow
@@ -145,8 +174,8 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 				-- Only initiate the first and second slide, the next one will just copy the old one
 				if i == 2 then
 					newReverseArrow = script.ReverseArrow:Clone()
-					local pos = PointData[#PointData][4]
-					local rotation = PointData[#PointData][6]
+				local pos = PointData[#PointData].EndPos
+				local rotation = PointData[#PointData].Rotation
 					newReverseArrow.Size = UDim2.fromScale(RadiusBase * 0.6, RadiusBase * 0.6)
 					newReverseArrow.Position = UDim2.fromScale(pos.X, pos.Y)
 					newReverseArrow.Rotation = Rotate180(rotation)
@@ -156,8 +185,8 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 			else
 				if i == 3 then
 					newReverseArrow = ReverseArrows[1]:Clone()
-					local pos = PointData[1][3]
-					local rotation = PointData[1][6]
+					local pos = PointData[1].StartPos
+					local rotation = PointData[1].Rotation
 					newReverseArrow.Position = UDim2.fromScale(pos.X, pos.Y)
 					newReverseArrow.Rotation = rotation
 				else
@@ -182,7 +211,7 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 	for i, data in pairs(tickData) do
 		local appearTime = data[1]::number
 		local tickSlide = data[2]::number
-		local tickPosition = data[3]::Vector2
+		local tickPosition = (data[3]::any)::Vector2
 		local newTick = script.SliderTick:Clone()
 		newTick.Parent = SliderBase.TickFrame
 		newTick.Visible = false
@@ -226,7 +255,7 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 			local previoudSlideTick = runtimeTickData[slide-1]
 			if previoudSlideTick then
 				for _, tickData in pairs(previoudSlideTick) do
-					disableTick(tickData.Object)
+					disableTick(tickData.Object :: ImageLabel)
 				end
 			end
 		end
@@ -238,7 +267,7 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 				for tickOrder, tickData in pairs(currentSlideTick) do
 					local tickDisplayTime = math.max(0, 0 - holdTime + (1/#currentSlideTick*tickOrder) * movementTime/#runtimeTickData * 0.75)
 					repeat task.wait() until os.clock()-_s >= tickDisplayTime/1000
-					enableTick(tickData.Object)
+					enableTick(tickData.Object :: ImageLabel)
 				end
 			end)
 		end
@@ -248,38 +277,40 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 		local crrSlideData = runtimeTickData[slide]
 		local tickData = crrSlideData and crrSlideData[index]
 		if tickData then
-			disableTick(tickData.Object)
+			disableTick(tickData.Object :: ImageLabel)
 		end
 	end
 	
 	function SliderObject.CleanUp()
 		for _, data in pairs(PointData) do
-			ObjManage:AddToCollection(data[1], true)
-			ObjManage:AddToCollection(data[2], false)
-			--data[1]:Destroy()
-			--data[2]:Destroy()
+			ObjManage:AddToCollection(data.InnerObject, true)
+			ObjManage:AddToCollection(data.OuterObject, false)
+			--data.InnerObject:Destroy()
+			--data.OuterObject:Destroy()
 		end
 	end
 	
 	-- Important functions
 	
-	function SliderObject.PositionOf(t:number, isReverse:boolean?)
+	function SliderObject.PositionOf(t:number, isReverse:boolean?): Vector2?
 		local targetPoints = PointData
 		if isReverse then
 			t = 1-t
 		end
 
 		local lastPoint = targetPoints[#targetPoints]
-		if t >= lastPoint[7]+lastPoint[8] then
-			return lastPoint[4]
+		if t >= lastPoint.Start+lastPoint.Duration then
+			return lastPoint.EndPos
 		end
 		for _, data in pairs(targetPoints) do
-			local tStart = data[7]
-			local tEnd = tStart+data[8]
+			local tStart = data.Start
+			local tEnd = tStart+data.Duration
 			if t >= tStart and t <= tEnd then
-				return PositionPoint(data[3], data[4], (t-tStart)/data[8])
+				return PositionPoint(data.StartPos, data.EndPos, (t-tStart)/data.Duration)
 			end
 		end
+
+		return nil
 	end
 	
 	function SliderObject.SetTransparency(t)
@@ -290,23 +321,23 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 		xpcall(function()				
 			local lastRotation = 0
 			for _, data in pairs(PointData) do
-				local obj = data[1]
-				local objOuter = data[2]
-				local tStart = data[7]
-				local tEnd = tStart+data[8]
+				local obj = data.InnerObject
+				local objOuter = data.OuterObject
+				local tStart = data.Start
+				local tEnd = tStart+data.Duration
 				if t >= tStart then
 					obj.Visible = true
 					objOuter.Visible = true
-					local Ratio = math.min(1, (t - tStart) / data[8])
+					local Ratio = math.min(1, (t - tStart) / data.Duration)
 					obj.Body.Overlay.Size = UDim2.fromScale(Ratio,1)
 					objOuter.Body.Overlay.Size = UDim2.fromScale(Ratio,1)
-					lastRotation = Rotate180(data[6])
-				else
+					lastRotation = Rotate180(data.Rotation)
+			else
 					obj.Visible = false
 					objOuter.Visible = false
 				end
 				if t <= tEnd then
-					lastRotation = Rotate180(data[6])
+					lastRotation = Rotate180(data.Rotation)
 					if inReverse then
 						continue
 					else
@@ -314,7 +345,7 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 					end
 				end
 			end
-			local Position = SliderObject.PositionOf(t)
+			local Position = SliderObject.PositionOf(t) :: Vector2
 			if slideCount > 1 and not inReverse then -- animate the first arrow object
 				local firstReverseArrow = ReverseArrows[1]
 				firstReverseArrow.Position = UDim2.fromScale(Position.X, Position.Y)
@@ -338,19 +369,19 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 			else
 				-- But this isn't...
 				for _, data in pairs(PointData) do
-					local obj = data[1]
-					local objOuter = data[2]
-					local tStart = data[7]
-					local tEnd = tStart+data[8]
-					if t-tStart > data[8] then
+					local obj = data.InnerObject
+					local objOuter = data.OuterObject
+					local tStart = data.Start
+					local tEnd = tStart+data.Duration
+					if t-tStart > data.Duration then
 						obj.Visible = false
 						objOuter.Visible = false
 						continue
 					else
-						local Ratio = math.clamp((t-tStart) / (data[8]), 0, 1)
+						local Ratio = math.clamp((t-tStart) / (data.Duration), 0, 1)
 						obj.Body.Overlay.Size = UDim2.fromScale(1-Ratio,1)
 						objOuter.Body.Overlay.Size = UDim2.fromScale(1-Ratio,1)
-						local Pos = PositionPoint(data[3],data[4], Ratio)
+						local Pos = PositionPoint(data.StartPos,data.EndPos, Ratio)
 						obj.Position = UDim2.fromScale(Pos.X, Pos.Y)
 						objOuter.Position = UDim2.fromScale(Pos.X, Pos.Y)
 						if Ratio < tEnd and Ratio >= tStart then
@@ -360,7 +391,7 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 						end
 					end
 				end
-				local Position = SliderObject.PositionOf(t)
+				local Position = SliderObject.PositionOf(t) :: Vector2
 				newEndSliderInner.Visible = true
 				newEndSliderOuter.Visible = true
 				newEndSliderInner.Position = UDim2.fromScale(Position.X, Position.Y)
@@ -372,12 +403,12 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 	end
 	
 	function SliderObject.setFollowCirclePosition(t, isReverse)
-		local Position = SliderObject.PositionOf(t, isReverse)
+		local Position = SliderObject.PositionOf(t, isReverse) :: Vector2
 		SliderFollowCircle.Position = UDim2.fromScale(Position.X,Position.Y)
 	end
 	
 	function SliderObject.isCursorInFollowCircle(position:Vector2, t:number, isReverse:boolean)
-		local FollowPosition = SliderObject.PositionOf(t, isReverse)
+		local FollowPosition = SliderObject.PositionOf(t, isReverse) :: Vector2
 		local Distance = (position - FollowPosition*Vector2.new(512,384)).Magnitude
 		
 		return Distance <= circleRadius/2 * 2.25
@@ -389,7 +420,7 @@ function Slider.new(curvePoint:{ [any]: Vector2}, tickData:{{number}}, slideCoun
 		for i = currentReverseArrow, #ReverseArrows do
 			local arrow = ReverseArrows[i]
 			if not arrow then return end
-			local size = lerp(1, 1.25, t)
+			local size = math.lerp(1, 1.25, t)
 			arrow.ReverseArrow.Size = UDim2.fromScale(size, size)
 		end
 		script.Parent.executeRate.Value += 1

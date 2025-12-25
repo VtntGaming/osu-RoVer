@@ -1,8 +1,10 @@
 --[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.ReloadPreviewFrame]
-local BeatmapPreviewSession = ""
+local StarterGui = game:GetService("StarterGui")
+local workspace = game:GetService("Workspace")
 local BasePreviewBeatmapset = ""
 TweenService = game:GetService("TweenService")
 
+local GetMaxScore = require(StarterGui.PlayScreen.GameplayScripts.Components.Gameplay.GetMaxScore)
 local wait = require(workspace.WaitModule)
 local PerformanceCalculator = require(workspace.PerformanceCalculator)
 local GameSettings = game.Players.LocalPlayer.PlayerGui:WaitForChild("Settings").SettingFrame.BaseFrame.MainLayer.SettingsManage
@@ -22,7 +24,6 @@ local function spawn(f)
 		f()
 	end)
 end
-local thisScript = script
 
 local webRequestID
 
@@ -76,7 +77,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	for _, _task:thread in pairs(_tasks) do
 		task.cancel(_task)
 	end
-	local script = script.Parent.Parent.OsuGame
+	local corescript = script.Parent.Parent.OsuGame
 
 
 	local PreviewFrame = CurrentPreviewFrame
@@ -85,10 +86,8 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	local CurrentFileType = FileType
 	local CurrentSongDelay = Settings.Parent.VirtualSettings.InstantSettings.Offset.Value
 	local SongSpeed = tonumber(Settings.Speed.Text)
-	local CurrentPreviewSession = game.HttpService:GenerateGUID()
 	local SongVolume = GameSettings.getSettings:Invoke("MusicVolume")
 	local KeepOriginalPitch = GameSettings.getSettings:Invoke("EnableSpeedPitch")
-	BeatmapPreviewSession = CurrentPreviewSession
 
 
 	if SongSpeed == nil or (SongSpeed < 0.5 or SongSpeed > 2) or SongSpeed ~= SongSpeed  then
@@ -97,7 +96,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 	ModData.SA = SongSpeed
 
-	script.Parent.MultiplayerData.UploadMap:Fire(BeatmapStudio.Name,SongSpeed)
+	corescript.Parent.MultiplayerData.UploadMap:Fire(BeatmapStudio.Name,SongSpeed)
 
 	CurrentModData.Speed = SongSpeed
 
@@ -111,7 +110,6 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		CurrentFileType = 1
 	end
 
-	local s = tick()
 	local env = game.Players.LocalPlayer.PlayerScripts.ExternalFunction_Actor.ProcessCommand:Invoke("Core_OsuConvert",
 		{
 			FileType = CurrentFileType,
@@ -123,17 +121,16 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 			ModData = ModData
 		}
 	)
-	local BeatmapData,ReturnData,TimmingPoints,ComboColors
+	local BeatmapData,ReturnData,TimmingPoints
 
 	BeatmapData = env.ConvertedData
 	ReturnData = env.ReturningData
 	TimmingPoints = env.TimingPoints
-	ComboColors = env.BeatmapColor
 
 	local MaxCombo = ReturnData.Difficulty.MaxCombo
-	local NoteCount = #BeatmapData
+	local TotalNoteCount = #BeatmapData
 
-	local MaxScore, MaxAccScore, MaxConsistencyScore = require(thisScript.Parent.Components.Gameplay.GetMaxScore)(NoteCount, MaxCombo)
+	local _, MaxAccScore, MaxConsistencyScore = GetMaxScore(TotalNoteCount, MaxCombo)
 
 	for i = 1,5 do
 		wait()
@@ -143,7 +140,6 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	local Notes = 0
 	local Sliders = 0
 	local Spinners = 0
-	local AvgNPS = math.floor(TotalNotes/(tonumber(ReturnData.Overview.MapLength) or 0/1000))
 
 	for i,data in pairs(BeatmapData) do
 		local Type = data.Type
@@ -154,14 +150,14 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 				elseif Type == 12 then Type = 8
 				end
 			else
-				for i = 1,8 do
-					if Type == 21 + 16*(i-1) then
+				for j = 1,8 do
+					if Type == 21 + 16*(j-1) then
 						Type = 1
 						break
-					elseif Type == 22 + 16*(i-1) then
+					elseif Type == 22 + 16*(j-1) then
 						Type = 2
 						break
-					elseif Type == 28 + 16*(i-1) then
+					elseif Type == 28 + 16*(j-1) then
 						Type = 8
 						break
 					end
@@ -179,7 +175,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	end
 
 
-	script.Parent.Parent.BG.StartButtonBeatAnimation.BPMAnimation.Event:Fire(TimmingPoints,SongSpeed,ReturnData.OriginalOffset)
+	corescript.Parent.Parent.BG.StartButtonBeatAnimation.BPMAnimation.Event:Fire(TimmingPoints,SongSpeed,ReturnData.OriginalOffset)
 
 	if ReturnData.Overview.Metadata ~= nil then
 		PreviewFrame.Overview.MapName.Text = ReturnData.Overview.Metadata.MapName
@@ -208,16 +204,12 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		SpeedDisplay = "(x"..tostring(math.floor(SongSpeed*100)/100)..")"
 	end
 
-	local ExtraARRate = ""
 	local ExtraDiffModText = (ModData.HR and "[Mod ⬆]") or (ModData.EZ and "[Mod ⬇️]") or ""
-	local CSModMulti = ((ModData.HR and 1.3) or (ModData.EZ and 0.5) or 1)
-	local DiffModMulti = ((ModData.HR and 1.4) or (ModData.EZ and 0.5) or 1)
 
 	local CSRate = converterTools.GetDifficultyValueAfterMod.CS(ReturnData.Difficulty.CircleSize, ModData)
 	local HPRate = converterTools.GetDifficultyValueAfterMod.HP(ReturnData.Difficulty.HPDrainRate, ModData)
-	local ARRate, ARRate_NoSA = converterTools.GetDifficultyValueAfterMod.AR(ReturnData.Difficulty.ApproachRate, ModData)
+	local ARRate, _ = converterTools.GetDifficultyValueAfterMod.AR(ReturnData.Difficulty.ApproachRate, ModData)
 	local ODRate, ODRate_NoSA = converterTools.GetDifficultyValueAfterMod.OD(ReturnData.Difficulty.OverallDifficulty, ModData)
-	local SpeedAR = ARRate
 
 
 	if CSRate > 11 then CSRate = 11 end
@@ -311,7 +303,6 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 		local DiffListing = PreviewFrame.Overview.DiffListing
 		local TweenInfo_DiffAnimation = TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out)
-		local InformationFrame = PreviewFrame.Overview.Information
 
 		local baseData = {
 			CS = ReturnData.Difficulty.CircleSize,
@@ -451,6 +442,8 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 				return map
 			end
 		end
+
+		return nil
 	end
 	local mapListingMainFrame = game.Players.LocalPlayer.PlayerGui.BeatmapListing:WaitForChild("MainFrame")
 	spawn(function()
@@ -538,14 +531,11 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	local SpeedDiff = ReturnData.Difficulty.SpeedDifficulty
 	local FLDiff = ReturnData.Difficulty.FlashLightDifficulty
 	local BaseDiff = ReturnData.Difficulty.BeatmapDifficulty
-
-	local AddsUp = AimDiff + SpeedDiff
 	
 	-- Modifier effects
 	local AimMultiplier = 1
 	local SpeedMultiplier = 1
 	local AccMultiplier = 1
-	local FLMultiplier = 1
 
 	local NoteCount = {
 		Circle = Notes, Slider = Sliders, Spinner = Spinners
@@ -651,10 +641,9 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 	--DiffDisplay:ClearAllChildren()
 	if not DiffDisplay:FindFirstChild("DifficultyStrikeListLayout") then
-		script.UILayout.DifficultyStrikeListLayout:Clone().Parent = DiffDisplay
+		corescript.UILayout.DifficultyStrikeListLayout:Clone().Parent = DiffDisplay
 	end
 	local List = DiffDisplay:GetChildren()
-	local TotalList = #List
 	for i,a in pairs(List) do
 		if a:IsA("UIListLayout") then
 			table.remove(List,i)
@@ -665,14 +654,14 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 	for i = 1,30 do
 		local Frame = PreviewFrame.DifficultyDisplay.Background:WaitForChild(tostring(i))
-		local HighestDiffTime = HighestDiffTime/10
+		local highestDiffTime = HighestDiffTime/10
 
-		if (i < HighestDiffTime-4 and math.pow((i)/HighestDiffTime,ExpomentalRate) < 0.25) or i > HighestDiffTime + 1 or (HighestDiffTime > 12 and i%2 ~= 0 and i < math.floor(HighestDiffTime)) then
-			local TweenPos = math.max(1-math.pow(i/HighestDiffTime,ExpomentalRate),1-math.pow((HighestDiffTime+1)/HighestDiffTime,3))
+		if (i < highestDiffTime-4 and math.pow((i)/highestDiffTime,ExpomentalRate) < 0.25) or i > highestDiffTime + 1 or (highestDiffTime > 12 and i%2 ~= 0 and i < math.floor(highestDiffTime)) then
+			local TweenPos = math.max(1-math.pow(i/highestDiffTime,ExpomentalRate),1-math.pow((highestDiffTime+1)/highestDiffTime,3))
 			TweenService:Create(Frame,TweenInfo_DiffTimeline,{BackgroundTransparency = 1,Position = UDim2.new(0,0,TweenPos,2)}):Play()
 			TweenService:Create(Frame.Display,TweenInfo_DiffTimeline,{TextTransparency = 1}):Play()
 		else
-			TweenService:Create(Frame,TweenInfo_DiffTimeline,{BackgroundTransparency = 0.9,Position = UDim2.new(0,0,1-math.pow(i/HighestDiffTime,ExpomentalRate),0)}):Play()
+			TweenService:Create(Frame,TweenInfo_DiffTimeline,{BackgroundTransparency = 0.9,Position = UDim2.new(0,0,1-math.pow(i/highestDiffTime,ExpomentalRate),0)}):Play()
 			TweenService:Create(Frame.Display,TweenInfo_DiffTimeline,{TextTransparency = 0.5}):Play()
 		end
 	end
@@ -861,22 +850,22 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		local isExistSecondSong = (ReturnData.MapSongId2 ~= nil)
 		if (ReturnData.MapSongId or ReturnData.CustomSongFile) and isRequireSongReload(PreviewFrame, ReturnData.MapSongId, ReturnData.MapSongId2, isExistSecondSong) and BasePreviewBeatmapset ~= ReturnData.BeatmapSetsData.BeatmapsetID then
 			local OldSongObj = PreviewFrame.OverviewSong
-			thisScript.Archive:ClearAllChildren()
+			script.Archive:ClearAllChildren()
 			OldSongObj.LocalScript:Destroy()
-			OldSongObj.Parent = thisScript.Archive
+			OldSongObj.Parent = script.Archive
 			local OldSongObj2 = PreviewFrame:FindFirstChild("OverviewSong2")
 			if OldSongObj2 then
 				OldSongObj2.LocalScript:Destroy()
-				OldSongObj2.Parent = thisScript.Archive
+				OldSongObj2.Parent = script.Archive
 			end
-			local NewSongObj = thisScript.OverviewSong:Clone()
+			local NewSongObj = script.OverviewSong:Clone()
 			NewSongObj.Parent = PreviewFrame
 			NewSongObj.LocalScript.Disabled = false
 
 			NewSongObj.Wire.TargetInstance = Mixer
 			local NewSongObj2
 			if isExistSecondSong then
-				NewSongObj2 = thisScript.OverviewSong2:Clone()
+				NewSongObj2 = script.OverviewSong2:Clone()
 				NewSongObj2.Parent = PreviewFrame
 				NewSongObj2.LocalScript.Disabled = false
 				NewSongObj2.Asset = "rbxassetid://"..tostring(ReturnData.MapSongId2)
@@ -998,12 +987,12 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		if #Background:GetChildren() > 1 then
 			TweenTime = 0
 		end
-		NewBackground = script.BackgroundImage:Clone()
+		NewBackground = corescript.BackgroundImage:Clone()
 		NewBackground.ZIndex = 0
 		NewBackground.Parent = Background
 		NewBackground.Image = "http://www.roblox.com/asset/?id="..ReturnData.ImageId
 
-		NewBackground_Listing = script.BackgroundImage_Listing:Clone()
+		NewBackground_Listing = corescript.BackgroundImage_Listing:Clone()
 		NewBackground_Listing.ZIndex = 0
 		NewBackground_Listing.Parent = Background_Listing
 		NewBackground_Listing.Image = "http://www.roblox.com/asset/?id="..ReturnData.ImageId
@@ -1046,14 +1035,6 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	local PreviewMapPS = {
 		Aim = 0, Speed = 0, Mod = 0, AimFL = 0, Acc = 0, TD = TouchDevicePS, objCount = 0
 	}
-
-	local AimPSList = {}
-	local SpeedPSList = {}
-	local OverallPSList = {}
-	local BaseMultiplier = 100
-
-	local CurrentAimStrain = 0
-	local CurrentSpeedStrain = 0
 
 	-- Add all external information of the beatmap to the game (mostly use for leaderboard)
 

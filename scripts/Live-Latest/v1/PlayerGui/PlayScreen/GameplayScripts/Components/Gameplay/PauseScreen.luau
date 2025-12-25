@@ -73,7 +73,6 @@ function pauseScreen.Toggle(newState: boolean, isFail: boolean?, args: Args)
 		end
 		if not args.DisableRestart then
 			setButtonVisible(PauseFrame.RestartBeatmap, true)
-			setPos()
 			PauseFrame.RestartBeatmap.Visible = true
 			setPos(PauseFrame.RestartBeatmap, RENDER_POS.Enable[tostring(isFail)].Restart, true, isFail and 0.4 or 0.3)
 		else
@@ -82,22 +81,17 @@ function pauseScreen.Toggle(newState: boolean, isFail: boolean?, args: Args)
 		
 		if true then
 			setButtonVisible(PauseFrame.ExitGame, true)
-			setPos(PauseFrame.ExitGame, RENDER_POS.Enable[tostring(isFail)].Exit, 0.5)
+			setPos(PauseFrame.ExitGame, RENDER_POS.Enable[tostring(isFail)].Exit, true, 0.5)
 			PauseFrame.ExitGame.Visible = true
 		end
 		
 		if not isFail then
 			setButtonVisible(PauseFrame.ContinueBeatmap, true)
-			setPos(PauseFrame.ContinueBeatmap, RENDER_POS.Enable[tostring(isFail)].Continue, 0.3)
+			setPos(PauseFrame.ContinueBeatmap, RENDER_POS.Enable[tostring(isFail)].Continue, true, 0.3)
 			PauseFrame.ContinueBeatmap.Visible = true
 		else
 			setButtonVisible(PauseFrame.ContinueBeatmap, false, true)
 		end
-		
-		local pos = {
-			Pause = {},
-			Fail = {}
-		}
 		
 		PauseFrame.Hint.HintText.Text = displayText
 	else

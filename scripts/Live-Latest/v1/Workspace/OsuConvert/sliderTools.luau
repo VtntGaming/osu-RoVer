@@ -1,7 +1,7 @@
 --[LOCATION]:[Workspace.OsuConvert.sliderTools]
 --!strict
 local sliderTools = {}
-local converterTools = require(script.Parent.converterTools)
+-- local converterTools = require(script.Parent.converterTools)
 
 --315,336,57671,102,0,B|352:326|352:326|372:332|372:332|440:317,2,100,0|0|0,3:2|0:2|0:2,0:2:0:0:
 

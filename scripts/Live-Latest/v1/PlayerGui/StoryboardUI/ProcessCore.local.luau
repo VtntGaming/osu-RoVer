@@ -1,17 +1,12 @@
-local HttpService = game:GetService("HttpService")
-
 local PROCESS_PER_FRAME:number
 local UI_PROCESS_PER_FRAME:number
 
 local DEFAULT_ASSET_ID = "rbxassetid://13227806914"
 local DEFAULT_ASSET_SIZE = Vector2.new(32,32)
-local ContentProvider = game:GetService("ContentProvider")
 
 local callbacks = {}
 local callbacks_once = {}
 local callbacks_UI = {}
-local objectData = {}
-local commandsCount = 0
 local mainUI = script.Parent.Parent.Parent.Parent
 local currentSpeed = 1
 
@@ -468,7 +463,6 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 			objectFrameList[i] = newClone
 		end
 	end
-	local globalParentNull = false
 
 	local UI_funct = function()		
 		if objectType == "Animation" then
@@ -517,7 +511,6 @@ script.Parent:BindToMessage("AddObject", function(unquieId:string, objData, extr
 		end
 
 		local newPrt = newTransparency < 1 and parentDestination or nil
-		globalParentNull = newPrt == nil
 		if objectFrame.Parent ~= newPrt then
 			objectFrame.Parent = newPrt
 			if not newPrt then					
@@ -596,7 +589,6 @@ script.Parent:BindToMessage("AddCommand", function(objUnquieId:string, unquieId:
 
 	local easing = getEasing(command.Easing)
 	local params = command.Params
-	local commandHaveRanOnce = false
 
 	local crrObjectData = objectData[objUnquieId].Data
 

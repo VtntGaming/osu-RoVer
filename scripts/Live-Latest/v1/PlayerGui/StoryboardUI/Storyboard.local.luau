@@ -1,7 +1,8 @@
 local HttpService = game:GetService("HttpService")
 local ContentProvider = game:GetService("ContentProvider")
+local workspace = game:GetService("Workspace")
 local StoryboardConverter = require(workspace.StoryboardConverter)
-local PathListConverter = require(workspace.StoryboardConverter.PathGenerator)
+-- local PathListConverter = require(workspace.StoryboardConverter.PathGenerator)
 
 local s = os.clock()
 local storyboardFile = script.Parent.Parent.Parent.StoryboardMap.Value
@@ -9,18 +10,23 @@ local difficultyFile = script.Parent.Parent.Parent.DifficultyMap.Value
 local storyboardData = StoryboardConverter(storyboardFile, difficultyFile)
 print("Load completed, took", os.clock()-s)
 type SpriteObject = StoryboardConverter.spriteObject
-local DEFAULT_ASSET_ID = "rbxassetid://13227806914"
 local DEFAULT_ASSET_SIZE = Vector2.new(32,32)
 
 --local pathList = PathListConverter(storyboardData)
 --print(pathList)
 
-local ImageList = {}
+type ImageListType = {
+	[string]: {
+
+	}
+}
+
+local ImageList = {} :: ImageListType
 local currentSpeed = 1
 
-local storyBoardImgList = storyboardFile:FindFirstChild("ImageList")
+local storyBoardImgList = storyboardFile:FindFirstChild("ImageList")::ModuleScript
 if storyBoardImgList then
-	ImageList = require(storyBoardImgList)
+	ImageList = require(storyBoardImgList) :: ImageListType
 end
 
 local appearCount = {}
@@ -145,18 +151,8 @@ print("All preview image loaded")
 
 local startTime = os.clock() + 3
 local spritesCount = #storyboardData
-local processingSprites = 0
 local commandsCount = 0
 local completedCount = 0
-local callbacks = {}
-local callbacks_once = {}
-local callbacks_UI = {}
-local LayoutPlacement = {
-	[0] = script.Parent.Parent.Parent.MainFrame.RatioFrame.Background,
-	[1] = nil,
-	[2] = nil,
-	[3] = script.Parent.Parent.Parent.MainFrame.RatioFrame.Foreground,
-}
 local Stats = {
 	FPS = 0,
 	LastCommandTime = 0,
@@ -174,7 +170,6 @@ for i = 1, 120 do task.wait() end
 local LOAD_TEST_RATE = 1000000
 local RATE_PER_COMMANDS = 300000	-- The requirement rate per command for a minimum 45fps
 local test_s = os.clock()
-local operation_count = 0
 for i = 1,LOAD_TEST_RATE do end
 local load_t = os.clock() - test_s
 local commandSpeed = LOAD_TEST_RATE / load_t
@@ -293,13 +288,13 @@ function toUDim2(v:Vector2):UDim2
 	return UDim2.fromScale(v.X/640, v.Y/480)
 end
 
-function toUDim2FromX(x:number, u:UDim2)
-	return UDim2.fromScale(x, u.Y.Scale)
-end
+-- function toUDim2FromX(x:number, u:UDim2)
+-- 	return UDim2.fromScale(x, u.Y.Scale)
+-- end
 
-function toUDim2FromY(y:number, u:UDim2)
-	return UDim2.fromScale(u.X.Scale, y)
-end
+-- function toUDim2FromY(y:number, u:UDim2)
+-- 	return UDim2.fromScale(u.X.Scale, y)
+-- end
 
 script.Parent:BindToMessage("Restart", function()
 	local oldUI = script.Parent.Parent.Parent
@@ -361,33 +356,22 @@ for i, spriteData in pairs(storyboardData) do
 	if (os.clock() - startTime) * currentSpeed < objStartTime then
 		repeat task.wait() until (os.clock() - startTime) * currentSpeed >= objStartTime
 	end
-
-	local crrObjectData = {
-		Position = {X = objData.Position.X, Y = objData.Position.Y},
-		Scale = {X = objData.Position.X, Y = objData.Position.Y},
-		Opacity = 0,
-		Color = Color3.new(1,1,1),
-		Rotation = 0,	-- radians
-		FlipX = false,
-		FlipY = false,
-		AdditiveColor = false
-	}
 	local _imgSize = ImageList[objData.Filepath] and ImageList[objData.Filepath].Size
 	local _imgId = ImageList[objData.Filepath] and ImageList[objData.Filepath].ImageId
 	local objectSize =  toUDim2(_imgSize or DEFAULT_ASSET_SIZE)
-	local parentDestination = LayoutPlacement[objData.Layer]
+	-- local parentDestination = LayoutPlacement[objData.Layer]
 
 	local imageIdList = {}
 	local animData = {}
 	if spriteData.Type == "Animation" then
-		local animData = objData::StoryboardConverter.AnimationData
-		local raw = animData.Filepath:split(".")
+		local animData_local = objData::StoryboardConverter.AnimationData
+		local raw = animData_local.Filepath:split(".")
 		local p = ""
 		for i = 1, #raw-1 do
 			p = p..raw[i]
 		end
 		local ex = raw[#raw]
-		for i = 0, animData.FrameCount-1 do
+		for i = 0, animData_local.FrameCount-1 do
 			local path = `{p}{i}.{ex}`
 			local id = ImageList[path] and ImageList[path].ImageId
 			imageIdList[i+1] = id
@@ -419,9 +403,7 @@ for i, spriteData in pairs(storyboardData) do
 				continue
 			end
 			local commandType = command.CommandType
-			local commandDuration = (command.EndTime - command.StartTime)/1000
 			local params = command.Params
-			local commandHaveRanOnce = false
 			if not table.find(SUPPORTED_CMD, commandType) and commandType ~= "P" then
 				print("Command not supported!", commandType)
 				continue
