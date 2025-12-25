@@ -2019,7 +2019,7 @@ function ProcessReplayData(stringdata):boolean
 		end,
 		setBeatmapByFilename = setBeatmapByFilename,
 		setEnvKey = function(key, value)
-			getfenv()[key] = value
+			coreConfig[key] = value
 		end,
 	})
 
