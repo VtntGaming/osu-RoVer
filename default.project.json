@@ -1,0 +1,27 @@
+{
+  "name": "osu!RoVer",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+      "$ignoreUnknownInstances": true,
+      "$path": "scripts/latest/v1/Workspace"
+    },
+    "ReplicatedFirst": {
+      "$ignoreUnknownInstances": true
+    },
+    "ReplicatedStorage": {
+        "$ignoreUnknownInstances": true
+    },
+    "ServerScriptService": {
+        "$ignoreUnknownInstances": true
+    },
+    "StarterPlayer": {
+      "$ignoreUnknownInstances": true
+    },
+    "StarterGui": {
+      "$ignoreUnknownInstances": true,
+      "$path": "scripts/latest/v1/PlayerGui"
+    }
+  }
+}
