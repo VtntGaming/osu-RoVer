@@ -3,6 +3,7 @@
 -- convert raw osu file into readable and excutable lua data
 -- V1.47 (Size: 27.69KB)
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local workspace = game:GetService("Workspace")
 local BasePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
 local calculator = require(workspace.DifficultyCalculator)
@@ -25,7 +26,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	if FileType == 1 then
 		OsuData = require(Beatmap)
 	elseif FileType == 3 then
-		OsuData = game.ReplicatedStorage.GetModuleData:InvokeServer(tonumber(Beatmap))
+		OsuData = ReplicatedStorage.GetModuleData:InvokeServer(tonumber(Beatmap))
 	end
 
 	local ReturningData = {} --Should be useful

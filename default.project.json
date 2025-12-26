@@ -20,7 +20,15 @@
     },
     "StarterGui": {
       "$ignoreUnknownInstances": true,
-      "$path": "scripts/Live-Latest/v1/PlayerGui"
+      "$path": "scripts/Live-Latest/v1/PlayerGui",
+      "PlayScreen": {
+        "$className": "ScreenGui",
+        "$ignoreUnknownInstances": true,
+        "RestartGame": {
+          "$ignoreUnknownInstances": true,
+          "$path": "scripts/Live-Latest/v1/PlayerGui/PlayScreen/RestartGame"
+        }  
+      }
     }
   }
 }
