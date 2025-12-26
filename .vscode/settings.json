@@ -4,6 +4,8 @@
         "**/updatelog/**",
         "**/scripts/Component**",
         "**/scripts/Converter/**",
-        "**/scripts/Corescript/**"
+        "**/scripts/Corescript/**",
+        "**/scripts/converter/**",
+        "**/scripts/corescript/**"
 	],
 }
