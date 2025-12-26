@@ -1,10 +1,13 @@
 --[LOCATION]:[StarterGui.PlayScreen.RestartGame.RestartgameScript]
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+local script = script
 local SecurityValue = script:WaitForChild("Key",math.huge)
 local ServerSecurityKey = SecurityValue.Value
-local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local PauseUtils = require(script.Parent.Parent.GameplayScripts.Components.Gameplay.PauseScreen)
-local notificationPopupSignal = game.Players.LocalPlayer.PlayerGui.NotificationPopup.NotificationsPopup.ClientCreateNotification
+local notificationPopupSignal = Players.LocalPlayer.PlayerGui.NotificationPopup.NotificationsPopup.ClientCreateNotification
 SecurityValue.Value = "no"
 SecurityValue:Destroy()
 local wait = require(workspace.WaitModule)
@@ -23,7 +26,7 @@ else
 	script.Parent.Position = UDim2.new(0,3,1,20)
 	TweenService:Create(script.Parent,TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(0,3,1,-3)}):Play()
 end
-spawn(function()
+task.spawn(function()
 	TweenService:Create(script.Parent.Reminder,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{TextTransparency = 0}):Play()
 	wait(3)
 	TweenService:Create(script.Parent,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{TextTransparency = 0.75,BackgroundTransparency = 1}):Play()
@@ -100,7 +103,7 @@ local function togglePause(isPaused: boolean):boolean
 	return true
 end
 
-spawn(function()
+task.spawn(function()
 	local previous = tick()
 	while task.wait() do
 		if OnHold then
@@ -143,12 +146,12 @@ script.Parent.Parent.PauseScreen.ExitGame.MouseButton1Click:Connect(function()
 	script.Parent.Event:Fire()
 end)
 
-game.Players.LocalPlayer.PlayerGui.BG.ResultScreenOptions.ReturnButton.InputButton.MouseButton1Click:Connect(function()
+Players.LocalPlayer.PlayerGui.BG.ResultScreenOptions.ReturnButton.InputButton.MouseButton1Click:Connect(function()
 	wait(0.5)
 	script.Parent.Event:Fire()
 end)
 
-game.Players.LocalPlayer.PlayerGui.BG.ResultScreenOptions.RestartButton.InputButton.MouseButton1Click:Connect(function()
+Players.LocalPlayer.PlayerGui.BG.ResultScreenOptions.RestartButton.InputButton.MouseButton1Click:Connect(function()
 	wait(0.5)
 	FastRestart = true
 	script.Parent.Event:Fire()
@@ -190,9 +193,9 @@ end)
 
 local QuickRestartHoldDuration = 0
 
-spawn(function()
+task.spawn(function()
 	--Backquote
-	spawn(function()
+	task.spawn(function()
 		local start = tick()
 		while wait() do
 			local found = false
@@ -219,9 +222,9 @@ end)
 
 local QuickReturnHoldDuration = 0
 
-spawn(function()
+task.spawn(function()
 	--Backquote
-	spawn(function()
+	task.spawn(function()
 		local start = tick()
 		while wait() do
 			local found = false
@@ -271,14 +274,14 @@ end)
 local MPForceLeave = script.Parent.Event.Event:Wait()
 script.Parent.Parent.Name = "no"
 local GameplayTransition = script.GameplayTransition:Clone()
-GameplayTransition.Parent = game.Players.LocalPlayer.PlayerGui
+GameplayTransition.Parent = Players.LocalPlayer.PlayerGui
 
-local isMultiplayer = not game.Players.LocalPlayer.PlayerGui.MenuInterface.MultiplayerPanel.MultiplayerScript.MultiplayerRoom.Disabled
+local isMultiplayer = not Players.LocalPlayer.PlayerGui.MenuInterface.MultiplayerPanel.MultiplayerScript.MultiplayerRoom.Disabled
 -- If multiplayer, the game will stop and not restart
 
 if not FastRestart or isMultiplayer then
 	local NewPreviewSong = script.Parent.Parent.GameSong.Song
-	NewPreviewSong.Parent =  game.Players.LocalPlayer.PlayerGui
+	NewPreviewSong.Parent =  Players.LocalPlayer.PlayerGui
 	NewPreviewSong.Name = "TransitionSong"
 end
 
@@ -288,16 +291,16 @@ if FastRestart and not isMultiplayer then
 end
 GameplayTransition.LocalScript.Disabled = false
 wait(0.25)
-game.Players.LocalPlayer.PlayerGui.BG:Destroy()
-game.Players.LocalPlayer.PlayerGui.StoryboardUI:Destroy()
---game.Players.LocalPlayer.PlayerGui.BeatmapChoose:Destroy()
-local NewBGFrame = game.StarterGui.BG:Clone()
-NewBGFrame.Parent = game.Players.LocalPlayer.PlayerGui
+Players.LocalPlayer.PlayerGui.BG:Destroy()
+Players.LocalPlayer.PlayerGui.StoryboardUI:Destroy()
+--Players.LocalPlayer.PlayerGui.BeatmapChoose:Destroy()
+local NewBGFrame = StarterGui.BG:Clone()
+NewBGFrame.Parent = Players.LocalPlayer.PlayerGui
 local newStoryboardUI = game.StarterGui.StoryboardUI:Clone()
-newStoryboardUI.Parent = game.Players.LocalPlayer.PlayerGui
+newStoryboardUI.Parent = Players.LocalPlayer.PlayerGui
 if isSpectateReturn then
 	local SpectateTransition = script.SpectateTransition:Clone()
-	SpectateTransition.Parent = game.Players.LocalPlayer.PlayerGui
+	SpectateTransition.Parent = Players.LocalPlayer.PlayerGui
 	local UIDValue = Instance.new("IntValue",SpectateTransition)
 	UIDValue.Name = "SpectateUID"
 	UIDValue.Value = tonumber(SpectateReturnUID)
@@ -306,7 +309,7 @@ end
 
 
 
---game.StarterGui.BeatmapChoose:Clone().Parent = game.Players.LocalPlayer.PlayerGui
+--game.StarterGui.BeatmapChoose:Clone().Parent = Players.LocalPlayer.PlayerGui
 local NewPlayScreen = game.StarterGui.PlayScreen:Clone()
 local CorescriptKey = Instance.new("StringValue",NewPlayScreen.OsuGame)
 CorescriptKey.Name = "Key"
@@ -315,11 +318,11 @@ CorescriptKey.Value = ServerSecurityKey
 local ReturnmainKey = Instance.new("StringValue",NewPlayScreen.RestartGame.RestartgameScript)
 ReturnmainKey.Name = "Key"
 ReturnmainKey.Value = ServerSecurityKey
-NewPlayScreen.Parent = game.Players.LocalPlayer.PlayerGui
+NewPlayScreen.Parent = Players.LocalPlayer.PlayerGui
 
 if isReplayReturn then
 	wait(1)
-	NewPlayScreen.ReplayCall:Fire(game.ReplicatedStorage.ClientCommunication.GetLocalReplayData:Invoke(1))
+	NewPlayScreen.ReplayCall:Fire(ReplicatedStorage.ClientCommunication.GetLocalReplayData:Invoke(1))
 end
 if FastRestart == true and not isMultiplayer then
 	NewPlayScreen.StartupState.Value = "FastRestart"
@@ -329,5 +332,5 @@ else
 end
 
 
---game.Players.LocalPlayer.PlayerGui.BG.HitKey.Visible = false
+--Players.LocalPlayer.PlayerGui.BG.HitKey.Visible = false
 script.Parent.Parent:Destroy()

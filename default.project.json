@@ -24,10 +24,19 @@
       "PlayScreen": {
         "$className": "ScreenGui",
         "$ignoreUnknownInstances": true,
+        "$path": "scripts/Live-Latest/v1/PlayerGui/PlayScreen",
         "RestartGame": {
+          "$className": "TextButton",
           "$ignoreUnknownInstances": true,
-          "$path": "scripts/Live-Latest/v1/PlayerGui/PlayScreen/RestartGame"
-        }  
+          "RestartgameScript": {       
+            "$className": "LocalScript",     
+            "$path": "scripts/Live-Latest/v1/PlayerGui/PlayScreen/RestartGame/RestartgameScript.local.luau"
+          }
+        },
+        "OsuGame": {
+          "$className": "LocalScript",
+          "$path": "scripts/Live-Latest/v1/PlayerGui/PlayScreen/OsuGame/init.local.luau"
+        }
       }
     }
   }
