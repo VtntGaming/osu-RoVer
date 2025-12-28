@@ -4,10 +4,7 @@
 local SettingsAction = require(script.Parent.SettingsAction)
 local CustomSkinImport = require(script.Parent.CustomSkinImport)
 
-local event = Instance.new("BindableEvent")
-event.Event:Connect(function(f, parameter)
-	f(parameter)
-end)
+-- Avoid holding onto callbacks via BindableEvent; we can safely defer callback execution.
 
 script.Parent.getSettings.OnInvoke = function(settingName)
 	if settingName == "All" then
@@ -23,6 +20,38 @@ local SubscribedConnections = {}
 -- {ConnectionName, CallbackFunction, ActiveScript}
 -- if the ActiveScript is not found or disabled, this connection will be deleted
 
+local function isValidActiveScript(activeScript: any): boolean
+	return activeScript ~= nil
+		and typeof(activeScript) == "Instance"
+		and activeScript.Parent ~= nil
+		and activeScript:IsA("LocalScript")
+		and not activeScript.Disabled
+end
+
+local function cleanupSubscription(settingName: string, id: string)
+	local settingConnection = SubscribedConnections[settingName]
+	if not settingConnection then
+		return
+	end
+
+	local entry = settingConnection[id]
+	if entry then
+		local cleaners = entry.Cleaners
+		if typeof(cleaners) == "table" then
+			for _, conn in pairs(cleaners) do
+				if typeof(conn) == "RBXScriptConnection" then
+					conn:Disconnect()
+				end
+			end
+		end
+		settingConnection[id] = nil
+	end
+
+	if next(settingConnection) == nil then
+		SubscribedConnections[settingName] = nil
+	end
+end
+
 script.Parent.SubscribeSettingChange.Event:Connect(function(SettingsName, ActiveScript, CallbackFunction)
 	local SettingConnection = SubscribedConnections[SettingsName]
 	if not SettingConnection then
@@ -30,20 +59,39 @@ script.Parent.SubscribeSettingChange.Event:Connect(function(SettingsName, Active
 		SubscribedConnections[SettingsName] = SettingConnection
 	end
 	
-	if ActiveScript == nil or ActiveScript.Parent == nil or not ActiveScript:IsA("LocalScript") or ActiveScript.Disabled or typeof(CallbackFunction) ~= "function" then
+	if typeof(SettingsName) ~= "string" or not isValidActiveScript(ActiveScript) or typeof(CallbackFunction) ~= "function" then
 		return
 	end
-	
-	
-	SettingConnection[game.HttpService:GenerateGUID()] = {
-		Callback = CallbackFunction, ActiveScript = ActiveScript
+
+	local id = game.HttpService:GenerateGUID()
+	local cleaners = {}
+
+	-- Proactively remove the subscription when the source script becomes invalid.
+	cleaners[#cleaners + 1] = ActiveScript.Destroying:Connect(function()
+		cleanupSubscription(SettingsName, id)
+	end)
+	cleaners[#cleaners + 1] = ActiveScript.AncestryChanged:Connect(function(_, parent)
+		if parent == nil then
+			cleanupSubscription(SettingsName, id)
+		end
+	end)
+	cleaners[#cleaners + 1] = ActiveScript:GetPropertyChangedSignal("Disabled"):Connect(function()
+		if ActiveScript.Disabled then
+			cleanupSubscription(SettingsName, id)
+		end
+	end)
+
+	SettingConnection[id] = {
+		Callback = CallbackFunction,
+		ActiveScript = ActiveScript,
+		Cleaners = cleaners,
 	}
 end)
 
 for _, obj in pairs(SettingsAction.getAll(false)) do
 	local SettingName = obj.Parent.Name
 	
-	obj:GetPropertyChangedSignal("Value"):Connect(function()
+	obj.Changed:Connect(function()
 		local SettingConnection = SubscribedConnections[SettingName]
 		if not SettingConnection then
 			return
@@ -52,13 +100,13 @@ for _, obj in pairs(SettingsAction.getAll(false)) do
 		for id, connection in pairs(SettingConnection) do
 			local ActiveScript = connection.ActiveScript
 			local Callback = connection.Callback
-			
-			if ActiveScript == nil or ActiveScript.Parent == nil or not ActiveScript:IsA("LocalScript") or ActiveScript.Disabled then
-				SettingConnection[id] = nil
+
+			if not isValidActiveScript(ActiveScript) or typeof(Callback) ~= "function" then
+				cleanupSubscription(SettingName, id)
 			else
-				event:Fire(Callback, obj.Value)
-			end 
-			
+				-- Defer prevents re-entrancy and avoids holding a BindableEvent around.
+				task.defer(Callback, obj.Value)
+			end
 		end
 	end)
 end
@@ -80,9 +128,8 @@ function ToggleSaveSettings()
 	game.ReplicatedStorage.GetSettings:InvokeServer(Data)
 end
 
-
-
 script.Parent.SaveSettings.Event:Connect(ToggleSaveSettings) -- save every time the player close the settings
+
 
 if DataStoreSettings and #DataStoreSettings > 0 and not DataStoreSettings.SettingsVersion then
 	-- it's an old settings from the version V1.46 and below
@@ -137,6 +184,8 @@ if DataStoreSettings and #DataStoreSettings > 0 and not DataStoreSettings.Settin
 		return Data or nil
 	end
 	
+	-- Apply user saved change to the objects
+	
 	for _, setting in pairs(SettingsAction.getRaw()) do
 		local relatedSettingObj = SettingsAction.getSettings(setting[3])
 		local RelatedOldSettingsData = GetRelatedOldSetting(setting[3])
@@ -152,8 +201,7 @@ if DataStoreSettings and #DataStoreSettings > 0 and not DataStoreSettings.Settin
 				relatedSettingObj.Value = RelatedOldSettingsData
 			end
 		end
-	end
-	
+	end	
 elseif DataStoreSettings.SettingsVersion then
 	-- It's the settings with new configuration
 	SettingsAction.SetSyncable(DataStoreSettings)
@@ -182,3 +230,5 @@ for _, obj in pairs(SettingsAction.getAll(false)) do
 		obj.Parent.Input.Input.Text = obj.Value
 	end
 end
+
+Instance.new("BoolValue", script.Parent).Name = "SettingsLoaded"

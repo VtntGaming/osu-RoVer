@@ -49,6 +49,7 @@ local SettingsList = {
 	{"MainSettings", "Gameplay", "EnableSliderShadow", "SwitchState", false, "EnableSliderShadow"},
 	{"MainSettings", "Gameplay", "SnakingInSliders", "SwitchState", true, "SnakingInSliders"},
 	{"MainSettings", "Gameplay", "SnakingOutSlider", "SwitchState", false, "SnakingOutSlider"},
+	{"MainSettings", "Gameplay", "EnableStoryboard", "SwitchState", false, "EnableStoryboard"},
 	{"KeybindAdjust", "InGame_Binding", "LeftKey", "Current", "Z", "Binding.LeftKey"},
 	{"KeybindAdjust", "InGame_Binding", "RightKey", "Current", "X", "Binding.RightKey"},
 	{"KeybindAdjust", "InGame_Binding", "QuickRestart", "Current", "Backquote", "Binding.QuickRestart"},
@@ -87,12 +88,12 @@ local MainFrame = script.Parent.Parent
 
 local function GetObjFromSetting(data)
 	local obj
-	local success, err = pcall(function()
+	local success, data = pcall(function()
 		obj = MainFrame[data[1]].Base[data[2]].Base[data[3]][data[4]]
 	end)
 	if not success then
 		warn("[CLIENT] Setting failed to load")
-		warn(err)
+		warn(data)
 		return nil
 	else
 		return obj
@@ -146,10 +147,22 @@ local function GetValueFromCloudName(Name)
 	return nil
 end
 
+FunctionList.CheckExternalChange = function(settingName, value, data)
+	-- check the object
+	if value.Parent:FindFirstChild("KeyRegistering") then
+		-- it's a keybind adjust, and we have to directly call the event
+		value.Parent.KeyRegistering.Update:Fire(data)
+	elseif value.Parent:FindFirstChild("ColorFrameControl") then
+		-- combo color value, same as above
+		value.Parent.ValueUpdate:Fire(data)
+	end
+end
+
 FunctionList.SetSyncable = function(CloudData)
 	for SettingName, data in pairs(CloudData) do
 		local value = GetValueFromCloudName(SettingName)
 		if value then
+			FunctionList.CheckExternalChange(SettingName, value, data)
 			value.Value = data
 		end
 	end
