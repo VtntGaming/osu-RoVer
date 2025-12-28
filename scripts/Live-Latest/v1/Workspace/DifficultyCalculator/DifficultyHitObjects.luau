@@ -52,7 +52,7 @@ function toSLPathData(curvePoints:{Vector2})
 	local returnData = {}
 	local totalLength = 0
 
-	for i, a in pairs(curvePoints) do
+	for i, a in ipairs(curvePoints) do
 		local l = 0
 		if i > 1 then
 			l = (curvePoints[i-1] - a).Magnitude
@@ -62,7 +62,7 @@ function toSLPathData(curvePoints:{Vector2})
 		returnData[#returnData+1] = {a,totalLength,l}
 	end
 
-	for i, a in pairs(returnData) do
+	for i, a in ipairs(returnData) do
 		a[2] /= totalLength
 		a[3] /= totalLength
 	end
@@ -76,7 +76,7 @@ function SLpositionAt(data, lengthRatio)
 	elseif lengthRatio <= 0 then
 		return data[1][1]
 	end
-	for i, a in pairs(data) do
+	for i, a in ipairs(data) do
 		if i >= #data then
 			return data[#data][1]
 		end
@@ -128,7 +128,7 @@ local Assumed_Slider_Radius = NORMALISED_RADIUS * 1.8
 
 return function(baseList:{any}, baseData)
 	local DifficultyObjects:{ObjectData} = {}
-	for objID, crr in pairs(baseList) do
+	for objID, crr in ipairs(baseList) do
 		local crrObj = {}::ObjectData
 		crrObj.objID = objID
 		crrObj.Previous = function(index)
@@ -248,7 +248,7 @@ return function(baseList:{any}, baseData)
 			local TickData = crr.SliderDifficultyTickData::{any}
 			if TickData then
 				local lastRealTick
-				for _, _tick in pairs(TickData) do
+				for _, _tick in ipairs(TickData) do
 					if _tick[4] == "Tick" then
 						lastRealTick = _tick
 					end
@@ -273,7 +273,8 @@ return function(baseList:{any}, baseData)
 				end
 				SliderPathData = tmp
 			end
-			local endTimeMin = lazySLTravelTime / SliderTime
+			local spanDuration = SliderTime / slidesCount
+			local endTimeMin = lazySLTravelTime / spanDuration
 			if endTimeMin % 2 >= 1 then
 				endTimeMin = 1 - endTimeMin % 1
 			else
@@ -287,7 +288,7 @@ return function(baseList:{any}, baseData)
 			local currentCursorPosition = positionOf(crr.Position)
 			local LazyTravelDistance = 0
 			if TickData then
-				for i, currentTick in pairs(TickData) do
+				for i, currentTick in ipairs(TickData) do
 					local currentMovement:Vector2 = currentTick[3] - currentCursorPosition
 					local currentMovementLength = scalingFactor * currentMovement.Magnitude
 					local requiredMovement = Assumed_Slider_Radius
@@ -316,7 +317,7 @@ return function(baseList:{any}, baseData)
 				end
 			end
 			
-			TailCirclePosition = slidesCount % 2 == 1 and _curvePoints[1] or _curvePoints[#_curvePoints]
+			TailCirclePosition = slidesCount % 2 == 0 and _curvePoints[1] or _curvePoints[#_curvePoints]
 			--
 			
 			BaseTravelTime = math.max(lazySLTravelTime, MIN_DELTA_TIME)

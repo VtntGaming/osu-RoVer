@@ -985,6 +985,10 @@ for _, obj in pairs(DisplayLBInformationValue) do
 	obj:GetPropertyChangedSignal("Value"):Connect(updateLBStaistic)
 end
 
+function tweenLbComponent(obj, value)
+	TweenService:Create(obj, TweenInfo.new(0.75, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Value = value}):Play()
+end
+
 function AddLeaderboardConnection(LeaderboardFrame,Data:ScoreStatistic,Score,UID,DateFormat)
 	if not LeaderboardFrame:IsA("Frame") and not Data then return end
 
@@ -1009,10 +1013,6 @@ function AddLeaderboardConnection(LeaderboardFrame,Data:ScoreStatistic,Score,UID
 		local LbInformation = PlayerGui.BG.BeatmapLeaderboard.UserPlayInformation
 		local MainFrame = LbInformation.MainFrame
 
-		local function add(obj, value)
-			TweenService:Create(obj, TweenInfo.new(0.75, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Value = value}):Play()
-		end
-
 		local externalData
 		local PreviewMapPS = coreConfig.PreviewMapPS :: any
 		local DiffChangeModEnabled = 
@@ -1033,17 +1033,17 @@ function AddLeaderboardConnection(LeaderboardFrame,Data:ScoreStatistic,Score,UID
 			}
 		end
 
-		add(DisplayLBInformationValue.Score, Score)
-		add(DisplayLBInformationValue.MaxCombo, Data.MaxCombo)
-		add(DisplayLBInformationValue.h300, Data.Statistic.h300)
-		add(DisplayLBInformationValue.h100, Data.Statistic.h100)
-		add(DisplayLBInformationValue.h50, Data.Statistic.h50)
-		add(DisplayLBInformationValue.miss, Data.Statistic.missCount)
-		add(DisplayLBInformationValue.rankedPS, Data.Performance or 0)
+		tweenLbComponent(DisplayLBInformationValue.Score, Score)
+		tweenLbComponent(DisplayLBInformationValue.MaxCombo, Data.MaxCombo)
+		tweenLbComponent(DisplayLBInformationValue.h300, Data.Statistic.h300)
+		tweenLbComponent(DisplayLBInformationValue.h100, Data.Statistic.h100)
+		tweenLbComponent(DisplayLBInformationValue.h50, Data.Statistic.h50)
+		tweenLbComponent(DisplayLBInformationValue.miss, Data.Statistic.missCount)
+		tweenLbComponent(DisplayLBInformationValue.rankedPS, Data.Performance or 0)
 		local MaxPS, UpdatedPS, mapMaxCombo = GetUserPlayUpdatedPS(Data, externalData)
-		add(DisplayLBInformationValue.MapMaxCombo, mapMaxCombo)
-		add(DisplayLBInformationValue.calculatedBasePS, UpdatedPS.TotalPS)
-		add(DisplayLBInformationValue.calculatedMaxPS, MaxPS.TotalPS)
+		tweenLbComponent(DisplayLBInformationValue.MapMaxCombo, mapMaxCombo)
+		tweenLbComponent(DisplayLBInformationValue.calculatedBasePS, UpdatedPS.TotalPS)
+		tweenLbComponent(DisplayLBInformationValue.calculatedMaxPS, MaxPS.TotalPS)
 		local crrID = HttpService:GenerateGUID()
 		UserPlayInformationAnimateID = crrID
 		local ReplayOption = MainFrame.ReplayOption
