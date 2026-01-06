@@ -11,9 +11,9 @@ local evaluator = require(script.DifficultyEvaluator)
 local StrainSkills = require(script.StrainSkills)
 local modData = require(workspace.ModData)
 
-local perfomance_base_multiplier = 1.14
+local perfomance_base_multiplier = 1.12
 local difficulty_multiplier = 0.0675
-local star_rating_multiplier = 0.0265
+local normalised_expoment = 1.1
 
 local calculator = {}
 
@@ -169,8 +169,9 @@ function calculator.CountTopWeightedStrains(strainData:{{number}}, strainType:st
 	if #strainData == 0 then
 		return 0
 	end
+	local decayWeight = 0.9
 	
-	local consistenTopStrain = calculator.DifficultyValue(strainData, strainType) / 10
+	local consistenTopStrain = calculator.DifficultyValue(strainData, strainType) * (1 - decayWeight)
 	if consistenTopStrain == 0 then
 		return #strainData
 	end
@@ -238,12 +239,8 @@ function calculateDifficultyRatingBase(value)
 	return math.sqrt(value) * difficulty_multiplier
 end
 
-function calculateStarRating(basePerfomance, multiplier)
-	if basePerfomance <= 0.00001 then
-		return 0
-	end
-	
-	return math.pow(multiplier, 1/3) * star_rating_multiplier * (math.pow(100000 / math.pow(2, 1/1.1) * basePerfomance, 1/3) + 4)
+function calculateStarRating(basePerfomance: number)
+	return math.pow(basePerfomance * perfomance_base_multiplier, 1/3)
 end
 function calculator.CalculateVisibilityBonus(modData:ModData, AR:number, visibilityFactor:number)
 	if not visibilityFactor then
@@ -405,7 +402,7 @@ function calculateMechanicalDifficultyRating(aimValue: number, speedValue: numbe
 	
 	local totalValue = math.pow(aimValue ^ 1.1 + speedValue ^ 1.1, 1/1.1)
 	
-	return calculateStarRating(totalValue, perfomance_base_multiplier)
+	return calculateStarRating(totalValue)
 end
 
 function calculateDifficultyMultiplier(modData:ModData, totalHits:number, spinnerCount:number)
@@ -446,8 +443,8 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 		aimBasePerfomance ^ 1.1 + speedBasePerfomance ^ 1.1 + flashlightBasePerfomance ^ 1.1, 1 / 1.1
 	)
 	
-	local multiplier = calculateDifficultyMultiplier(data.ModData, data.NoteCount.Total, data.NoteCount.Spinner)
-	local starRating = calculateStarRating(basePerfomance, multiplier)
+	-- local multiplier = calculateDifficultyMultiplier(data.ModData, data.NoteCount.Total, data.NoteCount.Spinner)
+	local starRating = calculateStarRating(basePerfomance)
 	
 	local Attributes = {
 		StarRating = starRating,
@@ -499,12 +496,10 @@ function calculator.GetDifficultyAttributesFromLiveData(Attributes:LiveDifficult
 	local speedBasePerfomance = basePerfomance(speedRating)
 	local flashlightBasePerformance = basePerfomanceFL(flashlightRating)
 	
-	local basePerfomance = math.pow(
-		aimBasePerfomance ^ 1.1 + speedBasePerfomance ^ 1.1 + flashlightBasePerformance ^ 1.1, 1 / 1.1
-	)
+	local basePerfomance = evaluator.Normalise(normalised_expoment, aimBasePerfomance, speedBasePerfomance, flashlightBasePerformance)
 	
-	local multiplier = calculateDifficultyMultiplier(Attributes.ModData, Attributes.NoteCount.Total, Attributes.NoteCount.Spinner)
-	local starRating = calculateStarRating(basePerfomance, multiplier)
+	-- local multiplier = calculateDifficultyMultiplier(Attributes.ModData, Attributes.NoteCount.Total, Attributes.NoteCount.Spinner)
+	local starRating = calculateStarRating(basePerfomance)
 	
 	return {
 		AimDifficulty = aimRating,

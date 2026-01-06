@@ -16,5 +16,20 @@ function evaluator.BPMToMilisecond(bpm:number, delimiter:any)
 	return 60000 / delimiter / bpm
 end
 
+function evaluator.Normalise(power:number, ...:number)
+	local count = 0
+	local sum = 0
+
+	for _, num in ipairs(table.pack(...)) do
+		sum += num ^ power
+		count += 1
+	end
+
+	if count > 0 then
+		return math.pow(sum, 1/power)
+	else
+		return 0
+	end
+end
 
 return evaluator

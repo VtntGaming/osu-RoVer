@@ -203,10 +203,7 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 		PrevObj = currentObj
 	end
 
-	local diff = math.sqrt(4 + rhythmComplexitySum * rhythm_overall_multiplier) / 2
-	local doubletapness = 1 - CrrObj.getDoubletapness(CrrObj.Next(1))
-
-	return diff * doubletapness
+	return math.sqrt(4 + rhythmComplexitySum * rhythm_overall_multiplier) / 2
 end
 
 return rhythmCalculator
