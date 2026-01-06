@@ -5301,6 +5301,8 @@ function CreateHitSound(HitsoundType,CustomSampleSet, AmbientRatio)
 		else
 			SelectedSampleSet = HitsoundSampleset[tonumber(SelectedSampleSet)]
 		end
+		
+		SelectedSampleSet = SelectedSampleSet:gsub("none", "normal")
 
 		if HitsoundType == 4 and SelectedSampleSet == "drum" then
 			return
