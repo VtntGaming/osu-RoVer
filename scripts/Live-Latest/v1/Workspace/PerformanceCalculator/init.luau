@@ -5,7 +5,10 @@ local basePerformanceFL = require(script.BasePerfomanceFL)
 local DifficultyCalculationUtils = require(workspace.DifficultyCalculator.DifficultyEvaluator.DifficultyCalculationUtils)
 local DifficultyCalculator = require(workspace.DifficultyCalculator)
 local ConverterTools = require(workspace.OsuConvert.converterTools)
+local evaluator = require(workspace.DifficultyCalculator.DifficultyEvaluator)
 local modData = require(workspace.ModData)
+
+local normalised_expoment = 1.1
 
 
 function calculateMissPenalty(missCount:number, diffStrainCount:number):number
@@ -345,9 +348,7 @@ function _GetPerfomanceAttributes(Attributes:GeneralAttributes):ReturnAttributes
 	local accPS = _ComputeAccuracyValue(accuracyAttribute)
 	local flashlightPS = _ComputeFlashlightValue(flashlightAttribute)
 	
-	local totalPS = math.pow(
-		aimPS ^ 1.1 + speedPS ^ 1.1 + accPS ^ 1.1 + flashlightPS ^ 1.1, 1 / 1.1
-	) * multiplier
+	local totalPS = evaluator.Normalise(normalised_expoment, aimPS, speedPS, accPS, flashlightPS) * multiplier
 	
 	local returnAttributes:ReturnAttributes = {
 		AimPS = aimPS,

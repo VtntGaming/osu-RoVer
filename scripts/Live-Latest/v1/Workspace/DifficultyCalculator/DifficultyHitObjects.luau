@@ -338,7 +338,7 @@ return function(baseList:{any}, baseData)
 				local nextDeltaTime = math.max(1, nextObj.DeltaTime)
 				local deltaDifference = math.abs(nextDeltaTime-crrDeltaTime)
 				local speedRatio = crrDeltaTime/math.max(crrDeltaTime,deltaDifference)
-				local windowRatio = math.pow(math.min(1, crrDeltaTime / Hit300Value), 2)
+				local windowRatio = math.pow(math.min(1, crrDeltaTime / Hit300Value), 5)
 				
 				return 1 - math.pow(speedRatio, 1 - windowRatio)
 			end

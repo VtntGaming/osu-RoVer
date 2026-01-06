@@ -1,4 +1,4 @@
 --[LOCATION]:[Workspace.PerformanceCalculator.BasePerfomance]
 return function (value)
-	return math.pow(5.0 * math.max(1.0, value / 0.0675) - 4.0, 3.0) / 100000
+	return 4 * math.pow(value, 3)
 end
