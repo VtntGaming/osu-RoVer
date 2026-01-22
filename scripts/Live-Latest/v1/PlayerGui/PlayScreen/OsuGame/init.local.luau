@@ -1701,17 +1701,6 @@ ReloadPreviewFrame = function(isInit: boolean?)
 	LoadMultiplier()
 end
 
-local _cached = {}
-
-local function fnv1a(str: string): number
-	local hash = 2166136261
-	for i = 1, #str do
-		hash = bit32.bxor(hash, string.byte(str, i))
-		hash = (hash * 16777619) % 2^32
-	end
-	return hash
-end
-
 script.Parent.RequestMapDifficulty.OnInvoke = function(map): number
 	local songSpeed = tonumber(CurrentSetting.MainSettings.Speed.Text)
 	if songSpeed == nil or (songSpeed < 0.5 or songSpeed > 2) or songSpeed ~= songSpeed  then
@@ -1734,15 +1723,9 @@ script.Parent.RequestMapDifficulty.OnInvoke = function(map): number
 		SA = songSpeed
 	}
 	
-	local conversion = map.Name..game.HttpService:JSONEncode(data)
-	conversion = fnv1a(conversion)
-	if _cached[conversion] then
-		return _cached[conversion]
-	end
 	local _, returnData = require(workspace.OsuConvert)(1,map,0,true, false, data)
 	
 	local difficulty = returnData.Difficulty.BeatmapDifficulty
-	_cached[conversion] = difficulty
 	
 	for i = 1, 30 do
 		task.wait()
