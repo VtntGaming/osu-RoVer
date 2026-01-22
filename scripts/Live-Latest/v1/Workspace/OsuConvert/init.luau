@@ -3,6 +3,7 @@
 -- convert raw osu file into readable and excutable lua data
 -- V1.47 (Size: 27.69KB)
 
+local IS_GAME_RUNNING = game:GetService("RunService"):IsRunning()	-- If it's executed from command bar, I will try to disable some of the calculation
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local workspace = game:GetService("Workspace")
 local BasePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
@@ -21,10 +22,31 @@ local evaluators = {
 
 export type ModData = modData.ModData
 
+local CachedData = {} :: {[number]: {[any]: any}}
+
+local function fnv1a(str: string): number
+	local hash = 2166136261
+	for i = 1, #str do
+		hash = bit32.bxor(hash, string.byte(str, i))
+		hash = (hash * 16777619) % 2^32
+	end
+	return hash
+end
+
 return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,modData:ModData)
 	local OsuData = Beatmap
+	local cacheId = -1
 	if FileType == 1 then
 		OsuData = require(Beatmap)
+
+		-- We do a quick inspect
+		local mapId = string.match(OsuData, "BeatmapID:([^%s]+)") or Beatmap.Name
+		local hashName = mapId..game.HttpService:JSONEncode(modData)
+		cacheId = fnv1a(hashName)
+		-- Find the cache with the same map, same mod
+		if CachedData[cacheId] then
+			return table.unpack(CachedData[cacheId])
+		end
 	elseif FileType == 3 then
 		OsuData = ReplicatedStorage.GetModuleData:InvokeServer(tonumber(Beatmap))
 	end
@@ -336,12 +358,22 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	for i = 1, #hitObjects do
 		local obj = hitObjects[i]
 		local data = string.split(obj, ",")
+		local Time = 0
+		local pass = true
 		-- valid format checking 
-		if not tonumber(data[1]) or not tonumber(data[2]) or not tonumber(data[3]) then
-			warn(i)
-		else
+		for i = 1, 3 do
+			local num = tonumber(data[i])
+			if not num then
+				pass = false
+				break
+			elseif i == 3 then
+				Time = num
+			end
+		end
+		
+		if pass then
 			HitObjectsListing[#HitObjectsListing+1] = {
-				Time = tonumber(data[3]),
+				Time = Time,
 				Data = obj
 			}
 		end
@@ -377,24 +409,20 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			local StackCount = 0
 			local raw = string.split(HitObj,",")
 
-			for CurrentType = 1, #raw do
-				local data = raw[CurrentType]
+			HitPos.X = tonumber(raw[1]) or 0
+			local yPos = tonumber(raw[2]) or 0
+			if modData.HR then
+				yPos = 384 - yPos
+			end
+			HitPos.Y = yPos
+			Time = (tonumber(raw[3])+DelayedTime)/SongSpeed or Time
+			Type = tonumber(raw[4]) or Type
+			for i = 5, #raw do
+				local data = raw[i]
 				if data == "" then
 					break
-				elseif CurrentType == 1 then
-					HitPos.X = tonumber(data)
-				elseif CurrentType == 2 then
-					HitPos.Y = tonumber(data)
-					if modData.HR then
-						HitPos.Y = 384 - HitPos.Y
-					end
-				elseif CurrentType == 3 then
-					Time = (tonumber(data)+DelayedTime)/SongSpeed
-				elseif CurrentType == 4 then
-					Type = tonumber(data)
-				elseif CurrentType >= 5 then
-					ExtraData[#ExtraData+1] = data
 				end
+				ExtraData[#ExtraData+1] = data
 			end
 
 			--slider
@@ -778,6 +806,11 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 
 	if metadataonly ~= true then
 		ReturningData.Overview.MapLength = MapLength
+	end
+	
+	if cacheId ~= -1 and IS_GAME_RUNNING then
+		-- Save data to cached, this will be used later
+		CachedData[cacheId] = table.pack(ConvertedData,ReturningData,TimingPoints,BeatmapColor)		
 	end
 
 	return ConvertedData,ReturningData,TimingPoints,BeatmapColor
