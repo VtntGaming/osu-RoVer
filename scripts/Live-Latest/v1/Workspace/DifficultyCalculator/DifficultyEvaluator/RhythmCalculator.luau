@@ -1,15 +1,6 @@
 --[LOCATION]:[Workspace.DifficultyCalculator.DifficultyEvaluator.RhythmCalculator]
 local rhythmCalculator = {}
 
-local function getIslandCount(islandList, currentIsland)
-	for i, island in pairs(islandList) do
-		if island:IsEqual(currentIsland) then
-			return i-1, island
-		end
-	end
-	return nil
-end
-
 local function Logistic(x, midpointOffset, multiplier, maxValue)
 	if not maxValue then maxValue = 1 end
 
@@ -48,6 +39,50 @@ end
 local MIN_DELTA_TIME = 25
 -- local EXTRA_MULTIPLIER = 1	-- This being added to ensure stability, until I found out a better way to calculate properly
 
+local function addDelta(self, delta)
+	if self.delta == 9999999999999 then
+		self.delta = math.max(delta, MIN_DELTA_TIME)
+	end
+	self.deltaCount += 1
+end
+
+local function isSimilarPolarity(self, otherDelta)
+	return self.deltaCount % 2 == otherDelta.deltaCount % 2
+end
+
+local function isEqual(self, otherDelta)
+	if not otherDelta then return false	end
+
+	return math.abs(self.delta - otherDelta.delta) < self.deltaDifferenceEpsilon and self.deltaCount == otherDelta.deltaCount
+end
+
+local function getIslandCount(islandList, currentIsland)
+	for i = 1, #islandList do
+		local island = islandList[i]
+		if isEqual(island, currentIsland) then
+			return i-1, island
+		end
+	end
+	return nil
+end
+
+local function newIsland(delta, epsilon) -- Initiate Island class
+	local island = {
+		deltaDifferenceEpsilon = epsilon,
+		delta = 9999999999999, -- maximum value possible
+		Count = 1,
+		deltaCount = 0
+	}
+
+	if delta then
+		island.delta = math.max(delta, MIN_DELTA_TIME)
+		island.deltaCount += 1
+	end
+
+	return island
+end
+
+
 function rhythmCalculator.GetRhythmDiff(CrrObj)
 	-- This is the most complicate section I ever transfer
 
@@ -56,38 +91,6 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 	local rhythm_overall_multiplier = 1.00
 	local rhythm_ratio_multiplier = 15
 
-	local function newIsland(delta, epsilon) -- Initiate Island class
-		local island = {
-			deltaDifferenceEpsilon = epsilon,
-			delta = 9999999999999, -- maximum value possible
-			Count = 1,
-			deltaCount = 0
-		}
-
-		if delta then
-			island.delta = math.max(delta, MIN_DELTA_TIME)
-			island.deltaCount += 1
-		end
-
-		function island:AddDelta(delta)
-			if self.delta == 9999999999999 then
-				self.delta = math.max(delta, MIN_DELTA_TIME)
-			end
-			self.deltaCount += 1
-		end
-
-		function island:IsSimilarPolarity(otherDelta)
-			return self.deltaCount % 2 == otherDelta.deltaCount % 2
-		end
-
-		function island:IsEqual(otherDelta)
-			if not otherDelta then return false	end
-
-			return math.abs(self.delta - otherDelta.delta) < self.deltaDifferenceEpsilon and self.deltaCount == otherDelta.deltaCount
-		end
-
-		return island
-	end
 
 	if CrrObj.isSpinner or not CrrObj.Hit300Value then
 		return 0
@@ -134,7 +137,7 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 
 		if firstDeltaSwitch then
 			if math.abs(prevDelta - currDelta) < deltaDifferenceEpsilon then
-				Island:AddDelta(currDelta)
+				addDelta(Island, currDelta)
 			else
 				if currentObj.isSlider then
 					effectiveRatio *= 0.125
@@ -144,7 +147,7 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 					effectiveRatio *= 0.3
 				end
 				
-				if Island:IsSimilarPolarity(PrevIsland) then
+				if isSimilarPolarity(Island, PrevIsland) then
 					effectiveRatio *= 0.5
 				end
 
@@ -158,7 +161,7 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 
 				local countIndex , islandCount = getIslandCount(IslandList, Island)
 				if islandCount then
-					if PrevIsland:IsEqual(Island) then
+					if isEqual(PrevIsland, Island) then
 						islandCount.Count += 1
 					end
 

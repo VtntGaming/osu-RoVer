@@ -61,7 +61,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	local Listraw = string.split(OsuData, "\n")
 	local currentIndex = nil
 	local onStoryboardLine = false
-	for _, crrLine in pairs(Listraw) do
+	for i = 1, #Listraw do
+		local crrLine = Listraw[i]
 		if currentIndex == "Difficulty" and metadataonly then
 			break
 		end
@@ -90,8 +91,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	end
 	
 	-- Make sure that no data is blank
-
-	local _,_ = pcall(function()
+	pcall(function()
 		if MapData.RobloxData ~= nil  then
 			local RblxData = {}
 			for _,RawData in pairs(MapData.RobloxData) do
@@ -100,8 +100,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			end
 
 			-- Process RblxData
-
-
 			if RblxData.SoundOffset ~= nil then
 				DelayedTime += 30+RblxData.SoundOffset/SongSpeed
 				ReturningData.OriginalOffset = RblxData.SoundOffset
@@ -110,6 +108,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			if RblxData.CustomSoundFile then
 				ReturningData.CustomSongFile = tool.ConvertRaw(RblxData.CustomSoundFile)
 			end
+
 			if RblxData.RblxSoundID ~= nil then
 				ReturningData.MapSongId = RblxData.RblxSoundID
 				ReturningData.MapSongId2 = RblxData.RblxSoundID2
@@ -122,7 +121,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 				if RblxData.SongPitch then
 					ReturningData.SongPitch = RblxData.SongPitch
 				end
-
 			end
 
 			if RblxData.CustomBackgroundFile then
@@ -207,7 +205,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			for _,RawData in pairs(MapData.TimingPoints) do
 				local raw = string.split(RawData,",")
 				local CurrentTimmingPoint = {}
-				for _, data in pairs(raw) do
+				for i = 1, #raw do
+					local data = raw[i]
 					CurrentTimmingPoint[#CurrentTimmingPoint+1] = tonumber(data)
 				end
 				CurrentTimmingPoint[1] += DelayedTime
@@ -217,7 +216,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			table.sort(TimingPoints,function(timing1,timing2)
 				return timing1[1] < timing2[1]
 			end)
-			for _,TimingPoint in pairs(TimingPoints) do
+			for i = 1, #TimingPoints do
+				local TimingPoint = TimingPoints[i]
 				if TimingPoint[#TimingPoint] == 1 and OriginalPreviewTime == -1 then
 					ReturningData.Overview.OverviewStartTime = TimingPoint[1]+DelayedTime
 					break
@@ -231,20 +231,21 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	pcall(function()
 		if MapData.Colours ~= nil then
 			local Colours = {}
-			for _,RawData in pairs(MapData.Colours) do
+			for i = 1, #MapData.Colours do
+				local RawData = MapData.Colours[i]
 				local raw = string.split(RawData,":")
 				Colours[#Colours+1] = string.sub(raw[2], 2, #raw[2])
 			end
 
 			-- Process colour
 			local ConvertedColors = {}
-			for _,RawColor in pairs(Colours) do
+			for i = 1, #Colours do
+				local RawColor = Colours[i]
 				local ColorTable = game:GetService("HttpService"):JSONDecode('['..RawColor..']')
 				local ConvertedColor = Color3.fromRGB(ColorTable[1],ColorTable[2],ColorTable[3])
 				ConvertedColors[#ConvertedColors+1] = ConvertedColor
 			end
 			BeatmapColor = ConvertedColors
-
 		end
 	end)
 
@@ -272,7 +273,9 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			end
 
 			-- Process events
-			for _,breaktime in pairs(BeatmapEvents["Break Periods"]) do
+			local breakPeriods = BeatmapEvents["Break Periods"]
+			for i = 1, #breakPeriods do
+				local breaktime = breakPeriods[i]
 				local BreakStart = (tonumber(breaktime[2])+DelayedTime)/SongSpeed
 				local BreakEnd = (tonumber(breaktime[3])+DelayedTime)/SongSpeed
 
@@ -302,7 +305,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	AnythingElse: Hit circle - NewCombo
 	]]
 
-
 	local ConvertedData = {}
 	local RawDifficulty = {}
 	--local StrainData = {}
@@ -318,7 +320,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		Circle = 0, Slider = 0, Spinner = 0
 	}
 
-
 	local ODMultiplier = 1 --115 / ((119.5 - 9 * OD))
 	ODMultiplier = ODMultiplier ^ 0.2
 
@@ -330,8 +331,10 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	local DifficultyStrikeRecord = 2000/SongSpeed -- in milisecond
 	
 	local HitObjectsListing = {}
-	
-	for i, obj in ipairs(MapData["HitObjects"]) do
+	local hitObjects = MapData["HitObjects"]
+
+	for i = 1, #hitObjects do
+		local obj = hitObjects[i]
 		local data = string.split(obj, ",")
 		-- valid format checking 
 		if not tonumber(data[1]) or not tonumber(data[2]) or not tonumber(data[3]) then
@@ -356,7 +359,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	end)
 
 	if metadataonly ~= true then -- this would reduce lag
-		for objectID,HitObjData in pairs(HitObjectsListing) do
+		for objectID = 1, #HitObjectsListing do
+			local HitObjData = HitObjectsListing[objectID]
 			local HitObj = HitObjData.Data
 			local HitPos = {X = 0,Y = 0}
 			local Time = 0
@@ -373,7 +377,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			local StackCount = 0
 			local raw = string.split(HitObj,",")
 
-			for CurrentType, data in pairs(raw) do
+			for CurrentType = 1, #raw do
+				local data = raw[CurrentType]
 				if data == "" then
 					break
 				elseif CurrentType == 1 then
@@ -443,55 +448,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			local SLTickData = {}
 			local SLDifficultyTickData = {}
 			local SLCurvePoints:{Vector2} = {}
-			local function _getTickPosition(_tickTime:number, isReverse:boolean):Vector2?
-				local _slidesCount = tonumber(ExtraData[3])
-				local _beatLength = tonumber(ExtraData[4])
-				local _slideTime = (SliderTime * 1000 / _slidesCount)
-				local _tickProgressLength = (1 - ((Time - _tickTime)%_slideTime)/_slideTime) * tonumber(ExtraData[4])
-				if not isReverse then
-					local _currentLength = 0
-					for i = 1, #SLCurvePoints - 1 do
-						local _crr = SLCurvePoints[i]
-						local _next = SLCurvePoints[i+1]
-						local _length = (_next - _crr).Magnitude
-						local _nextLength = _currentLength + _length
-						
-						if _nextLength >= _tickProgressLength then
-							local _ratio = math.min(1, (_tickProgressLength-_currentLength)/_length)
-							local _pos = _crr:Lerp(_next, _ratio)
-							return _pos
-						else
-							_currentLength = _nextLength
-						end 
-					end
-				else
-					local _currentLength = 0
-					for i = #SLCurvePoints, 2, -1 do
-						local _crr = SLCurvePoints[i]
-						local _next = SLCurvePoints[i-1]
-						local _length = (_next - _crr).Magnitude
-						local _nextLength = _currentLength + _length
-
-						if _nextLength >= _tickProgressLength then
-							local _ratio = math.min(1, _tickProgressLength/_length)
-							local _pos = _crr:Lerp(_next, _ratio)
-
-							return _pos
-						else
-							_currentLength = _next	
-						end 
-					end
-				end
-				local lastPoint = SLCurvePoints[isReverse and 1 or #SLCurvePoints]
-				
-				if lastPoint then
-					return lastPoint -- return the last point instead...
-				end
-				
-				warn("Cannot find tick position from tick time!")
-				print(_tickTime, Time, SliderTime, _beatLength, _tickProgressLength, isReverse)
-				return nil
-			end
 			if isSlider then
 				-- Calculate slider actual curves from raw curve points
 				local beatLength = tonumber(ExtraData[4])
@@ -516,12 +472,12 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 					local CurrentSlide = math.floor(TimeSinceNoteStart/sliderTimeSec)+1
 					if currentTime > Time and currentTime < Time + sliderTimeSec and TimeBetweenTail > 20 and TimeBetweenTail < SliderTime-20 then
 						tickCount += 1
-						local tickPosition = _getTickPosition(currentTime, CurrentSlide%2==0)
+						local tickPosition = tool.GetTickPosition(Time, SliderTime, SLCurvePoints, ExtraData, currentTime, CurrentSlide%2==0)
 						SLTickData[#SLTickData+1] = {currentTime, CurrentSlide, tickPosition}
 						SLDifficultyTickData[#SLDifficultyTickData+1] = {currentTime, CurrentSlide, tickPosition, "Tick"}
 					else
 						local _type = CurrentSlide < slidesCount and "Repeat" or "Tail"
-						local tickPosition = _getTickPosition(currentTime, CurrentSlide%2==0)
+						local tickPosition = tool.GetTickPosition(Time, SliderTime, SLCurvePoints, ExtraData, currentTime, CurrentSlide%2==0)
 						SLDifficultyTickData[#SLDifficultyTickData+1] = {currentTime, CurrentSlide, tickPosition, _type}
 					end
 					i += 1
@@ -590,13 +546,15 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		end
 
 		local RemoveList = {}
-		for i,Data in pairs(ConvertedData) do
+		for i = 1, #ConvertedData do
+			local Data = ConvertedData[i]
 			if (i ~= #ConvertedData and (Data.Time > ConvertedData[i+1].Time or (Data.SliderNote == true and Data.Time > ConvertedData[i+1].Time-100))) then
 				RemoveList[#RemoveList+1] = i
 			end
 		end
 
-		for _,RemoveData in pairs(RemoveList) do
+		for i = 1, #RemoveList do
+			local RemoveData = RemoveList[i]
 			table.remove(ConvertedData,RemoveData)
 		end
 	end
@@ -606,7 +564,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		local CSRate = tool.GetDifficultyValueAfterMod.CS(ReturningData.Difficulty.CircleSize, modData)
 		local ObjectRadius = 54.4 - 4.48 * CSRate
 		local StackVector = ObjectRadius / 10
-		for i, crrObj in pairs(ConvertedData) do
+		for i = 1, #ConvertedData do
+			local crrObj = ConvertedData[i]
 			if not (crrObj.isSpinner) then
 				crrObj.Position.X -= StackVector * crrObj.StackCount
 				crrObj.Position.Y -= StackVector * crrObj.StackCount
@@ -627,7 +586,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		RoundRequiredPerSec = 2.5 + 1.25 * (ODRateAfterMod-5)/5 -- 150 - 225RPM
 	end	
 	
-	for _, obj in pairs(ConvertedData) do
+	for i = 1, #ConvertedData do
+		local obj = ConvertedData[i]
 		local NoteCombo = 1
 		if obj.isSlider and not modData.NS then
 			NoteCombo = 1 + #obj.SliderTickData + (tonumber(obj.ExtraData[3]) or 0)
@@ -650,9 +610,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	----------------------------------------------------------------------------
 	-- > Difficulty evaluator
 	
-	-- ignore the old diff data from the above
-	-- this will be changed soon
-	
 	AimStrainData = {}
 	AimSLStrainData = {}
 	SpeedStrainData = {}
@@ -672,8 +629,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	local SpeedStrain = 0
 	local FLStrain = 0
 	
-	-- Skills
-	
+	-- Skills	
 	-- Sometime it would not be very easy to match everything with osu! difficulty system
 	-- I need to adjust it back to the original osu! standard
 	local aimAdjustedMultiplier = 1
@@ -685,8 +641,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	local AimFLBaseStrainDecay = 0.15
 	local SpeedBaseStrainDecay = 0.3
 	
-	
-	for objectId, objectData in pairs(ProcessedDifficultyObject) do
+	for objectId = 1, #ProcessedDifficultyObject do
+		local objectData = ProcessedDifficultyObject[objectId]
 		local AimDiff = evaluators.Aim.GetAimDiff(objectData) * aimSkillMultiplier
 		local SpeedDiff = evaluators.Speed.GetSpeedDiff(objectData) * speedSkillMultiplier
 		local RhythmDiff = evaluators.Rhythm.GetRhythmDiff(objectData)
@@ -748,9 +704,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	}
 
 	-- Difficulty timeline caculation
-
 	if isReturnDifficulty == true then
-		-- Convert difficulty Part1
 		local DiffTimeline = {}
 		local DiffHighest = 0
 		
@@ -761,8 +715,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			DiffTimeline[#DiffTimeline+1] = 0
 		end
 		
-		
-		for _, RawDiff in pairs(RawDifficulty) do
+		for i = 1, #RawDifficulty do
+			local RawDiff = RawDifficulty[i]
 			local diffTime = RawDiff[2]
 			local diff = RawDiff[1] * 10
 			DiffHighest = math.max(DiffHighest, diff)
@@ -777,14 +731,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			List = DiffTimeline,
 			Highest = DiffHighest
 		}
-		------------
-
-		--BeatmapDifficulty = BeatmapDifficulty * 1.3626 -- Old: 1.22
 		
-		
-		
-		-- Get difficulty value of Aim, Speed, Flashlight
-		
+		-- Get difficulty value of Aim, Speed, Flashlight		
 		local DifficultyValue = {
 			CS = tool.GetDifficultyValueAfterMod.CS(ReturningData.Difficulty.CircleSize, modData),
 			AR = tool.GetDifficultyValueAfterMod.AR(ReturningData.Difficulty.ApproachRate, modData),
@@ -812,7 +760,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	end
 
 	local consistencyScore, accuracyScore, v1Score = tool.GetScoreV1(MapMaxCombo)
-
 	ReturningData.Difficulty.DifficultyStrike = DifficultyStrikeList
 	ReturningData.Difficulty.BeatmapDifficulty = BeatmapDifficulty
 	ReturningData.Difficulty.AimDifficulty = AimDifficulty
@@ -828,10 +775,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		AccuracyScore = accuracyScore,
 		ConsistencyScore = consistencyScore
 	}
-
-	--2234.05 -> 12.19
-	--9.15 -> 1.70
-
 
 	if metadataonly ~= true then
 		ReturningData.Overview.MapLength = MapLength

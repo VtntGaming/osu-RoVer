@@ -222,6 +222,52 @@ tool.GetDifficultyValueAfterMod = {
 	end,
 }
 
+function tool.GetTickPosition(Time: number, SliderTime: number, SLCurvePoints: {Vector2}, ExtraData: {number}, tickTime: number, isReverse:boolean): Vector2?
+	local slideCount = tonumber(ExtraData[3]) :: number
+	local _slideTime = (SliderTime * 1000 / slideCount)
+	local _tickProgressLength = (1 - ((Time - tickTime)%_slideTime)/_slideTime) * tonumber(ExtraData[4]) :: number
+	if not isReverse then
+		local _currentLength = 0
+		for i = 1, #SLCurvePoints - 1 do
+			local _crr = SLCurvePoints[i] :: Vector2
+			local _next = SLCurvePoints[i+1] :: Vector2
+			local _length = (_next - _crr).Magnitude
+			local _nextLength = _currentLength + _length
+			
+			if _nextLength >= _tickProgressLength then
+				local _ratio = math.min(1, (_tickProgressLength-_currentLength)/_length)
+				local _pos = _crr:Lerp(_next, _ratio)
+				return _pos
+			else
+				_currentLength = _nextLength
+			end
+		end
+	else
+		local _currentLength = 0
+		for i = #SLCurvePoints, 2, -1 do
+			local _crr = SLCurvePoints[i] :: Vector2
+			local _next = SLCurvePoints[i-1] :: Vector2
+			local _length = (_next - _crr).Magnitude
+			local _nextLength = _currentLength + _length
+
+			if _nextLength >= _tickProgressLength then
+				local _ratio = math.min(1, _tickProgressLength/_length)
+				local _pos = _crr:Lerp(_next, _ratio)
+
+				return _pos
+			else
+				_currentLength = _nextLength	
+			end 
+		end
+	end
+	local lastPoint = SLCurvePoints[isReverse and 1 or #SLCurvePoints]
+	
+	if lastPoint then
+		return lastPoint -- return the last point instead...
+	end
+	return nil
+end
+
 local function getConsistencyScore(combo:number):number
 	local score = (combo * (combo + 1) / 2)
 	score = math.pow(score, 1.1704417) * 1.2255
