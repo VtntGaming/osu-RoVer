@@ -20,7 +20,13 @@ function evaluator.Normalise(power:number, ...:number)
 	local count = 0
 	local sum = 0
 
-	for _, num in ipairs(table.pack(...)) do
+	local data = table.pack(...)
+	if data.n == 0 then
+		return 0
+	end
+
+	for i = 1, data.n do
+		local num = data[i]
 		sum += num ^ power
 		count += 1
 	end

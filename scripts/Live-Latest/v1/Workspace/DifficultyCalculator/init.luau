@@ -67,8 +67,8 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 	local StrainPeak = StrainSkills.GetStrainPeak(StrainData, strainType)
 	
 	sortPeak(StrainPeak)
-	
-	for i,a in pairs(StrainPeak) do
+
+	for i = 1, #StrainPeak do
 		local scale = math.log10(math.lerp(1,10,math.clamp((i-1)/reducedSelectionCount,0,1)))
 		StrainPeak[i] *= math.lerp(ReducedStrainBaseline, 1, scale)
 		if i > 10 then
@@ -77,7 +77,9 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 	end
 
 	sortPeak(StrainPeak)
-	for _,strain in pairs(StrainPeak) do
+
+	for i = 1, #StrainPeak do
+		local strain = StrainPeak[i]
 		if strain <= 0 then break end
 		
 		difficulty += strain * weight
@@ -95,7 +97,8 @@ function calculator.FLDifficultyValue(StrainData:{{number}})
 	-- Since flashlight sum all the value so no need to sort
 	
 	local difficulty = 0
-	for _,strain in pairs(StrainPeak) do
+	for i = 1, #StrainPeak do
+		local strain = StrainPeak[i]
 		difficulty += strain
 	end
 	return difficulty
@@ -116,7 +119,7 @@ function calculator.LiveDifficultyValue(StrainPeak:{number}, strainType:string):
 	
 	sortPeak(StrainPeak)
 	
-	for i,a in pairs(StrainPeak) do
+	for i = 1, #StrainPeak do
 		local scale = math.log10(lerp(1,10,math.clamp((i-1)/reducedSelectionCount,0,1)))
 		StrainPeak[i] *= lerp(ReducedStrainBaseline, 1, scale)
 		if i > 10 then
@@ -125,7 +128,8 @@ function calculator.LiveDifficultyValue(StrainPeak:{number}, strainType:string):
 	end
 
 	sortPeak(StrainPeak)
-	for _,strain in pairs(StrainPeak) do
+	for i = 1, #StrainPeak do
+		local strain = StrainPeak[i]
 		if strain <= 0 then break end
 
 		difficulty += strain * weight
@@ -139,7 +143,8 @@ function calculator.LiveFLDifficultyValue(StrainPeak:{number}):number
 
 	StrainPeak = _DeepCopy(StrainPeak)::{number}
 	
-	for _,strain in pairs(StrainPeak) do
+	for i = 1, #StrainPeak do
+		local strain = StrainPeak[i]
 		difficulty += strain
 	end
 	return difficulty
@@ -158,7 +163,8 @@ function calculator.RelevantNoteCount(strainData:{{number}})
 	end
 	
 	local relevantNoteCount = 0
-	for _, strain in pairs(strainData) do
+	for i = 1, #strainData do
+		local strain = strainData[i]
 		relevantNoteCount += 1 / (1 + math.exp(-(strain[1]/maxStrain * 12 - 6)))
 	end
 	
@@ -177,7 +183,8 @@ function calculator.CountTopWeightedStrains(strainData:{{number}}, strainType:st
 	end
 	
 	local strainCount = 0
-	for _, strain in pairs(strainData) do
+	for i = 1, #strainData do
+		local strain = strainData[i]
 		strainCount += 1.1 / (1 + math.exp(-10 * (strain[1] / consistenTopStrain - 0.88)))
 	end
 	
@@ -197,7 +204,8 @@ function calculator.getDificultSliders(strainData:{{number}})
 	end
 	
 	local strainDiff = 0
-	for _, strain in pairs(strainData) do
+	for i = 1, #strainData do
+		local strain = strainData[i]
 		strainDiff += 1 / (1 + math.exp(-(strain[1]/maxSLStrain * 12 - 6)))
 	end
 	

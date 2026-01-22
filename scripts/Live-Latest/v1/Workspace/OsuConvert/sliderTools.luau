@@ -59,29 +59,29 @@ local function getSectionLength(curvePoints:{Vector2})
 	return length
 end
 
+local function getBezierPosition(t, curvePoints)
+	local PointData = curvePoints
+	local PointsLeft = #PointData
+	for i = PointsLeft+1,3,-1 do
+		local PointDataNew = {}
+		for a = 1,PointsLeft-1 do
+			PointDataNew[#PointDataNew+1] = PointData[1]:Lerp(PointData[a+1], t)
+		end
+		PointData = PointDataNew
+		PointsLeft-=1
+	end
+	return PointData[1]
+end
+
 function benzier(curvePoints:{Vector2}, SliderLength:number, CurrentLength:number)
 	local sectionLength = getSectionLength(curvePoints)
 	local NumberOfPoints = math.clamp(sectionLength/20, 10, 50) -- the curve per point
 	local NewCurvePoints = {}
 
-	local function GetBenzierPosition(t)
-		local PointData = curvePoints
-		local PointsLeft = #PointData
-		for i = PointsLeft+1,3,-1 do
-			local PointDataNew = {}
-			for a = 1,PointsLeft-1 do
-				PointDataNew[#PointDataNew+1] = PointData[1]:Lerp(PointData[a+1], t)
-			end
-			PointData = PointDataNew
-			PointsLeft-=1
-		end
-		return PointData[1]
-	end
-
 	local Previous:Vector2?
 
 	for i = 1,NumberOfPoints do
-		local newPoint = GetBenzierPosition((i-1)/(NumberOfPoints-1))
+		local newPoint = getBezierPosition((i-1)/(NumberOfPoints-1), curvePoints)
 		NewCurvePoints[#NewCurvePoints+1] = newPoint
 
 		if Previous then
@@ -98,21 +98,20 @@ function benzier(curvePoints:{Vector2}, SliderLength:number, CurrentLength:numbe
 end
 
 -- Perfect circle calculation
+local function midpoint(p1:Vector2, p2:Vector2)
+	return p1:Lerp(p2, 0.5)
+end
+
+local function perpendicularSlope(p1:Vector2, p2:Vector2)
+	local dx: number = p2.X - p1.X
+	local dy = p2.Y - p1.Y
+	-- Avoid division by zero
+	if dx == 0 then return 0 end
+	if dy == 0 then return math.huge end
+	return -dx / dy
+end
 
 function findCircleCenter(A, B, C, SliderLength):Vector2?
-	local function midpoint(p1:Vector2, p2:Vector2)
-		return p1:Lerp(p2, 0.5)
-	end
-
-	local function perpendicularSlope(p1:Vector2, p2:Vector2)
-		local dx = p2.X - p1.X
-		local dy = p2.Y - p1.Y
-		-- Avoid division by zero
-		if dx == 0 then return 0 end
-		if dy == 0 then return math.huge end
-		return -dx / dy
-	end
-
 	local midAB = midpoint(A, B)
 	local midBC = midpoint(B, C)
 
@@ -157,6 +156,16 @@ local function getDirection(A:Vector2, B:Vector2, C:Vector2)
 	end
 end
 
+local function getPointOnCircle(t: number, offset: Vector2, Direction: number, Ratio: number, Radius, PointCenter: Vector2): Vector2
+	-- wrap t in [0,1]
+	t = math.clamp(t, 0, 1)
+	local angle = math.atan2(offset.Y, offset.X) + Direction * (t * Ratio * 2 * math.pi)
+	return Vector2.new(
+		PointCenter.X + math.cos(angle) * Radius,
+		PointCenter.Y + math.sin(angle) * Radius
+	)
+end
+
 local function perfectCircle(SliderCurvePoints:{Vector2}, SliderLength:number):{Vector2}
 	local NumberOfPoints = math.clamp(math.round(SliderLength/20), 10, 100)
 	local NewCurvePoints = {}
@@ -182,19 +191,8 @@ local function perfectCircle(SliderCurvePoints:{Vector2}, SliderLength:number):{
 		return SliderCurvePoints
 	end
 
-	local function getPointOnCircle(t)
-		-- wrap t in [0,1]
-		t = math.clamp(t, 0, 1)
-		-- angle = start + direction * (fraction‑of‑circle) * 2π
-		local angle = math.atan2(offset.Y, offset.X) + Direction * (t * Ratio * 2 * math.pi)
-		return Vector2.new(
-			PointCenter.X + math.cos(angle) * Radius,
-			PointCenter.Y + math.sin(angle) * Radius
-		)
-	end
-
 	for i = 0, NumberOfPoints-1 do
-		local Point = getPointOnCircle(i/(NumberOfPoints-1))
+		local Point = getPointOnCircle(i/(NumberOfPoints-1), offset, Direction, Ratio, Radius, PointCenter)
 		NewCurvePoints[#NewCurvePoints+1] = Point
 	end
 	
@@ -217,7 +215,9 @@ function sliderTools.convertToBaseCurve(raw:string, headPosition:Vector2, isHR:b
 	local curveType
 	local curvePoints = {}
 	curvePoints[1] = headPosition	-- Include the circle position
-	for i, str in pairs(raw:split("|")) do
+	local spilited = raw:split("|")
+	for i = 1, #spilited do
+		local str = spilited[i]
 		if i == 1 then
 			curveType = str
 		else

@@ -23,6 +23,9 @@ StrainSkills.CalculateInitialStrain = {
 	end,
 }
 
+local function saveCurrentPeak(strainPeak: {number}, currentSectionPeak: number)
+	strainPeak[#strainPeak + 1] = currentSectionPeak
+end
 
 function StrainSkills.GetStrainPeak(strainData:{{number}}, strainType:string):{number}
 	local StrainPeak:{number} = {}
@@ -30,16 +33,8 @@ function StrainSkills.GetStrainPeak(strainData:{{number}}, strainType:string):{n
 	local _currentSectionEnd = 0
 	local _currentSectionPeak = 0
 	
-	local function _saveCurrentPeak()
-		StrainPeak[#StrainPeak+1] = _currentSectionPeak
-	end
-	
-	local function _startNewSection(t:number, strain:{number}, previousTime:number)
-		local _initialStrain = StrainSkills.CalculateInitialStrain.AimSpeed(t, strain, previousTime, strainType)
-		_currentSectionPeak = _initialStrain
-	end
-	
-	for i, strain in pairs(strainData) do
+	for i = 1, #strainData do
+		local strain = strainData[i]
 		if i == 1 then
 			_currentSectionEnd = math.ceil(strain[2]/_sectionLength) * _sectionLength
 		end
@@ -49,19 +44,22 @@ function StrainSkills.GetStrainPeak(strainData:{{number}}, strainType:string):{n
 			if i > 1 then
 				previousTime = strainData[i-1][2]
 			end
-			_saveCurrentPeak()
-			_startNewSection(_currentSectionEnd, strain, previousTime)
+			saveCurrentPeak(StrainPeak, _currentSectionPeak)
+			-- Start new section
+			local _initialStrain = StrainSkills.CalculateInitialStrain.AimSpeed(_currentSectionEnd, strain, previousTime, strainType)
+			_currentSectionPeak = _initialStrain
 			_currentSectionEnd += _sectionLength
 		end
 		
 		_currentSectionPeak = math.max(strain[1], _currentSectionPeak)
 	end
 	
-	_saveCurrentPeak()
+	saveCurrentPeak(StrainPeak, _currentSectionPeak)
 	
 	local FilteredPeaks = {}
 	-- We need to filters out zero strain for the worst case senario
-	for _, strain in pairs(StrainPeak) do
+	for i = 1, #StrainPeak do
+		local strain = StrainPeak[i]
 		if strain > 0 then
 			FilteredPeaks[#FilteredPeaks + 1] = strain
 		end

@@ -8,15 +8,18 @@ end
 
 function getAccuracyScore(AccuracyData, NoteCount, MaxCombo)
 	-- For SL mod (or will be NM soon), I will add an extra score to catch up the scale to be same with the ConsistencyScore
-	local Accuracy = (AccuracyData.h300*300+AccuracyData.h100*100+AccuracyData.h50*50)/((AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss)*300)
+	local TotalNotes = AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss
+	local Accuracy = (AccuracyData.h300*3+AccuracyData.h100*1+AccuracyData.h50*0.5)/(TotalNotes*3)
 	-- When the total possible combo (maximum current combo player can get) more than total note of the game
 	-- Accuracy score will rise up even more
 	local ExtraCombo = MaxCombo-NoteCount
 	-- penalty for each miss given
 	-- prevent players just "chilling out" and watching the score keep increasing
 	local ExtraAccPoint = math.max(0, ExtraCombo * Accuracy - AccuracyData.miss)
+	local ScoreAccuracy = Accuracy
+	local AccuracyScore = math.pow(ScoreAccuracy * TotalNotes + ExtraAccPoint, 2.265) * 6 * 1 * 0.3
 
-	return math.pow(ExtraAccPoint + (AccuracyData.h300*300+AccuracyData.h100*100+AccuracyData.h50*50)/300,2.265) * 6 * 1 * 0.3
+	return AccuracyScore
 end
 
 function getMinimumConsistencyScore(PlayerMaxCombo)
@@ -29,6 +32,22 @@ function getMaximumConsistencyScore(PlayerMaxCombo:number, MapMaxCombo:number):n
 	local RemainsCombo = math.max(0, MapMaxCombo - PlayerMaxCombo) -- Assume player missed all at that section
 	local RemainsScore = RemainsCombo * (RemainsCombo + 1) // 2
 	return math.max(0, math.pow(RemainsScore, 1.1704417) * 1.2255 * 6 * 0.7) + MinimumScore
+end
+
+local EX_RATE = 0.44150110375
+
+function getConsistencyScoreV2(currentConsistencyScore:number, maxConsistencyScore: number, AccuracyData)
+	local TotalNotes = AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss
+	local Accuracy = (AccuracyData.h300*3+AccuracyData.h100*1+AccuracyData.h50*0.5)/(TotalNotes*3)
+	local comboFactor = math.pow(currentConsistencyScore/maxConsistencyScore, EX_RATE)
+	return comboFactor * Accuracy * 500000
+end
+
+function getAccuracyScoreV2(AccuracyData)
+	local TotalNotes = AccuracyData.h300+AccuracyData.h100+AccuracyData.h50+AccuracyData.miss
+	local Accuracy = (AccuracyData.h300*3+AccuracyData.h100*1+AccuracyData.h50*0.5)/(TotalNotes*3)
+	
+	return math.pow(Accuracy, 5) * 500000
 end
 
 
@@ -96,8 +115,8 @@ return function(V1Score:number, AccuracyData:{MaxCombo:number,h300:number,h100:n
 	local ConsistencyScore = math.clamp(AssumedConsistencyScore, MinimumConsistencyScore, MaximumConsistencyScore) -- Clamp up the score
 	
 	local exRate = 0.44150110375
-	local AccV2Score = math.pow(AccuracyScore/MaxAccScore,exRate) * 300000 * MissPenalty
-	local ConsistencyV2Score = math.pow(ConsistencyScore/MaxConsistencyScore,exRate) * 700000 * MissPenalty
+	local AccV2Score = getAccuracyScoreV2(AccuracyData) * MissPenalty
+	local ConsistencyV2Score = getConsistencyScoreV2(ConsistencyScore, MaxConsistencyScore, AccuracyData) * MissPenalty
 	local ScoreV2 = AccV2Score + ConsistencyV2Score + SpinScore * 0.1
 	ScoreV2 *= ScoreMultiplier * V2SpeedMultiplier
 	--print(V1Score, AccV2Score, ConsistencyV2Score, SpinScore * 0.1)
