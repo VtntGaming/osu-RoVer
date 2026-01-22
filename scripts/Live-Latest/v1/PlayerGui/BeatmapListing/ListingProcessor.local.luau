@@ -28,6 +28,19 @@ local ExternalFunction_Actor = game.Players.LocalPlayer.PlayerScripts.ExternalFu
 local TargetListingFolder = workspace.Beatmaps
 if #workspace.ProcessingBeatmap:GetChildren() >= 1 then
 	TargetListingFolder = workspace.ProcessingBeatmap
+else
+	local function checkListing(mapFolder:Instance)
+		mapFolder.Destroying:Once(function()
+			while mapFolder.Parent do
+				task.wait()
+			end
+			local newFolder = workspace:WaitForChild("Beatmaps")
+			TargetListingFolder = newFolder
+			checkListing(newFolder)
+		end)
+	end
+	
+	checkListing(TargetListingFolder)
 end
 
 mapModuleVersion.Changed:Connect(function()
@@ -137,10 +150,6 @@ function LoadListing()
 	end]]
 end
 
-function compareString(s1, s2)
-	
-end
-
 function SortListing()
 	-- Local set diff sorting
 	for _,MapsetData in pairs(MapList) do
@@ -237,8 +246,47 @@ end
 local CurrentSetConnection
 local CurrentDiffNameConnection = {}
 
-function ChooseSet(MapFrame,Data,CustomDiffOrder,CustomMapID,DoNotLoadMap)
-	
+local characterList = {
+	["<"] = "&lt;",
+	[">"] = "&gt;",
+	['"'] = "&quot;",
+	["'"] = "&apos;",
+	["&"] = "&amp;"
+}
+
+function ConvertDiffName(Name)
+	local Next = 1
+
+	while true do -- yes
+		local isLoop = false
+		for i = Next,#Name do
+			local Replacement = characterList[string.sub(Name,i,i)]
+			if Replacement then
+				if Replacement == "&amp;" and string.sub(Name,i,i+4) == "&amp;"  then
+					continue
+				end
+				Name = string.sub(Name,1,i-1)..Replacement..string.sub(Name,i+1,#Name)
+				Next = i+1
+				isLoop = true
+				break
+			end
+		end
+
+		if not isLoop then break end
+	end
+
+	return Name
+end
+
+function GetSetOrder(MapFrame)
+	for i,Data in pairs(SortData[CurrentSort]) do
+		if Data.MapFrame == MapFrame then
+			return i
+		end
+	end
+end
+
+function ChooseSet(MapFrame,Data,CustomDiffOrder,CustomMapID,DoNotLoadMap)	
 	if #CurrentDiffNameConnection > 0 then
 		for _, c in pairs(CurrentDiffNameConnection) do
 			c:Disconnect()
@@ -311,40 +359,7 @@ function ChooseSet(MapFrame,Data,CustomDiffOrder,CustomMapID,DoNotLoadMap)
 
 	local CurrentSetDiffOrder = RandomMap
 
-	local function ConvertDiffName(Name)
 
-		local characterList = {
-			["<"] = "&lt;",
-			[">"] = "&gt;",
-			['"'] = "&quot;",
-			["'"] = "&apos;",
-			["&"] = "&amp;"
-		}
-
-
-		local Next = 1
-
-		while true do -- yes
-
-			local isLoop = false
-			for i = Next,#Name do
-				local Replacement = characterList[string.sub(Name,i,i)]
-				if Replacement then
-					if Replacement == "&amp;" and string.sub(Name,i,i+4) == "&amp;"  then
-						continue
-					end
-					Name = string.sub(Name,1,i-1)..Replacement..string.sub(Name,i+1,#Name)
-					Next = i+1
-					isLoop = true
-					break
-				end
-			end
-
-			if not isLoop then break end
-		end
-
-		return Name
-	end
 	
 	if MapFrame.MainFrame.DifficultyListing.Actual:FindFirstChild("Base") then
 		MapFrame.MainFrame.DifficultyListing.Actual.Base.Parent = MapFrame.MainFrame.DifficultyListing.Overlay
@@ -362,17 +377,62 @@ function ChooseSet(MapFrame,Data,CustomDiffOrder,CustomMapID,DoNotLoadMap)
 			end
 		end)
 		--DiffFrame.MainFrame.DifficultyDisplay.DiffDisplay.Text = string.format("%.2f",diffdata.DiffRating)
-		spawn(function()
+		task.spawn(function()
 			local s = tick()
 			local animTime = (1+(#diffListing-order)*0.1) * 0.5
 			local value = Instance.new("NumberValue")
 			value.Value = math.max(0,diffdata.DiffRating - 2)
 			TweenService:Create(value,TweenInfo.new(animTime,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{Value = diffdata.DiffRating}):Play()
-			while wait() and DiffFrame.Parent and tick() - s < animTime do
+			while task.wait() and DiffFrame.Parent and tick() - s < animTime do
 				DiffFrame.MainFrame.DifficultyDisplay.DiffDisplay.Text = string.format("%.2f",value.Value)
 			end
 			if DiffFrame.Parent then
 				DiffFrame.MainFrame.DifficultyDisplay.DiffDisplay.Text = string.format("%.2f",diffdata.DiffRating)
+			end
+			
+			task.wait(0.25)
+			
+			local newDiff = game.Players.LocalPlayer.PlayerGui.PlayScreen.RequestMapDifficulty:Invoke(diffdata.MapFile)
+			newDiff = math.round(newDiff * 1000) / 1000
+			
+			if newDiff ~= diffdata.DiffRating then
+				s = tick()
+				TweenService:Create(value,TweenInfo.new(0.25,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{Value = newDiff}):Play()
+				while task.wait() and DiffFrame.Parent and tick() - s < 0.25 do
+					DiffFrame.MainFrame.DifficultyDisplay.DiffDisplay.Text = string.format("%.2f",value.Value)
+				end
+
+				if DiffFrame.Parent then
+					DiffFrame.MainFrame.DifficultyDisplay.DiffDisplay.Text = string.format("%.2f",newDiff)
+				end
+				
+				local DiffFormat = newDiff
+				if DiffFormat > 10 then DiffFormat = 10 end
+
+				local HColor =  (DiffFormat <= 1.5 and 200) or (DiffFormat <= 4.5 and (1-(DiffFormat/4.5))*200) or (DiffFormat <= 6.5 and 360-((DiffFormat-4.5)/2)*120) or (DiffFormat <= 9.9 and 240) or 0
+				local SColor = (DiffFormat <= 8.5 and 255) or (DiffFormat <= 10 and 255 - (DiffFormat-8.5)*170) or (DiffFormat <= 12 and (DiffFormat-10)*127.5) or 255
+				local VColor = (DiffFormat <= 6.5 and 255) or (DiffFormat < 9 and 255 - (DiffFormat-6.5)*102) or 0
+
+				HColor /= 360
+				SColor /= 255
+				VColor /= 255
+
+
+				if DiffFormat >= 6.3 then
+					DiffFrame.MainFrame.DifficultyDisplay.DiffDisplay.UIStroke.Enabled = true
+					DiffFrame.MainFrame.DifficultyDisplay.Frame.Diff.UIStroke.Enabled = true
+				else
+					DiffFrame.MainFrame.DifficultyDisplay.DiffDisplay.UIStroke.Enabled = false
+					DiffFrame.MainFrame.DifficultyDisplay.Frame.Diff.UIStroke.Enabled = false					
+				end
+
+				local BeatmapDiffColor = Color3.fromHSV(HColor,SColor,VColor)
+				local EffectColor = Color3.fromHSV(math.max(0,HColor-0.05),math.max(SColor-0.1,1),math.min(VColor+0.1,1))
+
+				DiffFrame.MainFrame.DifficultyDisplay.DiffDisplay.TextColor3 = BeatmapDiffColor
+				DiffFrame.MainFrame.DifficultyDisplay.Frame.Diff.BackgroundColor3 = BeatmapDiffColor
+				DiffFrame.MainFrame.DifficultyDisplay.Frame.Diff.Effect.BackgroundColor3 = EffectColor
+				TweenService:Create(DiffFrame.MainFrame.DifficultyDisplay.Frame.Diff,TweenInfo.new(0.25,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(DiffFormat/10,0,1,0)}):Play()
 			end
 		end)
 		local DiffFormat = diffdata.DiffRating
@@ -402,7 +462,7 @@ function ChooseSet(MapFrame,Data,CustomDiffOrder,CustomMapID,DoNotLoadMap)
 
 		diffdata.DiffFrame = DiffFrame
 
-	TweenService:Create(DiffFrame.MainFrame.DifficultyDisplay.Frame.Diff,TweenInfo.new(0.5+(#diffListing-order)*0.1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(DiffFormat/10,0,1,0)}):Play()
+		TweenService:Create(DiffFrame.MainFrame.DifficultyDisplay.Frame.Diff,TweenInfo.new(0.5+(#diffListing-order)*0.1,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(DiffFormat/10,0,1,0)}):Play()
 		if order ==  RandomMap or CustomMapID == diffdata.BeatmapID then
 			CurrentSetDiffOrder = order
 			ChooseDiff(DiffFrame,diffdata,DoNotLoadMap)
@@ -429,14 +489,6 @@ function ChooseSet(MapFrame,Data,CustomDiffOrder,CustomMapID,DoNotLoadMap)
 	CurrentSetConnection = UserInputService.InputBegan:Connect(function(data)
 		if NavigationSwitching or not isOpen then return end
 		NavigationSwitching = true
-
-		local function GetSetOrder(MapFrame)
-			for i,Data in pairs(SortData[CurrentSort]) do
-				if Data.MapFrame == MapFrame then
-					return i
-				end
-			end
-		end
 
 		local KeyCode = data.KeyCode
 		if KeyCode == Enum.KeyCode.Up or KeyCode == Enum.KeyCode.Down then
@@ -508,6 +560,18 @@ UpdatePosEvent.Event:Connect(function()
 	script.Parent.CustomScrollChange:Fire(BaseScrollPosition,0.5)
 end)
 
+function UpdatePosition(Data, MapFrame, MaxRender)
+	if MapFrame.LayoutOrder == -1 then return end -- the frame is invisible on the filter result
+
+	local MaxRender = #Data.DiffListing*50 + 500
+
+	if MapFrame.AbsolutePosition.Y >= -MaxRender  and MapFrame.AbsolutePosition.Y < workspace.CurrentCamera.ViewportSize.Y+MaxRender then
+		MapFrame.MainFrame.Visible = true
+	else
+		MapFrame.MainFrame.Visible = false
+	end
+end
+
 function BuildListing()
 	for _,Data in pairs(MapList) do
 		local MapFrame = script.BeatmapFrame:Clone()
@@ -515,21 +579,15 @@ function BuildListing()
 
 		Data.MapFrame = MapFrame
 		local _connections:{[any]:RBXScriptConnection} = {}
+		
+		local maxRender = #Data.DiffListing*50 + 500
 
-		local function UpdatePosition()
-			if MapFrame.LayoutOrder == -1 then return end -- the frame is invisible on the filter result
-
-			local MaxRender = #Data.DiffListing*50 + 500
-
-			if MapFrame.AbsolutePosition.Y >= -MaxRender  and MapFrame.AbsolutePosition.Y < workspace.CurrentCamera.ViewportSize.Y+MaxRender then
-				MapFrame.MainFrame.Visible = true
-			else
-				MapFrame.MainFrame.Visible = false
-			end
-		end
-
-		_connections.UpdateCanvas = ListingFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(UpdatePosition)
-		_connections.UpdatePosEvent = UpdatePosEvent.Event:Connect(UpdatePosition)
+		_connections.UpdateCanvas = ListingFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+			UpdatePosition(Data,MapFrame,maxRender)
+		end)
+		_connections.UpdatePosEvent = UpdatePosEvent.Event:Connect(function()
+			UpdatePosition(Data,MapFrame,maxRender)
+		end)
 
 		local Title = Data.Metadata.Title
 		local Artist = Data.Metadata.Artist
@@ -626,15 +684,14 @@ function UpdateConnection()
 			FirstLoad = false
 
 			local CurrentMap = script.Parent.Parent.Parent.Parent.CurrentBeatmap.Value or workspace.Beatmaps:GetChildren()[#workspace.Beatmaps:GetChildren()]
-			local SetID = GetValue(require(CurrentMap), "BeatmapSetID:", 0)
-			local MapID = GetValue(require(CurrentMap), "BeatmapID:", 0)
-
-			local MapData = MapList[SetID]
-			local MapFrame = MapData.MapFrame
+			local data = require(CurrentMap)
+			local SetID = GetValue(data, "BeatmapSetID:", 0)
+			local MapID = GetValue(data, "BeatmapID:", 0)
 			
+			local MapData = MapList[SetID]
+			local MapFrame = MapData.MapFrame			
 
 			ChooseSet(MapFrame, MapData, -1, MapID, true)
-
 
 			for i = 1,30 do
 				wait()
@@ -805,14 +862,6 @@ end)
 
 UserInputService.InputBegan:Connect(function(data)
 	if NavigationSwitching or not isOpen then return end
-
-	local function GetSetOrder(MapFrame)
-		for i,Data in pairs(SortData[CurrentSort]) do
-			if Data.MapFrame == MapFrame then
-				return i
-			end
-		end
-	end
 
 	NavigationSwitching = true
 
@@ -986,6 +1035,67 @@ function convertKeyword(keyword) -- We have to make sure it got converted to the
 	return filtered
 end
 
+local DiffDataSearchList = {
+	HP = "HP", HPDRAINRATE = "HP", HEALTHDRAINRATE = "HP", HEALTH = "HP",
+	CS = "CS", CIRCLESIZE = "CS", SIZE = "CS",
+	OD = "OD", OVERALLDIFFICULTY = "OD", ACC = "OD", ACCURACY = "OD",
+	AR = "AR", APPROACHRATE = "AR",
+	DR = "DR", DIFFICULTYRATING = "DR", DIFF = "DR", SR = "DR", STARRATING = "DR", STAR = "DR", STARS = "DR"
+}
+
+function findForCondition(key)
+	if string.find(key,">=") then
+		return ">="
+	elseif string.find(key,"<=") then
+		return "<="
+	elseif string.find(key,">") then
+		return ">"
+	elseif string.find(key,"<") then
+		return "<"
+	elseif string.find(key,"=") then
+		return "="
+	end
+end
+
+function checkKey(key)
+	local conditionKey = findForCondition(key)
+	if not conditionKey then return end
+	local s,e = string.find(key,conditionKey)
+	local Value1 = string.sub(key,1,s-1)
+	local Value2 = string.sub(key,e+1,#key)
+	Value1 = DiffDataSearchList[string.upper(Value1)]
+	Value2 = tonumber(Value2)
+
+	if Value1 and Value2 then
+		return conditionKey,Value1,Value2
+	end
+end
+
+function isCondition(conditionKey,a,b)
+	-- we take rounded number of maximum 2 digits
+	a = math.round(a*100)/100
+	b = math.round(b*100)/100
+	local list = {
+		[">"] = a>b, ["<"] = a<b, [">="] = a>=b, ["<="] = a<=b, ["="] = a==b
+	}
+
+	return list[conditionKey]
+end
+
+function checkCondition(conditionKey,Value1,Value2, a)
+	local matchCount = 0
+	for _, diff in pairs(a.DiffListing) do
+		local DiffValue = diff.DiffData[Value1]
+		if isCondition(conditionKey,DiffValue,Value2) then
+			matchCount += 1
+		else
+			diff.isCurrentlyMatched = false
+		end
+	end
+
+	return matchCount > 0
+end
+
 function FilterMaps(data,keyword,diffRange)
 	keyword = convertKeyword(keyword)
 	local KeyList = SpiltKeyword(keyword)
@@ -1010,70 +1120,9 @@ function FilterMaps(data,keyword,diffRange)
 			isMatch = false
 		end
 		
-		local DiffDataSearchList = {
-			HP = "HP", HPDRAINRATE = "HP", HEALTHDRAINRATE = "HP", HEALTH = "HP",
-			CS = "CS", CIRCLESIZE = "CS", SIZE = "CS",
-			OD = "OD", OVERALLDIFFICULTY = "OD", ACC = "OD", ACCURACY = "OD",
-			AR = "AR", APPROACHRATE = "AR",
-			DR = "DR", DIFFICULTYRATING = "DR", DIFF = "DR", SR = "DR", STARRATING = "DR", STAR = "DR", STARS = "DR"
-		}
-		
-		local function findForCondition(key)
-			if string.find(key,">=") then
-				return ">="
-			elseif string.find(key,"<=") then
-				return "<="
-			elseif string.find(key,">") then
-				return ">"
-			elseif string.find(key,"<") then
-				return "<"
-			elseif string.find(key,"=") then
-				return "="
-			end
-		end
-		
-		local function checkKey(key)
-			local conditionKey = findForCondition(key)
-			if not conditionKey then return end
-			local s,e = string.find(key,conditionKey)
-			local Value1 = string.sub(key,1,s-1)
-			local Value2 = string.sub(key,e+1,#key)
-			Value1 = DiffDataSearchList[string.upper(Value1)]
-			Value2 = tonumber(Value2)
-			
-			if Value1 and Value2 then
-				return conditionKey,Value1,Value2
-			end
-		end
-		
-		local function isCondition(conditionKey,a,b)
-			-- we take rounded number of maximum 2 digits
-			a = math.round(a*100)/100
-			b = math.round(b*100)/100
-			local list = {
-				[">"] = a>b, ["<"] = a<b, [">="] = a>=b, ["<="] = a<=b, ["="] = a==b
-			}
-			
-			return list[conditionKey]
-		end
-		
-		local function checkCondition(conditionKey,Value1,Value2)
-			local matchCount = 0
-			for _, diff in pairs(a.DiffListing) do
-				local DiffValue = diff.DiffData[Value1]
-				if isCondition(conditionKey,DiffValue,Value2) then
-					matchCount += 1
-				else
-					diff.isCurrentlyMatched = false
-				end
-			end
-			
-			return matchCount > 0
-		end
-		
 		for _,key in pairs(KeyList) do
 			local condition,Value1,Value2 = checkKey(key)
-			if not (condition and Value1 and Value2 and checkCondition(condition,Value1,Value2)) and not CheckMap(a,key) then
+			if not (condition and Value1 and Value2 and checkCondition(condition,Value1,Value2,a)) and not CheckMap(a,key) then
 				isMatch = false
 				break
 			end
