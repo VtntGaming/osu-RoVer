@@ -29,6 +29,12 @@ function lerp(a:number,b:number,r:number)
 	return a + (b-a)*r
 end
 
+local function Logistic(x: number, midpointOffset: number, multiplier: number, maxValue: number): number
+	if not maxValue then maxValue = 1 end
+
+	return maxValue / (1 + math.exp(multiplier * (midpointOffset - x)))
+end
+
 local function _DeepCopy(t:{any}):{any}
 	local newT = {}
 	for index, data in pairs(t) do
@@ -86,6 +92,37 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 		weight *= decayWeight
 	end
 	return difficulty
+end
+
+local HarmonicScale = 20
+local DecayExponent = 0.85
+
+function calculator.DifficultyValueHarmonic(StrainData: {{number}}): (number, number)
+	local objectCount = #StrainData
+	if objectCount == 0 then
+		return 0, 0
+	end
+
+	-- Unlike the normal strain, we get the strains unfiltered
+	local difficulty = 0
+	local noteWeightSum = 0
+	sortStrain(StrainData)
+
+	for index = 1, objectCount do
+		local i = index - 1
+		local note = StrainData[index][1]
+
+		if note <= 0 then
+			break
+		end
+		local harmonicTerm = HarmonicScale / (1 + i)
+		local weight = (1 + harmonicTerm) / (math.pow(i, DecayExponent) + 1 + harmonicTerm)
+		noteWeightSum += weight
+
+		difficulty += note * weight
+	end
+
+	return difficulty, noteWeightSum
 end
 
 function calculator.FLDifficultyValue(StrainData:{{number}})
@@ -189,6 +226,30 @@ function calculator.CountTopWeightedStrains(strainData:{{number}}, strainType:st
 	end
 	
 	return strainCount
+end
+
+function calculator.CountTopWeightedDifficultyHarmonic(StrainData: {{number}}, difficulty: number, noteWeightSum: number)
+	if #StrainData == 0 then
+		return 0
+	end
+
+	if noteWeightSum == 0 then
+		return 0
+	end
+
+	local consistentTopNote = difficulty / noteWeightSum
+
+	if consistentTopNote == 0 then
+		return 0
+	end
+
+	local sum = 0
+	for i = 1, #StrainData do
+		local strain = StrainData[i][1]
+
+		sum += Logistic(strain / consistentTopNote, 0.88, 10, 1.1)
+	end
+	return sum
 end
 
 function calculator.getDificultSliders(strainData:{{number}})
@@ -424,18 +485,19 @@ end
 
 function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	local speedNotes = calculator.RelevantNoteCount(data.SpeedStrain)
-	
-	local aimDiffStrainCount = calculator.CountTopWeightedStrains(data.AimStrain, "Aim")
-	local speedDiffStrainCount = calculator.CountTopWeightedStrains(data.SpeedStrain, "Speed")
-	
 	local difficultSliders = calculator.getDificultSliders(data.AimSLStrain)
 	
 	local ARRate = data.DifficultyValue.AR
 	local ODRate = data.DifficultyValue.OD
 	
 	local aimDifficultyValue = calculator.DifficultyValue(data.AimStrain, "Aim")
-	local speedDifficultyValue = calculator.DifficultyValue(data.SpeedStrain, "Speed")
+	local speedDifficultyValue, speedNoteWeightSum = calculator.DifficultyValueHarmonic(data.SpeedStrain)
 	local flashlightDifficultyValue = calculator.FLDifficultyValue(data.FlashlightStrain)
+
+	
+	local aimDiffStrainCount = calculator.CountTopWeightedStrains(data.AimStrain, "Aim")
+	local speedDiffStrainCount = calculator.CountTopWeightedDifficultyHarmonic(data.SpeedStrain, speedDifficultyValue, speedNoteWeightSum)
+	
 	
 	local mechanicalDifficultyRating = calculateMechanicalDifficultyRating(aimDifficultyValue, speedDifficultyValue)
 	

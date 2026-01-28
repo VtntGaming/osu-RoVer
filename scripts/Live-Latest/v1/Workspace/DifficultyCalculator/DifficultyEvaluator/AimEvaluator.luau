@@ -16,8 +16,8 @@ local math = math
 
 -- General Multipliers
 local WIDE_ANGLE_MULTIPLIER = 1.5
-local ACUTE_ANGLE_MULTIPLIER = 2.55
-local SLIDER_MULTIPLIER = 1.35
+local ACUTE_ANGLE_MULTIPLIER = 2.3
+local SLIDER_MULTIPLIER = 1.5
 local VELOCITY_CHANGE_MULTIPLIER = 0.75
 local WIGGLE_MULTIPLIER = 1.02
 
@@ -50,13 +50,18 @@ local function calcAcuteAngleBonus(angle:number)
 	return smoothstep(angle, RAD_140, RAD_40)
 end
 
+local function getHighBPMBonus(ms: number)
+	return 1 / (1 - math.pow(0.15, ms/1000))
+end
+
 -- Inlined the calc...Bonus functions as they were simple wrappers.
 -- The direct calls to smoothstep are just as clear with named angle constants.
 
 -- The main evaluation function
 local function getAimDiff(CrrObj: preprocessing.ObjectData)
 	-- Guard clauses for objects that don't contribute to aim strain
-	if CrrObj.isSpinner or CrrObj.objID < 3 then
+	-- Index <= 1 means we need at least the 3rd object (index 2)
+	if CrrObj.isSpinner or CrrObj.objID <= 2 then
 		return 0
 	end
 
@@ -72,11 +77,14 @@ local function getAimDiff(CrrObj: preprocessing.ObjectData)
 	-- Cache frequently accessed properties into local variables
 	local crrStrainTime = CrrObj.StrainTime
 	local prevStrainTime = PrevObj.StrainTime
+	
 	local crrJumpDist = CrrObj.LazyJumpDistance
 	local prevJumpDist = PrevObj.LazyJumpDistance
 
 	-- Calculate base velocities
 	local crrVelocity = (crrJumpDist and crrStrainTime > 0) and (crrJumpDist / crrStrainTime) or 0
+	
+	-- But if the last object is a slider, extend travel velocity through slider into current object
 	if PrevObj.isSlider then
 		local travelVelocity = PrevObj.BaseTravelDistance / PrevObj.BaseTravelTime
 		local movementVelocity = CrrObj.MinimumJumpDistance / CrrObj.MinimumJumpTime
@@ -144,34 +152,48 @@ local function getAimDiff(CrrObj: preprocessing.ObjectData)
 
 	-- Velocity Change Bonus
 	if math.max(prevVelocity, crrVelocity) > 0 then
-		-- Re-calculate velocity including slider travel distance
-		local fullPrevVelocity = (prevJumpDist + (PrevPrevObj and PrevPrevObj.BaseTravelDistance or 0)) / prevStrainTime
-		local fullCrrVelocity = (crrJumpDist + (PrevObj.BaseTravelDistance or 0)) / crrStrainTime
+		local velocityPrev = prevVelocity
+		local velocityCrr = crrVelocity
+		
+		-- We want to use the average velocity over the whole object when awarding differences
+		velocityPrev = (PrevObj.LazyJumpDistance + (PrevPrevObj and PrevPrevObj.BaseTravelDistance or 0)) / prevStrainTime
+		velocityCrr = (CrrObj.LazyJumpDistance + (PrevObj.BaseTravelDistance or 0)) / crrStrainTime
 
-		local deltaV = math.abs(fullPrevVelocity - fullCrrVelocity)
-		local maxV = math.max(fullPrevVelocity, fullCrrVelocity)
+		local deltaV = math.abs(velocityPrev - velocityCrr)
+		local maxV = math.max(velocityPrev, velocityCrr)
 		local minTime = math.min(crrStrainTime, prevStrainTime)
 
 		if maxV > 0 and minTime > 0 then
+			-- Scale with ratio of difference compared to 0.5 * max dist
 			local distanceRatio = smoothstep(deltaV / maxV, 0, 1)
+			-- Reward for % distance up to 125 / strainTime for overlaps where velocity is still changing
 			local overlapVelocityBuff = math.min((NORMALIZED_DIAMETER * 1.25) / minTime, deltaV)
 
 			velocityChangeBonus = overlapVelocityBuff * distanceRatio
+			-- Penalize for rhythm changes
 			velocityChangeBonus *= (minTime / math.max(crrStrainTime, prevStrainTime)) ^ 2
 		end
 	end
 
-	-- Slider Bonus
-	if PrevObj.isSlider then
-		sliderBonus = PrevObj.BaseTravelDistance / PrevObj.BaseTravelTime
+	-- Slider Bonus - reward sliders based on velocity (check current object, not previous!)
+	if CrrObj.isSlider then
+		sliderBonus = CrrObj.BaseTravelDistance / CrrObj.BaseTravelTime
 	end
 
 	-- Final Strain Calculation
 	baseAimStrain += wiggleBonus * WIGGLE_MULTIPLIER
 	baseAimStrain += velocityChangeBonus * VELOCITY_CHANGE_MULTIPLIER
+	
+	-- Add in acute angle bonus or wide angle bonus, whichever is larger
 	baseAimStrain += math.max(acuteAngleBonus * ACUTE_ANGLE_MULTIPLIER, wideAngleBonus * WIDE_ANGLE_MULTIPLIER)
+	
+	-- Apply high circle size bonus
 	baseAimStrain *= CrrObj.SmallCircleBonus
+	
+	-- Add in additional slider velocity bonus
 	baseAimStrain += sliderBonus * SLIDER_MULTIPLIER
+	
+	baseAimStrain *= getHighBPMBonus(CrrObj.StrainTime)
 
 	return baseAimStrain
 end

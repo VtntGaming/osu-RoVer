@@ -1,5 +1,10 @@
 --[LOCATION]:[Workspace.DifficultyCalculator.StrainSkills]
 --!strict
+local Workspace = game:GetService("Workspace")
+
+local DifficultyEvaluator = require(script.Parent.DifficultyEvaluator)
+local ModData = require(Workspace.ModData)
+local BasePerfomance = require(Workspace.PerformanceCalculator.BasePerfomance)
 local StrainSkills = {}
 
 local SECTION_LENGTH = 400
@@ -66,6 +71,107 @@ function StrainSkills.GetStrainPeak(strainData:{{number}}, strainType:string):{n
 	end
 	
 	return FilteredPeaks
+end
+
+-- Sometime it would not be very easy to match everything with osu! difficulty system
+-- I need to adjust it back to the original osu!standard
+local aimAdjustedMultiplier = 1
+local speedAimAdjustedMultiplier = 1
+local totalAdjustedMultiplier = 1
+local speedAdjustedMultiplier = 1
+local aimSkillMultiplier = 26 * aimAdjustedMultiplier
+local speedAimSkillMultiplier = 1.3 * speedAimAdjustedMultiplier
+local speedSkillMultiplier = 1.03 * speedAdjustedMultiplier
+local skillMultiplierTotal = 1.01 * totalAdjustedMultiplier
+local meanExpoment = 1.2
+local flashlightSkillMultiplier = 0.05512
+
+local AimFLBaseStrainDecay = 0.15
+local SpeedBaseStrainDecay = 0.3
+
+local DIFFICULTY_VALUE_EXPOMENTAL_RATE = 1/3
+local DIFFICULTY_VALUE_MULTIPLIER_RATE = 0.265
+local DIFFICULTY_VALUE_AIM_MULTIPLIER = 1
+local DIFFICULTY_VALUE_SPEED_MULTIPLIER = 1
+local EvaluatorContainer = script.Parent.DifficultyEvaluator
+local Evaluators = {
+	Aim = require(EvaluatorContainer.AimEvaluator),
+	SpeedAim = (require(EvaluatorContainer.SpeedAimEvalulator)),
+	Speed = require(EvaluatorContainer.SpeedEvaluator),
+	Rhythm = require(EvaluatorContainer.RhythmCalculator),
+	Flashlight = require(EvaluatorContainer.FLEvaluator)
+}
+
+function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModData.ModData, ConvertedData, RawDifficulty)	
+	local AimStrain = 0
+	local SpeedAimStrain = 0
+	local SpeedStrain = 0
+	local FLStrain = 0
+	
+	local AimStrainData = {}
+	local AimSLStrainData = {}
+	local SpeedStrainData = {}
+	local RhythmDiffData = {}
+	local FLStrainData = {}
+	for objectId = 1, #ProcessedDifficultyObject do
+		local objectData = ProcessedDifficultyObject[objectId]
+		local AimDiff = Evaluators.Aim.GetAimDiff(objectData) * aimSkillMultiplier
+		local SpeedAimDiff = Evaluators.SpeedAim.GetSpeedAimDiff(objectData) * speedAimSkillMultiplier
+		local SpeedDiff = Evaluators.Speed.GetSpeedDiff(objectData) * speedSkillMultiplier
+		local RhythmDiff = Evaluators.Rhythm.GetRhythmDiff(objectData)
+		local FLDiff = modData.FL and Evaluators.Flashlight.getFlashLightDiff(objectData, modData.HD) * flashlightSkillMultiplier or 0
+		
+		local AimFLStrainDecay = math.pow(AimFLBaseStrainDecay,objectData.StrainTime/1000)
+		local SpeedStrainDecay = math.pow(SpeedBaseStrainDecay,objectData.StrainTime/1000)
+
+		if modData.TD then
+			AimDiff = math.pow(AimDiff, 0.8)
+			SpeedAimDiff = math.pow(SpeedDiff, 0.95)
+		end
+
+		-- Calculate aim & speed skill
+		AimStrain *= AimFLStrainDecay
+		AimStrain += AimDiff * (1 - AimFLStrainDecay)
+		SpeedAimStrain *= SpeedStrainDecay
+		SpeedAimStrain += SpeedAimDiff * (1 - SpeedStrainDecay)
+		local AimTotalStrain = DifficultyEvaluator.Normalise(meanExpoment, AimStrain, SpeedAimStrain) * skillMultiplierTotal
+		-- Calculate harmony speed diff
+		SpeedStrain *= SpeedStrainDecay
+		SpeedStrain += SpeedDiff * (1 - SpeedStrainDecay)
+		-- Calculate flash light skill
+		FLStrain *= AimFLStrainDecay
+		FLStrain += FLDiff
+		
+		ConvertedData[objectId].PSValue.Aim = AimDiff
+		ConvertedData[objectId].PSValue.Speed = SpeedDiff
+		ConvertedData[objectId].PSValue.Rhythm = RhythmDiff
+		ConvertedData[objectId].PSValue.Flashlight = FLDiff
+		ConvertedData[objectId].PSValue.AimStrainDecay = AimFLStrainDecay
+		ConvertedData[objectId].PSValue.SpeedStrainDecay = SpeedStrainDecay
+		ConvertedData[objectId].PSValue.FLStrainDecay = AimFLStrainDecay
+		
+		AimStrainData[#AimStrainData+1] = {AimTotalStrain, objectData.Time}
+		SpeedStrainData[#SpeedStrainData+1] = {SpeedStrain * RhythmDiff, objectData.Time}
+		RhythmDiffData[#RhythmDiffData+1] = {RhythmDiff, objectData.Time}
+		FLStrainData[#FLStrainData+1] = {FLStrain, objectData.Time}
+		
+		if objectData.isSlider then
+			AimSLStrainData[#AimSLStrainData+1] = {AimTotalStrain, objectData.Time}
+		end		
+		
+		local multiplierBase = 10
+		
+		local baseAim = math.pow(AimStrain * multiplierBase, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
+		local baseSpeed = math.pow(SpeedStrain * RhythmDiff * multiplierBase, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_SPEED_MULTIPLIER
+		local baseFL = math.pow(FLStrain * multiplierBase, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
+		local basePerfomance = ((BasePerfomance(baseAim)^1.1+BasePerfomance(baseSpeed)^1.1+BasePerfomance(baseFL)^1.1)^(1/1.1))
+		local CurrentStrain = 0.027 * math.pow(1.15, 1/3) * (math.pow(100000 / math.pow(2, 1 / 1.1) * basePerfomance ,1/3) + 4)
+		CurrentStrain = math.clamp(CurrentStrain, 0, 50) -- to prevent the graph jumping out of the limit, I've set it to 0-50
+		
+		RawDifficulty[#RawDifficulty+1] = {CurrentStrain,objectData.Time}
+	end
+
+	return AimStrainData, AimSLStrainData, SpeedStrainData, RhythmDiffData, FLStrainData
 end
 
 return StrainSkills
