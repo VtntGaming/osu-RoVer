@@ -63,56 +63,56 @@
                           "name": "CircleObject",
                           "className": "ModuleScript",
                           "filePaths": [
-                            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/CircleObject.luau"
+                            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/CircleObject.luau"
                           ]
                         },
                         {
                           "name": "GameplayTimeUtils",
                           "className": "ModuleScript",
                           "filePaths": [
-                            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/GameplayTimeUtils.luau"
+                            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/GameplayTimeUtils.luau"
                           ]
                         },
                         {
                           "name": "GetMaxScore",
                           "className": "ModuleScript",
                           "filePaths": [
-                            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/GetMaxScore.luau"
+                            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/GetMaxScore.luau"
                           ]
                         },
                         {
                           "name": "LivePlayProcessing",
                           "className": "ModuleScript",
                           "filePaths": [
-                            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/LivePlayProcessing.luau"
+                            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/LivePlayProcessing.luau"
                           ]
                         },
                         {
                           "name": "PauseScreen",
                           "className": "ModuleScript",
                           "filePaths": [
-                            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/PauseScreen.luau"
+                            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/PauseScreen.luau"
                           ]
                         },
                         {
                           "name": "RawV1ToV2",
                           "className": "ModuleScript",
                           "filePaths": [
-                            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/RawV1ToV2.luau"
+                            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/RawV1ToV2.luau"
                           ]
                         },
                         {
                           "name": "ScoreStatisticConverter",
                           "className": "ModuleScript",
                           "filePaths": [
-                            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/ScoreStatisticConverter.luau"
+                            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/ScoreStatisticConverter.luau"
                           ]
                         },
                         {
                           "name": "SliderComponent",
                           "className": "ModuleScript",
                           "filePaths": [
-                            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/SliderComponent.luau"
+                            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/SliderComponent.luau"
                           ]
                         },
                         {
@@ -123,21 +123,21 @@
                               "name": "LeaderboardController",
                               "className": "ModuleScript",
                               "filePaths": [
-                                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/Utils/LeaderboardController.luau"
+                                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/Utils/LeaderboardController.luau"
                               ]
                             },
                             {
                               "name": "ReplayParser",
                               "className": "ModuleScript",
                               "filePaths": [
-                                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/Utils/ReplayParser.luau"
+                                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/Utils/ReplayParser.luau"
                               ]
                             },
                             {
                               "name": "ScoreFormat",
                               "className": "ModuleScript",
                               "filePaths": [
-                                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/Utils/ScoreFormat.luau"
+                                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Gameplay/Utils/ScoreFormat.luau"
                               ]
                             }
                           ]
@@ -152,14 +152,14 @@
                           "name": "SliderObjManage",
                           "className": "ModuleScript",
                           "filePaths": [
-                            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Perfomance/SliderObjManage.luau"
+                            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Perfomance/SliderObjManage.luau"
                           ]
                         },
                         {
                           "name": "StreamingCode",
                           "className": "ModuleScript",
                           "filePaths": [
-                            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Perfomance/StreamingCode.luau"
+                            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/Components/Perfomance/StreamingCode.luau"
                           ]
                         }
                       ]
@@ -177,7 +177,7 @@
                   "name": "ReloadPreviewFrame",
                   "className": "Folder",
                   "filePaths": [
-                    "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/ReloadPreviewFrame/init.local.luau"
+                    "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/ReloadPreviewFrame/init.local.luau"
                   ],
                   "children": [
                     {
@@ -193,7 +193,7 @@
                   "name": "UISeparate",
                   "className": "ModuleScript",
                   "filePaths": [
-                    "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/UISeparate.luau"
+                    "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/UISeparate.luau"
                   ]
                 },
                 {
@@ -201,7 +201,7 @@
                   "className": "LocalScript",
                   "pluginManaged": true,
                   "filePaths": [
-                    "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/KiaiEffect.local.luau"
+                    "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/GameplayScripts/KiaiEffect.local.luau"
                   ]
                 }
               ]
@@ -210,7 +210,7 @@
               "name": "OsuGame",
               "className": "Folder",
               "filePaths": [
-                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/OsuGame/init.local.luau"
+                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/OsuGame/init.local.luau"
               ],
               "children": [
                 {
@@ -232,6 +232,14 @@
                   "filePaths": [
                     "scripts/Live-Latest/v1/PlayerGui\\PlayScreen\\RestartGame\\RestartgameScript.local.luau"
                   ]
+                },
+                {
+                  "name": "RestartgameScript",
+                  "className": "LocalScript",
+                  "pluginManaged": true,
+                  "filePaths": [
+                    "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/RestartGame/RestartgameScript.local.luau"
+                  ]
                 }
               ]
             },
@@ -240,7 +248,7 @@
               "className": "LocalScript",
               "pluginManaged": true,
               "filePaths": [
-                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/Cursor.local.luau"
+                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/PlayerGui/PlayScreen/Cursor.local.luau"
               ]
             }
           ]
@@ -375,49 +383,57 @@
           "name": "DifficultyCalculator",
           "className": "ModuleScript",
           "filePaths": [
-            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/init.luau"
+            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/init.luau"
           ],
           "children": [
             {
               "name": "DifficultyEvaluator",
               "className": "ModuleScript",
               "filePaths": [
-                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyEvaluator/init.luau"
+                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyEvaluator/init.luau"
               ],
               "children": [
                 {
                   "name": "AimEvaluator",
                   "className": "ModuleScript",
                   "filePaths": [
-                    "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyEvaluator/AimEvaluator.luau"
+                    "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyEvaluator/AimEvaluator.luau"
                   ]
                 },
                 {
                   "name": "DifficultyCalculationUtils",
                   "className": "ModuleScript",
                   "filePaths": [
-                    "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyEvaluator/DifficultyCalculationUtils.luau"
+                    "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyEvaluator/DifficultyCalculationUtils.luau"
                   ]
                 },
                 {
                   "name": "FLEvaluator",
                   "className": "ModuleScript",
                   "filePaths": [
-                    "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyEvaluator/FLEvaluator.luau"
+                    "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyEvaluator/FLEvaluator.luau"
                   ]
                 },
                 {
                   "name": "RhythmCalculator",
                   "className": "ModuleScript",
                   "filePaths": [
-                    "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyEvaluator/RhythmCalculator.luau"
+                    "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyEvaluator/RhythmCalculator.luau"
                   ]
                 },
                 {
                   "name": "SpeedEvaluator",
                   "className": "ModuleScript",
                   "filePaths": [
-                    "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyEvaluator/SpeedEvaluator.luau"
+                    "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyEvaluator/SpeedEvaluator.luau"
+                  ]
+                },
+                {
+                  "name": "SpeedAimEvalulator",
+                  "className": "ModuleScript",
+                  "pluginManaged": true,
+                  "filePaths": [
+                    "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyEvaluator/SpeedAimEvalulator.luau"
                   ]
                 }
               ]
@@ -426,14 +442,14 @@
               "name": "DifficultyHitObjects",
               "className": "ModuleScript",
               "filePaths": [
-                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyHitObjects.luau"
+                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/DifficultyHitObjects.luau"
               ]
             },
             {
               "name": "StrainSkills",
               "className": "ModuleScript",
               "filePaths": [
-                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/StrainSkills.luau"
+                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/DifficultyCalculator/StrainSkills.luau"
               ]
             }
           ]
@@ -442,49 +458,49 @@
           "name": "ExampleBeatmap",
           "className": "ModuleScript",
           "filePaths": [
-            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/ExampleBeatmap.luau"
+            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/ExampleBeatmap.luau"
           ]
         },
         {
           "name": "ModData",
           "className": "ModuleScript",
           "filePaths": [
-            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/ModData.luau"
+            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/ModData.luau"
           ]
         },
         {
           "name": "ObjectImport",
           "className": "ModuleScript",
           "filePaths": [
-            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/ObjectImport.luau"
+            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/ObjectImport.luau"
           ]
         },
         {
           "name": "ObjectReader",
           "className": "ModuleScript",
           "filePaths": [
-            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/ObjectReader.luau"
+            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/ObjectReader.luau"
           ]
         },
         {
           "name": "OsuConvert",
           "className": "ModuleScript",
           "filePaths": [
-            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/OsuConvert/init.luau"
+            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/OsuConvert/init.luau"
           ],
           "children": [
             {
               "name": "converterTools",
               "className": "ModuleScript",
               "filePaths": [
-                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/OsuConvert/converterTools.luau"
+                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/OsuConvert/converterTools.luau"
               ]
             },
             {
               "name": "sliderTools",
               "className": "ModuleScript",
               "filePaths": [
-                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/OsuConvert/sliderTools.luau"
+                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/OsuConvert/sliderTools.luau"
               ]
             },
             {
@@ -499,7 +515,7 @@
               "className": "Script",
               "pluginManaged": true,
               "filePaths": [
-                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/OsuConvert/test.legacy.luau"
+                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/OsuConvert/test.legacy.luau"
               ]
             }
           ]
@@ -508,28 +524,28 @@
           "name": "PerformanceCalculator",
           "className": "ModuleScript",
           "filePaths": [
-            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/PerformanceCalculator/init.luau"
+            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/PerformanceCalculator/init.luau"
           ],
           "children": [
             {
               "name": "BasePerfomance",
               "className": "ModuleScript",
               "filePaths": [
-                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/PerformanceCalculator/BasePerfomance.luau"
+                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/PerformanceCalculator/BasePerfomance.luau"
               ]
             },
             {
               "name": "BasePerfomanceFL",
               "className": "ModuleScript",
               "filePaths": [
-                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/PerformanceCalculator/BasePerfomanceFL.luau"
+                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/PerformanceCalculator/BasePerfomanceFL.luau"
               ]
             },
             {
               "name": "CombobreakConsistencyEstimatior",
               "className": "ModuleScript",
               "filePaths": [
-                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/PerformanceCalculator/CombobreakConsistencyEstimatior.luau"
+                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/PerformanceCalculator/CombobreakConsistencyEstimatior.luau"
               ]
             }
           ]
@@ -538,28 +554,28 @@
           "name": "ReplayDataTest",
           "className": "ModuleScript",
           "filePaths": [
-            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/ReplayDataTest.luau"
+            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/ReplayDataTest.luau"
           ]
         },
         {
           "name": "SkinModule",
           "className": "ModuleScript",
           "filePaths": [
-            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/SkinModule/init.luau"
+            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/SkinModule/init.luau"
           ]
         },
         {
           "name": "StoryboardConverter",
           "className": "ModuleScript",
           "filePaths": [
-            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/StoryboardConverter/init.luau"
+            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/StoryboardConverter/init.luau"
           ],
           "children": [
             {
               "name": "PathGenerator",
               "className": "ModuleScript",
               "filePaths": [
-                "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/StoryboardConverter/PathGenerator.luau"
+                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/StoryboardConverter/PathGenerator.luau"
               ]
             }
           ]
@@ -568,7 +584,29 @@
           "name": "WaitModule",
           "className": "ModuleScript",
           "filePaths": [
-            "c:/Users/pc/Desktop/Stuff/osu!RoVer/Github/osu-RoVer/scripts/Live-Latest/v1/Workspace/WaitModule.luau"
+            "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/scripts/Live-Latest/v1/Workspace/WaitModule.luau"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ServerStorage",
+      "className": "ServerStorage",
+      "pluginManaged": true,
+      "children": [
+        {
+          "name": "BeatmapListing",
+          "className": "Folder",
+          "pluginManaged": true,
+          "children": [
+            {
+              "name": "MapListing",
+              "className": "ModuleScript",
+              "pluginManaged": true,
+              "filePaths": [
+                "c:/Users/Admin/Desktop/Project/_osu/osu-rover/osu-RoVer/beatmaps/MapListing.luau"
+              ]
+            }
           ]
         }
       ]

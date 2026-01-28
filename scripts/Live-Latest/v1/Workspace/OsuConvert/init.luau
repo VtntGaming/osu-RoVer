@@ -4,21 +4,15 @@
 -- V1.47 (Size: 27.69KB)
 
 local IS_GAME_RUNNING = game:GetService("RunService"):IsRunning()	-- If it's executed from command bar, I will try to disable some of the calculation
+local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local workspace = game:GetService("Workspace")
-local BasePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
+local StrainSkills = require(workspace.DifficultyCalculator.StrainSkills)
 local calculator = require(workspace.DifficultyCalculator)
 local tool = require(script.converterTools)
 local sliderTools = require(script.sliderTools)
 local preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
-local evaluatorContainer = workspace.DifficultyCalculator.DifficultyEvaluator
 local modData = require(workspace.ModData)
-local evaluators = {
-	Aim = require(evaluatorContainer.AimEvaluator),
-	Speed = require(evaluatorContainer.SpeedEvaluator),
-	Rhythm = require(evaluatorContainer.RhythmCalculator),
-	Flashlight = require(evaluatorContainer.FLEvaluator)
-}
 
 export type ModData = modData.ModData
 
@@ -41,7 +35,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 
 		-- We do a quick inspect
 		local mapId = string.match(OsuData, "BeatmapID:([^%s]+)") or Beatmap.Name
-		local hashName = mapId..game.HttpService:JSONEncode(modData)
+		local hashName = mapId..HttpService:JSONEncode(modData)
 		cacheId = fnv1a(hashName)
 		-- Find the cache with the same map, same mod
 		if CachedData[cacheId] then
@@ -71,12 +65,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	local MapData = {}
 	local TimingPoints = {}
 	local BeatmapColor
-	local OriginalPreviewTime = -1
-	
-	local DIFFICULTY_VALUE_EXPOMENTAL_RATE = 1/3
-	local DIFFICULTY_VALUE_MULTIPLIER_RATE = 0.265
-	local DIFFICULTY_VALUE_AIM_MULTIPLIER = 1
-	local DIFFICULTY_VALUE_SPEED_MULTIPLIER = 1
+	local OriginalPreviewTime = -1	
 
 	-- Spilt into categories
 	---------------
@@ -653,68 +642,9 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		ModData = modData
 	}
 	local ProcessedDifficultyObject = preprocessing(ConvertedData, baseData)
-	local AimStrain = 0
-	local SpeedStrain = 0
-	local FLStrain = 0
 	
-	-- Skills	
-	-- Sometime it would not be very easy to match everything with osu! difficulty system
-	-- I need to adjust it back to the original osu! standard
-	local aimAdjustedMultiplier = 1
-	local speedAdjustedMultiplier = 1.12
-	local aimSkillMultiplier = 26 * aimAdjustedMultiplier
-	local speedSkillMultiplier = 1.47 * speedAdjustedMultiplier
-	local flashlightSkillMultiplier = 0.05512
-	
-	local AimFLBaseStrainDecay = 0.15
-	local SpeedBaseStrainDecay = 0.3
-	
-	for objectId = 1, #ProcessedDifficultyObject do
-		local objectData = ProcessedDifficultyObject[objectId]
-		local AimDiff = evaluators.Aim.GetAimDiff(objectData) * aimSkillMultiplier
-		local SpeedDiff = evaluators.Speed.GetSpeedDiff(objectData) * speedSkillMultiplier
-		local RhythmDiff = evaluators.Rhythm.GetRhythmDiff(objectData)
-		local FLDiff = modData.FL and evaluators.Flashlight.getFlashLightDiff(objectData, modData.HD) * flashlightSkillMultiplier or 0
-		
-		local AimFLStrainDecay = math.pow(AimFLBaseStrainDecay,objectData.DeltaTime/1000)
-		AimStrain *= AimFLStrainDecay
-		AimStrain += AimDiff
-		local SpeedStrainDecay = math.pow(SpeedBaseStrainDecay,objectData.DeltaTime/1000)
-		
-		SpeedStrain *= SpeedStrainDecay
-		SpeedStrain += SpeedDiff
-		
-		FLStrain *= AimFLStrainDecay
-		FLStrain += FLDiff		
-		
-		ConvertedData[objectId].PSValue.Aim = AimDiff
-		ConvertedData[objectId].PSValue.Speed = SpeedDiff
-		ConvertedData[objectId].PSValue.Rhythm = RhythmDiff
-		ConvertedData[objectId].PSValue.Flashlight = FLDiff
-		ConvertedData[objectId].PSValue.AimStrainDecay = AimFLStrainDecay
-		ConvertedData[objectId].PSValue.SpeedStrainDecay = SpeedStrainDecay
-		ConvertedData[objectId].PSValue.FLStrainDecay = AimFLStrainDecay
-		
-		AimStrainData[#AimStrainData+1] = {AimStrain, objectData.Time}
-		SpeedStrainData[#SpeedStrainData+1] = {SpeedStrain * RhythmDiff, objectData.Time}
-		RhythmDiffData[#RhythmDiffData+1] = {RhythmDiff, objectData.Time}
-		FLStrainData[#FLStrainData+1] = {FLStrain, objectData.Time}
-		
-		if objectData.isSlider then
-			AimSLStrainData[#AimSLStrainData+1] = {AimStrain, objectData.Time}
-		end		
-		
-		local multiplierBase = 10
-		
-		local baseAim = math.pow(AimStrain * multiplierBase, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
-		local baseSpeed = math.pow(SpeedStrain * RhythmDiff * multiplierBase, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_SPEED_MULTIPLIER
-		local baseFL = math.pow(FLStrain * multiplierBase, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
-		local basePerfomance = ((BasePerfomance(baseAim)^1.1+BasePerfomance(baseSpeed)^1.1+BasePerfomance(baseFL)^1.1)^(1/1.1))
-		local CurrentStrain = 0.027 * math.pow(1.15, 1/3) * (math.pow(100000 / math.pow(2, 1 / 1.1) * basePerfomance ,1/3) + 4)
-		CurrentStrain = math.clamp(CurrentStrain, 0, 50) -- to prevent the graph jumping out of the limit, I've set it to 0-50
-		
-		RawDifficulty[#RawDifficulty+1] = {CurrentStrain,objectData.Time}
-	end
+	-- Skills
+	AimStrainData, AimSLStrainData, SpeedStrainData, RhythmDiffData, FLStrainData = StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData, ConvertedData, RawDifficulty)
 
 	local BeatmapDifficulty = 0
 	local AimDiffStrainCount = 0

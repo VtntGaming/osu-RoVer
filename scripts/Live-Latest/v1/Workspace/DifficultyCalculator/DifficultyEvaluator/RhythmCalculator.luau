@@ -82,16 +82,13 @@ local function newIsland(delta, epsilon) -- Initiate Island class
 	return island
 end
 
+local history_time_max = 5000 -- ms
+local history_obj_max = 32
+local rhythm_overall_multiplier = 1.00
+local rhythm_ratio_multiplier = 30
 
 function rhythmCalculator.GetRhythmDiff(CrrObj)
 	-- This is the most complicate section I ever transfer
-
-	local history_time_max = 5000 -- ms
-	local history_obj_max = 32
-	local rhythm_overall_multiplier = 1.00
-	local rhythm_ratio_multiplier = 15
-
-
 	if CrrObj.isSpinner or not CrrObj.Hit300Value then
 		return 0
 	end
