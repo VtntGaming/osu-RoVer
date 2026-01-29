@@ -85,7 +85,7 @@ local speedSkillMultiplier = 1.03 * speedAdjustedMultiplier
 local skillMultiplierTotal = 1.01 * totalAdjustedMultiplier
 local readingSkillMultiplier = 2.5
 local meanExpoment = 1.2
-local flashlightSkillMultiplier = 0.05512
+local flashlightSkillMultiplier = 0.056
 
 local AimFLBaseStrainDecay = 0.15
 local SpeedBaseStrainDecay = 0.3
@@ -133,7 +133,7 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 
 		if modData.TD then
 			AimDiff = math.pow(AimDiff, 0.8)
-			SpeedAimDiff = math.pow(SpeedDiff, 0.95)
+			SpeedAimDiff = math.pow(SpeedAimDiff, 0.95)
 		end
 
 		-- Calculate aim skill
@@ -164,6 +164,7 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		SpeedStrainData[#SpeedStrainData+1] = {SpeedStrain * RhythmDiff, objectData.Time}
 		RhythmDiffData[#RhythmDiffData+1] = {RhythmDiff, objectData.Time}
 		FLStrainData[#FLStrainData+1] = {FLStrain, objectData.Time}
+		ReadingStrainData[#ReadingStrainData+1] = {ReadingStrain, objectData.Time}
 		
 		if objectData.isSlider then
 			AimSLStrainData[#AimSLStrainData+1] = {AimTotalStrain, objectData.Time}

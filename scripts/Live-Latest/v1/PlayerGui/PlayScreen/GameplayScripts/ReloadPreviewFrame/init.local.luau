@@ -250,10 +250,11 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	local AimDiffRating = ReturnData.Difficulty.AimDifficulty
 	local SpeedDiffRating = ReturnData.Difficulty.SpeedDifficulty
 	local FlashlightDifficulty = ReturnData.Difficulty.FlashLightDifficulty
+	local ReadingDifficulty = ReturnData.Difficulty.ReadingDifficulty
 	if not ModData.FL then
 		FlashlightDifficulty = 0
 	end
-	local MaxDiff = math.max(AimDiffRating, SpeedDiffRating, FlashlightDifficulty)
+	local MaxDiff = math.max(AimDiffRating, SpeedDiffRating, FlashlightDifficulty, ReadingDifficulty)
 	if ReturnData.Difficulty ~= nil then
 		local Diff = tonumber(ReturnData.Difficulty.BeatmapDifficulty)
 		if Diff > 6 then
@@ -266,6 +267,8 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 					end
 				elseif MaxDiff == SpeedDiffRating then
 					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0, (Diff-6)/3 * 0.588235, 1)
+				elseif MaxDiff == ReadingDifficulty then
+					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0.333333, (Diff-6)/3 * 0.588235, 1)
 				else
 					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0.166667, (Diff-6)/3 * 0.588235, 1)
 				end
@@ -278,6 +281,8 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 					end
 				elseif MaxDiff == SpeedDiffRating then
 					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0, 0.588235 + (Diff-9)/4 * 0.411765, 1)
+				elseif MaxDiff == ReadingDifficulty then
+					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0.333333, 0.588235 + (Diff-9)/4 * 0.411765, 1)
 				else
 					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0.166667, 0.588235 + (Diff-9)/4 * 0.411765, 1)
 				end
@@ -290,6 +295,8 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 					end
 				elseif MaxDiff == SpeedDiffRating then
 					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0, 1, 1)
+				elseif MaxDiff == ReadingDifficulty then
+					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0.333333, 1, 1)
 				else
 					PreviewFrame.Overview.BeatmapDifficulty.TextColor3 = Color3.fromHSV(0.166667, 1, 1)
 				end
@@ -529,6 +536,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 	local AimDiff = ReturnData.Difficulty.AimDifficulty
 	local SpeedDiff = ReturnData.Difficulty.SpeedDifficulty
+	local ReadingDiff = ReturnData.Difficulty.ReadingDifficulty
 	local FLDiff = ReturnData.Difficulty.FlashLightDifficulty
 	local BaseDiff = ReturnData.Difficulty.BeatmapDifficulty
 	
@@ -560,6 +568,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	DetailedInterface.Difficulty.Data.Text = string.format("%.2f (%.2fps)",BaseDiff,TotalPS)
 	DetailedInterface.AimDifficulty.Data.Text = string.format("%.2f (%.2fps)",AimDiff,RewardedAimPS)
 	DetailedInterface.SpeedDifficulty.Data.Text = string.format("%.2f (%.2fps)",SpeedDiff,RewardedSpeedPS)
+	DetailedInterface.ReadingDifficulty.Data.Text = string.format("%.2f (%.2fps)",ReadingDiff,0)
 	if ModData.FL then
 		DetailedInterface.FlashlightDifficulty.Data.Text = string.format("%.2f (%.2fps)",FLDiff,RewardedFlashlightPS)
 		DetailedInterface.FlashlightDifficulty.Data.TextTransparency = 0

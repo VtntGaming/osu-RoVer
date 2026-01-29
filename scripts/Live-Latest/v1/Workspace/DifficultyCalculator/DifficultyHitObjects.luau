@@ -133,10 +133,21 @@ local Maximum_Slider_Radius = NORMALISED_RADIUS * 2.4
 local Assumed_Slider_Radius = NORMALISED_RADIUS * 1.8
 local HIDDEN_FADE_OUT_DURATION_MULTIPLIER = 0.3
 
+local defaultFunct = function()
+	return 0
+end
+
 return function(baseList:{any}, baseData)
 	local DifficultyObjects:{ObjectData} = {}
 	for objID, crr in ipairs(baseList) do
 		local crrObj = {}::ObjectData
+
+		-- initialize important properties		
+		crrObj.TimePreempt = 600
+		crrObj.ClockRate = baseData.ModData.SA
+		crrObj.Preempt = crrObj.TimePreempt / crrObj.ClockRate
+		crrObj.TimeFadeIn = 400
+		--
 		local registeredIndex = #DifficultyObjects + 1
 		crrObj.objID = objID
 		crrObj.Previous = function(index)
@@ -148,10 +159,10 @@ return function(baseList:{any}, baseData)
 		end
 
 		crrObj.DurationSpentInvisible = function()
-			local fadeOutStartTime = crrObj.Time + crrObj.TimePreempt + crrObj.TimeFadeIn
+			local fadeOutStartTime = crrObj.Time - crrObj.TimePreempt + crrObj.TimeFadeIn
 			local fadeOutDuration = crrObj.TimePreempt * HIDDEN_FADE_OUT_DURATION_MULTIPLIER
 			
-			return (fadeOutStartTime + fadeOutDuration) - (crrObj.StartTime - crrObj.TimePreempt)
+			return (fadeOutStartTime + fadeOutDuration) - (crrObj.Time - crrObj.TimePreempt)
 		end
 
 		if crr.isSpinner then
@@ -161,9 +172,11 @@ return function(baseList:{any}, baseData)
 		-- It's a spinner, or it's previous is a spinner
 
 		if objID < 2 or crr.isSpinner or crrObj.Previous(1).isSpinner then
-			crrObj.getDoubletapness = function() return 0 end
+			crrObj.getDoubletapness = defaultFunct
+			crrObj.OpacityAt = defaultFunct
 			crrObj.Time = crr.Time
 			crrObj.isInvalid = true
+			crrObj.LazyJumpDistance = 0
 			local prevObj = crrObj.Previous(1)
 			local prevTime = prevObj and prevObj.Time or 0
 			crrObj.DeltaTime = crr.Time - prevTime
@@ -354,7 +367,7 @@ return function(baseList:{any}, baseData)
 				local nextDeltaTime = math.max(1, nextObj.DeltaTime)
 				local deltaDifference = math.abs(nextDeltaTime-crrDeltaTime)
 				local speedRatio = crrDeltaTime/math.max(crrDeltaTime,deltaDifference)
-				local windowRatio = math.pow(math.min(1, crrDeltaTime / Hit300Value), 2)
+				local windowRatio = math.pow(math.min(1, crrDeltaTime / Hit300Value), 5)
 
 				return 1 - math.pow(speedRatio, 1 - windowRatio)
 			end
@@ -403,10 +416,6 @@ return function(baseList:{any}, baseData)
 		crrObj.Radius = radius
 		crrObj.SLRepeatCount = SLRepeatCount
 		crrObj.lazyTravelDistance = 0 -- I will implement later
-		crrObj.TimePreempt = 600
-		crrObj.ClockRate = baseData.ModData.SA
-		crrObj.TimeFadeIn = 400
-		crrObj.Preempt = crrObj.TimePreempt / crrObj.ClockRate
 
 		DifficultyObjects[objID] = crrObj::ObjectData	
 	end
