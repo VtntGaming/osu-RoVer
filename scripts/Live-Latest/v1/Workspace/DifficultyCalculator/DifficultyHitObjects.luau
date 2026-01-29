@@ -16,6 +16,16 @@ SLTravelDistance = SliderLength
 }]]
 local converterTool = require(workspace.OsuConvert.converterTools)
 
+-- Cache math functions
+local math_floor = math.floor
+local math_max = math.max
+local math_min = math.min
+local math_abs = math.abs
+local math_pow = math.pow
+local math_clamp = math.clamp
+local math_atan2 = math.atan2
+local Vector2_new = Vector2.new
+
 function range(value:number):number
 	return (value - 5) / 5
 end
@@ -38,14 +48,14 @@ function h300window(od)
 
 	local value = difficultyRange(od, min, mid, max)
 
-	return math.floor(value) - 0.5
+	return math_floor(value) - 0.5
 end
 
 function positionOf(vectorTable):Vector2
 	if typeof(vectorTable) == "Vector2" then
 		return vectorTable
 	end
-	return Vector2.new(vectorTable.X, vectorTable.Y)
+	return Vector2_new(vectorTable.X, vectorTable.Y)
 end
 
 function toSLPathData(curvePoints:{Vector2})
@@ -216,7 +226,7 @@ return function(baseList:{any}, baseData)
 					local dot = v1:Dot(v2)
 					local det = v1.X * v2.Y - v1.Y * v2.X
 
-					angle = math.abs(math.atan2(det, dot))
+					angle = math_abs(math_atan2(det, dot))
 				end
 			end
 		end
@@ -270,7 +280,7 @@ return function(baseList:{any}, baseData)
 			local SliderTime = crr.SliderTime * 1000
 			-- Compute slider cursor position
 			local Tail_Leniency = -36
-			local trackingEndTime = math.max(
+			local trackingEndTime = math_max(
 				crr.Time + SliderTime + Tail_Leniency, crr.Time + SliderTime/2
 			)
 
@@ -349,27 +359,27 @@ return function(baseList:{any}, baseData)
 			TailCirclePosition = slidesCount % 2 == 0 and _curvePoints[1] or _curvePoints[#_curvePoints]
 			--
 
-			BaseTravelTime = math.max(lazySLTravelTime, MIN_DELTA_TIME)
-			BaseTravelDistance = LazyTravelDistance * math.pow(1 + (slidesCount - 1) / 2.5, 1 / 2.5)
+			BaseTravelTime = math_max(lazySLTravelTime, MIN_DELTA_TIME)
+			BaseTravelDistance = LazyTravelDistance * math_pow(1 + (slidesCount - 1) / 2.5, 1 / 2.5)
 		end
 
 		if prevDiffObj.isSlider and not baseData.ModData.NS then
-			local lastTravelTime = math.max(prevDiffObj.lazySLTravelTime, MIN_DELTA_TIME)
-			MinimumJumpTime = math.max(StrainTime - lastTravelTime, MIN_DELTA_TIME)
+			local lastTravelTime = math_max(prevDiffObj.lazySLTravelTime, MIN_DELTA_TIME)
+			MinimumJumpTime = math_max(StrainTime - lastTravelTime, MIN_DELTA_TIME)
 
 			local tailJumpDistance = (currentPosition - prevDiffObj.TailCirclePosition).Magnitude * scalingFactor
-			MinimumJumpDistance = math.max(0, math.min(LazyJumpDistance - (Maximum_Slider_Radius - Assumed_Slider_Radius), tailJumpDistance - Maximum_Slider_Radius))
+			MinimumJumpDistance = math_max(0, math_min(LazyJumpDistance - (Maximum_Slider_Radius - Assumed_Slider_Radius), tailJumpDistance - Maximum_Slider_Radius))
 		end
 
 		crrObj.getDoubletapness = function(nextObj:ObjectData)
 			if nextObj and not nextObj.isSpinner then
-				local crrDeltaTime = math.max(1, DeltaTime)
-				local nextDeltaTime = math.max(1, nextObj.DeltaTime)
-				local deltaDifference = math.abs(nextDeltaTime-crrDeltaTime)
-				local speedRatio = crrDeltaTime/math.max(crrDeltaTime,deltaDifference)
-				local windowRatio = math.pow(math.min(1, crrDeltaTime / Hit300Value), 5)
+				local crrDeltaTime = math_max(1, DeltaTime)
+				local nextDeltaTime = math_max(1, nextObj.DeltaTime)
+				local deltaDifference = math_abs(nextDeltaTime-crrDeltaTime)
+				local speedRatio = crrDeltaTime/math_max(crrDeltaTime,deltaDifference)
+				local windowRatio = math_pow(math_min(1, crrDeltaTime / Hit300Value), 5)
 
-				return 1 - math.pow(speedRatio, 1 - windowRatio)
+				return 1 - math_pow(speedRatio, 1 - windowRatio)
 			end
 			return 0
 		end
@@ -381,21 +391,21 @@ return function(baseList:{any}, baseData)
 			local TimePreempt = converterTool.DifficultyRange(baseData.AR, 1800, 1200, 450)
 
 			local fadeInStartTime = crr.Time - TimePreempt
-			local TimeFadeIn = 400 * math.min(1, TimePreempt/450)
+			local TimeFadeIn = 400 * math_min(1, TimePreempt/450)
 
 			if baseData.ModData.HD then
 				local fadeOutStartTime = crr.Time - TimePreempt + TimeFadeIn
 				local fadeOutDuration = TimePreempt * 0.3
 
-				return math.min(
-					math.clamp((t - fadeInStartTime) / TimeFadeIn, 0.0, 1.0),
-					1.0 - math.clamp((t - fadeOutStartTime) / fadeOutDuration, 0.0, 1.0))
+				return math_min(
+					math_clamp((t - fadeInStartTime) / TimeFadeIn, 0.0, 1.0),
+					1.0 - math_clamp((t - fadeOutStartTime) / fadeOutDuration, 0.0, 1.0))
 			else
-				return math.clamp((t - fadeInStartTime) / TimeFadeIn, 0.0, 1.0)
+				return math_clamp((t - fadeInStartTime) / TimeFadeIn, 0.0, 1.0)
 			end
 		end
 
-		crrObj.SmallCircleBonus = math.max(1, 1 + (30 - radius) / 40)
+		crrObj.SmallCircleBonus = math_max(1, 1 + (30 - radius) / 40)
 		crrObj.Position = positionOf(crr.Position)
 		crrObj.Time = crr.Time
 		crrObj.Angle = angle
@@ -410,7 +420,7 @@ return function(baseList:{any}, baseData)
 		crrObj.Hit300Value = Hit300Value
 		crrObj.BaseTravelTime = BaseTravelTime
 		crrObj.BaseTravelDistance = BaseTravelDistance
-		crrObj.CirclePosition = Vector2.new(crr.Position.X, crr.Position.Y)
+		crrObj.CirclePosition = Vector2_new(crr.Position.X, crr.Position.Y)
 		crrObj.SLTailPosition = SLTailPosition
 		crrObj.SLTickData = SLTickData
 		crrObj.Radius = radius

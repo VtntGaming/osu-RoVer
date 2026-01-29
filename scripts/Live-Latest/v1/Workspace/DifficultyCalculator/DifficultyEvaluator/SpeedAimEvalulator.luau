@@ -3,9 +3,16 @@ local Preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObject
 
 local SpeedAimEvaluator = {}
 
+-- Cache math functions
+local math_min = math.min
+local math_pow = math.pow
+local math_sqrt = math.sqrt
+
 local SINGLE_SPACING_THRESHOLD = 125
+local INV_SINGLE_SPACING = 1 / SINGLE_SPACING_THRESHOLD
+
 local function getHighBPMBonus(ms: number)
-	return 1 / (1 - math.pow(0.3, ms/1000))
+	return 1 / (1 - math_pow(0.3, ms/1000))
 end
 
 function SpeedAimEvaluator.GetSpeedAimDiff(CrrObj: Preprocessing.ObjectData)
@@ -20,15 +27,16 @@ function SpeedAimEvaluator.GetSpeedAimDiff(CrrObj: Preprocessing.ObjectData)
     local travelDistance = prevObj.BaseTravelDistance or 0
     local distance = travelDistance + CrrObj.LazyJumpDistance
 
-    distance = math.min(distance, SINGLE_SPACING_THRESHOLD)
+    distance = math_min(distance, SINGLE_SPACING_THRESHOLD)
 
-    local distanceBonus = math.pow(distance/SINGLE_SPACING_THRESHOLD, 3.95)
+    local distanceBonus = math_pow(distance * INV_SINGLE_SPACING, 3.95)
 
-    distanceBonus *= math.sqrt(CrrObj.SmallCircleBonus)
+    distanceBonus *= math_sqrt(CrrObj.SmallCircleBonus)
 
-    local strain = distanceBonus * 1000 / CrrObj.StrainTime
+    local strainTime = CrrObj.StrainTime
+    local strain = distanceBonus * 1000 / strainTime
 
-    strain *= getHighBPMBonus(CrrObj.StrainTime)
+    strain *= getHighBPMBonus(strainTime)
 
     return strain
 end

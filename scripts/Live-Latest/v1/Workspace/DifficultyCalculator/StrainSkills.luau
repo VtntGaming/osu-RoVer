@@ -7,16 +7,22 @@ local ModData = require(Workspace.ModData)
 local BasePerfomance = require(Workspace.PerformanceCalculator.BasePerfomance)
 local StrainSkills = {}
 
+-- Cache math functions
+local math_pow = math.pow
+local math_max = math.max
+local math_ceil = math.ceil
+local table_sort = table.sort
+
 local SECTION_LENGTH = 400
 local STRAIN_DECAY_AIMFL = 0.15
 local STRAIN_DECAY_SPEED = 0.30
 local MINIMUM_DELTA_TIME = 25
 
 function StrainSkills.StrainDecay(t:number, _type:string):number
-	t = math.max(t, MINIMUM_DELTA_TIME)
+	t = math_max(t, MINIMUM_DELTA_TIME)
 	local _decayRate = _type == "Speed" and STRAIN_DECAY_SPEED or STRAIN_DECAY_AIMFL
 	
-	return math.pow(_decayRate, t/1000)
+	return math_pow(_decayRate, t/1000)
 end
 
 StrainSkills.CalculateInitialStrain = {
@@ -24,7 +30,7 @@ StrainSkills.CalculateInitialStrain = {
 		return strain[1] * StrainSkills.StrainDecay(t, "Aim")
 	end,	
 	AimSpeed = function(t:number, strain:{number}, previousTime:number, strainType:string)
-		return strain[1] * StrainSkills.StrainDecay(math.max(0, t - previousTime), strainType)
+		return strain[1] * StrainSkills.StrainDecay(math_max(0, t - previousTime), strainType)
 	end,
 }
 
@@ -37,14 +43,16 @@ function StrainSkills.GetStrainPeak(strainData:{{number}}, strainType:string):{n
 	local _sectionLength = SECTION_LENGTH
 	local _currentSectionEnd = 0
 	local _currentSectionPeak = 0
+	local strainCount = #strainData
 	
-	for i = 1, #strainData do
+	for i = 1, strainCount do
 		local strain = strainData[i]
+		local strainTime = strain[2]
 		if i == 1 then
-			_currentSectionEnd = math.ceil(strain[2]/_sectionLength) * _sectionLength
+			_currentSectionEnd = math_ceil(strainTime/_sectionLength) * _sectionLength
 		end
 		
-		while strain[2] > _currentSectionEnd do
+		while strainTime > _currentSectionEnd do
 			local previousTime = 0
 			if i > 1 then
 				previousTime = strainData[i-1][2]
@@ -56,17 +64,22 @@ function StrainSkills.GetStrainPeak(strainData:{{number}}, strainType:string):{n
 			_currentSectionEnd += _sectionLength
 		end
 		
-		_currentSectionPeak = math.max(strain[1], _currentSectionPeak)
+		local strainValue = strain[1]
+		if strainValue > _currentSectionPeak then
+			_currentSectionPeak = strainValue
+		end
 	end
 	
 	saveCurrentPeak(StrainPeak, _currentSectionPeak)
 	
 	local FilteredPeaks = {}
+	local filteredCount = 0
 	-- We need to filters out zero strain for the worst case senario
 	for i = 1, #StrainPeak do
 		local strain = StrainPeak[i]
 		if strain > 0 then
-			FilteredPeaks[#FilteredPeaks + 1] = strain
+			filteredCount += 1
+			FilteredPeaks[filteredCount] = strain
 		end
 	end
 	
@@ -118,68 +131,93 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 	local ReadingStrainData = {}
 	local RhythmDiffData = {}
 	local FLStrainData = {}
-	for objectId = 1, #ProcessedDifficultyObject do
+	
+	-- Pre-compute mod flags
+	local isTD = modData.TD
+	local isFL = modData.FL
+	local isHD = modData.HD or false
+	
+	-- Pre-access evaluators
+	local EvaluatorAim = Evaluators.Aim
+	local EvaluatorSpeedAim = Evaluators.SpeedAim
+	local EvaluatorSpeed = Evaluators.Speed
+	local EvaluatorRhythm = Evaluators.Rhythm
+	local EvaluatorReading = Evaluators.Reading
+	local EvaluatorFlashlight = Evaluators.Flashlight
+	
+	local objectCount = #ProcessedDifficultyObject
+	local aimIdx, aimSLIdx, speedIdx, readingIdx, rhythmIdx, flIdx, rawIdx = 0, 0, 0, 0, 0, 0, 0
+	
+	for objectId = 1, objectCount do
 		local objectData = ProcessedDifficultyObject[objectId]
-		local AimDiff = Evaluators.Aim.GetAimDiff(objectData) * aimSkillMultiplier
-		local SpeedAimDiff = Evaluators.SpeedAim.GetSpeedAimDiff(objectData) * speedAimSkillMultiplier
-		local SpeedDiff = Evaluators.Speed.GetSpeedDiff(objectData) * speedSkillMultiplier
-		local RhythmDiff = Evaluators.Rhythm.GetRhythmDiff(objectData)
-		local ReadingDiff = Evaluators.Reading.GetReadingDiff(objectData, modData.HD or false) * readingSkillMultiplier
-		local FLDiff = modData.FL and Evaluators.Flashlight.getFlashLightDiff(objectData, modData.HD) * flashlightSkillMultiplier or 0
+		local strainTime = objectData.StrainTime
+		local objectTime = objectData.Time
 		
-		local AimFLStrainDecay = math.pow(AimFLBaseStrainDecay,objectData.StrainTime/1000)
-		local SpeedStrainDecay = math.pow(SpeedBaseStrainDecay,objectData.StrainTime/1000)
-		local ReadingStrainDecay = math.pow(ReadingBaseStrainDecay,objectData.StrainTime/1000)
+		local AimDiff = EvaluatorAim.GetAimDiff(objectData) * aimSkillMultiplier
+		local SpeedAimDiff = EvaluatorSpeedAim.GetSpeedAimDiff(objectData) * speedAimSkillMultiplier
+		local SpeedDiff = EvaluatorSpeed.GetSpeedDiff(objectData) * speedSkillMultiplier
+		local RhythmDiff = EvaluatorRhythm.GetRhythmDiff(objectData)
+		local ReadingDiff = EvaluatorReading.GetReadingDiff(objectData, isHD) * readingSkillMultiplier
+		local FLDiff = isFL and EvaluatorFlashlight.getFlashLightDiff(objectData, isHD) * flashlightSkillMultiplier or 0
+		
+		local strainTimeDiv1000 = strainTime / 1000
+		local AimFLStrainDecay = math_pow(AimFLBaseStrainDecay, strainTimeDiv1000)
+		local SpeedStrainDecay = math_pow(SpeedBaseStrainDecay, strainTimeDiv1000)
+		local ReadingStrainDecay = math_pow(ReadingBaseStrainDecay, strainTimeDiv1000)
 
-		if modData.TD then
-			AimDiff = math.pow(AimDiff, 0.8)
-			SpeedAimDiff = math.pow(SpeedAimDiff, 0.95)
+		if isTD then
+			AimDiff = math_pow(AimDiff, 0.8)
+			SpeedAimDiff = math_pow(SpeedAimDiff, 0.95)
 		end
 
 		-- Calculate aim skill
-		AimStrain *= AimFLStrainDecay
-		AimStrain += AimDiff * (1 - AimFLStrainDecay)
-		SpeedAimStrain *= SpeedStrainDecay
-		SpeedAimStrain += SpeedAimDiff * (1 - SpeedStrainDecay)
+		local oneMinusAimDecay = 1 - AimFLStrainDecay
+		AimStrain = AimStrain * AimFLStrainDecay + AimDiff * oneMinusAimDecay
+		local oneMinusSpeedDecay = 1 - SpeedStrainDecay
+		SpeedAimStrain = SpeedAimStrain * SpeedStrainDecay + SpeedAimDiff * oneMinusSpeedDecay
 		local AimTotalStrain = DifficultyEvaluator.Normalise(meanExpoment, AimStrain, SpeedAimStrain) * skillMultiplierTotal
 		-- Calculate speed diff
-		SpeedStrain *= SpeedStrainDecay
-		SpeedStrain += SpeedDiff * (1 - SpeedStrainDecay)
+		SpeedStrain = SpeedStrain * SpeedStrainDecay + SpeedDiff * oneMinusSpeedDecay
 		-- Calculate reading diff
-		ReadingStrain *= ReadingStrainDecay
-		ReadingStrain += ReadingDiff
+		ReadingStrain = ReadingStrain * ReadingStrainDecay + ReadingDiff
 		-- Calculate flash light skill
-		FLStrain *= AimFLStrainDecay
-		FLStrain += FLDiff
+		FLStrain = FLStrain * AimFLStrainDecay + FLDiff
 		
-		ConvertedData[objectId].PSValue.Aim = AimDiff
-		ConvertedData[objectId].PSValue.Speed = SpeedDiff
-		ConvertedData[objectId].PSValue.Rhythm = RhythmDiff
-		ConvertedData[objectId].PSValue.Flashlight = FLDiff
-		ConvertedData[objectId].PSValue.AimStrainDecay = AimFLStrainDecay
-		ConvertedData[objectId].PSValue.SpeedStrainDecay = SpeedStrainDecay
-		ConvertedData[objectId].PSValue.FLStrainDecay = AimFLStrainDecay
+		local PSValue = ConvertedData[objectId].PSValue
+		PSValue.Aim = AimDiff
+		PSValue.Speed = SpeedDiff
+		PSValue.Rhythm = RhythmDiff
+		PSValue.Flashlight = FLDiff
+		PSValue.AimStrainDecay = AimFLStrainDecay
+		PSValue.SpeedStrainDecay = SpeedStrainDecay
+		PSValue.FLStrainDecay = AimFLStrainDecay
 		
-		AimStrainData[#AimStrainData+1] = {AimTotalStrain, objectData.Time}
-		SpeedStrainData[#SpeedStrainData+1] = {SpeedStrain * RhythmDiff, objectData.Time}
-		RhythmDiffData[#RhythmDiffData+1] = {RhythmDiff, objectData.Time}
-		FLStrainData[#FLStrainData+1] = {FLStrain, objectData.Time}
-		ReadingStrainData[#ReadingStrainData+1] = {ReadingStrain, objectData.Time}
+		aimIdx += 1
+		AimStrainData[aimIdx] = {AimTotalStrain, objectTime}
+		local speedRhythm = SpeedStrain * RhythmDiff
+		speedIdx += 1
+		SpeedStrainData[speedIdx] = {speedRhythm, objectTime}
+		rhythmIdx += 1
+		RhythmDiffData[rhythmIdx] = {RhythmDiff, objectTime}
+		flIdx += 1
+		FLStrainData[flIdx] = {FLStrain, objectTime}
+		readingIdx += 1
+		ReadingStrainData[readingIdx] = {ReadingStrain, objectTime}
 		
 		if objectData.isSlider then
-			AimSLStrainData[#AimSLStrainData+1] = {AimTotalStrain, objectData.Time}
+			aimSLIdx += 1
+			AimSLStrainData[aimSLIdx] = {AimTotalStrain, objectTime}
 		end		
 		
-		local multiplierBase = 10
+		local baseAim = math_pow(AimStrain * 10, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
+		local baseSpeed = math_pow(speedRhythm * 10, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_SPEED_MULTIPLIER
+		local baseFL = math_pow(FLStrain * 10, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
+		local basePerfomance = math_pow(math_pow(BasePerfomance(baseAim), 1.1) + math_pow(BasePerfomance(baseSpeed), 1.1) + math_pow(BasePerfomance(baseFL), 1.1), 1/1.1)
+		local CurrentStrain = 0.027 * 1.04768955549 * (math_pow(100000 / 1.86606598308 * basePerfomance, 1/3) + 4)
+		CurrentStrain = CurrentStrain < 0 and 0 or (CurrentStrain > 50 and 50 or CurrentStrain)
 		
-		local baseAim = math.pow(AimStrain * multiplierBase, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
-		local baseSpeed = math.pow(SpeedStrain * RhythmDiff * multiplierBase, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_SPEED_MULTIPLIER
-		local baseFL = math.pow(FLStrain * multiplierBase, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
-		local basePerfomance = ((BasePerfomance(baseAim)^1.1+BasePerfomance(baseSpeed)^1.1+BasePerfomance(baseFL)^1.1)^(1/1.1))
-		local CurrentStrain = 0.027 * math.pow(1.15, 1/3) * (math.pow(100000 / math.pow(2, 1 / 1.1) * basePerfomance ,1/3) + 4)
-		CurrentStrain = math.clamp(CurrentStrain, 0, 50) -- to prevent the graph jumping out of the limit, I've set it to 0-50
-		
-		RawDifficulty[#RawDifficulty+1] = {CurrentStrain,objectData.Time}
+		rawIdx += 1
+		RawDifficulty[rawIdx] = {CurrentStrain, objectTime}
 	end
 
 	return AimStrainData, AimSLStrainData, SpeedStrainData, RhythmDiffData, FLStrainData, ReadingStrainData

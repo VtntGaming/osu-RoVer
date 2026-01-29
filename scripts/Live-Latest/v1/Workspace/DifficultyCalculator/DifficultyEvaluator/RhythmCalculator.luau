@@ -1,14 +1,25 @@
 --[LOCATION]:[Workspace.DifficultyCalculator.DifficultyEvaluator.RhythmCalculator]
 local rhythmCalculator = {}
 
+-- Cache math functions
+local math_exp = math.exp
+local math_clamp = math.clamp
+local math_max = math.max
+local math_min = math.min
+local math_abs = math.abs
+local math_floor = math.floor
+local math_ceil = math.ceil
+local math_pow = math.pow
+local math_sqrt = math.sqrt
+
 local function Logistic(x, midpointOffset, multiplier, maxValue)
 	if not maxValue then maxValue = 1 end
 
-	return maxValue / (1 + math.exp(multiplier * (midpointOffset - x)))
+	return maxValue / (1 + math_exp(multiplier * (midpointOffset - x)))
 end
 
 local function smoothstep(x: number, _start: number, _end: number)
-	x = math.clamp((x - _start) / (_end - _start), 0, 1)
+	x = math_clamp((x - _start) / (_end - _start), 0, 1)
 	return x * x * (3 - 2 * x)
 end
 
@@ -28,11 +39,7 @@ local function smoothstepBellCurve(x: number, mean: number?, width: number?) : n
 end
 
 local function mathTruncate(x: number):number
-	if x >= 0 then
-		return math.floor(x)
-	else
-		return math.ceil(x)
-	end
+	return x >= 0 and math_floor(x) or math_ceil(x)
 end
 
 
@@ -102,10 +109,12 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 
 	local startRatio = 0
 	local firstDeltaSwitch = false
-	local historicalNoteCount = math.min(CrrObj.objID - 1, history_obj_max)
+	local crrObjID = CrrObj.objID
+	local crrTime = CrrObj.Time
+	local historicalNoteCount = math_min(crrObjID - 1, history_obj_max)
 	local rhythmStart = 0
 
-	while rhythmStart < historicalNoteCount - 2 and CrrObj.Time - CrrObj.Previous(rhythmStart).Time < history_time_max do
+	while rhythmStart < historicalNoteCount - 2 and crrTime - CrrObj.Previous(rhythmStart).Time < history_time_max do
 		rhythmStart += 1
 	end
 
@@ -114,26 +123,26 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 
 	for i = rhythmStart, 1, -1 do
 		local currentObj = CrrObj.Previous(i)
-		local timeDecay = (history_time_max - (CrrObj.Time - currentObj.Time)) / history_time_max
+		local timeDecay = (history_time_max - (crrTime - currentObj.Time)) / history_time_max
 		local noteDecay = (historicalNoteCount - i) / historicalNoteCount
 
-		local currHistoricalDecay = math.min(noteDecay, timeDecay)
-		local currDelta = math.max(currentObj.DeltaTime, 1e-7)
-		local prevDelta = math.max(PrevObj.DeltaTime, 1e-7)
-		local lastDelta = math.max(LastObj.DeltaTime, 1e-7)
+		local currHistoricalDecay = math_min(noteDecay, timeDecay)
+		local currDelta = math_max(currentObj.DeltaTime, 1e-7)
+		local prevDelta = math_max(PrevObj.DeltaTime, 1e-7)
+		local lastDelta = math_max(LastObj.DeltaTime, 1e-7)
 
-		local deltaDifference = math.max(prevDelta, currDelta) / math.min(prevDelta, currDelta)
+		local deltaDifference = math_max(prevDelta, currDelta) / math_min(prevDelta, currDelta)
 		local deltaDifferenceFraction = deltaDifference - mathTruncate(deltaDifference)
 
-		local currRatio = 1.0 + rhythm_ratio_multiplier * math.min(0.5, smoothstepBellCurve(deltaDifferenceFraction))
+		local currRatio = 1.0 + rhythm_ratio_multiplier * math_min(0.5, smoothstepBellCurve(deltaDifferenceFraction))
 
-		local differenceMultiplier = math.clamp(2 - deltaDifference / 8, 0, 1)
+		local differenceMultiplier = math_clamp(2 - deltaDifference / 8, 0, 1)
 
-		local windowPenalty = math.min(1, math.max(0, math.abs(prevDelta - currDelta) - deltaDifferenceEpsilon) / deltaDifferenceEpsilon)
+		local windowPenalty = math_min(1, math_max(0, math_abs(prevDelta - currDelta) - deltaDifferenceEpsilon) / deltaDifferenceEpsilon)
 		local effectiveRatio = windowPenalty * currRatio * differenceMultiplier
 
 		if firstDeltaSwitch then
-			if math.abs(prevDelta - currDelta) < deltaDifferenceEpsilon then
+			if math_abs(prevDelta - currDelta) < deltaDifferenceEpsilon then
 				addDelta(Island, currDelta)
 			else
 				if currentObj.isSlider then
@@ -163,7 +172,7 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 					end
 
 					local power = Logistic(Island.delta, 58.33, 0.24, 2.75)
-					effectiveRatio *= math.min(3.0 / islandCount.Count, math.pow(1.0 / islandCount.Count, power))
+					effectiveRatio *= math_min(3.0 / islandCount.Count, math_pow(1.0 / islandCount.Count, power))
 
 					IslandList[countIndex+1] = islandCount
 				else
@@ -173,7 +182,7 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 				local doubletapness = PrevObj.getDoubletapness(currentObj)
 				effectiveRatio *= 1 - doubletapness * 0.75
 
-				rhythmComplexitySum += math.sqrt(effectiveRatio * startRatio) * currHistoricalDecay
+				rhythmComplexitySum += math_sqrt(effectiveRatio * startRatio) * currHistoricalDecay
 				startRatio = effectiveRatio
 				PrevIsland = Island
 
@@ -203,7 +212,7 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 		PrevObj = currentObj
 	end
 
-	return math.sqrt(4 + rhythmComplexitySum * rhythm_overall_multiplier) / 2
+	return math_sqrt(4 + rhythmComplexitySum * rhythm_overall_multiplier) / 2
 end
 
 return rhythmCalculator
