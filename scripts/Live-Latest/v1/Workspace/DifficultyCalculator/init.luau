@@ -11,6 +11,17 @@ local evaluator = require(script.DifficultyEvaluator)
 local StrainSkills = require(script.StrainSkills)
 local modData = require(workspace.ModData)
 
+-- Cache math functions for performance
+local math_pow = math.pow
+local math_max = math.max
+local math_min = math.min
+local math_sqrt = math.sqrt
+local math_log10 = math.log10
+local math_exp = math.exp
+local math_clamp = math.clamp
+local math_lerp = math.lerp
+local table_sort = table.sort
+
 local perfomance_base_multiplier = 1.12
 local difficulty_multiplier = 0.0675
 local normalised_expoment = 1.1
@@ -32,7 +43,7 @@ end
 local function Logistic(x: number, midpointOffset: number, multiplier: number, maxValue: number): number
 	if not maxValue then maxValue = 1 end
 
-	return maxValue / (1 + math.exp(multiplier * (midpointOffset - x)))
+	return maxValue / (1 + math_exp(multiplier * (midpointOffset - x)))
 end
 
 local function _DeepCopy(t:{any}):{any}
@@ -66,7 +77,7 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 		reducedSelectionCount = 5
 	end
 	
-	table.sort(StrainData, function(a,b)
+	table_sort(StrainData, function(a,b)
 		return a[2] < b[2]	-- Sort the timing to be perfect
 	end)
 	
@@ -75,8 +86,8 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 	sortPeak(StrainPeak)
 
 	for i = 1, #StrainPeak do
-		local scale = math.log10(math.lerp(1,10,math.clamp((i-1)/reducedSelectionCount,0,1)))
-		StrainPeak[i] *= math.lerp(ReducedStrainBaseline, 1, scale)
+		local scale = math_log10(math_lerp(1,10,math_clamp((i-1)/reducedSelectionCount,0,1)))
+		StrainPeak[i] *= lerp(ReducedStrainBaseline, 1, scale)
 		if i > 10 then
 			break
 		end
@@ -121,7 +132,7 @@ function calculator.DifficultyValueHarmonic(StrainData: {{number}}, type: string
 			break
 		end
 		local harmonicTerm = harmonicScale / (1 + i)
-		local weight = (1 + harmonicTerm) / (math.pow(i, decayExponent) + 1 + harmonicTerm)
+		local weight = (1 + harmonicTerm) / (math_pow(i, decayExponent) + 1 + harmonicTerm)
 		noteWeightSum += weight
 
 		difficulty += note * weight
@@ -131,7 +142,7 @@ function calculator.DifficultyValueHarmonic(StrainData: {{number}}, type: string
 end
 
 function calculator.FLDifficultyValue(StrainData:{{number}})
-	table.sort(StrainData, function(a,b)
+	table_sort(StrainData, function(a,b)
 		return a[2] < b[2]	-- Sort the timing to be perfect
 	end)
 	local StrainPeak = StrainSkills.GetStrainPeak(StrainData, "Flashlight")
@@ -140,8 +151,7 @@ function calculator.FLDifficultyValue(StrainData:{{number}})
 	
 	local difficulty = 0
 	for i = 1, #StrainPeak do
-		local strain = StrainPeak[i]
-		difficulty += strain
+		difficulty += StrainPeak[i]
 	end
 	return difficulty
 end
@@ -162,7 +172,7 @@ function calculator.LiveDifficultyValue(StrainPeak:{number}, strainType:string):
 	sortPeak(StrainPeak)
 	
 	for i = 1, #StrainPeak do
-		local scale = math.log10(lerp(1,10,math.clamp((i-1)/reducedSelectionCount,0,1)))
+		local scale = math_log10(lerp(1,10,math_clamp((i-1)/reducedSelectionCount,0,1)))
 		StrainPeak[i] *= lerp(ReducedStrainBaseline, 1, scale)
 		if i > 10 then
 			break
@@ -205,9 +215,10 @@ function calculator.RelevantNoteCount(strainData:{{number}})
 	end
 	
 	local relevantNoteCount = 0
+	local invMaxStrain = 1 / maxStrain
 	for i = 1, #strainData do
 		local strain = strainData[i]
-		relevantNoteCount += 1 / (1 + math.exp(-(strain[1]/maxStrain * 12 - 6)))
+		relevantNoteCount += 1 / (1 + math_exp(-(strain[1] * invMaxStrain * 12 - 6)))
 	end
 	
 	return relevantNoteCount
@@ -225,9 +236,10 @@ function calculator.CountTopWeightedStrains(strainData:{{number}}, strainType:st
 	end
 	
 	local strainCount = 0
+	local invConsistentTopStrain = 1 / consistenTopStrain
 	for i = 1, #strainData do
 		local strain = strainData[i]
-		strainCount += 1.1 / (1 + math.exp(-10 * (strain[1] / consistenTopStrain - 0.88)))
+		strainCount += 1.1 / (1 + math_exp(-10 * (strain[1] * invConsistentTopStrain - 0.88)))
 	end
 	
 	return strainCount
@@ -270,9 +282,10 @@ function calculator.getDificultSliders(strainData:{{number}})
 	end
 	
 	local strainDiff = 0
+	local invMaxSLStrain = 1 / maxSLStrain
 	for i = 1, #strainData do
 		local strain = strainData[i]
-		strainDiff += 1 / (1 + math.exp(-(strain[1]/maxSLStrain * 12 - 6)))
+		strainDiff += 1 / (1 + math_exp(-(strain[1] * invMaxSLStrain * 12 - 6)))
 	end
 	
 	return strainDiff
@@ -313,11 +326,11 @@ export type DifficultyAttributes = {
 }
 
 function calculateDifficultyRatingBase(value)
-	return math.sqrt(value) * difficulty_multiplier
+	return math_sqrt(value) * difficulty_multiplier
 end
 
 function calculateStarRating(basePerfomance: number)
-	return math.pow(basePerfomance * perfomance_base_multiplier, 1/3)
+	return math_pow(basePerfomance * perfomance_base_multiplier, 1/3)
 end
 function calculator.CalculateVisibilityBonus(modData:ModData, AR:number, visibilityFactor:number)
 	if not visibilityFactor then
@@ -326,15 +339,15 @@ function calculator.CalculateVisibilityBonus(modData:ModData, AR:number, visibil
 	
 	local isAlwayParticallyVisible = true
 	
-	local readingBonus = 0.04 * (12 - math.max(AR, 7))
+	local readingBonus = 0.04 * (12 - math_max(AR, 7))
 	readingBonus *= visibilityFactor
 
 	if AR < 7 then
-		readingBonus += (isAlwayParticallyVisible and 0.03 or 0.045) * (7 - math.max(AR , 0))
+		readingBonus += (isAlwayParticallyVisible and 0.03 or 0.045) * (7 - math_max(AR , 0))
 	end
 	
 	if AR < 0 then
-		readingBonus += (isAlwayParticallyVisible and 0.075 or 0.1) * (1 - math.pow(1.5, AR))
+		readingBonus += (isAlwayParticallyVisible and 0.075 or 0.1) * (1 - math_pow(1.5, AR))
 	end
 	
 	return readingBonus
@@ -358,8 +371,9 @@ function calculator.ComputeAimRating(aimDifficultyValue:number, modData:ModData,
 	
 	local ratingMultiplier = 1
 	-- Apply the OD difficulty to the aim rating
-	ratingMultiplier *= 0.98 + math.pow(math.max(0, OD), 2) / 2500
-	return aimRating * math.pow(ratingMultiplier, 1/3)
+	local odMax = math_max(0, OD)
+	ratingMultiplier *= 0.98 + odMax * odMax / 2500
+	return aimRating * math_pow(ratingMultiplier, 1/3)
 end
 
 function calculator.ComputeSpeedRating(speedDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number)
@@ -383,7 +397,7 @@ function calculator.ComputeReadingRating(readingDifficultyValue: number, modData
 	local readingRating = calculateDifficultyRatingBase(readingDifficultyValue)
 
 	if modData.TD then
-		readingRating = math.pow(readingRating, 0.8)
+		readingRating = math_pow(readingRating, 0.8)
 	end
 
 	if modData.RX then
@@ -398,9 +412,10 @@ function calculator.ComputeReadingRating(readingDifficultyValue: number, modData
 	end
 
 	local ratingMultiplier = 1
-	ratingMultiplier *= 0.75 + math.pow(math.max(0, OD), 2.2) / 800
+	local odMax = math_max(0, OD)
+	ratingMultiplier *= 0.75 + math_pow(odMax, 2.2) / 800
 
-	return readingRating * math.pow(ratingMultiplier, 1/3)
+	return readingRating * math_pow(ratingMultiplier, 1/3)
 end
 
 function calculator.ComputeFlashlightRating(flashlightDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number)
@@ -411,7 +426,7 @@ function calculator.ComputeFlashlightRating(flashlightDifficultyValue:number, mo
 	end
 	
 	if modData.TD then
-		flRating = math.pow(flRating, 0.8)
+		flRating = math_pow(flRating, 0.8)
 	end
 	
 	if modData.RX then
@@ -430,12 +445,13 @@ function calculator.ComputeFlashlightRating(flashlightDifficultyValue:number, mo
 	--end
 	
 	local ratingMultiplier = 1
-	ratingMultiplier *= 0.7 + 0.1 * math.min(1.0, totalHit / 200.0) +
-		(totalHit > 200 and (0.2 * math.min(1.0, (totalHit - 200) / 200.0)) or 0.0)
+	ratingMultiplier *= 0.7 + 0.1 * math_min(1.0, totalHit / 200.0) +
+		(totalHit > 200 and (0.2 * math_min(1.0, (totalHit - 200) / 200.0)) or 0.0)
 	
-	ratingMultiplier *= 0.98 + math.pow(math.max(0, OD), 2) / 2500
+	local odMax = math_max(0, OD)
+	ratingMultiplier *= 0.98 + odMax * odMax / 2500
 	
-	return flRating * math.sqrt(ratingMultiplier)
+	return flRating * math_sqrt(ratingMultiplier)
 end
 
 function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes

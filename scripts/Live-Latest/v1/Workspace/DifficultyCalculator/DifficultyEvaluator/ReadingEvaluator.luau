@@ -1,8 +1,16 @@
 local workspace = game:GetService("Workspace")
 local DifficultyEvaluator = require(script.Parent)
-local DifficultyCalculationUtils = require(script.Parent.DifficultyCalculationUtils)
 local preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
 
+-- Cache math functions for faster access
+local math_clamp = math.clamp
+local math_pow = math.pow
+local math_sqrt = math.sqrt
+local math_max = math.max
+local math_min = math.min
+local math_abs = math.abs
+local math_cos = math.cos
+local math_rad = math.rad
 
 type DifficultyHitObject = preprocessing.ObjectData
 local ReadingEvaluator = {}
@@ -18,10 +26,14 @@ local PREEMPT_BALANCING_FACTOR = 140000
 local PREEMPT_STARTING_POINT = 500
 local MINIMUM_ANGLE_RELEVANCY_TIME = 2000
 local MAXIMUM_ANGLE_RELEVANCY_TIME = 200
+-- Pre-computed constants
+local HALF_READING_WINDOW = READING_WINDOW_SIZE / 2
+local RAD_30 = math_rad(30)
 
 local function smootherstep(x: number, _start: number, _end: number)
-	x = math.clamp((x - _start) / (_end - _start), 0.0, 1.0)
-	return x * x * x * (x * (6.0 * x - 15.0) + 10.0)
+	x = math_clamp((x - _start) / (_end - _start), 0.0, 1.0)
+	local x2 = x * x
+	return x2 * x * (x * (6.0 * x - 15.0) + 10.0)
 end
 
 local function calculateDensityDifficulty(nextObj: DifficultyHitObject?, 
@@ -29,16 +41,16 @@ local function calculateDensityDifficulty(nextObj: DifficultyHitObject?,
     constantAngleNerfFactor: number, 
     pastObjectDifficultyInfluence: number,
     currentVisibleObjectDensity: number)
-    local futureObjectDifficultyInfluence = math.sqrt(currentVisibleObjectDensity)
+    local futureObjectDifficultyInfluence = math_sqrt(currentVisibleObjectDensity)
 
     if nextObj then
         futureObjectDifficultyInfluence *= smootherstep(nextObj.LazyJumpDistance, 15, DISTANCE_INFLUENCE_THRESHOLD)
     end
 
-    local noteDensityDifficulty = math.pow(pastObjectDifficultyInfluence + futureObjectDifficultyInfluence, 1.7) * 0.4 * constantAngleNerfFactor * velocity
+    local noteDensityDifficulty = math_pow(pastObjectDifficultyInfluence + futureObjectDifficultyInfluence, 1.7) * 0.4 * constantAngleNerfFactor * velocity
 
-    noteDensityDifficulty = math.max(0, noteDensityDifficulty - DENSITY_DIFFICULTY_BASE)
-    noteDensityDifficulty = math.pow(noteDensityDifficulty, 0.45) * DENSITY_MULTIPLIER
+    noteDensityDifficulty = math_max(0, noteDensityDifficulty - DENSITY_DIFFICULTY_BASE)
+    noteDensityDifficulty = math_pow(noteDensityDifficulty, 0.45) * DENSITY_MULTIPLIER
 
     return noteDensityDifficulty
 end
@@ -48,27 +60,28 @@ local function calculateHiddenDifficulty(
     pastObjectDifficultyInfluence: number, 
     currentVisibleObjectDensity: number, 
     velocity: number, 
-    constantAngleNerfFactor: number)
+    constantAngleNerfFactor: number,
+    previousObj: DifficultyHitObject)
     
     local timeSpentInvisible = crrObj.DurationSpentInvisible() / crrObj.ClockRate
 
-    local timeSpentInvisibleFactor = math.pow(timeSpentInvisible, 2.2) * 0.022
+    local timeSpentInvisibleFactor = math_pow(timeSpentInvisible, 2.2) * 0.022
 
-    local densityFactor = math.pow(currentVisibleObjectDensity + pastObjectDifficultyInfluence, 3.3) * 3
+    local densityFactor = math_pow(currentVisibleObjectDensity + pastObjectDifficultyInfluence, 3.3) * 3
     local hiddenDifficulty = (timeSpentInvisibleFactor + densityFactor) * constantAngleNerfFactor * velocity * 0.01
-    hiddenDifficulty = math.pow(hiddenDifficulty, 0.4) * HIDDEN_MULTIPLIER
+    hiddenDifficulty = math_pow(hiddenDifficulty, 0.4) * HIDDEN_MULTIPLIER
 
-    local previousObj = crrObj.Previous(1)
-
-    if crrObj.LazyJumpDistance == 0 and crrObj.OpacityAt(previousObj.Time + previousObj.Preempt) == 0 and previousObj.Time + previousObj.Preempt > crrObj.Time then
-        hiddenDifficulty += HIDDEN_MULTIPLIER * 7500 / math.pow(crrObj.StrainTime, 1.5)
+    local prevTimePreempt = previousObj.Time + previousObj.Preempt
+    if crrObj.LazyJumpDistance == 0 and crrObj.OpacityAt(prevTimePreempt) == 0 and prevTimePreempt > crrObj.Time then
+        hiddenDifficulty += HIDDEN_MULTIPLIER * 7500 / math_pow(crrObj.StrainTime, 1.5)
     end
 
     return hiddenDifficulty
 end
 
 local function calculatePreemptDifficulty(velocity: number, constantAngleNerfFactor: number, preempt: number)
-    local preemptDifficulty = math.pow((PREEMPT_STARTING_POINT - preempt + math.abs(preempt - PREEMPT_STARTING_POINT)) / 2, 2.5) / PREEMPT_BALANCING_FACTOR
+    local diff = PREEMPT_STARTING_POINT - preempt
+    local preemptDifficulty = math_pow((diff + math_abs(diff)) * 0.5, 2.5) / PREEMPT_BALANCING_FACTOR
     preemptDifficulty *= constantAngleNerfFactor * velocity
 
     return preemptDifficulty
@@ -92,7 +105,7 @@ local function retrievePastVisibleObjects(current: DifficultyHitObject): {Diffic
 end
 
 local function getTimeNerfFactor(dt)
-    return math.clamp(2 - dt / (READING_WINDOW_SIZE / 2), 0, 1)
+    return math_clamp(2 - dt / HALF_READING_WINDOW, 0, 1)
 end
 
 local function getPastObjectDifficultyInfluence(crrObj: DifficultyHitObject)
@@ -139,6 +152,9 @@ local function getConstantAngleNerfFactor(current: DifficultyHitObject)
     local constantAngleCount = 0
     local index = 0
     local currentTimeGap = 0
+    local currentAngle = current.Angle
+    local currentTime = current.Time
+    local reverseLerpDenom = 1 / (MINIMUM_ANGLE_RELEVANCY_TIME - MAXIMUM_ANGLE_RELEVANCY_TIME)
 
     while currentTimeGap < MINIMUM_ANGLE_RELEVANCY_TIME do
         local loopObj = current.Previous(index + 1)
@@ -147,20 +163,20 @@ local function getConstantAngleNerfFactor(current: DifficultyHitObject)
             break
         end
 
-        local longIntervalFactor = 1 - DifficultyCalculationUtils.ReverseLerp(loopObj.StrainTime, MAXIMUM_ANGLE_RELEVANCY_TIME, MINIMUM_ANGLE_RELEVANCY_TIME)
+        local longIntervalFactor = 1 - math_clamp((loopObj.StrainTime - MAXIMUM_ANGLE_RELEVANCY_TIME) * reverseLerpDenom, 0, 1)
 
-        if loopObj.Angle and current.Angle then
-            local angleDifference = math.abs(current.Angle - loopObj.Angle)
+        if loopObj.Angle and currentAngle then
+            local angleDifference = math_abs(currentAngle - loopObj.Angle)
             local stackFactor = smootherstep(loopObj.LazyJumpDistance, 0, NORMALIZED_RADIUS)
 
-            constantAngleCount += math.cos(3 * math.min(math.rad(30), angleDifference * stackFactor)) * longIntervalFactor
+            constantAngleCount += math_cos(3 * math_min(RAD_30, angleDifference * stackFactor)) * longIntervalFactor
         end
 
-        currentTimeGap = current.Time - loopObj.Time
+        currentTimeGap = currentTime - loopObj.Time
         index += 1
     end
 
-    return math.clamp(2 / constantAngleCount, 0.2, 1)
+    return math_clamp(2 / constantAngleCount, 0.2, 1)
 end
 
 function ReadingEvaluator.GetReadingDiff(crrObj: DifficultyHitObject, isHidden: boolean)
@@ -169,13 +185,19 @@ function ReadingEvaluator.GetReadingDiff(crrObj: DifficultyHitObject, isHidden: 
     end
 
     local nextObj = crrObj.Next(1)
-    local velocity = math.max(1, crrObj.LazyJumpDistance / crrObj.StrainTime) 
+    local strainTime = crrObj.StrainTime
+    local lazyJumpDistance = crrObj.LazyJumpDistance
+    local velocity = math_max(1, lazyJumpDistance / strainTime) 
     local currentVisibleObjectDensity = retrieveCurrentVisibleObjectDensity(crrObj)
     local pastObjectDifficultyInfluence = getPastObjectDifficultyInfluence(crrObj)
     local constantAngleNerfFactor = getConstantAngleNerfFactor(crrObj)
     local noteDensityDifficulty = calculateDensityDifficulty(nextObj, velocity, constantAngleNerfFactor, pastObjectDifficultyInfluence, currentVisibleObjectDensity)
     
-    local hiddenDifficulty = isHidden and calculateHiddenDifficulty(crrObj, pastObjectDifficultyInfluence, currentVisibleObjectDensity, velocity, constantAngleNerfFactor) or 0
+    local hiddenDifficulty = 0
+    if isHidden then
+        local previousObj = crrObj.Previous(1)
+        hiddenDifficulty = calculateHiddenDifficulty(crrObj, pastObjectDifficultyInfluence, currentVisibleObjectDensity, velocity, constantAngleNerfFactor, previousObj)
+    end
 
     local preemptDifficulty = calculatePreemptDifficulty(velocity, constantAngleNerfFactor, crrObj.Preempt)
 

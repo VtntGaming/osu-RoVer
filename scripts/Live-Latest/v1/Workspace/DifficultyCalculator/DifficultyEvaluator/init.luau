@@ -2,8 +2,12 @@
 --!strict
 local evaluator = {}
 
+-- Cache math functions
+local math_clamp = math.clamp
+local math_pow = math.pow
+
 function evaluator.ReverseLerp(x:number, _start:number, _end:number)
-	return math.clamp((x - _start) / (_end - _start), 0.0, 1.0)
+	return math_clamp((x - _start) / (_end - _start), 0.0, 1.0)
 end
 
 function evaluator.milisecondToBPM(ms:number, delimiter:any)
@@ -27,12 +31,12 @@ function evaluator.Normalise(power:number, ...:number)
 
 	for i = 1, data.n do
 		local num = data[i]
-		sum += num ^ power
+		sum += math_pow(num, power)
 		count += 1
 	end
 
 	if count > 0 then
-		return math.pow(sum, 1/power)
+		return math_pow(sum, 1/power)
 	else
 		return 0
 	end
