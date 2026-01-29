@@ -10,10 +10,10 @@
       "$ignoreUnknownInstances": true
     },
     "ReplicatedStorage": {
-        "$ignoreUnknownInstances": true
+      "$ignoreUnknownInstances": true
     },
     "ServerScriptService": {
-        "$ignoreUnknownInstances": true
+      "$ignoreUnknownInstances": true
     },
     "StarterPlayer": {
       "$ignoreUnknownInstances": true
@@ -28,13 +28,11 @@
         "RestartGame": {
           "$className": "TextButton",
           "$ignoreUnknownInstances": true,
-          "RestartgameScript": {       
-            "$className": "LocalScript",     
+          "RestartgameScript": {
             "$path": "scripts/Live-Latest/v1/PlayerGui/PlayScreen/RestartGame/RestartgameScript.local.luau"
           }
         },
         "OsuGame": {
-          "$className": "LocalScript",
           "$path": "scripts/Live-Latest/v1/PlayerGui/PlayScreen/OsuGame/init.local.luau"
         }
       }
