@@ -328,6 +328,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	local AimDifficulty = 0
 	local SpeedDifficulty = 0
 	local FlashlightDifficulty = 0
+	local ReadingDifficulty = 0
 	local NoteCount = {
 		Circle = 0, Slider = 0, Spinner = 0
 	}
@@ -702,6 +703,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			AimStrain = AimStrainData,
 			AimSLStrain = AimSLStrainData,
 			SpeedStrain = SpeedStrainData,
+			ReadingStrain = ReadingStrainData,
 			FlashlightStrain = FLStrainData,
 			DifficultyValue = DifficultyValue,
 			ModData = modData,
@@ -714,6 +716,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		SpeedDiffStrainCount = difficultyAttributes.SpeedDifficultStrainCount
 		SpeedRelevantNoteCount = difficultyAttributes.SpeedNoteCount
 		FlashlightDifficulty = difficultyAttributes.FlashlightDifficulty
+		ReadingDifficulty = difficultyAttributes.ReadingDifficulty
 
 		BeatmapDifficulty = difficultyAttributes.StarRating
 	end
@@ -723,6 +726,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	ReturningData.Difficulty.BeatmapDifficulty = BeatmapDifficulty
 	ReturningData.Difficulty.AimDifficulty = AimDifficulty
 	ReturningData.Difficulty.SpeedDifficulty = SpeedDifficulty
+	ReturningData.Difficulty.ReadingDifficulty = ReadingDifficulty
 	ReturningData.Difficulty.FlashLightDifficulty = FlashlightDifficulty
 	ReturningData.Difficulty.AimDifficultyStrainCount = AimDiffStrainCount
 	ReturningData.Difficulty.SpeedDifficultyStrainCount = SpeedDiffStrainCount

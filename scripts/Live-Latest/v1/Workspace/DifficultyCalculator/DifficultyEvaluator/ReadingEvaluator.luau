@@ -61,7 +61,7 @@ local function calculateHiddenDifficulty(
     local previousObj = crrObj.Previous(1)
 
     if crrObj.LazyJumpDistance == 0 and crrObj.OpacityAt(previousObj.Time + previousObj.Preempt) == 0 and previousObj.Time + previousObj.Preempt > crrObj.Time then
-        hiddenDifficulty += HIDDEN_MULTIPLIER * 7500 / math.pow(crrObj.Time, 1.5)
+        hiddenDifficulty += HIDDEN_MULTIPLIER * 7500 / math.pow(crrObj.StrainTime, 1.5)
     end
 
     return hiddenDifficulty
@@ -164,12 +164,12 @@ local function getConstantAngleNerfFactor(current: DifficultyHitObject)
 end
 
 function ReadingEvaluator.GetReadingDiff(crrObj: DifficultyHitObject, isHidden: boolean)
-    if crrObj.isSpinner or crrObj.objID < 2 then
+    if crrObj.isSpinner or crrObj.objID <= 2 then
         return 0
     end
 
     local nextObj = crrObj.Next(1)
-    local velocity = math.max(1, crrObj.LazyJumpDistance / crrObj.StrainTime)
+    local velocity = math.max(1, crrObj.LazyJumpDistance / crrObj.StrainTime) 
     local currentVisibleObjectDensity = retrieveCurrentVisibleObjectDensity(crrObj)
     local pastObjectDifficultyInfluence = getPastObjectDifficultyInfluence(crrObj)
     local constantAngleNerfFactor = getConstantAngleNerfFactor(crrObj)

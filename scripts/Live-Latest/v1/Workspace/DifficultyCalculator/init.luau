@@ -94,10 +94,15 @@ function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
 	return difficulty
 end
 
-local HarmonicScale = 20
-local DecayExponent = 0.85
+local HarmonicScale = 1
+local DecayExponent = 0.9
 
-function calculator.DifficultyValueHarmonic(StrainData: {{number}}): (number, number)
+local SpeedHarmonicScale = 20
+local SpeedDecayExponent = 0.85
+
+function calculator.DifficultyValueHarmonic(StrainData: {{number}}, type: string): (number, number)
+	local harmonicScale = type == "Speed" and SpeedHarmonicScale or HarmonicScale
+	local decayExponent = type == "Speed" and SpeedDecayExponent or DecayExponent
 	local objectCount = #StrainData
 	if objectCount == 0 then
 		return 0, 0
@@ -115,8 +120,8 @@ function calculator.DifficultyValueHarmonic(StrainData: {{number}}): (number, nu
 		if note <= 0 then
 			break
 		end
-		local harmonicTerm = HarmonicScale / (1 + i)
-		local weight = (1 + harmonicTerm) / (math.pow(i, DecayExponent) + 1 + harmonicTerm)
+		local harmonicTerm = harmonicScale / (1 + i)
+		local weight = (1 + harmonicTerm) / (math.pow(i, decayExponent) + 1 + harmonicTerm)
 		noteWeightSum += weight
 
 		difficulty += note * weight
@@ -277,6 +282,7 @@ export type Data = {
 	AimStrain:{{number}},
 	AimSLStrain:{{number}},
 	SpeedStrain:{{number}},
+	ReadingStrain:{{number}},
 	FlashlightStrain:{{number}},
 	DifficultyValue:{
 		CS:number,
@@ -298,10 +304,12 @@ export type DifficultyAttributes = {
 	AimDifficulty:number,
 	AimDifficultySliderCount:number,
 	SpeedDifficulty:number,
+	ReadingDifficulty:number,
 	SpeedNoteCount:number,
 	FlashlightDifficulty:number,
 	AimDifficultStrainCount:number,
-	SpeedDifficultStrainCount:number
+	SpeedDifficultStrainCount:number,
+	ReadingDifficultStrainCount: number
 }
 
 function calculateDifficultyRatingBase(value)
@@ -332,35 +340,13 @@ function calculator.CalculateVisibilityBonus(modData:ModData, AR:number, visibil
 	return readingBonus
 end
 
-function calculateAimVisibilityFactor(AR:number, attributes)
-	local ar_factor_end_point = 11.5
-	
-	local mechanicalDifficultyFactor = evaluator.ReverseLerp(attributes.mechanicalDifficultyRating, 5, 10)
-	local arFactorStartingPoint = lerp(9, 10.33, mechanicalDifficultyFactor)
-	
-	return evaluator.ReverseLerp(AR, ar_factor_end_point, arFactorStartingPoint)
-end
-
-function calculateSpeedVisibilityFactor(AR:number, attributes)
-	local ar_factor_end_point = 11.5
-
-	local mechanicalDifficultyFactor = evaluator.ReverseLerp(attributes.mechanicalDifficultyRating, 5, 10)
-	local arFactorStartingPoint = lerp(10, 10.33, mechanicalDifficultyFactor)
-
-	return evaluator.ReverseLerp(AR, ar_factor_end_point, arFactorStartingPoint)
-end
-
-function calculator.ComputeAimRating(aimDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number, attributes)
+function calculator.ComputeAimRating(aimDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number)
 	if modData.AP then
 		return 0
 	end
 	
 	local aimRating = calculateDifficultyRatingBase(aimDifficultyValue)
-	
-	if modData.TD then
-		aimRating = math.pow(aimRating, 0.8)
-	end
-	
+
 	if modData.RX then
 		aimRating *= 0.9
 	end
@@ -371,32 +357,12 @@ function calculator.ComputeAimRating(aimDifficultyValue:number, modData:ModData,
 	end
 	
 	local ratingMultiplier = 1
-	local ARLengthBonus = 0.95 + 0.4 * math.min(1 , totalHit / 2000) + (totalHit > 2000 and math.log10(totalHit/2000) * 0.5 or 0)
-	local ARFactor = 0
-	
-	if AR > 10.33 then
-		ARFactor = 0.3 * (AR - 10.33)
-	elseif AR < 8 then
-		ARFactor = 0.05 * (8 - AR)
-	end
-	
-	if modData.RX then
-		ARFactor = 0
-	end
-	
-	ratingMultiplier += ARFactor * ARLengthBonus
-	
-	if modData.HD then
-		local visibilityFactor = calculateAimVisibilityFactor(AR, attributes)
-		ratingMultiplier += calculator.CalculateVisibilityBonus(modData, AR, visibilityFactor)
-	end
-		
 	-- Apply the OD difficulty to the aim rating
 	ratingMultiplier *= 0.98 + math.pow(math.max(0, OD), 2) / 2500
 	return aimRating * math.pow(ratingMultiplier, 1/3)
 end
 
-function calculator.ComputeSpeedRating(speedDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number, attributes)
+function calculator.ComputeSpeedRating(speedDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number)
 	if modData.RX then
 		return 0
 	end
@@ -410,31 +376,34 @@ function calculator.ComputeSpeedRating(speedDifficultyValue:number, modData:ModD
 		speedRating *= 1 - magnetisedStrength * 0.3
 	end
 	
-	local ratingMultiplier = 1
-	local ARLengthBonus = 0.95 + 0.4 * math.min(1 , totalHit / 2000) + (totalHit > 2000 and math.log10(totalHit/2000) * 0.5 or 0)
-	local ARFactor = 0
-	
-	if AR > 10.33 then
-		ARFactor = 0.3 * (AR - 10.33)
-	end
-	
-	if modData.AP then
-		ARFactor = 0
-	end
-	
-	ratingMultiplier += ARFactor * ARLengthBonus
-	
-	if modData.HD then
-		local visibilityFactor = calculateSpeedVisibilityFactor(AR, attributes)
-		ratingMultiplier *= 1 + calculator.CalculateVisibilityBonus(modData, AR, visibilityFactor)
-	end
-	
-	ratingMultiplier *= 0.95 + math.pow(math.max(0, OD), 2)/750
-	
-	return speedRating * math.pow(ratingMultiplier, 1/3)
+	return speedRating
 end
 
-function calculator.ComputeFlashlightRating(flashlightDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number, attributes)
+function calculator.ComputeReadingRating(readingDifficultyValue: number, modData:ModData, OD:number)
+	local readingRating = calculateDifficultyRatingBase(readingDifficultyValue)
+
+	if modData.TD then
+		readingRating = math.pow(readingRating, 0.8)
+	end
+
+	if modData.RX then
+		readingRating *= 0.7
+	elseif modData.AP then
+		readingRating *= 0.4
+	end
+
+	if modData.MG then
+		local magnetisedStrength = modData.MG.Strength or 0
+		readingRating *= 1 - magnetisedStrength
+	end
+
+	local ratingMultiplier = 1
+	ratingMultiplier *= 0.75 + math.pow(math.max(0, OD), 2.2) / 800
+
+	return readingRating * math.pow(ratingMultiplier, 1/3)
+end
+
+function calculator.ComputeFlashlightRating(flashlightDifficultyValue:number, modData:ModData, totalHit:number, AR:number, OD:number)
 	local flRating = calculateDifficultyRatingBase(flashlightDifficultyValue)
 	
 	if not modData.FL then
@@ -446,7 +415,9 @@ function calculator.ComputeFlashlightRating(flashlightDifficultyValue:number, mo
 	end
 	
 	if modData.RX then
-		flRating = 0.7
+		flRating *= 0.7
+	elseif modData.AP then
+		flRating *= 0.4
 	end
 	
 	if modData.MG then
@@ -467,22 +438,6 @@ function calculator.ComputeFlashlightRating(flashlightDifficultyValue:number, mo
 	return flRating * math.sqrt(ratingMultiplier)
 end
 
-function calculateMechanicalDifficultyRating(aimValue: number, speedValue: number): number
-	
-	local totalValue = math.pow(aimValue ^ 1.1 + speedValue ^ 1.1, 1/1.1)
-	
-	return calculateStarRating(totalValue)
-end
-
-function calculateDifficultyMultiplier(modData:ModData, totalHits:number, spinnerCount:number)
-	local multiplier = perfomance_base_multiplier
-	if modData.SO and totalHits > 0 then
-		multiplier *= 1 - math.pow(spinnerCount / totalHits, 0.85)
-	end
-	
-	return multiplier
-end
-
 function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	local speedNotes = calculator.RelevantNoteCount(data.SpeedStrain)
 	local difficultSliders = calculator.getDificultSliders(data.AimSLStrain)
@@ -491,40 +446,42 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	local ODRate = data.DifficultyValue.OD
 	
 	local aimDifficultyValue = calculator.DifficultyValue(data.AimStrain, "Aim")
-	local speedDifficultyValue, speedNoteWeightSum = calculator.DifficultyValueHarmonic(data.SpeedStrain)
+	local speedDifficultyValue, speedNoteWeightSum = calculator.DifficultyValueHarmonic(data.SpeedStrain, "Speed")
+	local readingDifficultyValue, readingNoteWeightSum = calculator.DifficultyValueHarmonic(data.ReadingStrain, "Reading")
 	local flashlightDifficultyValue = calculator.FLDifficultyValue(data.FlashlightStrain)
 
 	
 	local aimDiffStrainCount = calculator.CountTopWeightedStrains(data.AimStrain, "Aim")
 	local speedDiffStrainCount = calculator.CountTopWeightedDifficultyHarmonic(data.SpeedStrain, speedDifficultyValue, speedNoteWeightSum)
+	local readingDiffStrainCount = calculator.CountTopWeightedDifficultyHarmonic(data.ReadingStrain, readingDifficultyValue, readingNoteWeightSum)
 	
-	
-	local mechanicalDifficultyRating = calculateMechanicalDifficultyRating(aimDifficultyValue, speedDifficultyValue)
-	
-	local aimRating = calculator.ComputeAimRating(aimDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
-	local speedRating = calculator.ComputeSpeedRating(speedDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
-	local flashlightRating = calculator.ComputeFlashlightRating(flashlightDifficultyValue, data.ModData, data.NoteCount.Total, ARRate, ODRate, {})
+	local aimRating = calculator.ComputeAimRating(aimDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate)
+	local speedRating = calculator.ComputeSpeedRating(speedDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate)
+	local flashlightRating = calculator.ComputeFlashlightRating(flashlightDifficultyValue, data.ModData, data.NoteCount.Total, ARRate, ODRate)
+	local readingRating = calculator.ComputeReadingRating(readingDifficultyValue, data.ModData, ODRate)
 	
 	local aimBasePerfomance = basePerfomance(aimRating)
 	local speedBasePerfomance = basePerfomance(speedRating)
+	local readingBasePerformance = basePerfomance(readingRating)
 	local flashlightBasePerfomance = basePerfomanceFL(flashlightRating)
+	local baseCognitionPerformance = evaluator.Normalise(2, readingBasePerformance, flashlightBasePerfomance)
 	
-	local basePerfomance = math.pow(
-		aimBasePerfomance ^ 1.1 + speedBasePerfomance ^ 1.1 + flashlightBasePerfomance ^ 1.1, 1 / 1.1
-	)
+	local basePerformance = evaluator.Normalise(normalised_expoment, aimBasePerfomance, speedBasePerfomance, baseCognitionPerformance)
 	
 	-- local multiplier = calculateDifficultyMultiplier(data.ModData, data.NoteCount.Total, data.NoteCount.Spinner)
-	local starRating = calculateStarRating(basePerfomance)
+	local starRating = calculateStarRating(basePerformance)
 	
 	local Attributes = {
 		StarRating = starRating,
 		AimDifficulty = aimRating,
 		AimDifficultySliderCount = difficultSliders,
 		SpeedDifficulty = speedRating,
+		ReadingDifficulty = readingRating,
 		SpeedNoteCount = speedNotes,
 		FlashlightDifficulty = flashlightRating,
 		AimDifficultStrainCount = aimDiffStrainCount,
-		SpeedDifficultStrainCount = speedDiffStrainCount
+		SpeedDifficultStrainCount = speedDiffStrainCount,
+		ReadingDifficultStrainCount = readingDiffStrainCount
 	}
 	
 	return Attributes
@@ -556,11 +513,10 @@ function calculator.GetDifficultyAttributesFromLiveData(Attributes:LiveDifficult
 	local aimDifficultyValue = calculator.LiveDifficultyValue(Attributes.AimPeak, "Aim")
 	local speedDifficultyValue = calculator.LiveDifficultyValue(Attributes.SpeedPeak, "Speed")
 	local flashlightDifficultyValue = Attributes.ModData.FL and calculator.LiveFLDifficultyValue(Attributes.FLPeak) or 0
-	local mechanicalDifficultyRating = calculateMechanicalDifficultyRating(aimDifficultyValue, speedDifficultyValue)
 	
-	local aimRating = calculator.ComputeAimRating(aimDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
-	local speedRating = calculator.ComputeSpeedRating(speedDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate, {mechanicalDifficultyRating = mechanicalDifficultyRating})
-	local flashlightRating = calculator.ComputeFlashlightRating(flashlightDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate, {})
+	local aimRating = calculator.ComputeAimRating(aimDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate)
+	local speedRating = calculator.ComputeSpeedRating(speedDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate)
+	local flashlightRating = calculator.ComputeFlashlightRating(flashlightDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate)
 	
 	local aimBasePerfomance = basePerfomance(aimRating)
 	local speedBasePerfomance = basePerfomance(speedRating)
