@@ -323,6 +323,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	local AimSLStrainData = {}
 	local SpeedStrainData = {}
 	local RhythmDiffData = {}
+	local ReadingStrainData = {}
 	local FLStrainData = {}
 	local AimDifficulty = 0
 	local SpeedDifficulty = 0
@@ -644,7 +645,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	local ProcessedDifficultyObject = preprocessing(ConvertedData, baseData)
 	
 	-- Skills
-	AimStrainData, AimSLStrainData, SpeedStrainData, RhythmDiffData, FLStrainData = StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData, ConvertedData, RawDifficulty)
+	AimStrainData, AimSLStrainData, SpeedStrainData, RhythmDiffData, FLStrainData, ReadingStrainData = StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData, ConvertedData, RawDifficulty)
 
 	local BeatmapDifficulty = 0
 	local AimDiffStrainCount = 0
