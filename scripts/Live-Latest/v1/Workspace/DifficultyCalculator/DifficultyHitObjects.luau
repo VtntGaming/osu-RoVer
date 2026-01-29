@@ -94,6 +94,8 @@ export type ObjectData = {
 	Previous:(index:number) -> (ObjectData),
 	Next:(index:number) -> (ObjectData),
 	getDoubletapness:(nextObj:ObjectData) -> (number),
+	OpacityAt: (t: number) -> (number),
+	DurationSpentInvisible: () -> number,
 	isInvalid:boolean,
 	isSpinner:boolean,
 	isSlider:boolean,
@@ -118,6 +120,10 @@ export type ObjectData = {
 	Radius:number,
 	SLRepeatCount:number,
 	lazyTravelDistance:number,
+	Preempt: number,
+	TimePreempt: number,
+	ClockRate: number,
+	TimeFadeIn: number
 }
 
 local NORMALISED_RADIUS = 50
@@ -125,6 +131,7 @@ local NORMALISED_RADIUS = 50
 local MIN_DELTA_TIME = 25
 local Maximum_Slider_Radius = NORMALISED_RADIUS * 2.4
 local Assumed_Slider_Radius = NORMALISED_RADIUS * 1.8
+local HIDDEN_FADE_OUT_DURATION_MULTIPLIER = 0.3
 
 return function(baseList:{any}, baseData)
 	local DifficultyObjects:{ObjectData} = {}
@@ -139,6 +146,14 @@ return function(baseList:{any}, baseData)
 		crrObj.Next = function(index)
 			return DifficultyObjects[registeredIndex + index]
 		end
+
+		crrObj.DurationSpentInvisible = function()
+			local fadeOutStartTime = crrObj.Time + crrObj.TimePreempt + crrObj.TimeFadeIn
+			local fadeOutDuration = crrObj.TimePreempt * HIDDEN_FADE_OUT_DURATION_MULTIPLIER
+			
+			return (fadeOutStartTime + fadeOutDuration) - (crrObj.StartTime - crrObj.TimePreempt)
+		end
+
 		if crr.isSpinner then
 			crrObj.isSpinner = true
 		end
@@ -388,6 +403,10 @@ return function(baseList:{any}, baseData)
 		crrObj.Radius = radius
 		crrObj.SLRepeatCount = SLRepeatCount
 		crrObj.lazyTravelDistance = 0 -- I will implement later
+		crrObj.TimePreempt = 600
+		crrObj.ClockRate = baseData.ModData.SA
+		crrObj.TimeFadeIn = 400
+		crrObj.Preempt = crrObj.TimePreempt / crrObj.ClockRate
 
 		DifficultyObjects[objID] = crrObj::ObjectData	
 	end

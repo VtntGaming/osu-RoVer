@@ -83,11 +83,13 @@ local aimSkillMultiplier = 26 * aimAdjustedMultiplier
 local speedAimSkillMultiplier = 1.3 * speedAimAdjustedMultiplier
 local speedSkillMultiplier = 1.03 * speedAdjustedMultiplier
 local skillMultiplierTotal = 1.01 * totalAdjustedMultiplier
+local readingSkillMultiplier = 2.5
 local meanExpoment = 1.2
 local flashlightSkillMultiplier = 0.05512
 
 local AimFLBaseStrainDecay = 0.15
 local SpeedBaseStrainDecay = 0.3
+local ReadingBaseStrainDecay = 0.8
 
 local DIFFICULTY_VALUE_EXPOMENTAL_RATE = 1/3
 local DIFFICULTY_VALUE_MULTIPLIER_RATE = 0.265
@@ -99,18 +101,21 @@ local Evaluators = {
 	SpeedAim = (require(EvaluatorContainer.SpeedAimEvalulator)),
 	Speed = require(EvaluatorContainer.SpeedEvaluator),
 	Rhythm = require(EvaluatorContainer.RhythmCalculator),
-	Flashlight = require(EvaluatorContainer.FLEvaluator)
+	Flashlight = require(EvaluatorContainer.FLEvaluator),
+	Reading = require(EvaluatorContainer.ReadingEvaluator)
 }
 
 function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModData.ModData, ConvertedData, RawDifficulty)	
 	local AimStrain = 0
 	local SpeedAimStrain = 0
 	local SpeedStrain = 0
+	local ReadingStrain = 0
 	local FLStrain = 0
 	
 	local AimStrainData = {}
 	local AimSLStrainData = {}
 	local SpeedStrainData = {}
+	local ReadingStrainData = {}
 	local RhythmDiffData = {}
 	local FLStrainData = {}
 	for objectId = 1, #ProcessedDifficultyObject do
@@ -119,25 +124,30 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		local SpeedAimDiff = Evaluators.SpeedAim.GetSpeedAimDiff(objectData) * speedAimSkillMultiplier
 		local SpeedDiff = Evaluators.Speed.GetSpeedDiff(objectData) * speedSkillMultiplier
 		local RhythmDiff = Evaluators.Rhythm.GetRhythmDiff(objectData)
+		local ReadingDiff = Evaluators.Reading.GetReadingDiff(objectData, modData.HD or false) * readingSkillMultiplier
 		local FLDiff = modData.FL and Evaluators.Flashlight.getFlashLightDiff(objectData, modData.HD) * flashlightSkillMultiplier or 0
 		
 		local AimFLStrainDecay = math.pow(AimFLBaseStrainDecay,objectData.StrainTime/1000)
 		local SpeedStrainDecay = math.pow(SpeedBaseStrainDecay,objectData.StrainTime/1000)
+		local ReadingStrainDecay = math.pow(ReadingBaseStrainDecay,objectData.StrainTime/1000)
 
 		if modData.TD then
 			AimDiff = math.pow(AimDiff, 0.8)
 			SpeedAimDiff = math.pow(SpeedDiff, 0.95)
 		end
 
-		-- Calculate aim & speed skill
+		-- Calculate aim skill
 		AimStrain *= AimFLStrainDecay
 		AimStrain += AimDiff * (1 - AimFLStrainDecay)
 		SpeedAimStrain *= SpeedStrainDecay
 		SpeedAimStrain += SpeedAimDiff * (1 - SpeedStrainDecay)
 		local AimTotalStrain = DifficultyEvaluator.Normalise(meanExpoment, AimStrain, SpeedAimStrain) * skillMultiplierTotal
-		-- Calculate harmony speed diff
+		-- Calculate speed diff
 		SpeedStrain *= SpeedStrainDecay
 		SpeedStrain += SpeedDiff * (1 - SpeedStrainDecay)
+		-- Calculate reading diff
+		ReadingStrain *= ReadingStrainDecay
+		ReadingStrain += ReadingDiff
 		-- Calculate flash light skill
 		FLStrain *= AimFLStrainDecay
 		FLStrain += FLDiff
@@ -171,7 +181,7 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		RawDifficulty[#RawDifficulty+1] = {CurrentStrain,objectData.Time}
 	end
 
-	return AimStrainData, AimSLStrainData, SpeedStrainData, RhythmDiffData, FLStrainData
+	return AimStrainData, AimSLStrainData, SpeedStrainData, RhythmDiffData, FLStrainData, ReadingStrainData
 end
 
 return StrainSkills
