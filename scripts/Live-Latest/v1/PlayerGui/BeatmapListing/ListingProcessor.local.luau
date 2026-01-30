@@ -560,12 +560,13 @@ UpdatePosEvent.Event:Connect(function()
 	script.Parent.CustomScrollChange:Fire(BaseScrollPosition,0.5)
 end)
 
-function UpdatePosition(Data, MapFrame, MaxRender)
+local cached = {}
+
+function UpdatePosition(Data, MapFrame)
 	if MapFrame.LayoutOrder == -1 then return end -- the frame is invisible on the filter result
 
 	local MaxRender = #Data.DiffListing*50 + 500
-
-	if MapFrame.AbsolutePosition.Y >= -MaxRender  and MapFrame.AbsolutePosition.Y < workspace.CurrentCamera.ViewportSize.Y+MaxRender then
+	if MapFrame.AbsolutePosition.Y >= -MaxRender and MapFrame.AbsolutePosition.Y < workspace.CurrentCamera.ViewportSize.Y+MaxRender then
 		MapFrame.MainFrame.Visible = true
 	else
 		MapFrame.MainFrame.Visible = false
@@ -573,21 +574,13 @@ function UpdatePosition(Data, MapFrame, MaxRender)
 end
 
 function BuildListing()
+	local eventQueueFrame = {}
 	for _,Data in pairs(MapList) do
 		local MapFrame = script.BeatmapFrame:Clone()
 		MapFrame.Parent = ListingFrame
 
 		Data.MapFrame = MapFrame
 		local _connections:{[any]:RBXScriptConnection} = {}
-		
-		local maxRender = #Data.DiffListing*50 + 500
-
-		_connections.UpdateCanvas = ListingFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-			UpdatePosition(Data,MapFrame,maxRender)
-		end)
-		_connections.UpdatePosEvent = UpdatePosEvent.Event:Connect(function()
-			UpdatePosition(Data,MapFrame,maxRender)
-		end)
 
 		local Title = Data.Metadata.Title
 		local Artist = Data.Metadata.Artist
@@ -601,8 +594,27 @@ function BuildListing()
 			ChooseSet(MapFrame,Data)
 		end)
 		
+		eventQueueFrame[#eventQueueFrame+1] = {
+			MapFrame = MapFrame,
+			Data = Data
+		}
+		
 		Data._connections = _connections
 	end
+	
+	local function onEvent()
+		for i = 1, #eventQueueFrame do
+			local data = eventQueueFrame[i]
+			local Data = data.Data
+			local MapFrame = data.MapFrame
+
+			UpdatePosition(Data,MapFrame)
+		end
+	end
+
+	
+	UpdatePosEvent.Event:Connect(onEvent)
+	ListingFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(onEvent)
 	
 	-- layout
 
@@ -1213,10 +1225,12 @@ function SetVisible(obj)
 		if a:IsA("TextButton") then
 			if a ~= obj then
 				TweenService:Create(a,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.9 ,BackgroundColor3 = Color3.new(1,1,1), TextColor3 = Color3.new(1, 1, 1)}):Play()
+			else
+				TweenService:Create(obj,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.25,BackgroundColor3 = Color3.new(1, 1, 0.498039), TextColor3 = Color3.new(0, 0, 0)}):Play()				
 			end
 		end
 	end
-	TweenService:Create(obj,TweenInfo.new(0.1,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.25,BackgroundColor3 = Color3.new(1, 1, 0.498039), TextColor3 = Color3.new(0, 0, 0)}):Play()
+	
 end
 
 SortTypeFrame.TitleName.MouseButton1Click:Connect(function()
