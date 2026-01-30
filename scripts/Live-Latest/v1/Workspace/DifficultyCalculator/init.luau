@@ -454,6 +454,12 @@ function calculator.ComputeFlashlightRating(flashlightDifficultyValue:number, mo
 	return flRating * math_sqrt(ratingMultiplier)
 end
 
+function calculator.SumCognitionDifficulty(reading: number, flashlight: number)
+	local cognition = evaluator.Normalise(2, reading, flashlight)
+
+	return flashlight >= reading and cognition or math_lerp(reading + flashlight, cognition, flashlight / reading)
+end
+
 function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	local speedNotes = calculator.RelevantNoteCount(data.SpeedStrain)
 	local difficultSliders = calculator.getDificultSliders(data.AimSLStrain)
@@ -480,7 +486,7 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	local speedBasePerfomance = basePerfomance(speedRating)
 	local readingBasePerformance = basePerfomance(readingRating)
 	local flashlightBasePerfomance = basePerfomanceFL(flashlightRating)
-	local baseCognitionPerformance = evaluator.Normalise(2, readingBasePerformance, flashlightBasePerfomance)
+	local baseCognitionPerformance = calculator.SumCognitionDifficulty(readingBasePerformance, flashlightBasePerfomance)
 	
 	local basePerformance = evaluator.Normalise(normalised_expoment, aimBasePerfomance, speedBasePerfomance, baseCognitionPerformance)
 	

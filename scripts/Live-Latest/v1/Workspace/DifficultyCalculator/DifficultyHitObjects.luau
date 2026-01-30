@@ -143,20 +143,26 @@ local Maximum_Slider_Radius = NORMALISED_RADIUS * 2.4
 local Assumed_Slider_Radius = NORMALISED_RADIUS * 1.8
 local HIDDEN_FADE_OUT_DURATION_MULTIPLIER = 0.3
 
+
+local PREEMPT_MIN = 450
+local PREEMPT_MID = 1200
+local PREEMPT_MAX = 1800
+
 local defaultFunct = function()
 	return 0
 end
 
 return function(baseList:{any}, baseData)
 	local DifficultyObjects:{ObjectData} = {}
-	for objID, crr in ipairs(baseList) do
+	for objID = 1, #baseList do
+		local crr = baseList[objID]
 		local crrObj = {}::ObjectData
 
 		-- initialize important properties		
-		crrObj.TimePreempt = 600
+		crrObj.TimePreempt = converterTool.DifficultyRange(baseData.AR, PREEMPT_MAX, PREEMPT_MID, PREEMPT_MIN)
 		crrObj.ClockRate = baseData.ModData.SA
 		crrObj.Preempt = crrObj.TimePreempt / crrObj.ClockRate
-		crrObj.TimeFadeIn = 400
+		crrObj.TimeFadeIn = 400 * math.min(1, crrObj.TimePreempt / PREEMPT_MIN)
 		--
 		local registeredIndex = #DifficultyObjects + 1
 		crrObj.objID = objID
@@ -388,7 +394,7 @@ return function(baseList:{any}, baseData)
 			if t > crr.Time then
 				return 0
 			end
-			local TimePreempt = converterTool.DifficultyRange(baseData.AR, 1800, 1200, 450)
+			local TimePreempt = crrObj.TimePreempt
 
 			local fadeInStartTime = crr.Time - TimePreempt
 			local TimeFadeIn = 400 * math_min(1, TimePreempt/450)

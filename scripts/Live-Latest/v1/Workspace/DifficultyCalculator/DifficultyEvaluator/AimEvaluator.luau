@@ -187,13 +187,14 @@ local function getAimDiff(CrrObj: preprocessing.ObjectData)
 	-- Add in acute angle bonus or wide angle bonus, whichever is larger
 	baseAimStrain += math.max(acuteAngleBonus * ACUTE_ANGLE_MULTIPLIER, wideAngleBonus * WIDE_ANGLE_MULTIPLIER)
 	
-	-- Apply high circle size bonus
-	baseAimStrain *= CrrObj.SmallCircleBonus
 	
 	-- Add in additional slider velocity bonus
 	baseAimStrain += sliderBonus * SLIDER_MULTIPLIER
 	
 	baseAimStrain *= getHighBPMBonus(CrrObj.StrainTime)
+	
+	-- Apply high circle size bonus
+	baseAimStrain *= CrrObj.SmallCircleBonus
 
 	return baseAimStrain
 end
