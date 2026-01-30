@@ -11,7 +11,7 @@ local StrainSkills = {}
 local math_pow = math.pow
 local math_max = math.max
 local math_ceil = math.ceil
-local table_sort = table.sort
+-- local table_sort = table.sort
 
 local SECTION_LENGTH = 400
 local STRAIN_DECAY_AIMFL = 0.15
@@ -129,7 +129,6 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 	local AimSLStrainData = {}
 	local SpeedStrainData = {}
 	local ReadingStrainData = {}
-	local RhythmDiffData = {}
 	local FLStrainData = {}
 	
 	-- Pre-compute mod flags
@@ -193,15 +192,14 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		PSValue.FLStrainDecay = AimFLStrainDecay
 		
 		aimIdx += 1
-		AimStrainData[aimIdx] = {AimTotalStrain, objectTime}
-		local speedRhythm = SpeedStrain * RhythmDiff
 		speedIdx += 1
-		SpeedStrainData[speedIdx] = {speedRhythm, objectTime}
 		rhythmIdx += 1
-		RhythmDiffData[rhythmIdx] = {RhythmDiff, objectTime}
 		flIdx += 1
-		FLStrainData[flIdx] = {FLStrain, objectTime}
 		readingIdx += 1
+		local speedRhythm = SpeedStrain * RhythmDiff
+		AimStrainData[aimIdx] = {AimTotalStrain, objectTime}
+		SpeedStrainData[speedIdx] = {speedRhythm, objectTime}
+		FLStrainData[flIdx] = {FLStrain, objectTime}
 		ReadingStrainData[readingIdx] = {ReadingStrain, objectTime}
 		
 		if objectData.isSlider then
@@ -220,7 +218,7 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		RawDifficulty[rawIdx] = {CurrentStrain, objectTime}
 	end
 
-	return AimStrainData, AimSLStrainData, SpeedStrainData, RhythmDiffData, FLStrainData, ReadingStrainData
+	return AimStrainData, AimSLStrainData, SpeedStrainData, FLStrainData, ReadingStrainData
 end
 
 return StrainSkills
