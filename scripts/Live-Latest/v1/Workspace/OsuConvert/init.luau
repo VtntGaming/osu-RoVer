@@ -33,14 +33,16 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	if FileType == 1 then
 		OsuData = require(Beatmap)
 
-		-- We do a quick inspect
-		local mapId = string.match(OsuData, "BeatmapID:([^%s]+)") or Beatmap.Name
-		local hashName = mapId..HttpService:JSONEncode(modData)
-		cacheId = fnv1a(hashName)
-		-- Find the cache with the same map, same mod
-		if CachedData[cacheId] then
-			return table.unpack(CachedData[cacheId])
-		end
+		if IS_GAME_RUNNING then
+			-- We do a quick inspect
+			local mapId = string.match(OsuData, "BeatmapID:([^%s]+)") or Beatmap.Name
+			local hashName = mapId..HttpService:JSONEncode(modData)
+			cacheId = fnv1a(hashName)
+			-- Find the cache with the same map, same mod
+			if CachedData[cacheId] then
+				return table.unpack(CachedData[cacheId])
+			end
+		end		
 	elseif FileType == 3 then
 		OsuData = ReplicatedStorage.GetModuleData:InvokeServer(tonumber(Beatmap))
 	end
