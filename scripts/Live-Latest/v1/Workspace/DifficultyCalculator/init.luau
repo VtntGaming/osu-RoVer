@@ -111,6 +111,43 @@ local DecayExponent = 0.9
 local SpeedHarmonicScale = 20
 local SpeedDecayExponent = 0.85
 
+local READING_REDUCED_DIFFICULTY_BASELINE = 0.0
+local READING_REDUCED_DIFFICULTY_DURATION = 60000	-- 1 minute
+
+local function calculateReducedNoteCount(StrainData: {{number}}): number
+	local objectCount = #StrainData
+	if objectCount == 0 then
+		return 0
+	end
+
+	local reducedDuration = StrainData[1][2] + READING_REDUCED_DIFFICULTY_DURATION
+	local reducedNoteCount = 0
+
+	for i = 1, #StrainData do
+		local strain = StrainData[i]
+
+		if strain[2] > reducedDuration then
+			break
+		end
+
+		reducedNoteCount += 1
+	end
+
+	return reducedNoteCount
+end
+
+function calculator.ApplyDifficultyTransformation(StrainData: {{number}}, type: string)
+	if type == "Reading" then
+		local reducedNoteCount = calculateReducedNoteCount(StrainData)
+
+		for i = 1, math.min(#StrainData, reducedNoteCount) do
+			local index = i-1
+			local scale = math.log10(math_lerp(1, 10, math_clamp(index/reducedNoteCount, 0, 1)))
+			StrainData[i][1] *= math_lerp(READING_REDUCED_DIFFICULTY_BASELINE, 1, scale)
+		end
+	end
+end
+
 function calculator.DifficultyValueHarmonic(StrainData: {{number}}, type: string): (number, number)
 	local harmonicScale = type == "Speed" and SpeedHarmonicScale or HarmonicScale
 	local decayExponent = type == "Speed" and SpeedDecayExponent or DecayExponent
@@ -118,6 +155,8 @@ function calculator.DifficultyValueHarmonic(StrainData: {{number}}, type: string
 	if objectCount == 0 then
 		return 0, 0
 	end
+
+	calculator.ApplyDifficultyTransformation(StrainData, type)
 
 	-- Unlike the normal strain, we get the strains unfiltered
 	local difficulty = 0
@@ -401,9 +440,9 @@ function calculator.ComputeReadingRating(readingDifficultyValue: number, modData
 	end
 
 	if modData.RX then
-		readingRating *= 0.7
+		readingRating *= 0.6
 	elseif modData.AP then
-		readingRating *= 0.4
+		readingRating *= 0.3
 	end
 
 	if modData.MG then
@@ -455,9 +494,13 @@ function calculator.ComputeFlashlightRating(flashlightDifficultyValue:number, mo
 end
 
 function calculator.SumCognitionDifficulty(reading: number, flashlight: number)
-	local cognition = evaluator.Normalise(2, reading, flashlight)
+	if reading <= 0 then
+		return flashlight
+	elseif flashlight <= 0 then
+		return reading
+	end
 
-	return flashlight >= reading and cognition or math_lerp(reading + flashlight, cognition, flashlight / reading)
+	return evaluator.Normalise(1.1, reading, flashlight * math_clamp(flashlight/reading, 0.25, 1))
 end
 
 function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
