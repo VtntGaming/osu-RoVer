@@ -92,10 +92,10 @@ local aimAdjustedMultiplier = 1
 local speedAimAdjustedMultiplier = 1
 local totalAdjustedMultiplier = 1
 local speedAdjustedMultiplier = 1
-local aimSkillMultiplier = 26 * aimAdjustedMultiplier
-local speedAimSkillMultiplier = 1.3 * speedAimAdjustedMultiplier
-local speedSkillMultiplier = 1.03 * speedAdjustedMultiplier
-local skillMultiplierTotal = 1.01 * totalAdjustedMultiplier
+local aimSkillMultiplier = 65.2 * aimAdjustedMultiplier
+local speedAimSkillMultiplier = 2.8 * speedAimAdjustedMultiplier
+local skillMultiplierTotal = 1 * totalAdjustedMultiplier
+local speedSkillMultiplier = 1.07 * speedAdjustedMultiplier
 local readingSkillMultiplier = 2.5
 local meanExpoment = 1.2
 local flashlightSkillMultiplier = 0.056
@@ -135,6 +135,7 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 	local isTD = modData.TD
 	local isFL = modData.FL
 	local isHD = modData.HD or false
+	local isRX = modData.RX
 	
 	-- Pre-access evaluators
 	local EvaluatorAim = Evaluators.Aim
@@ -165,15 +166,19 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		local ReadingStrainDecay = math_pow(ReadingBaseStrainDecay, strainTimeDiv1000)
 
 		if isTD then
-			AimDiff = math_pow(AimDiff, 0.8)
+			AimDiff = math_pow(AimDiff, 0.76)
 			SpeedAimDiff = math_pow(SpeedAimDiff, 0.95)
+		end
+
+		if isRX then
+			SpeedAimDiff = 0
 		end
 
 		-- Calculate aim skill
 		local oneMinusAimDecay = 1 - AimFLStrainDecay
 		AimStrain = AimStrain * AimFLStrainDecay + AimDiff * oneMinusAimDecay
 		local oneMinusSpeedDecay = 1 - SpeedStrainDecay
-		SpeedAimStrain = SpeedAimStrain * SpeedStrainDecay + SpeedAimDiff * oneMinusSpeedDecay
+		SpeedAimStrain = (SpeedAimStrain * SpeedStrainDecay + SpeedAimDiff * oneMinusSpeedDecay)
 		local AimTotalStrain = DifficultyEvaluator.Normalise(meanExpoment, AimStrain, SpeedAimStrain) * skillMultiplierTotal
 		-- Calculate speed diff
 		SpeedStrain = SpeedStrain * SpeedStrainDecay + SpeedDiff * oneMinusSpeedDecay

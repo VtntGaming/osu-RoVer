@@ -73,7 +73,7 @@ local function calculateHiddenDifficulty(
 
     local prevTimePreempt = previousObj.Time + previousObj.Preempt
     if crrObj.LazyJumpDistance == 0 and crrObj.OpacityAt(prevTimePreempt) == 0 and prevTimePreempt > crrObj.Time then
-        hiddenDifficulty += HIDDEN_MULTIPLIER * 7500 / math_pow(crrObj.StrainTime, 1.5)
+        hiddenDifficulty += HIDDEN_MULTIPLIER * 2500 / math_pow(crrObj.StrainTime, 1.5)
     end
 
     return hiddenDifficulty
