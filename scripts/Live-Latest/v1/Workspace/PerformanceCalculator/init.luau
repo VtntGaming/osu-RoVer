@@ -54,7 +54,7 @@ type AimAttributes = {
 	AimDifficultyStrainCount:number
 }
 
-function _ComputeAimValue(Attributes:AimAttributes):number
+local function ComputeAimValue(Attributes:AimAttributes):number
 	local aimDiff = Attributes.AimDiff
 	-- local estimateImproperlyFollowedDifficultSliders = 0	-- We will calculate this later
 	local sliderNerfFactor = 1
@@ -93,7 +93,7 @@ type DeviationAttributes = {
 	ODRate:number
 }
 
-function _CalculateDeviation(relevantCount300:number, relevantCount100:number, relevantCount50:number, ODRate:number, ModData:modData.ModData):number?
+local function CalculateDeviation(relevantCount300:number, relevantCount100:number, relevantCount50:number, ODRate:number, ModData:modData.ModData):number?
 	if relevantCount300 + relevantCount100 + relevantCount50 <= 0 then
 		return nil
 	end
@@ -125,7 +125,7 @@ function _CalculateDeviation(relevantCount300:number, relevantCount100:number, r
 	return deviation
 end
 
-function _CalculateSpeedDeviation(Attributes:DeviationAttributes):number?
+local function CalculateSpeedDeviation(Attributes:DeviationAttributes):number?
 	local accData = Attributes.AccuracyData
 	local totalSuccessfulHit = accData.h300 + accData.h100 + accData.h50
 	local totalHit = totalSuccessfulHit + accData.missCount
@@ -141,10 +141,10 @@ function _CalculateSpeedDeviation(Attributes:DeviationAttributes):number?
 	local relevantCount100 = math.min(accData.h100, speedNoteCount - relevantCountMiss - relevantCount50);
 	local relevantCount300 = math.max(0, speedNoteCount - relevantCountMiss - relevantCount50 - relevantCount100);
 	
-	return _CalculateDeviation(relevantCount300, relevantCount100, relevantCount50, Attributes.ODRate, Attributes.ModData)
+	return CalculateDeviation(relevantCount300, relevantCount100, relevantCount50, Attributes.ODRate, Attributes.ModData)
 end
 
-function _ComputeSpeedValue(Attributes:SpeedAttributes):number
+local function ComputeSpeedValue(Attributes:SpeedAttributes):number
 	if not Attributes.AccuracyData.SpeedDeviation then
 		return 0
 	end
@@ -184,7 +184,7 @@ type AccuracyAttributes = {
 	ARRate:number,
 }
 
-function _ComputeAccuracyValue(Attributes:AccuracyAttributes):number
+local function ComputeAccuracyValue(Attributes:AccuracyAttributes):number
 	if Attributes.ModData.RX then
 		return 0
 	end
@@ -236,11 +236,11 @@ type FlashlightAttributes = {
 	MapMaxCombo:number
 }
 
-function _GetComboScalingFactor(Attributes:FlashlightAttributes):number
+local function GetComboScalingFactor(Attributes:FlashlightAttributes):number
 	return Attributes.MapMaxCombo <= 0 and 1 or math.min(math.pow(Attributes.MaxCombo, 0.8) / math.pow(Attributes.MapMaxCombo, 0.8), 1.0)
 end
 
-function _ComputeFlashlightValue(Attributes:FlashlightAttributes):number
+local function ComputeFlashlightValue(Attributes:FlashlightAttributes):number
 	if not Attributes.ModData.FL then
 		return 0
 	end
@@ -252,7 +252,7 @@ function _ComputeFlashlightValue(Attributes:FlashlightAttributes):number
 		flashlightPS *= 0.97 * math.pow	(1 - math.pow(effectiveMissCount / totalHit, 0.775), math.pow(effectiveMissCount, .875))
 	end
 	
-	flashlightPS *= _GetComboScalingFactor(Attributes)
+	flashlightPS *= GetComboScalingFactor(Attributes)
 	flashlightPS *= 0.5 + accData.Accuracy / 2
 	
 	return flashlightPS
@@ -284,7 +284,7 @@ type ReturnAttributes = {
 	EffectiveMissCount:number
 }
 
-function _GetPerfomanceAttributes(Attributes:GeneralAttributes):ReturnAttributes
+local function GetPerfomanceAttributes(Attributes:GeneralAttributes):ReturnAttributes
 	local accData = Attributes.AccuracyData
 	local h300 = accData.h300
 	local h100 = accData.h100
@@ -340,13 +340,13 @@ function _GetPerfomanceAttributes(Attributes:GeneralAttributes):ReturnAttributes
 		MapMaxCombo = Attributes.MapMaxCombo
 	}
 	
-	local speedDeviation = _CalculateSpeedDeviation(deviationAttribute)
+	local speedDeviation = CalculateSpeedDeviation(deviationAttribute)
 	Attributes.AccuracyData.SpeedDeviation = speedDeviation
 	
-	local aimPS = _ComputeAimValue(aimAttribute)
-	local speedPS = _ComputeSpeedValue(speedAttribute)
-	local accPS = _ComputeAccuracyValue(accuracyAttribute)
-	local flashlightPS = _ComputeFlashlightValue(flashlightAttribute)
+	local aimPS = ComputeAimValue(aimAttribute)
+	local speedPS = ComputeSpeedValue(speedAttribute)
+	local accPS = ComputeAccuracyValue(accuracyAttribute)
+	local flashlightPS = ComputeFlashlightValue(flashlightAttribute)
 	
 	local totalPS = evaluator.Normalise(normalised_expoment, aimPS, speedPS, accPS, flashlightPS) * multiplier
 	
@@ -367,11 +367,11 @@ export type PerfomanceAttributes = {
 	Max:ReturnAttributes
 }
 
-function _DeepCopy(t:{any})
+local function DeepCopy(t:{any})
 	local newT = {}
 	for index, data in pairs(t) do
 		if typeof(data) == "table" then
-			newT[index] = _DeepCopy(data)
+			newT[index] = DeepCopy(data)
 		else
 			newT[index] = data
 		end
@@ -380,7 +380,7 @@ function _DeepCopy(t:{any})
 	return newT
 end
 
-return function(
+local function CalculatePerformanceAttributes(
 	AimValue, 
 	SpeedValue, 
 	FLValue, 
@@ -392,7 +392,8 @@ return function(
 	AimDiffStrainCount, 
 	SpeedDiffStrainCount, 
 	SpeedRelevantNoteCount, 
-	AccuracyData:AccuracyData?):PerfomanceAttributes
+	AccuracyData:AccuracyData?): PerfomanceAttributes
+
 	--local MaxPSData = PerformanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, NoteCount, true, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount)
 	local ReturnAttributes:PerfomanceAttributes = {}::PerfomanceAttributes
 	
@@ -419,16 +420,18 @@ return function(
 		MapMaxCombo = 0
 	}
 	
-	local perfectScoreResult = _GetPerfomanceAttributes(PerfectScoreAttribute)
+	local perfectScoreResult = GetPerfomanceAttributes(PerfectScoreAttribute)
 	ReturnAttributes.Max = perfectScoreResult
 	
 	if not MaxOnly then
-		local PlayerScoreAttribute = _DeepCopy(PerfectScoreAttribute)::GeneralAttributes
+		local PlayerScoreAttribute = DeepCopy(PerfectScoreAttribute)::GeneralAttributes
 		PlayerScoreAttribute.AccuracyData = AccuracyData
 		
-		local playerScoreResult = _GetPerfomanceAttributes(PlayerScoreAttribute)
+		local playerScoreResult = GetPerfomanceAttributes(PlayerScoreAttribute)
 		ReturnAttributes.Current = playerScoreResult
 	end
 	
 	return ReturnAttributes
 end
+
+return CalculatePerformanceAttributes
