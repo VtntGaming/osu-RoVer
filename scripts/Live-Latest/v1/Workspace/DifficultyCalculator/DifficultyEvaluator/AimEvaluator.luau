@@ -4,6 +4,7 @@
 -- Pre-load required modules
 local workspace = game:GetService("Workspace")
 local Evaluator = require(script.Parent)
+local SpeedAimEvalulator = require(script.Parent.SpeedAimEvalulator)
 local preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
 
 -- Localize math library for faster access
@@ -15,10 +16,10 @@ local math = math
 ]]
 
 -- General Multipliers
-local WIDE_ANGLE_MULTIPLIER = 1.5
-local ACUTE_ANGLE_MULTIPLIER = 2.3
-local SLIDER_MULTIPLIER = 1.5
-local VELOCITY_CHANGE_MULTIPLIER = 0.75
+local WIDE_ANGLE_MULTIPLIER = 1.35
+local ACUTE_ANGLE_MULTIPLIER = 2.5
+local SLIDER_MULTIPLIER = 1.9
+local VELOCITY_CHANGE_MULTIPLIER = 1.1
 local WIGGLE_MULTIPLIER = 1.02
 
 -- Calculation Constants
@@ -51,7 +52,7 @@ local function calcAcuteAngleBonus(angle:number)
 end
 
 local function getHighBPMBonus(ms: number)
-	return 1 / (1 - math.pow(0.15, ms/1000))
+	return (1 - math.pow(0.03, math.pow(ms / 1000, 0.65)))
 end
 
 -- Inlined the calc...Bonus functions as they were simple wrappers.
@@ -86,16 +87,14 @@ local function getAimDiff(CrrObj: preprocessing.ObjectData)
 	
 	-- But if the last object is a slider, extend travel velocity through slider into current object
 	if PrevObj.isSlider then
-		local travelVelocity = PrevObj.BaseTravelDistance / PrevObj.BaseTravelTime
-		local movementVelocity = CrrObj.MinimumJumpDistance / CrrObj.MinimumJumpTime
-		crrVelocity = math.max(crrVelocity, travelVelocity + movementVelocity)
+		local sliderDistance = PrevObj.lazyTravelDistance + CrrObj.LazyJumpDistance
+		crrVelocity *= math.max(crrVelocity, sliderDistance / CrrObj.StrainTime)
 	end
 
 	local prevVelocity = (prevJumpDist and prevStrainTime > 0) and (prevJumpDist / prevStrainTime) or 0
 	if PrevPrevObj and PrevPrevObj.isSlider then
-		local travelVelocity = PrevPrevObj.BaseTravelDistance / PrevPrevObj.BaseTravelTime
-		local movementVelocity = PrevObj.MinimumJumpDistance / PrevObj.MinimumJumpTime
-		prevVelocity = math.max(prevVelocity, travelVelocity + movementVelocity)
+		local sliderDistance = PrevPrevObj.lazyTravelDistance + PrevObj.LazyJumpDistance
+		prevVelocity *= math.max(prevVelocity, sliderDistance / PrevObj.StrainTime)
 	end
 
 	-- Initialize bonus values
@@ -130,7 +129,7 @@ local function getAimDiff(CrrObj: preprocessing.ObjectData)
 
 		wideAngleBonus = wideBonusFactor
 		wideAngleBonus *= 1 - math.min(wideAngleBonus, lastWideBonusFactor ^ 3)
-		wideAngleBonus *= angleBonus * smootherstep(crrJumpDist, 0, NORMALIZED_DIAMETER)
+		wideAngleBonus *= angleBonus * smoothstep(crrJumpDist, 0, SpeedAimEvalulator.SINGLE_SPACING_THRESHOLD)
 
 		if Prev2Obj and Prev2Obj.CirclePosition then
 			local distance = (Prev2Obj.CirclePosition - PrevObj.CirclePosition).Magnitude
@@ -189,7 +188,7 @@ local function getAimDiff(CrrObj: preprocessing.ObjectData)
 	
 	
 	-- Add in additional slider velocity bonus
-	baseAimStrain += sliderBonus * SLIDER_MULTIPLIER
+	baseAimStrain += (sliderBonus < 1 and sliderBonus or math.pow(sliderBonus, 0.75)) * SLIDER_MULTIPLIER
 	
 	baseAimStrain *= getHighBPMBonus(CrrObj.StrainTime)
 	

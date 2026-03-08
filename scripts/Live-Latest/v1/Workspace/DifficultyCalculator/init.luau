@@ -358,7 +358,7 @@ function calculator.ComputeAimRating(aimDifficultyValue:number, modData:ModData,
 		return 0
 	end
 	
-	local aimRating = calculateDifficultyRatingBase(aimDifficultyValue)
+	local aimRating = math_pow(aimDifficultyValue, 0.62) * 0.0248
 
 	if modData.RX then
 		aimRating *= 0.9

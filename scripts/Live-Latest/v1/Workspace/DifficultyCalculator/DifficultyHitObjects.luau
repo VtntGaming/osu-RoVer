@@ -366,7 +366,7 @@ return function(baseList:{any}, baseData)
 			--
 
 			BaseTravelTime = math_max(lazySLTravelTime, MIN_DELTA_TIME)
-			BaseTravelDistance = LazyTravelDistance * math_pow(1 + (slidesCount - 1) / 2.5, 1 / 2.5)
+			BaseTravelDistance = LazyTravelDistance * math_max(1 , math_pow(slidesCount - 1, 0.3))
 		end
 
 		if prevDiffObj.isSlider and not baseData.ModData.NS then
@@ -411,7 +411,7 @@ return function(baseList:{any}, baseData)
 			end
 		end
 
-		crrObj.SmallCircleBonus = math_max(1, 1 + (30 - radius) / 40)
+		crrObj.SmallCircleBonus = math_max(1, 1 + (30 - radius) / 70)
 		crrObj.Position = positionOf(crr.Position)
 		crrObj.Time = crr.Time
 		crrObj.Angle = angle
