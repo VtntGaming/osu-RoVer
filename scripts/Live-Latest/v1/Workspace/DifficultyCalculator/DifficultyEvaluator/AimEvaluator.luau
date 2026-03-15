@@ -51,8 +51,8 @@ local function calcAcuteAngleBonus(angle:number)
 	return smoothstep(angle, RAD_140, RAD_40)
 end
 
-local function getHighBPMBonus(ms: number)
-	return (1 - math.pow(0.03, math.pow(ms / 1000, 0.65)))
+local function getHighBPMBonus(ms: number, distance: number)
+	return 1 / (1 - math.pow(0.03, math.pow(ms / 1000, 0.65))) * smootherstep(distance, 0, NORMALIZED_RADIUS)
 end
 
 -- Inlined the calc...Bonus functions as they were simple wrappers.
@@ -190,7 +190,7 @@ local function getAimDiff(CrrObj: preprocessing.ObjectData)
 	-- Add in additional slider velocity bonus
 	baseAimStrain += (sliderBonus < 1 and sliderBonus or math.pow(sliderBonus, 0.75)) * SLIDER_MULTIPLIER
 	
-	baseAimStrain *= getHighBPMBonus(CrrObj.StrainTime)
+	baseAimStrain *= getHighBPMBonus(CrrObj.StrainTime, CrrObj.LazyJumpDistance)
 	
 	-- Apply high circle size bonus
 	baseAimStrain *= CrrObj.SmallCircleBonus
