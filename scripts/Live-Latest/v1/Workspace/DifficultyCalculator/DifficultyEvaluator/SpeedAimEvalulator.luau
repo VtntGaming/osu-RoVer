@@ -34,7 +34,7 @@ function SpeedAimEvaluator.GetSpeedAimDiff(CrrObj: Preprocessing.ObjectData)
     -- Reward high CS rate bonus
     distanceBonus *= math_pow(CrrObj.SmallCircleBonus, 1.5)
 
-    local strainTime = CrrObj.StrainTime
+    local strainTime = CrrObj.AdjustedDeltaTime
     local strain = distanceBonus * 1000 / strainTime
 
     strain *= getHighBPMBonus(strainTime)

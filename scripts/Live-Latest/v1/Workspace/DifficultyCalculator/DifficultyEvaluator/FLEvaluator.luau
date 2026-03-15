@@ -37,7 +37,7 @@ function flashlightEvaluator.getFlashLightDiff(CrrObj, IsHD)
 			break
 		end
 
-		cumulativeStrainTime += LastObj.StrainTime
+		cumulativeStrainTime += LastObj.AdjustedDeltaTime
 
 		if not CurrentCheck.isSpinner and not CurrentCheck.isInvalid then
 			local JumpDistance = 0

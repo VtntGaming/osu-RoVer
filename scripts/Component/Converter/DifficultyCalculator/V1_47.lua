@@ -75,7 +75,7 @@ function calculator.GetAimDiff(CrrObj)
 	end
 
 
-	local crrVelocity = (CrrObj.LazyJumpDistance and CrrObj.StrainTime) and (CrrObj.LazyJumpDistance/CrrObj.StrainTime) or 0
+	local crrVelocity = (CrrObj.LazyJumpDistance and CrrObj.AdjustedDeltaTime) and (CrrObj.LazyJumpDistance/CrrObj.AdjustedDeltaTime) or 0
 
 	if PrevObj.isSlider then
 		local travelVelocity = PrevObj.BaseTravelDistance/PrevObj.BaseTravelTime -- previous slider head to slider tail
@@ -83,7 +83,7 @@ function calculator.GetAimDiff(CrrObj)
 		
 		crrVelocity = math.max(crrVelocity, travelVelocity + movementVelocity)
 	end
-	local prevVelocity = (PrevObj.LazyJumpDistance and PrevObj.StrainTime) and (PrevObj.LazyJumpDistance/PrevObj.StrainTime) or 0
+	local prevVelocity = (PrevObj.LazyJumpDistance and PrevObj.AdjustedDeltaTime) and (PrevObj.LazyJumpDistance/PrevObj.AdjustedDeltaTime) or 0
 	if PrevPrevObj and PrevPrevObj.isSlider then
 		local travelVelocity = PrevPrevObj.BaseTravelDistance/PrevPrevObj.BaseTravelTime
 		local movementVelocity = PrevObj.MinimumJumpDistance/PrevObj.MinimumJumpTime
@@ -99,7 +99,7 @@ function calculator.GetAimDiff(CrrObj)
 	local SliderBonus = 0
 	
 	local baseAimStrain = crrVelocity
-	if PrevObj.StrainTime and math.max(CrrObj.StrainTime,PrevObj.StrainTime) < 1.25 * math.min(CrrObj.StrainTime,PrevObj.StrainTime) then
+	if PrevObj.AdjustedDeltaTime and math.max(CrrObj.AdjustedDeltaTime,PrevObj.AdjustedDeltaTime) < 1.25 * math.min(CrrObj.AdjustedDeltaTime,PrevObj.AdjustedDeltaTime) then
 		-- process for same or "almost same" note time
 		if (CrrObj.Angle and PrevObj.Angle) then
 			local crrAngle = CrrObj.Angle
@@ -118,7 +118,7 @@ function calculator.GetAimDiff(CrrObj)
 			wideAngleBonus *= angleBonus * calculator.Smootherstep(CrrObj.LazyJumpDistance, 0, NormalizedDiameter)
 			
 			acuteAngleBonus *= angleBonus *
-				calculator.Smootherstep(calculator.milisecondToBPM(CrrObj.StrainTime, 2), 300, 400) *
+				calculator.Smootherstep(calculator.milisecondToBPM(CrrObj.AdjustedDeltaTime, 2), 300, 400) *
 				calculator.Smootherstep(CrrObj.LazyJumpDistance, NormalizedDiameter, NormalizedDiameter * 2)
 
 			wiggleBonus = angleBonus
@@ -132,14 +132,14 @@ function calculator.GetAimDiff(CrrObj)
 	end
 
 	if math.max(prevVelocity, crrVelocity) ~= 0 then
-		prevVelocity = (PrevObj.LazyJumpDistance + (PrevPrevObj.BaseTravelDistance or 0))/CrrObj.StrainTime
-		crrVelocity = (CrrObj.LazyJumpDistance + (PrevObj.BaseTravelDistance or 0))/CrrObj.StrainTime
+		prevVelocity = (PrevObj.LazyJumpDistance + (PrevPrevObj.BaseTravelDistance or 0))/CrrObj.AdjustedDeltaTime
+		crrVelocity = (CrrObj.LazyJumpDistance + (PrevObj.BaseTravelDistance or 0))/CrrObj.AdjustedDeltaTime
 		
 		local distanceRatio = math.pow(math.sin(math.pi/2*math.abs(prevVelocity-crrVelocity)/math.max(prevVelocity,crrVelocity)),2)
-		local overlapVelocityBuff = math.min(NormalizedDiameter * 1.25 / math.min(CrrObj.StrainTime, PrevObj.StrainTime), math.abs(prevVelocity - crrVelocity))
+		local overlapVelocityBuff = math.min(NormalizedDiameter * 1.25 / math.min(CrrObj.AdjustedDeltaTime, PrevObj.AdjustedDeltaTime), math.abs(prevVelocity - crrVelocity))
 		velocityChangeBonus = overlapVelocityBuff * distanceRatio
 
-		velocityChangeBonus *= math.pow(math.min(CrrObj.StrainTime, PrevObj.StrainTime)/ math.max(CrrObj.StrainTime,PrevObj.StrainTime),2)
+		velocityChangeBonus *= math.pow(math.min(CrrObj.AdjustedDeltaTime, PrevObj.AdjustedDeltaTime)/ math.max(CrrObj.AdjustedDeltaTime,PrevObj.AdjustedDeltaTime),2)
 	end
 	
 	
@@ -249,9 +249,9 @@ function calculator.GetRhythmDiff(CrrObj)
 		local noteDecay = (historicalNoteCount - i) / historicalNoteCount
 		
 		local currHistoricalDecay = math.min(noteDecay, timeDecay)
-		local currDelta = currentObj.StrainTime
-		local prevDelta = PrevObj.StrainTime
-		local lastDelta = LastObj.StrainTime
+		local currDelta = currentObj.AdjustedDeltaTime
+		local prevDelta = PrevObj.AdjustedDeltaTime
+		local lastDelta = LastObj.AdjustedDeltaTime
 		
 		local deltaDifferenceRatio = math.min(prevDelta, currDelta) / math.max(prevDelta, currDelta)
 		local currRatio = 1.0 + rhythm_ratio_multiplier * math.min(0.5, math.pow(math.sin(math.pi / deltaDifferenceRatio), 2))
@@ -353,7 +353,7 @@ function calculator.GetSpeedDiff(CrrObj)
 	local speed_balancing_factor = 40
 	local distance_multiplier = 0.9
 
-	local strainTime = CrrObj.StrainTime
+	local strainTime = CrrObj.AdjustedDeltaTime
 	local doubletapness = math.max(0, 1 - (CrrObj.getDoubletapness(nextObj)))
 
 	strainTime /= math.clamp((strainTime/CrrObj.Hit300Value)/ 0.93, 0.92, 1)
@@ -432,7 +432,7 @@ function calculator.getFlashLightDiff(CrrObj, IsHD)
 			break
 		end
 		
-		cumulativeStrainTime += LastObj.StrainTime
+		cumulativeStrainTime += LastObj.AdjustedDeltaTime
 		
 		if not CurrentCheck.isSpinner and not CurrentCheck.isInvalid then
 			local JumpDistance = 0
