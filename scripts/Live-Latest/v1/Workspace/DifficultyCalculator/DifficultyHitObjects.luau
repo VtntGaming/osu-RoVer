@@ -99,6 +99,15 @@ function SLpositionAt(data, lengthRatio)
 	return nil
 end
 
+local OBJECT_RADIUS = 64
+local BROKEN_GAMEFIELD_ROUNDING_ALLOWANCE = 1.00041
+
+local function CalculateRadiusFromCircleSize(CSRate: number): number
+	local scale = (1 - 0.7 * range(CSRate)) / 2 * BROKEN_GAMEFIELD_ROUNDING_ALLOWANCE
+
+	return OBJECT_RADIUS * scale
+end
+
 export type ObjectData = {
 	objID:number,
 	Previous:(index:number) -> (ObjectData),
@@ -136,6 +145,11 @@ export type ObjectData = {
 	TimeFadeIn: number
 }
 
+export type NestedTick = {
+	StartTime: number,
+	Type: string
+}
+
 local NORMALISED_RADIUS = 50
 -- local NORMALISED_DIAMETER = NORMALISED_RADIUS * 2
 local MIN_DELTA_TIME = 25
@@ -159,7 +173,7 @@ return function(baseList:{any}, baseData)
 		local crrObj = {}::ObjectData
 
 		-- initialize important properties		
-		crrObj.TimePreempt = converterTool.DifficultyRange(baseData.AR, PREEMPT_MAX, PREEMPT_MID, PREEMPT_MIN)
+		crrObj.TimePreempt = converterTool.DifficultyRange(baseData.AR, PREEMPT_MAX, PREEMPT_MID, PREEMPT_MIN) // 1
 		crrObj.ClockRate = baseData.ModData.SA
 		crrObj.Preempt = crrObj.TimePreempt / crrObj.ClockRate
 		crrObj.TimeFadeIn = 400 * math.min(1, crrObj.TimePreempt / PREEMPT_MIN)
@@ -252,7 +266,7 @@ return function(baseList:{any}, baseData)
 		local prevobj = baseList[objID-1]
 		local prevDiffObj = crrObj.Previous(1)
 		local normalisedRadius = 50
-		local radius = 54.4 - 4.48 * baseData.CS
+		local radius = CalculateRadiusFromCircleSize(baseData.CS)
 		local scalingFactor = normalisedRadius/radius
 		local DeltaTime = crr.Time - prevobj.Time
 		local minimumDeltaTime = 25
@@ -290,20 +304,19 @@ return function(baseList:{any}, baseData)
 				crr.Time + SliderTime + Tail_Leniency, crr.Time + SliderTime/2
 			)
 
-			local TickData = crr.SliderDifficultyTickData::{any}
+			local TickData = crr.SliderDifficultyTickData::{NestedTick}
 			if TickData then
 				local lastRealTick
 				for _, _tick in ipairs(TickData) do
-					if _tick[4] == "Tick" then
+					if _tick.Type == "Tick" then
 						lastRealTick = _tick
 					end
 				end
 				if lastRealTick then
-					if lastRealTick[1] > trackingEndTime then
-						trackingEndTime = lastRealTick[1]
+					if lastRealTick.StartTime > trackingEndTime then
+						trackingEndTime = lastRealTick.StartTime
 					end
 				end
-
 			end
 
 			lazySLTravelTime = trackingEndTime - crr.Time
@@ -334,7 +347,7 @@ return function(baseList:{any}, baseData)
 			local LazyTravelDistance = 0
 			if TickData then
 				for i, currentTick in ipairs(TickData) do
-					local currentMovement:Vector2 = currentTick[3] - currentCursorPosition
+					local currentMovement:Vector2 = currentTick.Position - currentCursorPosition
 					local currentMovementLength = scalingFactor * currentMovement.Magnitude
 					local requiredMovement = Assumed_Slider_Radius
 
@@ -346,7 +359,7 @@ return function(baseList:{any}, baseData)
 						end
 
 						currentMovementLength = scalingFactor * currentMovement.Magnitude
-					elseif currentTick[4] == "Repeat" then
+					elseif currentTick.Type == "Repeat" then
 						requiredMovement = NORMALISED_RADIUS
 					end
 
