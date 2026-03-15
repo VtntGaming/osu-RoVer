@@ -494,11 +494,19 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 						tickCount += 1
 						local tickPosition = tool.GetTickPosition(Time, SliderTime, SLCurvePoints, ExtraData, currentTime, CurrentSlide%2==0)
 						SLTickData[#SLTickData+1] = {currentTime, CurrentSlide, tickPosition}
-						SLDifficultyTickData[#SLDifficultyTickData+1] = {currentTime, CurrentSlide, tickPosition, "Tick"}
+						SLDifficultyTickData[#SLDifficultyTickData+1] = {
+							StartTime = currentTime,
+							Position = tickPosition,
+							Type = "Tick"
+						}
 					else
 						local _type = CurrentSlide < slidesCount and "Repeat" or "Tail"
 						local tickPosition = tool.GetTickPosition(Time, SliderTime, SLCurvePoints, ExtraData, currentTime, CurrentSlide%2==0)
-						SLDifficultyTickData[#SLDifficultyTickData+1] = {currentTime, CurrentSlide, tickPosition, _type}
+						SLDifficultyTickData[#SLDifficultyTickData+1] = {
+							StartTime = currentTime,
+							Position = tickPosition,
+							Type = _type
+						}
 					end
 					i += 1
 				end
@@ -507,7 +515,11 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 				if #SLDifficultyTickData == 0 or SLDifficultyTickData[#SLDifficultyTickData][4] ~= "Tail" then
 					local _tailPosition = SLCurvePoints[(slidesCount % 2 == 1) and #SLCurvePoints or 1]
 					local _tailTime = Time + SliderTime
-					SLDifficultyTickData[#SLDifficultyTickData+1] = {_tailTime, slidesCount, _tailPosition, "Tail"}
+					SLDifficultyTickData[#SLDifficultyTickData+1] = {
+						StartTime = _tailTime,
+						Position = _tailPosition,
+						Type = "Tail"
+					}
 				end
 			end
 			local objData = {
