@@ -11,7 +11,7 @@ local StrainSkills = require(workspace.DifficultyCalculator.StrainSkills)
 local calculator = require(workspace.DifficultyCalculator)
 local tool = require(script.converterTools)
 local sliderTools = require(script.sliderTools)
-local preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
+local DifficultyHitObject = require(workspace.DifficultyCalculator.DifficultyHitObjects)
 local modData = require(workspace.ModData)
 
 export type ModData = modData.ModData
@@ -655,7 +655,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		SliderTickRate = ReturningData.Difficulty.SliderTickRate,
 		ModData = modData
 	}
-	local ProcessedDifficultyObject = preprocessing(ConvertedData, baseData)
+	local ProcessedDifficultyObject = DifficultyHitObject.GenerateDifficultyHitObjects(ConvertedData, baseData)
 	
 	-- Skills
 	AimStrainData, AimSLStrainData, SpeedStrainData, FLStrainData, ReadingStrainData = StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData, ConvertedData, RawDifficulty)
