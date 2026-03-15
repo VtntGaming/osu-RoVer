@@ -113,9 +113,9 @@ return function(baseList, baseData)
 			crrObj.Time = crr.Time
 			crrObj.isInvalid = true
 			if objID < 2 then
-				crrObj.StrainTime = crr.Time
+				crrObj.AdjustedDeltaTime = crr.Time
 			else
-				crrObj.StrainTime = crr.Time - crrObj.Previous(1).Time
+				crrObj.AdjustedDeltaTime = crr.Time - crrObj.Previous(1).Time
 			end
 			DifficultyObjects[objID] = crrObj
 			continue
@@ -159,11 +159,11 @@ return function(baseList, baseData)
 		local scalingFactor = normalisedRadius/radius
 		local DeltaTime = crr.Time - prevobj.Time
 		local minimumDeltaTime = 25
-		local StrainTime = math.max(DeltaTime, minimumDeltaTime)
+		local AdjustedDeltaTime = math.max(DeltaTime, minimumDeltaTime)
 		local Hit300Value = 2 * h300window(baseData.OD)/baseData.Speed
 		local LazyJumpDistance = prevDiffObj.endCursorPosition and ((positionOf(crr.Position) * scalingFactor - prevDiffObj.endCursorPosition * scalingFactor).Magnitude) or 0
 		local MinimumJumpDistance = LazyJumpDistance
-		local MinimumJumpTime = StrainTime
+		local MinimumJumpTime = AdjustedDeltaTime
 		local BaseTravelDistance = 0
 		local BaseTravelTime
 		
@@ -228,7 +228,7 @@ return function(baseList, baseData)
 		
 		if prevDiffObj.isSlider then
 			local lastTravelTime = math.max(prevDiffObj.lazySLTravelTime, minimumDeltaTime)
-			MinimumJumpTime = math.max(StrainTime - lastTravelTime, minimumDeltaTime)
+			MinimumJumpTime = math.max(AdjustedDeltaTime - lastTravelTime, minimumDeltaTime)
 			
 			local tailJumpDistance = (positionOf(crr.Position) - prevDiffObj.SLTailPosition).Magnitude * scalingFactor
 			local JumpDistance = LazyJumpDistance - (maxSLRadius - assumedSLRadius)
@@ -275,7 +275,7 @@ return function(baseList, baseData)
 		crrObj.Time = crr.Time
 		crrObj.Angle = angle
 		crrObj.DeltaTime = DeltaTime
-		crrObj.StrainTime = StrainTime
+		crrObj.AdjustedDeltaTime = AdjustedDeltaTime
 		crrObj.LazyJumpDistance = LazyJumpDistance
 		crrObj.MinimumJumpDistance = MinimumJumpDistance
 		crrObj.MinimumJumpTime = MinimumJumpTime

@@ -150,7 +150,7 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 	
 	for objectId = 1, objectCount do
 		local objectData = ProcessedDifficultyObject[objectId]
-		local strainTime = objectData.StrainTime
+		local strainTime = objectData.AdjustedDeltaTime
 		local objectTime = objectData.Time
 		
 		local AimDiff = EvaluatorAim.GetAimDiff(objectData) * aimSkillMultiplier

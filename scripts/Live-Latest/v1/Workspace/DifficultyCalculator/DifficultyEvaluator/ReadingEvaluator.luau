@@ -73,7 +73,7 @@ local function calculateHiddenDifficulty(
 
     local prevTimePreempt = previousObj.Time + previousObj.Preempt
     if crrObj.LazyJumpDistance == 0 and crrObj.OpacityAt(prevTimePreempt) == 0 and prevTimePreempt > crrObj.Time then
-        hiddenDifficulty += HIDDEN_MULTIPLIER * 2500 / math_pow(crrObj.StrainTime, 1.5)
+        hiddenDifficulty += HIDDEN_MULTIPLIER * 2500 / math_pow(crrObj.AdjustedDeltaTime, 1.5)
     end
 
     return hiddenDifficulty
@@ -117,7 +117,7 @@ local function getPastObjectDifficultyInfluence(crrObj: DifficultyHitObject)
         local loopDifficulty = crrObj.OpacityAt(loopObj.Time)
         loopDifficulty *= smootherstep(loopObj.LazyJumpDistance, 15, DISTANCE_INFLUENCE_THRESHOLD)
         
-        local timeBetweenCurrAndLoopObj = crrObj.StrainTime - loopObj.Time
+        local timeBetweenCurrAndLoopObj = crrObj.AdjustedDeltaTime - loopObj.Time
         local timeNerfFactor = getTimeNerfFactor(timeBetweenCurrAndLoopObj)
         
         loopDifficulty *= timeNerfFactor
@@ -137,7 +137,7 @@ local function retrieveCurrentVisibleObjectDensity(current: DifficultyHitObject)
             break
         end
 
-        local timeBetweenCurrAndLoopObj = hitObject.StrainTime - current.Time
+        local timeBetweenCurrAndLoopObj = hitObject.AdjustedDeltaTime - current.Time
         local timeNerfFactor = getTimeNerfFactor(timeBetweenCurrAndLoopObj)
 
         visibleObjectCount += hitObject.OpacityAt(current.Time) * timeNerfFactor
@@ -163,7 +163,7 @@ local function getConstantAngleNerfFactor(current: DifficultyHitObject)
             break
         end
 
-        local longIntervalFactor = 1 - math_clamp((loopObj.StrainTime - MAXIMUM_ANGLE_RELEVANCY_TIME) * reverseLerpDenom, 0, 1)
+        local longIntervalFactor = 1 - math_clamp((loopObj.AdjustedDeltaTime - MAXIMUM_ANGLE_RELEVANCY_TIME) * reverseLerpDenom, 0, 1)
 
         if loopObj.Angle and currentAngle then
             local angleDifference = math_abs(currentAngle - loopObj.Angle)
@@ -185,7 +185,7 @@ function ReadingEvaluator.GetReadingDiff(crrObj: DifficultyHitObject, isHidden: 
     end
 
     local nextObj = crrObj.Next(1)
-    local strainTime = crrObj.StrainTime
+    local strainTime = crrObj.AdjustedDeltaTime
     local lazyJumpDistance = crrObj.LazyJumpDistance
     local velocity = math_max(1, lazyJumpDistance / strainTime) 
     local currentVisibleObjectDensity = retrieveCurrentVisibleObjectDensity(crrObj)

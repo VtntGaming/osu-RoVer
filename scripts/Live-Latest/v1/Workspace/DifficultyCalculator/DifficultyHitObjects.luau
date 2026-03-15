@@ -113,7 +113,7 @@ export type ObjectData = {
 	Time:number,
 	Angle:number,
 	DeltaTime:number,
-	StrainTime:number,
+	AdjustedDeltaTime:number,
 	LazyJumpDistance:number,
 	MinimumJumpDistance:number,
 	MinimumJumpTime:number,
@@ -196,7 +196,7 @@ return function(baseList:{any}, baseData)
 			local prevObj = crrObj.Previous(1)
 			local prevTime = prevObj and prevObj.Time or 0
 			crrObj.DeltaTime = crr.Time - prevTime
-			crrObj.StrainTime = math.max(crrObj.DeltaTime, MIN_DELTA_TIME)
+			crrObj.AdjustedDeltaTime = math.max(crrObj.DeltaTime, MIN_DELTA_TIME)
 			crrObj.Hit300Value = 2 * h300window(baseData.OD)
 			DifficultyObjects[objID] = crrObj
 			continue
@@ -256,14 +256,14 @@ return function(baseList:{any}, baseData)
 		local scalingFactor = normalisedRadius/radius
 		local DeltaTime = crr.Time - prevobj.Time
 		local minimumDeltaTime = 25
-		local StrainTime = math.max(DeltaTime, minimumDeltaTime)
+		local AdjustedDeltaTime = math.max(DeltaTime, minimumDeltaTime)
 		local Hit300Value = 2 * h300window(baseData.OD)
 		local lastCursorPosition:Vector2 = prevDiffObj.endCursorPosition
 		local currentPosition:Vector2 = positionOf(crr.Position)
 		local TailCirclePosition:Vector2?
 		local LazyJumpDistance = lastCursorPosition and ((currentPosition * scalingFactor - lastCursorPosition * scalingFactor).Magnitude) or 0
 		local MinimumJumpDistance = LazyJumpDistance
-		local MinimumJumpTime = StrainTime
+		local MinimumJumpTime = AdjustedDeltaTime
 		local BaseTravelDistance = 0
 		local BaseTravelTime
 
@@ -371,7 +371,7 @@ return function(baseList:{any}, baseData)
 
 		if prevDiffObj.isSlider and not baseData.ModData.NS then
 			local lastTravelTime = math_max(prevDiffObj.lazySLTravelTime, MIN_DELTA_TIME)
-			MinimumJumpTime = math_max(StrainTime - lastTravelTime, MIN_DELTA_TIME)
+			MinimumJumpTime = math_max(AdjustedDeltaTime - lastTravelTime, MIN_DELTA_TIME)
 
 			local tailJumpDistance = (currentPosition - prevDiffObj.TailCirclePosition).Magnitude * scalingFactor
 			MinimumJumpDistance = math_max(0, math_min(LazyJumpDistance - (Maximum_Slider_Radius - Assumed_Slider_Radius), tailJumpDistance - Maximum_Slider_Radius))
@@ -416,7 +416,7 @@ return function(baseList:{any}, baseData)
 		crrObj.Time = crr.Time
 		crrObj.Angle = angle
 		crrObj.DeltaTime = DeltaTime
-		crrObj.StrainTime = StrainTime
+		crrObj.AdjustedDeltaTime = AdjustedDeltaTime
 		crrObj.LazyJumpDistance = LazyJumpDistance
 		crrObj.MinimumJumpDistance = MinimumJumpDistance
 		crrObj.MinimumJumpTime = MinimumJumpTime

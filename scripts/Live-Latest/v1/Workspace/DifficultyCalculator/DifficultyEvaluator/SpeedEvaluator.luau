@@ -30,7 +30,7 @@ local function getSpeedDiff(CrrObj: Preprocessing.ObjectData)
 	local nextObj = CrrObj.Next(1)
 
 	-- Cache property access
-	local strainTime = CrrObj.StrainTime
+	local strainTime = CrrObj.AdjustedDeltaTime
 
 	-- Adjust Strain Time based on the object's timing window (OD)
 	local timeAdjustment = (strainTime / CrrObj.Hit300Value) / 0.93
@@ -48,7 +48,7 @@ local function getSpeedDiff(CrrObj: Preprocessing.ObjectData)
 
 	local speedDiff = ((1 + speedBonus) * 1000 / strainTime) * doubletapness
 
-	speedDiff *= getHighBPMBonus(CrrObj.StrainTime)
+	speedDiff *= getHighBPMBonus(CrrObj.AdjustedDeltaTime)
 
 	return speedDiff
 end

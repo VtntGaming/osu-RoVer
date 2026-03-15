@@ -76,8 +76,8 @@ local function getAimDiff(CrrObj: preprocessing.ObjectData)
 	local Prev2Obj = CrrObj.Previous(3)
 
 	-- Cache frequently accessed properties into local variables
-	local crrStrainTime = CrrObj.StrainTime
-	local prevStrainTime = PrevObj.StrainTime
+	local crrStrainTime = CrrObj.AdjustedDeltaTime
+	local prevStrainTime = PrevObj.AdjustedDeltaTime
 	
 	local crrJumpDist = CrrObj.LazyJumpDistance
 	local prevJumpDist = PrevObj.LazyJumpDistance
@@ -88,13 +88,13 @@ local function getAimDiff(CrrObj: preprocessing.ObjectData)
 	-- But if the last object is a slider, extend travel velocity through slider into current object
 	if PrevObj.isSlider then
 		local sliderDistance = PrevObj.lazyTravelDistance + CrrObj.LazyJumpDistance
-		crrVelocity *= math.max(crrVelocity, sliderDistance / CrrObj.StrainTime)
+		crrVelocity *= math.max(crrVelocity, sliderDistance / CrrObj.AdjustedDeltaTime)
 	end
 
 	local prevVelocity = (prevJumpDist and prevStrainTime > 0) and (prevJumpDist / prevStrainTime) or 0
 	if PrevPrevObj and PrevPrevObj.isSlider then
 		local sliderDistance = PrevPrevObj.lazyTravelDistance + PrevObj.LazyJumpDistance
-		prevVelocity *= math.max(prevVelocity, sliderDistance / PrevObj.StrainTime)
+		prevVelocity *= math.max(prevVelocity, sliderDistance / PrevObj.AdjustedDeltaTime)
 	end
 
 	-- Initialize bonus values
@@ -190,7 +190,7 @@ local function getAimDiff(CrrObj: preprocessing.ObjectData)
 	-- Add in additional slider velocity bonus
 	baseAimStrain += (sliderBonus < 1 and sliderBonus or math.pow(sliderBonus, 0.75)) * SLIDER_MULTIPLIER
 	
-	baseAimStrain *= getHighBPMBonus(CrrObj.StrainTime, CrrObj.LazyJumpDistance)
+	baseAimStrain *= getHighBPMBonus(CrrObj.AdjustedDeltaTime, CrrObj.LazyJumpDistance)
 	
 	-- Apply high circle size bonus
 	baseAimStrain *= CrrObj.SmallCircleBonus
