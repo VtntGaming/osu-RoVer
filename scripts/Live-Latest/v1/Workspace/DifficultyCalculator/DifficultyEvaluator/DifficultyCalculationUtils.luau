@@ -24,6 +24,16 @@ function utils.Smoothstep(x:number, _start:number, _end:number)
 	return x * x * (3 - 2 * x)
 end
 
+function utils.MillisecondsToBPM(ms:number, delimiter:any)
+	delimiter = delimiter or 4
+	return 60000 / (ms * delimiter)
+end
+
+function utils.BPMToMilliseconds(bpm:number, delimiter:any)
+	delimiter = delimiter or 4
+	return 60000 / delimiter / bpm
+end
+
 function utils.SmoothstepBellCurve(x:number, mean:number?, width:number?)
 	if not mean then mean = 0.5 end
 	if not width then width = 0.5 end
@@ -38,6 +48,53 @@ end
 
 function utils.ReverseLerp(x:number, _start:number, _end:number):number
 	return math_clamp((x - _start) / (_end - _start), 0.0, 1.0);
+end
+
+type LogisticA = (x: number, midpointOffset: number, multiplier: number, maxValue: number?) -> number
+type LogisticB = (exponent: number, maxValue: number?) -> number
+type Logistic = LogisticA & LogisticB
+
+local function LogisticA(x: number, midpointOffset: number, multiplier: number, maxValue: number?): number
+	local _maxValue = maxValue or 1
+	
+	return _maxValue / (1 + math.exp(multiplier * (midpointOffset - x)))
+end
+
+local function LogisticB(exponent: number, maxValue: number?): number
+	local _maxValue = maxValue or 1
+	return _maxValue / (1 + math.exp(exponent))
+end
+
+local function Logistic(...): number
+	if select("#", ...) >= 3 then
+		return LogisticA(...)
+	else
+		return LogisticB(...)
+	end
+end
+
+utils.Logistic = Logistic :: Logistic
+
+function utils.Normalise(power:number, ...:number)
+	local count = 0
+	local sum = 0
+
+	local data = table.pack(...)
+	if data.n == 0 then
+		return 0
+	end
+
+	for i = 1, data.n do
+		local num = data[i]
+		sum += math_pow(num, power)
+		count += 1
+	end
+
+	if count > 0 then
+		return math_pow(sum, 1/power)
+	else
+		return 0
+	end
 end
 
 function utils.Erf(x:number):number

@@ -123,9 +123,12 @@ export type ObjectData = {
 	Angle:number,
 	DeltaTime:number,
 	AdjustedDeltaTime:number,
+	JumpDistance:number,
 	LazyJumpDistance:number,
 	MinimumJumpDistance:number,
 	MinimumJumpTime:number,
+	AngularVelocity: number?,
+	NormalisedVectorAngle: number?,
 	endCursorPosition:Vector2,
 	lazySLTravelTime:number,
 	Hit300Value:number,
@@ -151,7 +154,7 @@ export type NestedTick = {
 }
 
 local NORMALISED_RADIUS = 50
--- local NORMALISED_DIAMETER = NORMALISED_RADIUS * 2
+local NORMALISED_DIAMETER = NORMALISED_RADIUS * 2
 local MIN_DELTA_TIME = 25
 local Maximum_Slider_Radius = NORMALISED_RADIUS * 2.4
 local Assumed_Slider_Radius = NORMALISED_RADIUS * 1.8
@@ -166,7 +169,15 @@ local defaultFunct = function()
 	return 0
 end
 
-return function(baseList:{any}, baseData)
+local DifficultyHitObject = {}
+
+DifficultyHitObject.NORMALISED_RADIUS = NORMALISED_RADIUS
+DifficultyHitObject.NORMALISED_DIAMETER = NORMALISED_DIAMETER
+DifficultyHitObject.MIN_DELTA_TIME = MIN_DELTA_TIME
+DifficultyHitObject.Maximum_Slider_Radius = Maximum_Slider_Radius
+DifficultyHitObject.Assumed_Slider_Radius = Assumed_Slider_Radius
+
+function DifficultyHitObject.GenerateDifficultyHitObjects(baseList:{any}, baseData):{ObjectData}
 	local DifficultyObjects:{ObjectData} = {}
 	for objID = 1, #baseList do
 		local crr = baseList[objID]
@@ -207,6 +218,7 @@ return function(baseList:{any}, baseData)
 			crrObj.Time = crr.Time
 			crrObj.isInvalid = true
 			crrObj.LazyJumpDistance = 0
+			crrObj.JumpDistance = 0
 			local prevObj = crrObj.Previous(1)
 			local prevTime = prevObj and prevObj.Time or 0
 			crrObj.DeltaTime = crr.Time - prevTime
@@ -214,41 +226,6 @@ return function(baseList:{any}, baseData)
 			crrObj.Hit300Value = 2 * h300window(baseData.OD)
 			DifficultyObjects[objID] = crrObj
 			continue
-		end
-
-		-- Angle of 2 previous object with current object
-
-		local angle = -1
-		--if objID > 2 and objID <= #baseList then
-		--	local prevobj = baseList[objID-1]
-		--	local prevprevobj = baseList[objID+1]
-		--	if prevprevobj and not prevprevobj.isSpinner then
-		--		local v1 = Vector2.new(prevprevobj.Position.X, prevprevobj.Position.Y)
-		--		local v2 = Vector2.new(prevobj.Position.X, prevobj.Position.Y)
-		--		local v3 = Vector2.new(crr.Position.X, crr.Position.Y)
-		--		angle = converterTool.getAngle(v1, v2, v3)
-		--	end
-		--end
-
-		if objID > 2 and objID <= #baseList then
-			local prevobj = crrObj.Previous(1)
-			local prevprevobj = crrObj.Previous(2)
-			if prevprevobj and not prevprevobj.isSpinner then
-				local prevPrevCursorPosition = prevprevobj.endCursorPosition or prevprevobj.Position
-				local prevCursorPosition = prevobj.endCursorPosition
-				local prevHeadPosition = prevobj.Position
-				local crrHeadPosition = positionOf(crr.Position)
-
-				if prevPrevCursorPosition then
-					local v1 = prevPrevCursorPosition - prevHeadPosition
-					local v2 = crrHeadPosition - prevCursorPosition
-
-					local dot = v1:Dot(v2)
-					local det = v1.X * v2.Y - v1.Y * v2.X
-
-					angle = math_abs(math_atan2(det, dot))
-				end
-			end
 		end
 
 		-- Cursor position
@@ -275,12 +252,48 @@ return function(baseList:{any}, baseData)
 		local lastCursorPosition:Vector2 = prevDiffObj.endCursorPosition
 		local currentPosition:Vector2 = positionOf(crr.Position)
 		local TailCirclePosition:Vector2?
+		local JumpDistance = prevDiffObj and prevDiffObj.Position and ((currentPosition * scalingFactor - prevDiffObj.Position * scalingFactor).Magnitude) or 0
 		local LazyJumpDistance = lastCursorPosition and ((currentPosition * scalingFactor - lastCursorPosition * scalingFactor).Magnitude) or 0
 		local MinimumJumpDistance = LazyJumpDistance
 		local MinimumJumpTime = AdjustedDeltaTime
 		local BaseTravelDistance = 0
 		local BaseTravelTime
 
+		
+		-- Angle of 2 previous object with current object
+		local angle = -1
+		local AngularVelocity: number?
+		local NormalisedVectorAngle: number?
+
+		if objID > 2 and objID <= #baseList then
+			local prevprevDiffObj = crrObj.Previous(2)
+			if prevprevDiffObj and not prevprevDiffObj.isSpinner then
+				local prevPrevCursorPosition = prevprevDiffObj.endCursorPosition or prevprevDiffObj.Position
+				local prevCursorPosition = prevDiffObj.endCursorPosition
+				local prevHeadPosition = prevDiffObj.Position
+				local crrHeadPosition = positionOf(crr.Position)
+
+				if prevPrevCursorPosition then
+					local v1 = prevPrevCursorPosition - prevHeadPosition
+					local v2 = crrHeadPosition - prevCursorPosition
+
+					local dot = v1:Dot(v2)
+					local det = v1.X * v2.Y - v1.Y * v2.X
+
+					local v = positionOf(crr.Position) - lastCursorPosition
+					NormalisedVectorAngle = math.atan2(math.abs(v.Y), math.abs(v.X))
+
+					angle = math_abs(math_atan2(det, dot))
+
+					if prevprevDiffObj.Angle and prevprevDiffObj.Angle ~= -1 then
+						local angleDifference = math_abs(angle - prevprevDiffObj.Angle)
+						local angleDifferenceAdjusted = math.sin(angleDifference / 2) * 180.0
+
+						AngularVelocity = angleDifferenceAdjusted / (AdjustedDeltaTime * 0.1)
+					end
+				end
+			end
+		end
 
 		-- Slider travel distance
 
@@ -428,8 +441,11 @@ return function(baseList:{any}, baseData)
 		crrObj.Position = positionOf(crr.Position)
 		crrObj.Time = crr.Time
 		crrObj.Angle = angle
+		crrObj.AngularVelocity = AngularVelocity
+		crrObj.NormalisedVectorAngle = NormalisedVectorAngle
 		crrObj.DeltaTime = DeltaTime
 		crrObj.AdjustedDeltaTime = AdjustedDeltaTime
+		crrObj.JumpDistance = JumpDistance
 		crrObj.LazyJumpDistance = LazyJumpDistance
 		crrObj.MinimumJumpDistance = MinimumJumpDistance
 		crrObj.MinimumJumpTime = MinimumJumpTime
@@ -451,3 +467,5 @@ return function(baseList:{any}, baseData)
 
 	return DifficultyObjects
 end
+
+return DifficultyHitObject

@@ -2,7 +2,10 @@
 --!strict
 local Workspace = game:GetService("Workspace")
 
-local DifficultyEvaluator = require(script.Parent.DifficultyEvaluator)
+local AgilityEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.Aim.AgilityEvaluator)
+local FlowAimEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.Aim.FlowAimEvaluator)
+local SnapAimEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.Aim.SnapAimEvaluator)
+local DifficultyCalculationUtils = require(Workspace.DifficultyCalculator.DifficultyEvaluator.DifficultyCalculationUtils)
 local ModData = require(Workspace.ModData)
 local BasePerfomance = require(Workspace.PerformanceCalculator.BasePerfomance)
 local StrainSkills = {}
@@ -88,16 +91,18 @@ end
 
 -- Sometime it would not be very easy to match everything with osu! difficulty system
 -- I need to adjust it back to the original osu!standard
-local aimAdjustedMultiplier = 1
-local speedAimAdjustedMultiplier = 1
+local aimSnapAdjustedMultiplier = 1
+local aimAgilityAdjustedMultiplier = 1
+local aimFlowAdjustedMultiplier = 1
 local totalAdjustedMultiplier = 1
 local speedAdjustedMultiplier = 1
-local aimSkillMultiplier = 65.2 * aimAdjustedMultiplier
-local speedAimSkillMultiplier = 2.8 * speedAimAdjustedMultiplier
-local skillMultiplierTotal = 1 * totalAdjustedMultiplier
+local aimSnapSkillMultiplier = 71 * aimSnapAdjustedMultiplier
+local aimAgilitySkillMultiplier = 2 * aimAgilityAdjustedMultiplier
+local aimFlowSkillMultiplier = 244 * aimFlowAdjustedMultiplier
+local skillMultiplierTotal = 1.1 * totalAdjustedMultiplier
 local speedSkillMultiplier = 1.07 * speedAdjustedMultiplier
 local readingSkillMultiplier = 2.5
-local meanExpoment = 1.2
+local meanExponent = 1.2
 local flashlightSkillMultiplier = 0.056
 
 local AimFLBaseStrainDecay = 0.15
@@ -110,13 +115,38 @@ local DIFFICULTY_VALUE_AIM_MULTIPLIER = 1
 local DIFFICULTY_VALUE_SPEED_MULTIPLIER = 1
 local EvaluatorContainer = script.Parent.DifficultyEvaluator
 local Evaluators = {
-	Aim = require(EvaluatorContainer.AimEvaluator),
-	SpeedAim = (require(EvaluatorContainer.SpeedAimEvalulator)),
 	Speed = require(EvaluatorContainer.SpeedEvaluator),
 	Rhythm = require(EvaluatorContainer.RhythmCalculator),
 	Flashlight = require(EvaluatorContainer.FLEvaluator),
 	Reading = require(EvaluatorContainer.ReadingEvaluator)
 }
+
+local function calculateSnapFlowProbability(ratio: number): number
+	local k = 7.27	-- WYSI
+
+	if ratio == 0 then
+		return 0
+	end
+
+	if math.isnan(ratio) then
+		return 1
+	end
+
+	return DifficultyCalculationUtils.Logistic(-k * math.log(ratio))
+end
+
+local function CalculateTotalAimValue(snapDifficulty: number, agilityDifficulty: number, flowDifficulty: number): number
+	local combinedSnapDifficulty = DifficultyCalculationUtils.Normalise(meanExponent, snapDifficulty, agilityDifficulty)
+
+	local pSnap = calculateSnapFlowProbability(flowDifficulty / combinedSnapDifficulty)
+	local pFlow = 1 - pSnap
+
+	local totalDifficulty = combinedSnapDifficulty * pSnap + flowDifficulty * pFlow
+
+	local totalStrain = totalDifficulty * skillMultiplierTotal
+
+	return totalStrain	
+end
 
 function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModData.ModData, ConvertedData, RawDifficulty)	
 	local AimStrain = 0
@@ -138,8 +168,6 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 	local isRX = modData.RX
 	
 	-- Pre-access evaluators
-	local EvaluatorAim = Evaluators.Aim
-	local EvaluatorSpeedAim = Evaluators.SpeedAim
 	local EvaluatorSpeed = Evaluators.Speed
 	local EvaluatorRhythm = Evaluators.Rhythm
 	local EvaluatorReading = Evaluators.Reading
@@ -153,8 +181,9 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		local strainTime = objectData.AdjustedDeltaTime
 		local objectTime = objectData.Time
 		
-		local AimDiff = EvaluatorAim.GetAimDiff(objectData) * aimSkillMultiplier
-		local SpeedAimDiff = EvaluatorSpeedAim.GetSpeedAimDiff(objectData) * speedAimSkillMultiplier
+		local AimSnapDiff = SnapAimEvaluator.GetSnapAimDiff(objectData, true) * aimSnapSkillMultiplier
+		local AimAgilityDiff = AgilityEvaluator.GetAimAgilityDiff(objectData) * aimAgilitySkillMultiplier
+		local FlowAimDiff = FlowAimEvaluator.GetFlowAimDiff(objectData, true) * aimFlowSkillMultiplier
 		local SpeedDiff = EvaluatorSpeed.GetSpeedDiff(objectData) * speedSkillMultiplier
 		local RhythmDiff = EvaluatorRhythm.GetRhythmDiff(objectData)
 		local ReadingDiff = EvaluatorReading.GetReadingDiff(objectData, isHD) * readingSkillMultiplier
@@ -166,20 +195,21 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		local ReadingStrainDecay = math_pow(ReadingBaseStrainDecay, strainTimeDiv1000)
 
 		if isTD then
-			AimDiff = math_pow(AimDiff, 0.76)
-			SpeedAimDiff = math_pow(SpeedAimDiff, 0.95)
+			AimSnapDiff = math_pow(AimSnapDiff, 0.76)
+			FlowAimDiff = math_pow(FlowAimDiff, 1.1)
 		end
 
 		if isRX then
-			SpeedAimDiff = 0
+			AimAgilityDiff = 0
+			FlowAimDiff *= 0.1
 		end
 
 		-- Calculate aim skill
 		local oneMinusAimDecay = 1 - AimFLStrainDecay
-		AimStrain = AimStrain * AimFLStrainDecay + AimDiff * oneMinusAimDecay
+		AimStrain = AimStrain * AimFLStrainDecay + AimSnapDiff * oneMinusAimDecay
 		local oneMinusSpeedDecay = 1 - SpeedStrainDecay
-		SpeedAimStrain = (SpeedAimStrain * SpeedStrainDecay + SpeedAimDiff * oneMinusSpeedDecay)
-		local AimTotalStrain = DifficultyEvaluator.Normalise(meanExpoment, AimStrain, SpeedAimStrain) * skillMultiplierTotal
+		SpeedAimStrain = (SpeedAimStrain * SpeedStrainDecay + AimAgilityDiff * oneMinusSpeedDecay)
+		local AimTotalStrain = CalculateTotalAimValue(AimSnapDiff, AimAgilityDiff, FlowAimDiff)
 		-- Calculate speed diff
 		SpeedStrain = SpeedStrain * SpeedStrainDecay + SpeedDiff * oneMinusSpeedDecay
 		-- Calculate reading diff
@@ -188,7 +218,7 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		FLStrain = FLStrain * AimFLStrainDecay + FLDiff
 		
 		local PSValue = ConvertedData[objectId].PSValue
-		PSValue.Aim = AimDiff
+		PSValue.Aim = AimSnapDiff
 		PSValue.Speed = SpeedDiff
 		PSValue.Rhythm = RhythmDiff
 		PSValue.Flashlight = FLDiff
