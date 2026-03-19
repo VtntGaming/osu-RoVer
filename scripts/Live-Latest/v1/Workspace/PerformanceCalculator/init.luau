@@ -1,7 +1,7 @@
 --[LOCATION]:[Workspace.PerformanceCalculator]
 local workspace = game:GetService("Workspace")
-local basePerformance = require(script.BasePerfomance)
-local basePerformanceFL = require(script.BasePerfomanceFL)
+
+local BasePerformance = require(script.BasePerformance)
 local DifficultyCalculationUtils = require(workspace.DifficultyCalculator.DifficultyEvaluator.DifficultyCalculationUtils)
 local DifficultyCalculator = require(workspace.DifficultyCalculator)
 local ConverterTools = require(workspace.OsuConvert.converterTools)
@@ -25,7 +25,7 @@ end
 function calculateSpeedHighDeviationNerf(Attributes:SpeedAttributes):number
 	if not Attributes.AccuracyData.SpeedDeviation then return 0 end
 	local speedDeviation = Attributes.AccuracyData.SpeedDeviation
-	local speedValue = basePerformance(Attributes.SpeedDiff)
+	local speedValue = BasePerformance.DifficultyToPerformance(Attributes.SpeedDiff)
 	local excessSpeedDifficultyCutoff = 100 + 220 * math.pow(22 / speedDeviation, 6.5)
 	if speedValue <= excessSpeedDifficultyCutoff then
 		return 1
@@ -64,7 +64,7 @@ local function ComputeAimValue(Attributes:AimAttributes):number
 	
 	local totalHit = accData.h300 + accData.h100 + accData.h50 + accData.missCount
 	
-	local aimPS = basePerformance(aimDiff)
+	local aimPS = BasePerformance.DifficultyToPerformance(aimDiff)
 	local lengthBonus = 0.95 + 0.4 * math.min(1, totalHit / 2000) + 
 		(totalHit > 2000 and math.log10(totalHit/2000) * 0.5 or 0)
 	aimPS *= lengthBonus
@@ -152,7 +152,7 @@ local function ComputeSpeedValue(Attributes:SpeedAttributes):number
 	local accData = Attributes.AccuracyData	
 	local totalHit = accData.h300 + accData.h100 + accData.h50 + accData.missCount
 	
-	local speedPS = basePerformance(Attributes.SpeedDiff)
+	local speedPS = BasePerformance.DifficultyToPerformance(Attributes.SpeedDiff)
 	
 	local lengthBonus = 0.95 + 0.4 * math.min(1, totalHit / 2000) + 
 		(totalHit > 2000 and math.log10(totalHit/2000) * 0.5 or 0)
@@ -246,7 +246,7 @@ local function ComputeFlashlightValue(Attributes:FlashlightAttributes):number
 	end
 	local accData = Attributes.AccuracyData	
 	local totalHit = accData.h300 + accData.h100 + accData.h50 + accData.missCount
-	local flashlightPS = basePerformanceFL(Attributes.FLDiff or 0)
+	local flashlightPS = BasePerformance.DifficultyToPerformanceFL(Attributes.FLDiff or 0)
 	local effectiveMissCount = accData.EffectiveMissCount
 	if effectiveMissCount > 0 then
 		flashlightPS *= 0.97 * math.pow	(1 - math.pow(effectiveMissCount / totalHit, 0.775), math.pow(effectiveMissCount, .875))
