@@ -552,10 +552,12 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	local AimDiffStrainCount = ReturnData.Difficulty.AimDifficultyStrainCount
 	local SpeedDiffStrainCount = ReturnData.Difficulty.SpeedDifficultyStrainCount
 	local SpeedRelevantNoteCount = ReturnData.Difficulty.SpeedRelevantNoteCount
+	local ReadingDiffStrainCount = ReturnData.Difficulty.ReadingDifficultyStrainCount
 
-	local MaxPSData = PerformanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, NoteCount, true, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount)
+	local MaxPSData = PerformanceCalculator(AimDiff, SpeedDiff, ReadingDiff, FLDiff, ODRate, ARRate, ModData, NoteCount, true, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, ReadingDiffStrainCount)
 	local RewardedAimPS = MaxPSData.Max.AimPS
 	local RewardedSpeedPS = MaxPSData.Max.SpeedPS
+	local RewardedReadingPS = MaxPSData.Max.ReadingPS
 	local RewardedAccPS = MaxPSData.Max.AccPS
 	local RewardedFlashlightPS = MaxPSData.Max.FlashlightPS
 
@@ -568,7 +570,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	DetailedInterface.Difficulty.Data.Text = string.format("%.2f (%.2fps)",BaseDiff,TotalPS)
 	DetailedInterface.AimDifficulty.Data.Text = string.format("%.2f (%.2fps)",AimDiff,RewardedAimPS)
 	DetailedInterface.SpeedDifficulty.Data.Text = string.format("%.2f (%.2fps)",SpeedDiff,RewardedSpeedPS)
-	DetailedInterface.ReadingDifficulty.Data.Text = string.format("%.2f (%.2fps)",ReadingDiff,0)
+	DetailedInterface.ReadingDifficulty.Data.Text = string.format("%.2f (%.2fps)",ReadingDiff,RewardedReadingPS)
 	if ModData.FL then
 		DetailedInterface.FlashlightDifficulty.Data.Text = string.format("%.2f (%.2fps)",FLDiff,RewardedFlashlightPS)
 		DetailedInterface.FlashlightDifficulty.Data.TextTransparency = 0
@@ -1064,10 +1066,12 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	PreviewMapPS.MaxConsistencyScore = MaxConsistencyScore
 	PreviewMapPS.AimDiffStrainCount = ReturnData.Difficulty.AimDifficultyStrainCount
 	PreviewMapPS.SpeedDiffStrainCount = ReturnData.Difficulty.SpeedDifficultyStrainCount
+	PreviewMapPS.ReadingDifficultyStrainCount = ReturnData.Difficulty.ReadingDifficultyStrainCount
 	PreviewMapPS.SpeedRelevantNoteCount = ReturnData.Difficulty.SpeedRelevantNoteCount
 	PreviewMapPS.CurrentSpeed = SongSpeed
 	PreviewMapPS.AimDiff = AimDiff
 	PreviewMapPS.SpeedDiff = SpeedDiff
+	PreviewMapPS.ReadingDiff = ReadingDiff
 	PreviewMapPS.FLDiff = FLDiff
 	PreviewMapPS.MapFile = ReturnData.MapFile -- Used for scores that have difference in Speed,EZ,HR,FL
 

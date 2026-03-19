@@ -246,6 +246,7 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 	local PSData = PerformanceCalculator(
 		self.AimDiffFinal, 
 		self.SpeedDiffFinal, 
+		0,
 		self.FLDiffFinal, 
 		self.ODRate, 
 		self.ARRate, 
@@ -255,6 +256,7 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 		self.AimDiffStrainCount, 
 		self.SpeedDiffStrainCount, 
 		self.SpeedRelevantNoteCount, 
+		0,
 		AccData
 	)
 
