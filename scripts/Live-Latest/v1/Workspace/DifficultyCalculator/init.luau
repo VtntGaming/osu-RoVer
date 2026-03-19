@@ -5,6 +5,8 @@
 -- The calculator might different compare to the original one
 
 local workspace = game:GetService("Workspace")
+
+local converterTools = require(workspace.OsuConvert.converterTools)
 local basePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
 local basePerfomanceFL = require(workspace.PerformanceCalculator.BasePerfomanceFL)
 local evaluator = require(script.DifficultyEvaluator)
@@ -20,7 +22,7 @@ local math_log10 = math.log10
 local math_exp = math.exp
 local math_clamp = math.clamp
 local math_lerp = math.lerp
-local table_sort = table.sort
+local table_sort = converterTools.TrySort
 
 local perfomance_base_multiplier = 1.12
 local difficulty_multiplier = 0.0675
@@ -29,11 +31,11 @@ local normalised_expoment = 1.1
 local calculator = {}
 
 function sortPeak(data:{number})
-	table.sort(data,function(a,b) return a>b end)
+	converterTools.TrySort(data,function(a,b) return a>b end)
 end
 
 function sortStrain(data:{{number}})
-	table.sort(data,function(a,b) return a[1]>b[1] end)
+	converterTools.TrySort(data,function(a,b) return a[1]>b[1] end)
 end
 
 function lerp(a:number,b:number,r:number)

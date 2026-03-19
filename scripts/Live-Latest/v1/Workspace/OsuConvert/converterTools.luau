@@ -283,5 +283,28 @@ function tool.GetScoreV1(maxCombo:number):(number, number, number)
 	local accuracyScore = getAccuracyScore(maxCombo)
 	return consistencyScore, accuracyScore, consistencyScore + accuracyScore
 end
+type SortFunct<V> = (a: V, b: V) -> boolean
+
+local function verifyOrder<V>(tbl: {V}, funct: SortFunct<V>): boolean
+	for i = 1, #tbl - 1 do
+		local v1 = tbl[i]
+		local v2 = tbl[i + 1]
+
+		local result = funct(v1, v2)
+		assert(type(result) == "boolean", "Expected boolean return")
+		if result == false then
+			return false
+		end
+	end
+
+
+	return true
+end
+
+function tool.TrySort<V>(tbl: {V}, funct: SortFunct<V>)
+	if not verifyOrder(tbl, funct) then
+		table.sort(tbl, funct)
+	end	
+end
 
 return tool

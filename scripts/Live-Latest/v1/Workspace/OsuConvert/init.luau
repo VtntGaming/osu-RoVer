@@ -226,7 +226,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 				CurrentTimmingPoint[1] /= SongSpeed
 				TimingPoints[#TimingPoints+1] = CurrentTimmingPoint
 			end
-			table.sort(TimingPoints,function(timing1,timing2)
+			tool.TrySort(TimingPoints,function(timing1,timing2)
 				return timing1[1] < timing2[1]
 			end)
 			for i = 1, #TimingPoints do
@@ -372,7 +372,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	end
 
 	-- sort based on the time
-	table.sort(HitObjectsListing, function(obj1, obj2)
+	tool.TrySort(HitObjectsListing, function(obj1, obj2)
 		if not obj1.Time then
 			return false
 		elseif not obj2.Time then
