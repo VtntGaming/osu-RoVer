@@ -4,11 +4,11 @@
 -- Even though I have to transfer code from C# to lua all by myself
 -- The calculator might different compare to the original one
 
+local Workspace = game:GetService("Workspace")
 local workspace = game:GetService("Workspace")
 
+local BasePerformance = require(Workspace.PerformanceCalculator.BasePerformance)
 local converterTools = require(workspace.OsuConvert.converterTools)
-local basePerfomance = require(workspace.PerformanceCalculator.BasePerfomance)
-local basePerfomanceFL = require(workspace.PerformanceCalculator.BasePerfomanceFL)
 local evaluator = require(script.DifficultyEvaluator)
 local DifficultyCalculationUtils = require(script.DifficultyEvaluator.DifficultyCalculationUtils)
 local RatingCalculator = require(script.RatingCalculator)
@@ -392,8 +392,8 @@ export type DifficultyAttributes = {
 	ReadingDifficultStrainCount: number
 }
 
-function calculateStarRating(basePerfomance: number)
-	return math_pow(basePerfomance * perfomance_base_multiplier, 1/3)
+function calculateStarRating(BasePerformance: number)
+	return math_pow(BasePerformance * perfomance_base_multiplier, 1/3)
 end
 function calculator.CalculateVisibilityBonus(modData:ModData, AR:number, visibilityFactor:number)
 	if not visibilityFactor then
@@ -448,13 +448,13 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	local flashlightRating = RatingCalculator.ComputeFlashlightRating(flashlightDifficultyValue, data.ModData, data.NoteCount.Total, ARRate, ODRate)
 	local readingRating = RatingCalculator.ComputeReadingRating(readingDifficultyValue, data.ModData, ODRate)
 	
-	local aimBasePerfomance = basePerfomance(aimRating)
-	local speedBasePerfomance = basePerfomance(speedRating)
-	local readingBasePerformance = basePerfomance(readingRating)
-	local flashlightBasePerfomance = basePerfomanceFL(flashlightRating)
-	local baseCognitionPerformance = calculator.SumCognitionDifficulty(readingBasePerformance, flashlightBasePerfomance)
+	local aimBasePerformance = BasePerformance.DifficultyToPerformance(aimRating)
+	local speedBasePerformance = BasePerformance.DifficultyToPerformance(speedRating)
+	local readingBasePerformance = BasePerformance.DifficultyToPerformance(readingRating)
+	local flashlightBasePerformance = BasePerformance.DifficultyToPerformanceFL(flashlightRating)
+	local baseCognitionPerformance = calculator.SumCognitionDifficulty(readingBasePerformance, flashlightBasePerformance)
 	
-	local basePerformance = evaluator.Normalise(normalised_expoment, aimBasePerfomance, speedBasePerfomance, baseCognitionPerformance)
+	local basePerformance = evaluator.Normalise(normalised_expoment, aimBasePerformance, speedBasePerformance, baseCognitionPerformance)
 	
 	-- local multiplier = calculateDifficultyMultiplier(data.ModData, data.NoteCount.Total, data.NoteCount.Spinner)
 	local starRating = calculateStarRating(basePerformance)
@@ -506,14 +506,14 @@ function calculator.GetDifficultyAttributesFromLiveData(Attributes:LiveDifficult
 	local speedRating = RatingCalculator.ComputeSpeedRating(speedDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate)
 	local flashlightRating = RatingCalculator.ComputeFlashlightRating(flashlightDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate)
 	
-	local aimBasePerfomance = basePerfomance(aimRating)
-	local speedBasePerfomance = basePerfomance(speedRating)
-	local flashlightBasePerformance = basePerfomanceFL(flashlightRating)
+	local aimBasePerformance = BasePerformance.DifficultyToPerformance(aimRating)
+	local speedBasePerformance = BasePerformance.DifficultyToPerformance(speedRating)
+	local flashlightBasePerformance = BasePerformance.DifficultyToPerformanceFL(flashlightRating)
 	
-	local basePerfomance = evaluator.Normalise(normalised_expoment, aimBasePerfomance, speedBasePerfomance, flashlightBasePerformance)
+	local BasePerformance = evaluator.Normalise(normalised_expoment, aimBasePerformance, speedBasePerformance, flashlightBasePerformance)
 	
 	-- local multiplier = calculateDifficultyMultiplier(Attributes.ModData, Attributes.NoteCount.Total, Attributes.NoteCount.Spinner)
-	local starRating = calculateStarRating(basePerfomance)
+	local starRating = calculateStarRating(BasePerformance)
 	
 	return {
 		AimDifficulty = aimRating,

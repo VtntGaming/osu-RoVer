@@ -7,7 +7,7 @@ local FlowAimEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvalua
 local SnapAimEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.Aim.SnapAimEvaluator)
 local DifficultyCalculationUtils = require(Workspace.DifficultyCalculator.DifficultyEvaluator.DifficultyCalculationUtils)
 local ModData = require(Workspace.ModData)
-local BasePerfomance = require(Workspace.PerformanceCalculator.BasePerfomance)
+local BasePerformance = require(Workspace.PerformanceCalculator.BasePerformance)
 local StrainSkills = {}
 
 -- Cache math functions
@@ -243,8 +243,8 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		local baseAim = math_pow(AimStrain * 10, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
 		local baseSpeed = math_pow(speedRhythm * 10, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_SPEED_MULTIPLIER
 		local baseFL = math_pow(FLStrain * 10, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
-		local basePerfomance = math_pow(math_pow(BasePerfomance(baseAim), 1.1) + math_pow(BasePerfomance(baseSpeed), 1.1) + math_pow(BasePerfomance(baseFL), 1.1), 1/1.1)
-		local CurrentStrain = 0.027 * 1.04768955549 * (math_pow(100000 / 1.86606598308 * basePerfomance, 1/3) + 4)
+		local BasePerformance = math_pow(math_pow(BasePerformance.DifficultyToPerformance(baseAim), 1.1) + math_pow(BasePerformance.DifficultyToPerformance(baseSpeed), 1.1) + math_pow(BasePerformance.DifficultyToPerformance(baseFL), 1.1), 1/1.1)
+		local CurrentStrain = 0.027 * 1.04768955549 * (math_pow(100000 / 1.86606598308 * BasePerformance, 1/3) + 4)
 		CurrentStrain = CurrentStrain < 0 and 0 or (CurrentStrain > 50 and 50 or CurrentStrain)
 		
 		rawIdx += 1
