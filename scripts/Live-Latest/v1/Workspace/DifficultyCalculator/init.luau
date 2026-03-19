@@ -477,7 +477,8 @@ end
 
 export type LiveDifficultyAttributes = {
 	AimPeak:{number},
-	SpeedPeak:{number},
+	SpeedObjects:{{number}},
+	ReadingObjects:{{number}},
 	FLPeak:{number},
 	ModData:modData.ModData,
 	ARRate:number,
@@ -493,17 +494,20 @@ export type LiveDifficultyAttributes = {
 export type LiveDifficultyReturnAttributes = {
 	AimDifficulty:number,
 	SpeedDifficulty:number,
+	ReadingDifficulty:number,
 	FlashlightDifficulty:number,
 	StarRating:number
 }
 
 function calculator.GetDifficultyAttributesFromLiveData(Attributes:LiveDifficultyAttributes):LiveDifficultyReturnAttributes
 	local aimDifficultyValue = calculator.LiveDifficultyValue(Attributes.AimPeak, "Aim")
-	local speedDifficultyValue = calculator.LiveDifficultyValue(Attributes.SpeedPeak, "Speed")
+	local speedDifficultyValue = calculator.DifficultyValueHarmonic(Attributes.SpeedObjects, "Speed")
+	local readingDifficultyValue = calculator.DifficultyValueHarmonic(Attributes.ReadingObjects, "Reading")
 	local flashlightDifficultyValue = Attributes.ModData.FL and calculator.LiveFLDifficultyValue(Attributes.FLPeak) or 0
 	
 	local aimRating = RatingCalculator.ComputeAimRating(aimDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate)
 	local speedRating = RatingCalculator.ComputeSpeedRating(speedDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate)
+	local readingRating = RatingCalculator.ComputeReadingRating(readingDifficultyValue, Attributes.ModData, Attributes.ODRate)
 	local flashlightRating = RatingCalculator.ComputeFlashlightRating(flashlightDifficultyValue, Attributes.ModData, Attributes.NoteCount.Total, Attributes.ARRate, Attributes.ODRate)
 	
 	local aimBasePerformance = BasePerformance.DifficultyToPerformance(aimRating)
@@ -518,6 +522,7 @@ function calculator.GetDifficultyAttributesFromLiveData(Attributes:LiveDifficult
 	return {
 		AimDifficulty = aimRating,
 		SpeedDifficulty = speedRating,
+		ReadingDifficulty = readingRating,
 		FlashlightDifficulty = flashlightRating,
 		StarRating = starRating
 	}

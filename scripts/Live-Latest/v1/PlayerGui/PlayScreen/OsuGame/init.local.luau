@@ -5638,9 +5638,11 @@ LivePlaySession:SetupData({
 	NoteCount = ReturnData.NoteCount,
 	AimDiffStrainCount = ReturnData.Difficulty.AimDifficultyStrainCount,
 	SpeedDiffStrainCount = ReturnData.Difficulty.SpeedDifficultyStrainCount,
+	ReadingDiffStrainCount = ReturnData.Difficulty.ReadingDifficultyStrainCount,
 	SpeedRelevantNoteCount = ReturnData.Difficulty.SpeedRelevantNoteCount,
 	AimDifficulty = ReturnData.Difficulty.AimDifficulty,
 	SpeedDifficulty = ReturnData.Difficulty.SpeedDifficulty,
+	ReadingDifficulty = ReturnData.Difficulty.ReadingDifficulty,
 	FlashlightDifficulty = ReturnData.Difficulty.FlashLightDifficulty
 })
 
@@ -5668,6 +5670,7 @@ task.spawn(function()
 		local _env = ParallelProcessingFolder.Core_OsuGame_LiveDifficultyProcess:SendMessage("Process",{
 			CurrentLiveDiffAim = LivePlaySession.CurrentLiveDiffAim,
 			CurrentLiveDiffSpeed = LivePlaySession.CurrentLiveDiffSpeed,
+			CurrentLiveDiffReading = LivePlaySession.CurrentLiveDiffReading,
 			CurrentLiveDiffFL = LivePlaySession.CurrentLiveDiffFL,
 			LiveDiffLastHit = LivePlaySession.LiveDiffLastHit,
 			DiffGraphList = DiffGraphList,

@@ -6,7 +6,18 @@ local DifficultyCalculator = require(workspace.DifficultyCalculator)
 local PerformanceCalculator = require(workspace.PerformanceCalculator)
 local StrainSkills = require(workspace.DifficultyCalculator.StrainSkills)
 local ConverterTools = require(workspace.OsuConvert.converterTools)
-export type PSValue = {Aim:number, Speed:number, Rhythm:number, Flashlight:number, AimStrainDecay:number, SpeedStrainDecay:number, FLStrainDecay:number}
+export type PSValue = {
+	Aim:number, 
+	Speed:number, 
+	Rhythm:number, 
+	Reading: number,
+	Flashlight:number, 
+	AimStrainDecay:number, 
+	SpeedStrainDecay:number, 
+	ReadingStrainDecay: number,
+	FLStrainDecay:number
+}
+
 export type LivePlayProcessing = {
 	new:() -> (LivePlayProcessing),
 	__index: LivePlayProcessing,
@@ -20,33 +31,41 @@ export type LivePlayProcessing = {
 	NoteCount: {Circle:number, Slider:number, Spinner:number, Total:number},
 	AimDiffStrainCount:number,
 	SpeedDiffStrainCount:number,
+	ReadingDiffStrainCount: number,
 	SpeedRelevantNoteCount:number,
 	BaseAimDiff:number,
 	BaseSpeedDiff:number,
+	BaseReadingDiff:number,
 	BaseFlashlightDiff:number,
 	
 	--> Live data
 	CurrentLiveDiffAim:number,
 	CurrentLiveDiffSpeed:number,
+	CurrentLiveDiffReading: number,
 	CurrentLiveDiffFL:number,
 	LiveDiffLastHit:number,
 	AimStrain:{{number}},
 	SpeedStrain:{{number}},
 	FlashlightStrain:{{number}},
+	ObjectData: {
+		Speed: {{number}},
+		Reading: {{number}}
+	},
 	StrainPeak:{
-		Aim:{number}, Speed:{number}, Flashlight:{number}
+		Aim:{number}, Flashlight:{number}
 	},
 	StrainCurrentPeak:{
-		Aim:number, Speed:number, Flashlight:number
+		Aim:number, Flashlight:number
 	},
 	PreviousStrain:{
-		Aim:number, Speed:number, Flashlight:number
+		Aim:number, Flashlight:number
 	},
 	CurrentSectionEnd:number,
 	PreviousTime:number,
 	CurrentStarRating:number,
 	AimDiffFinal:number,
 	SpeedDiffFinal:number,
+	ReadingDiffFinal: number,
 	FLDiffFinal:number,
 	CurrentPerformance:number,
 	IsFirstIndex:boolean,
@@ -57,7 +76,7 @@ export type LivePlayProcessing = {
 	ProcessPerfomanceScore:(self:LivePlayProcessing, PSValue:PSValue?, Timing:number?, AccData:PerformanceCalculator.AccuracyData) -> (),
 	_ProcessCurrentStrain:(self:LivePlayProcessing, Timing:number, PSValue:BasePSValue) -> (),
 	_SaveCurrentPeak:(self:LivePlayProcessing) -> (),
-	_StartNewSection:(self:LivePlayProcessing, Timing:number, Strains:{Aim:number, Speed:number, Flashlight:number}) -> (),
+	_StartNewSection:(self:LivePlayProcessing, Timing:number, Strains:{Aim:number, Flashlight:number}) -> (),
 	ProcessFinalResult:(self:LivePlayProcessing, AccData:PerformanceCalculator.AccuracyData) -> (),
 }
 
@@ -69,13 +88,15 @@ export type InputAttributes = {
 	AimDiffStrainCount:number,
 	SpeedDiffStrainCount:number,
 	SpeedRelevantNoteCount:number,
+	ReadingDiffStrainCount: number,
 	AimDifficulty:number,
 	SpeedDifficulty:number,
+	ReadingDifficulty:number,
 	FlashlightDifficulty:number,
 }
 
 type BasePSValue = {
-	Aim:number, Speed:number, Rhythm: number, Flashlight:number
+	Aim:number, Flashlight:number
 }
 local LivePlayProcessing:LivePlayProcessing = {}::LivePlayProcessing
 LivePlayProcessing.__index = LivePlayProcessing
@@ -108,6 +129,7 @@ function LivePlayProcessing.new()
 	
 	self.CurrentLiveDiffAim = 0
 	self.CurrentLiveDiffSpeed = 0
+	self.CurrentLiveDiffReading = 0
 	self.CurrentLiveDiffFL = 0
 	self.LiveDiffLastHit = 0
 	self.AimStrain = {}
@@ -116,17 +138,22 @@ function LivePlayProcessing.new()
 	self.CurrentStarRating = 0
 	self.AimDiffFinal = 0
 	self.SpeedDiffFinal = 0
+	self.ReadingDiffFinal = 0
 	self.FLDiffFinal = 0
 	self.CurrentPerformance = 0
 	-- Strain skills
 	self.StrainPeak = {
-		Aim	 = {}, Speed = {}, Flashlight = {}
+		Aim	 = {}, Flashlight = {}
 	}
 	self.StrainCurrentPeak = {
-		Aim = 0, Speed = 0, Flashlight = 0
+		Aim = 0, Flashlight = 0
 	}
 	self.PreviousStrain = {
-		Aim = 0, Speed = 0, Flashlight = 0
+		Aim = 0, Speed = 0, Flashlight = 0, Reading = 0
+	}
+	-- Speed and reading is Harmonic skill and need separate logic
+	self.ObjectData = {
+		Speed = {}, Reading = {}
 	}
 	self.CurrentSectionEnd = 0
 	self.PreviousTime = 0
@@ -143,8 +170,10 @@ function LivePlayProcessing:SetupData(Attributes:InputAttributes)
 	self.AimDiffStrainCount = Attributes.AimDiffStrainCount
 	self.SpeedDiffStrainCount = Attributes.SpeedDiffStrainCount
 	self.SpeedRelevantNoteCount = Attributes.SpeedRelevantNoteCount
+	self.ReadingDiffStrainCount = Attributes.ReadingDiffStrainCount
 	self.BaseAimDiff = Attributes.AimDifficulty
 	self.BaseSpeedDiff = Attributes.SpeedDifficulty
+	self.BaseReadingDiff = Attributes.ReadingDifficulty
 	self.BaseFlashlightDiff = Attributes.FlashlightDifficulty
 end
 
@@ -158,17 +187,13 @@ function LivePlayProcessing:_SaveCurrentPeak()
 	if self.StrainCurrentPeak.Aim > 0 then
 		self.StrainPeak.Aim[#self.StrainPeak.Aim+1] = self.StrainCurrentPeak.Aim
 	end
-	if self.StrainCurrentPeak.Speed > 0 then
-		self.StrainPeak.Speed[#self.StrainPeak.Speed+1] = self.StrainCurrentPeak.Speed
-	end
 	if self.StrainCurrentPeak.Flashlight > 0 then
 		self.StrainPeak.Flashlight[#self.StrainPeak.Flashlight+1] = self.StrainCurrentPeak.Flashlight
 	end
 end
 
-function LivePlayProcessing:_StartNewSection(Timing:number, Strains:{Aim:number, Speed:number, Flashlight:number})
+function LivePlayProcessing:_StartNewSection(Timing:number, Strains:{Aim:number, Flashlight:number})
 	self.StrainCurrentPeak.Aim = StrainSkills.CalculateInitialStrain.AimSpeed(Timing, {Strains.Aim}, self.PreviousTime, "Aim")
-	self.StrainCurrentPeak.Speed = StrainSkills.CalculateInitialStrain.AimSpeed(Timing, {Strains.Speed}, self.PreviousTime, "Speed")
 	self.StrainCurrentPeak.Flashlight = StrainSkills.CalculateInitialStrain.Default(Timing, {Strains.Flashlight})
 end
 
@@ -180,20 +205,18 @@ function LivePlayProcessing:_ProcessCurrentStrain(Timing:number, PSValue:BasePSV
 	
 	while Timing > self.CurrentSectionEnd do
 		self:_SaveCurrentPeak()
-		self:_StartNewSection(self.CurrentSectionEnd, {Aim = PSValue.Aim, Speed = PSValue.Speed * PSValue.Rhythm, Flashlight = PSValue.Flashlight})
+		self:_StartNewSection(self.CurrentSectionEnd, {Aim = PSValue.Aim, Flashlight = PSValue.Flashlight})
 		self.CurrentSectionEnd += SECTION_LENGTH
 	end
 	
 	self.StrainCurrentPeak = {
 		Aim = math.max(self.StrainCurrentPeak.Aim, PSValue.Aim),
-		Speed = math.max(self.StrainCurrentPeak.Speed, PSValue.Speed * PSValue.Rhythm),
-		Flashlight = math.max(self.StrainCurrentPeak.Flashlight, PSValue.Flashlight)
+		Flashlight = math.max(self.StrainCurrentPeak.Flashlight, PSValue.Flashlight),
 	}
 	
 	self.PreviousStrain = {
 		Aim = PSValue.Aim,
-		Speed = PSValue.Speed,
-		Flashlight = PSValue.Flashlight
+		Flashlight = PSValue.Flashlight,
 	}
 	
 	self.PreviousTime = Timing
@@ -202,9 +225,11 @@ end
 function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:number?, AccData:PerformanceCalculator.AccuracyData)
 	if PSValue and Timing then
 		self.CurrentLiveDiffAim *= PSValue.AimStrainDecay
-		self.CurrentLiveDiffAim += PSValue.Aim
+		self.CurrentLiveDiffAim += PSValue.Aim * (1 - PSValue.AimStrainDecay)
 		self.CurrentLiveDiffSpeed *= PSValue.SpeedStrainDecay
-		self.CurrentLiveDiffSpeed += PSValue.Speed
+		self.CurrentLiveDiffSpeed += PSValue.Speed * (1 - PSValue.SpeedStrainDecay)
+		self.CurrentLiveDiffReading *= PSValue.ReadingStrainDecay
+		self.CurrentLiveDiffReading += PSValue.Reading
 		if self.ModData.FL then
 			self.CurrentLiveDiffFL *= PSValue.FLStrainDecay
 			self.CurrentLiveDiffFL += PSValue.Flashlight
@@ -214,11 +239,14 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 		self:_ProcessCurrentStrain(Timing,
 			{
 				Aim = self.CurrentLiveDiffAim,
-				Speed = self.CurrentLiveDiffSpeed,
 				Flashlight = self.CurrentLiveDiffFL,
-				Rhythm = PSValue.Rhythm
+				Rhythm = PSValue.Rhythm,
 			}
 		)
+
+		-- Harmonic skill processing
+		self.ObjectData.Speed[#self.ObjectData.Speed + 1] = {self.CurrentLiveDiffSpeed, Timing}
+		self.ObjectData.Reading[#self.ObjectData.Reading + 1] = {self.CurrentLiveDiffReading, Timing}
 		
 		local _noteCount = {
 			Circle = self.NoteCount.Circle,
@@ -226,9 +254,11 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 			Spinner = self.NoteCount.Spinner,
 			Total = self.NoteCount.Circle + self.NoteCount.Slider + self.NoteCount.Spinner
 		}
+
 		local DifficultyAttributes:DifficultyCalculator.LiveDifficultyAttributes = {
 			AimPeak = _Append(self.StrainPeak.Aim, self.StrainCurrentPeak.Aim),
-			SpeedPeak = _Append(self.StrainPeak.Speed, self.StrainCurrentPeak.Speed),
+			SpeedObjects = _DeepCopy(self.ObjectData.Speed),
+			ReadingObjects = _DeepCopy(self.ObjectData.Reading),
 			FLPeak = _Append(self.StrainPeak.Flashlight, self.StrainCurrentPeak.Flashlight),
 			ARRate = self.ARRate,
 			ODRate = self.ODRate,
@@ -239,6 +269,7 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 		local Attributes = DifficultyCalculator.GetDifficultyAttributesFromLiveData(DifficultyAttributes)
 		self.AimDiffFinal = Attributes.AimDifficulty
 		self.SpeedDiffFinal = Attributes.SpeedDifficulty
+		self.ReadingDiffFinal = Attributes.ReadingDifficulty
 		self.FLDiffFinal = Attributes.FlashlightDifficulty
 		self.CurrentStarRating = Attributes.StarRating
 	end
@@ -246,7 +277,7 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 	local PSData = PerformanceCalculator(
 		self.AimDiffFinal, 
 		self.SpeedDiffFinal, 
-		0,
+		self.ReadingDiffFinal,
 		self.FLDiffFinal, 
 		self.ODRate, 
 		self.ARRate, 
@@ -256,13 +287,14 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 		self.AimDiffStrainCount, 
 		self.SpeedDiffStrainCount, 
 		self.SpeedRelevantNoteCount, 
-		0,
+		self.ReadingDiffStrainCount,
 		AccData
 	)
 
 	local TotalPS = PSData.Current.TotalPS
 	local AimPS = PSData.Current.AimPS
 	local SpeedPS = PSData.Current.SpeedPS
+	local ReadingPS = PSData.Current.ReadingPS
 	local AccPS = PSData.Current.AccPS
 	local FlashlightPS = PSData.Current.FlashlightPS
 
@@ -272,6 +304,7 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 	LivePSDisplay.Actor:SendMessage("Process",{
 		Aim = AimPS,
 		Speed = SpeedPS,
+		Reading = ReadingPS,
 		Acc = AccPS,
 		Flashlight = FlashlightPS
 	})
