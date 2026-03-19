@@ -16,6 +16,17 @@ local modData = require(workspace.ModData)
 
 export type ModData = modData.ModData
 
+type PSValue = {
+	Aim:number, 
+	Speed:number, 
+	Reading: number,
+	Flashlight:number, 
+	AimStrainDecay:number, 
+	SpeedStrainDecay:number, 
+	ReadingStrainDecay:number, 
+	FLStrainDecay:number
+}
+
 local CachedData = {} :: {[number]: {[any]: any}}
 
 local function fnv1a(str: string): number
@@ -395,8 +406,15 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			local crrSLBPMStartTime = 0
 			local ExtraData = {}
 			local HitObjBPMData = {BPM = 60,SliderMultiplier = 1,LastBPMTiming = 0}
-			local RewardPS:{Aim:number, Speed:number, Flashlight:number, AimStrainDecay:number, SpeedStrainDecay:number, FLStrainDecay:number} = {
-				Aim = 0, Speed = 0, Flashlight = 0, AimStrainDecay = 1, SpeedStrainDecay = 1, FLStrainDecay = 1
+			local RewardPS:PSValue = {
+				Aim = 0, 
+				Speed = 0,
+				Reading = 0,
+				Flashlight = 0, 
+				AimStrainDecay = 1, 
+				SpeedStrainDecay = 1, 
+				ReadingStrainDecay = 1,
+				FLStrainDecay = 1,
 			}
 			local StackCount = 0
 			local raw = string.split(HitObj,",")
