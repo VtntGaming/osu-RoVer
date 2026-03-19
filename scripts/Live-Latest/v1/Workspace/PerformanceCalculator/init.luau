@@ -65,11 +65,12 @@ local function ComputeAimValue(Attributes:AimAttributes):number
 	local totalHit = accData.h300 + accData.h100 + accData.h50 + accData.missCount
 	
 	local aimPS = BasePerformance.DifficultyToPerformance(aimDiff)
-	local lengthBonus = 0.95 + 0.4 * math.min(1, totalHit / 2000) + 
+	local lengthBonus = 0.95 + 0.35 * math.min(1, totalHit / 2000) + 
 		(totalHit > 2000 and math.log10(totalHit/2000) * 0.5 or 0)
 	aimPS *= lengthBonus
 	if accData.EffectiveMissCount > 0 then
-		aimPS *= calculateMissPenalty(accData.EffectiveMissCount, Attributes.AimDifficultyStrainCount)
+		local relevantMissCount = accData.EffectiveMissCount
+		aimPS *= calculateMissPenalty(relevantMissCount, Attributes.AimDifficultyStrainCount)
 	end
 	
 	aimPS *= accData.Accuracy
@@ -165,14 +166,12 @@ local function ComputeSpeedValue(Attributes:SpeedAttributes):number
 	
 	local speedHighDeviationMultiplier = calculateSpeedHighDeviationNerf(Attributes)
 	speedPS *= speedHighDeviationMultiplier
+
+	local effectiveHitWindow = 20 * math.pow(4 / Attributes.SpeedDiff, 0.35)
+	local effectiveAccuracy = DifficultyCalculationUtils.Erf(effectiveHitWindow/Attributes.AccuracyData.SpeedDeviation)
+
+	speedPS *= math.pow(effectiveAccuracy, 2)
 	
-	local relevantTotalDiff = math.max(0, totalHit - Attributes.SpeedNoteCount)
-	local relevantCount300 = math.max(0, accData.h300 - relevantTotalDiff)
-	local relevantCount100 = math.max(0, accData.h100 - math.max(0, relevantTotalDiff - accData.h300))
-	local relevantCount50 = math.max(0, accData.h50 - math.max(0, relevantTotalDiff - accData.h300 - accData.h100))
-	local relevantAccuracy = Attributes.SpeedNoteCount == 0 and 0 or (relevantCount300 * 6 + relevantCount100 * 2 + relevantCount50) / (Attributes.SpeedNoteCount * 6)
-	
-	speedPS *= math.pow((accData.Accuracy + relevantAccuracy) / 2, (14.5 - Attributes.ODRate) / 2)
 	return speedPS
 end
 
@@ -215,7 +214,9 @@ local function ComputeAccuracyValue(Attributes:AccuracyAttributes):number
 	
 	local accPS = math.pow(1.52163, Attributes.ODRate) * math.pow(betterAccuracyPercentage, 24) * 2.83
 	-- Buff for long maps with many hit circles
-	accPS *= math.min(1.15, math.pow(hitObjectsWithAccuracy / 1000, 0.3))
+	accPS *= hitObjectsWithAccuracy < 1000
+		and math.pow(hitObjectsWithAccuracy / 1000, 0.3)
+		or math.pow(hitObjectsWithAccuracy / 1000, 0.1)
 	
 	if Attributes.ModData.HD then
 		accPS *= 1 + 0.08 * DifficultyCalculationUtils.ReverseLerp(Attributes.ARRate, 11.5, 10)
