@@ -96,12 +96,13 @@ local aimAgilityAdjustedMultiplier = 1
 local aimFlowAdjustedMultiplier = 1
 local totalAdjustedMultiplier = 1
 local speedAdjustedMultiplier = 1
+local readingAdjustedMultiplier = 1
 local aimSnapSkillMultiplier = 71 * aimSnapAdjustedMultiplier
 local aimAgilitySkillMultiplier = 2 * aimAgilityAdjustedMultiplier
 local aimFlowSkillMultiplier = 245 * aimFlowAdjustedMultiplier
 local skillMultiplierTotal = 1.2 * totalAdjustedMultiplier
 local speedSkillMultiplier = 1.07 * speedAdjustedMultiplier
-local readingSkillMultiplier = 2.5
+local readingSkillMultiplier = 2.5 * readingAdjustedMultiplier
 local meanExponent = 1.2
 local flashlightSkillMultiplier = 0.056
 
@@ -178,6 +179,7 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 	for objectId = 1, objectCount do
 		local objectData = ProcessedDifficultyObject[objectId]
 		local strainTime = objectData.AdjustedDeltaTime
+		local deltaTime = objectData.DeltaTime
 		local objectTime = objectData.Time
 		
 		local AimSnapDiff = SnapAimEvaluator.GetSnapAimDiff(objectData, true) * aimSnapSkillMultiplier
@@ -191,7 +193,7 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		local strainTimeDiv1000 = strainTime / 1000
 		local AimFLStrainDecay = math_pow(AimFLBaseStrainDecay, strainTimeDiv1000)
 		local SpeedStrainDecay = math_pow(SpeedBaseStrainDecay, strainTimeDiv1000)
-		local ReadingStrainDecay = math_pow(ReadingBaseStrainDecay, strainTimeDiv1000)
+		local ReadingStrainDecay = math_pow(ReadingBaseStrainDecay, deltaTime / 1000)
 
 		if isTD then
 			AimSnapDiff = math_pow(AimSnapDiff, 0.76)
