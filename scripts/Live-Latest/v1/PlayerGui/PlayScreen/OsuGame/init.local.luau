@@ -832,6 +832,7 @@ function GetUserPlayUpdatedPS(Data:ScoreStatistic, externalData):(number, number
 	local PreviewMapPS = coreConfig.PreviewMapPS :: any
 	local AimDiff = PreviewMapPS.AimDiff
 	local SpeedDiff = PreviewMapPS.SpeedDiff
+	local ReadingDiff = PreviewMapPS.ReadingDiff
 	local FLDiff = PreviewMapPS.FLdDiff
 	local objCount = PreviewMapPS.objCountData
 	local mapMaxCombo = PreviewMapPS.MaxCombo
@@ -839,6 +840,7 @@ function GetUserPlayUpdatedPS(Data:ScoreStatistic, externalData):(number, number
 	if externalData then
 		AimDiff = externalData.AimDiff
 		SpeedDiff = externalData.SpeedDiff
+		ReadingDiff = externalData.ReadingDiff
 		FLDiff = externalData.FLDiff
 	end
 
@@ -852,6 +854,7 @@ function GetUserPlayUpdatedPS(Data:ScoreStatistic, externalData):(number, number
 	local AimDiffStrainCount = PreviewMapPS.AimDiffStrainCount
 	local SpeedDiffStrainCount = PreviewMapPS.AimDiffStrainCount
 	local SpeedRelevantNoteCount = PreviewMapPS.SpeedRelevantNoteCount
+	local ReadingDiffStrainCount = PreviewMapPS.ReadingDiffStrainCount
 	local CurrentSpeed = PreviewMapPS.CurrentSpeed
 
 
@@ -861,7 +864,7 @@ function GetUserPlayUpdatedPS(Data:ScoreStatistic, externalData):(number, number
 		h300 = h300, h100 = h100, h50 = h50, missCount = MissCount, EffectiveMissCount = MissCount
 	}
 
-	local ReturnData = PerformanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, objCount, false, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, AccuracyData)::PerformanceCalculator.PerfomanceAttributes
+	local ReturnData = PerformanceCalculator(AimDiff, SpeedDiff, ReadingDiff, FLDiff, ODRate, ARRate, ModData, objCount, false, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, ReadingDiffStrainCount, AccuracyData)::PerformanceCalculator.PerfomanceAttributes
 
 	--print(ActualPS, AimDiff, SpeedDiff, externalData~=nil)
 	return ReturnData.Max, ReturnData.Current, mapMaxCombo

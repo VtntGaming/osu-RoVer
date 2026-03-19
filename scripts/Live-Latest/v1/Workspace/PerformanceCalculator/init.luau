@@ -175,6 +175,27 @@ local function ComputeSpeedValue(Attributes:SpeedAttributes):number
 	return speedPS
 end
 
+type ReadingAttributes = {
+	ReadingDiff: number,
+	ModData:modData.ModData,
+	AccuracyData:AccuracyData,
+	ReadingDifficultNoteCount: number,
+}
+
+local function ComputeReadingValue(Attributes: ReadingAttributes): number
+	local readingPS = BasePerformance.DifficultyToPerformance(Attributes.ReadingDiff)
+
+	local effectiveMissCount = Attributes.AccuracyData.EffectiveMissCount
+
+	if effectiveMissCount > 0 then
+		readingPS *= calculateMissPenalty(effectiveMissCount, Attributes.ReadingDifficultNoteCount)
+	end
+
+	readingPS *= math.pow(Attributes.AccuracyData.Accuracy or 0, 3)
+
+	return readingPS
+end
+
 type AccuracyAttributes = {
 	ModData:modData.ModData,
 	NoteCount:{Circles:number, Sliders:number, Spinners:number},
@@ -262,6 +283,7 @@ end
 type GeneralAttributes = {
 	AimValue:number,
 	SpeedValue:number,
+	ReadingValue:number,
 	FLValue:number,
 	ODRate:number,
 	ARRate:number,
@@ -270,6 +292,7 @@ type GeneralAttributes = {
 	AccuracyData:AccuracyData,
 	AimDifficultyStrainCount:number,
 	SpeedDifficultyStrainCount:number,
+	ReadingDifficultyStrainCount:number,
 	SpeedNoteCount:number,
 	MaxCombo:number,
 	MapMaxCombo:number
@@ -278,6 +301,7 @@ type GeneralAttributes = {
 type ReturnAttributes = {
 	AimPS:number,
 	SpeedPS:number,
+	ReadingPS:number,
 	AccPS:number,
 	FlashlightPS:number,
 	TotalPS:number,
@@ -326,6 +350,12 @@ local function GetPerfomanceAttributes(Attributes:GeneralAttributes):ReturnAttri
 		SpeedDifficultyStrainCount = Attributes.SpeedDifficultyStrainCount,
 		ODRate = Attributes.ODRate
 	}
+	local readingAttribute: ReadingAttributes = {
+		ReadingDiff = Attributes.ReadingValue,
+		ModData = Attributes.ModData,
+		AccuracyData = Attributes.AccuracyData,
+		ReadingDifficultNoteCount = Attributes.ReadingDifficultyStrainCount,
+	}
 	local accuracyAttribute:AccuracyAttributes = {
 		ModData = Attributes.ModData,
 		NoteCount = Attributes.NoteCount,
@@ -346,14 +376,16 @@ local function GetPerfomanceAttributes(Attributes:GeneralAttributes):ReturnAttri
 	
 	local aimPS = ComputeAimValue(aimAttribute)
 	local speedPS = ComputeSpeedValue(speedAttribute)
+	local readingPS = ComputeReadingValue(readingAttribute)
 	local accPS = ComputeAccuracyValue(accuracyAttribute)
 	local flashlightPS = ComputeFlashlightValue(flashlightAttribute)
 	
-	local totalPS = evaluator.Normalise(normalised_expoment, aimPS, speedPS, accPS, flashlightPS) * multiplier
+	local totalPS = evaluator.Normalise(normalised_expoment, aimPS, speedPS, readingPS, accPS, flashlightPS) * multiplier
 	
 	local returnAttributes:ReturnAttributes = {
 		AimPS = aimPS,
 		SpeedPS = speedPS,
+		ReadingPS = readingPS,
 		AccPS = accPS,
 		FlashlightPS = flashlightPS,
 		TotalPS = totalPS,
@@ -384,6 +416,7 @@ end
 local function CalculatePerformanceAttributes(
 	AimValue, 
 	SpeedValue, 
+	ReadingValue,
 	FLValue, 
 	ODRate, 
 	ARRate, 
@@ -392,7 +425,8 @@ local function CalculatePerformanceAttributes(
 	MaxOnly, 
 	AimDiffStrainCount, 
 	SpeedDiffStrainCount, 
-	SpeedRelevantNoteCount, 
+	SpeedRelevantNoteCount,
+	ReadingDiffStrainCount, 
 	AccuracyData:AccuracyData?): PerfomanceAttributes
 
 	--local MaxPSData = PerformanceCalculator(AimDiff, SpeedDiff, FLDiff, ODRate, ARRate, ModData, NoteCount, true, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount)
@@ -408,6 +442,7 @@ local function CalculatePerformanceAttributes(
 	local PerfectScoreAttribute:GeneralAttributes = {
 		AimValue = AimValue,
 		SpeedValue = SpeedValue,
+		ReadingValue = ReadingValue,
 		FLValue = FLValue,
 		ODRate = ODRate,
 		ARRate = ARRate,
@@ -417,6 +452,7 @@ local function CalculatePerformanceAttributes(
 		AimDifficultyStrainCount = AimDiffStrainCount,
 		SpeedDifficultyStrainCount = SpeedDiffStrainCount,
 		SpeedNoteCount = SpeedRelevantNoteCount,
+		ReadingDifficultyStrainCount = ReadingDiffStrainCount,
 		MaxCombo = 0,
 		MapMaxCombo = 0
 	}
