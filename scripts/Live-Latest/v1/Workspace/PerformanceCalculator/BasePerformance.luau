@@ -1,7 +1,7 @@
 --[LOCATION]:[Workspace.PerformanceCalculator.BasePerformance]
 local BasePerformance = {}
 
-function BasePerformance.DifficultyToPerformance (value: number): number
+function BasePerformance.DifficultyToPerformance(value: number): number
 	return 4 * math.pow(value, 3)
 end
 
