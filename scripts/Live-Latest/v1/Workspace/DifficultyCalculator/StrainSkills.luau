@@ -98,8 +98,8 @@ local totalAdjustedMultiplier = 1
 local speedAdjustedMultiplier = 1
 local aimSnapSkillMultiplier = 71 * aimSnapAdjustedMultiplier
 local aimAgilitySkillMultiplier = 2 * aimAgilityAdjustedMultiplier
-local aimFlowSkillMultiplier = 244 * aimFlowAdjustedMultiplier
-local skillMultiplierTotal = 1.1 * totalAdjustedMultiplier
+local aimFlowSkillMultiplier = 245 * aimFlowAdjustedMultiplier
+local skillMultiplierTotal = 1.2 * totalAdjustedMultiplier
 local speedSkillMultiplier = 1.07 * speedAdjustedMultiplier
 local readingSkillMultiplier = 2.5
 local meanExponent = 1.2
@@ -150,7 +150,6 @@ end
 
 function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModData.ModData, ConvertedData, RawDifficulty)	
 	local AimStrain = 0
-	local SpeedAimStrain = 0
 	local SpeedStrain = 0
 	local ReadingStrain = 0
 	local FLStrain = 0
@@ -205,13 +204,12 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		end
 
 		-- Calculate aim skill
-		local oneMinusAimDecay = 1 - AimFLStrainDecay
-		AimStrain = AimStrain * AimFLStrainDecay + AimSnapDiff * oneMinusAimDecay
-		local oneMinusSpeedDecay = 1 - SpeedStrainDecay
-		SpeedAimStrain = (SpeedAimStrain * SpeedStrainDecay + AimAgilityDiff * oneMinusSpeedDecay)
-		local AimTotalStrain = CalculateTotalAimValue(AimSnapDiff, AimAgilityDiff, FlowAimDiff)
+		local aimTotalDifficulty = CalculateTotalAimValue(AimSnapDiff, AimAgilityDiff, FlowAimDiff)
+		
+		AimStrain *= AimFLStrainDecay
+		AimStrain += aimTotalDifficulty * (1 - AimFLStrainDecay)
 		-- Calculate speed diff
-		SpeedStrain = SpeedStrain * SpeedStrainDecay + SpeedDiff * oneMinusSpeedDecay
+		SpeedStrain = SpeedStrain * SpeedStrainDecay + SpeedDiff * (1 - SpeedStrainDecay)
 		-- Calculate reading diff
 		ReadingStrain = ReadingStrain * ReadingStrainDecay + ReadingDiff
 		-- Calculate flash light skill
@@ -232,14 +230,14 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		flIdx += 1
 		readingIdx += 1
 		local speedRhythm = SpeedStrain * RhythmDiff
-		AimStrainData[aimIdx] = {AimTotalStrain, objectTime}
+		AimStrainData[aimIdx] = {AimStrain, objectTime}
 		SpeedStrainData[speedIdx] = {speedRhythm, objectTime}
 		FLStrainData[flIdx] = {FLStrain, objectTime}
 		ReadingStrainData[readingIdx] = {ReadingStrain, objectTime}
 		
 		if objectData.isSlider then
 			aimSLIdx += 1
-			AimSLStrainData[aimSLIdx] = {AimTotalStrain, objectTime}
+			AimSLStrainData[aimSLIdx] = {AimStrain, objectTime}
 		end		
 		
 		local baseAim = math_pow(AimStrain * 10, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
