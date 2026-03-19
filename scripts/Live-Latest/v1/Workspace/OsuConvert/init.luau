@@ -664,6 +664,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	local AimDiffStrainCount = 0
 	local SpeedDiffStrainCount = 0
 	local SpeedRelevantNoteCount = 0
+	local ReadingDiffStrainCount = 0
 	local LastNoteData = ConvertedData[#ConvertedData]
 	local LastNoteTime = LastNoteData.Time
 	if LastNoteData.isSlider then
@@ -727,6 +728,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		SpeedDifficulty = difficultyAttributes.SpeedDifficulty
 		SpeedDiffStrainCount = difficultyAttributes.SpeedDifficultStrainCount
 		SpeedRelevantNoteCount = difficultyAttributes.SpeedNoteCount
+		ReadingDiffStrainCount = difficultyAttributes.ReadingDifficultStrainCount
 		FlashlightDifficulty = difficultyAttributes.FlashlightDifficulty
 		ReadingDifficulty = difficultyAttributes.ReadingDifficulty
 
@@ -742,6 +744,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	ReturningData.Difficulty.FlashLightDifficulty = FlashlightDifficulty
 	ReturningData.Difficulty.AimDifficultyStrainCount = AimDiffStrainCount
 	ReturningData.Difficulty.SpeedDifficultyStrainCount = SpeedDiffStrainCount
+	ReturningData.Difficulty.ReadingDifficultyStrainCount = ReadingDiffStrainCount
 	ReturningData.Difficulty.SpeedRelevantNoteCount = SpeedRelevantNoteCount
 	ReturningData.Difficulty.MaxCombo = MapMaxCombo
 	ReturningData.Difficulty.MaxSpinnerScore = MaxSpinnerScore

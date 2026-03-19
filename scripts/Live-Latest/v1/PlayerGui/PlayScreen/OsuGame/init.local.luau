@@ -864,7 +864,22 @@ function GetUserPlayUpdatedPS(Data:ScoreStatistic, externalData):(number, number
 		h300 = h300, h100 = h100, h50 = h50, missCount = MissCount, EffectiveMissCount = MissCount
 	}
 
-	local ReturnData = PerformanceCalculator(AimDiff, SpeedDiff, ReadingDiff, FLDiff, ODRate, ARRate, ModData, objCount, false, AimDiffStrainCount, SpeedDiffStrainCount, SpeedRelevantNoteCount, ReadingDiffStrainCount, AccuracyData)::PerformanceCalculator.PerfomanceAttributes
+	local ReturnData = PerformanceCalculator(
+		AimDiff, 
+		SpeedDiff, 
+		ReadingDiff, 
+		FLDiff, 
+		ODRate, 
+		ARRate, 
+		ModData, 
+		objCount, 
+		false, 
+		AimDiffStrainCount, 
+		SpeedDiffStrainCount, 
+		SpeedRelevantNoteCount, 
+		ReadingDiffStrainCount, 
+		AccuracyData
+	)::PerformanceCalculator.PerfomanceAttributes
 
 	--print(ActualPS, AimDiff, SpeedDiff, externalData~=nil)
 	return ReturnData.Max, ReturnData.Current, mapMaxCombo
@@ -1032,7 +1047,8 @@ function AddLeaderboardConnection(LeaderboardFrame,Data:ScoreStatistic,Score,UID
 			externalData = {
 				AimDiff = returnData.Difficulty.AimDifficulty,
 				SpeedDiff = returnData.Difficulty.SpeedDifficulty,
-				FLDiff = returnData.Difficulty.FlashLightDifficulty
+				FLDiff = returnData.Difficulty.FlashLightDifficulty,
+				ReadingDiff = returnData.Difficulty.ReadingDifficulty
 			}
 		end
 
