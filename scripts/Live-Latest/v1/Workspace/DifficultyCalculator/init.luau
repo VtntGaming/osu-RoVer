@@ -392,7 +392,7 @@ export type DifficultyAttributes = {
 	ReadingDifficultStrainCount: number
 }
 
-function calculateStarRating(BasePerformance: number)
+function calculator.CalculateStarRating(BasePerformance: number)
 	return math_pow(BasePerformance * perfomance_base_multiplier, 1/3)
 end
 function calculator.CalculateVisibilityBonus(modData:ModData, AR:number, visibilityFactor:number)
@@ -457,7 +457,7 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	local basePerformance = evaluator.Normalise(normalised_expoment, aimBasePerformance, speedBasePerformance, baseCognitionPerformance)
 	
 	-- local multiplier = calculateDifficultyMultiplier(data.ModData, data.NoteCount.Total, data.NoteCount.Spinner)
-	local starRating = calculateStarRating(basePerformance)
+	local starRating = calculator.CalculateStarRating(basePerformance)
 	
 	local Attributes = {
 		StarRating = starRating,
@@ -512,12 +512,14 @@ function calculator.GetDifficultyAttributesFromLiveData(Attributes:LiveDifficult
 	
 	local aimBasePerformance = BasePerformance.DifficultyToPerformance(aimRating)
 	local speedBasePerformance = BasePerformance.DifficultyToPerformance(speedRating)
+	local readingBasePerformance = BasePerformance.DifficultyToPerformance(readingRating)
 	local flashlightBasePerformance = BasePerformance.DifficultyToPerformanceFL(flashlightRating)
+	local baseCognitionPerformance = calculator.SumCognitionDifficulty(readingBasePerformance, flashlightBasePerformance)
 	
-	local BasePerformance = evaluator.Normalise(normalised_expoment, aimBasePerformance, speedBasePerformance, flashlightBasePerformance)
+	local BasePerformance = evaluator.Normalise(normalised_expoment, aimBasePerformance, speedBasePerformance, baseCognitionPerformance)
 	
 	-- local multiplier = calculateDifficultyMultiplier(Attributes.ModData, Attributes.NoteCount.Total, Attributes.NoteCount.Spinner)
-	local starRating = calculateStarRating(BasePerformance)
+	local starRating = calculator.CalculateStarRating(BasePerformance)
 	
 	return {
 		AimDifficulty = aimRating,

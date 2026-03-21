@@ -225,7 +225,7 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		PSValue.Flashlight = FLDiff
 		PSValue.AimStrainDecay = AimFLStrainDecay
 		PSValue.SpeedStrainDecay = SpeedStrainDecay
-		PSValue.Reading = ReadingStrainDecay
+		PSValue.ReadingStrainDecay = ReadingStrainDecay
 		PSValue.FLStrainDecay = AimFLStrainDecay
 		
 		aimIdx += 1
