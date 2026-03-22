@@ -6,7 +6,7 @@ local SnapAimEvaluator = require(script.Parent.SnapAimEvaluator)
 local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHitObjects)
 local FlowAimEvaluator = {}
 
-local VELOCITY_CHANGE_MULTIPLIER = 1.1
+local VELOCITY_CHANGE_MULTIPLIER = 2
 
 type HitObject = DifficultyHitObjects.ObjectData
 
@@ -31,7 +31,7 @@ function FlowAimEvaluator.GetFlowAimDiff(currentObject: HitObject, withSliderTra
 	local currentVelocity = currentDistance / currentObject.AdjustedDeltaTime
 
 	if lastObject.isSlider and withSliderTravelDistance then
-		local sliderDistance = lastObject.lazyTravelDistance + currentObject.LazyJumpDistance
+		local sliderDistance = lastObject.LazyTravelDistance + currentObject.LazyJumpDistance
 		currentVelocity = math.max(currentVelocity, sliderDistance / currentObject.AdjustedDeltaTime)
 	end
 
@@ -39,13 +39,17 @@ function FlowAimEvaluator.GetFlowAimDiff(currentObject: HitObject, withSliderTra
 
 	local flowDifficulty = currentVelocity
 
-	flowDifficulty *= currentObject.SmallCircleBonus
+	flowDifficulty *= math.pow(currentObject.SmallCircleBonus, 0.75)
 
 	flowDifficulty *= 1 + math.min(0.25, 
 		math.pow((math.max(currentObject.AdjustedDeltaTime, lastObject.AdjustedDeltaTime) - math.min(currentObject.AdjustedDeltaTime, lastObject.AdjustedDeltaTime)) / 50, 4))
 
-	if currentObject.AngularVelocity then
-		flowDifficulty *= 0.8 + math.sqrt(currentObject.AngularVelocity / 270)
+	if currentObject.Angle and lastObject.Angle and currentObject.Angle ~= -1 and lastObject.Angle ~= -1 then
+		local angleDifference = math.abs(currentObject.Angle - lastObject.Angle)
+		local angleDifferenceAdjusted = math.sin(angleDifference / 2) * 180
+		local angularVelocity = angleDifferenceAdjusted / (currentObject.AdjustedDeltaTime * 0.1)
+
+		flowDifficulty *= 0.8 + math.sqrt(angularVelocity / 270)
 	end
 
 	local overlappedNotesWeight = 1
@@ -58,7 +62,7 @@ function FlowAimEvaluator.GetFlowAimDiff(currentObject: HitObject, withSliderTra
 		overlappedNotesWeight = 1 - o1 * o2 * o3
 	end
 
-	if currentObject.Angle and currentObject.Angle ~= -1 and lastObject.Angle and lastObject.Angle ~= -1 then
+	if currentObject.Angle and currentObject.Angle ~= -1 then
 		flowDifficulty += math.sqrt(currentVelocity) *
 			SnapAimEvaluator.CalcAcuteAngleBonus(currentObject.Angle) * overlappedNotesWeight
 	end
@@ -66,17 +70,16 @@ function FlowAimEvaluator.GetFlowAimDiff(currentObject: HitObject, withSliderTra
 	if math.max(previousVelocity, currentVelocity) ~= 0 then
 		if (withSliderTravelDistance) then
 			currentVelocity = currentDistance / currentObject.AdjustedDeltaTime
-			previousVelocity = prevDistance / lastObject.AdjustedDeltaTime
 		end
 
 		local distRatio = DifficultyCalculationUtils.Smoothstep(math.abs(previousVelocity - currentVelocity) / math.max(previousVelocity, currentVelocity), 0, 1)
 		local overlapVelocityBuff = math.min(DifficultyHitObjects.NORMALISED_DIAMETER * 1.25 / math.min(currentObject.AdjustedDeltaTime, lastObject.AdjustedDeltaTime),
 			math.abs(previousVelocity - currentVelocity))
 
-		flowDifficulty += overlapVelocityBuff * distRatio * VELOCITY_CHANGE_MULTIPLIER
+		flowDifficulty += overlapVelocityBuff * distRatio * overlappedNotesWeight * VELOCITY_CHANGE_MULTIPLIER
 	end
 
-	if currentObject.isSlider then
+	if currentObject.isSlider and withSliderTravelDistance then
 		flowDifficulty += currentObject.BaseTravelDistance / currentObject.BaseTravelTime
 	end
 
