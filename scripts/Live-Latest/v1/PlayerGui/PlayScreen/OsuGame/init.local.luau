@@ -2331,7 +2331,7 @@ function checkFPSCounterPos()
 		if coreConfig.DetailedPSDisplay then
 			if workspace.CurrentCamera.ViewportSize.Y >= 470 then
 				TweenService:Create(PlayerGui.OverallInterface.FPSCounter,
-					TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,1,-95)}
+					TweenInfo.new(0.5,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Position = UDim2.new(1,-10,1,-105)}
 				):Play()
 			else
 				TweenService:Create(PlayerGui.OverallInterface.FPSCounter,
