@@ -113,7 +113,7 @@ function calculator.ComputeFlashlightRating(flashlightDifficultyValue:number, mo
 	ratingMultiplier *= 0.7 + 0.1 * math_min(1.0, totalHit / 200.0) +
 		(totalHit > 200 and (0.2 * math_min(1.0, (totalHit - 200) / 200.0)) or 0.0)
 	
-	ratingMultiplier *= 0.98 + math_pow(math_max(0, ODRate, 2)) / 2500
+	ratingMultiplier *= 0.98 + math_pow(math_max(0, ODRate), 2) / 2500
 	
 	return flRating * math_sqrt(ratingMultiplier)
 end
