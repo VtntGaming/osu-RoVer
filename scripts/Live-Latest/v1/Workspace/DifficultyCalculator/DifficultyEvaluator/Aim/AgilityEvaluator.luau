@@ -5,7 +5,7 @@ local DifficultyCalculationUtils = require(Workspace.DifficultyCalculator.Diffic
 local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHitObjects)
 local AgilityEvaluator = {}
 
-local NOMALISED_DIAMETER = 50
+local NOMALISED_DIAMETER = DifficultyHitObjects.NORMALISED_DIAMETER
 local DISTANCE_CAP = NOMALISED_DIAMETER * 1.25
 
 type ObjectData = DifficultyHitObjects.ObjectData
@@ -21,15 +21,18 @@ function AgilityEvaluator.GetAimAgilityDiff(currentObject: ObjectData): number
 
 	local lastObject: ObjectData? = currentObject.Previous(1)
 
-	local travelDistance = lastObject and lastObject.lazyTravelDistance or 0
+	local travelDistance = lastObject and lastObject.LazyTravelDistance or 0
 	local distance = travelDistance + currentObject.LazyJumpDistance
 
 	local distanceScaled = math.min(distance, DISTANCE_CAP) / DISTANCE_CAP
 	local strain = distanceScaled * 1000 / currentObject.AdjustedDeltaTime
+	if currentObject.SmallCircleBonus then
+		strain *= currentObject.SmallCircleBonus		
+	end
 
 	strain *= GetHighBPMBonus(currentObject.AdjustedDeltaTime)
 
-	return strain * DifficultyCalculationUtils.Smootherstep(distance, 0, NOMALISED_DIAMETER)
+	return strain * DifficultyCalculationUtils.Smootherstep(distance, 0, DifficultyHitObjects.NORMALISED_RADIUS)
 end
 
 return AgilityEvaluator

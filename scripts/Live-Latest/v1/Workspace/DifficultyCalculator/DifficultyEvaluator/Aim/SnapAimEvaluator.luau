@@ -72,13 +72,13 @@ end
 SnapAimEvaluator.CalcAcuteAngleBonus = CalcAcuteAngleBonus
 
 function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTravelDistance: boolean?): number
-	if currentObject.isSpinner or currentObject.objID < 2 or currentObject.Previous(1).isSpinner then
+	if currentObject.isSpinner or currentObject.objID < 3 or currentObject.Previous(1).isSpinner then
 		return 0
 	end
 
-	local lastObject = currentObject.Previous(0)
-	local lastLastObject = currentObject.Previous(1)
-	local last2Object = currentObject.Previous(2)
+	local lastObject = currentObject.Previous(1)
+	local lastLastObject = currentObject.Previous(2)
+	local last2Object = currentObject.Previous(3)
 
 	local radius = DifficultyHitObjects.NORMALISED_RADIUS
 	local diameter = DifficultyHitObjects.NORMALISED_DIAMETER
@@ -87,7 +87,7 @@ function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTra
 	local currVelocity = currDistance / currentObject.AdjustedDeltaTime
 
 	if lastObject.isSlider and withSliderTravelDistance then
-		local sliderDistance = lastObject.lazyTravelDistance + currentObject.LazyJumpDistance
+		local sliderDistance = lastObject.LazyTravelDistance + currentObject.LazyJumpDistance
 		currVelocity = math.max(currVelocity, sliderDistance / currentObject.AdjustedDeltaTime)
 	end
 
@@ -150,9 +150,9 @@ function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTra
 	end
 
 	if math.max(prevVelocity, currVelocity) ~= 0 then
-		if withSliderTravelDistance  then
+		if withSliderTravelDistance then
 			-- We want to use the average velocity over the whole object when awarding differences, not the individual jump and slider path velocities.
-			prevVelocity = (lastObject.LazyJumpDistance + lastLastObject.BaseTravelDistance) / lastObject.AdjustedDeltaTime
+			prevVelocity = (lastObject.LazyJumpDistance or 0 + lastLastObject.BaseTravelDistance or 0) / lastObject.AdjustedDeltaTime
 			currVelocity = (currentObject.LazyJumpDistance + lastObject.BaseTravelDistance) / currentObject.AdjustedDeltaTime
 		end
 

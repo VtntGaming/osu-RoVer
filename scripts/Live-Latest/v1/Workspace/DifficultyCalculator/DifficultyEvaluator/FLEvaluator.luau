@@ -79,7 +79,7 @@ function flashlightEvaluator.getFlashLightDiff(CrrObj, IsHD)
 	local SliderBonus = 0
 
 	if CrrObj.IsSlider then
-		local pixelTravelDistance = CrrObj.lazyTravelDistance / scalingFactor
+		local pixelTravelDistance = CrrObj.LazyTravelDistance / scalingFactor
 		SliderBonus = math_pow(math_max(0.0, pixelTravelDistance / CrrObj.BaseTravelTime - MIN_VELOCITY), 0.5)
 		SliderBonus *= pixelTravelDistance
 		if (CrrObj.SLRepeatCount > 0) then

@@ -126,7 +126,6 @@ export type ObjectData = {
 	LazyJumpDistance:number,
 	MinimumJumpDistance:number,
 	MinimumJumpTime:number,
-	AngularVelocity: number?,
 	NormalisedVectorAngle: number?,
 	endCursorPosition:Vector2,
 	lazySLTravelTime:number,
@@ -140,7 +139,7 @@ export type ObjectData = {
 	SLTickData:{},
 	Radius:number,
 	SLRepeatCount:number,
-	lazyTravelDistance:number,
+	LazyTravelDistance:number,
 	Preempt: number,
 	TimePreempt: number,
 	ClockRate: number,
@@ -253,7 +252,6 @@ function DifficultyHitObject.GenerateDifficultyHitObjects(baseList:{any}, baseDa
 		
 		-- Angle of 2 previous object with current object
 		local angle = -1
-		local AngularVelocity: number?
 		local NormalisedVectorAngle: number?
 
 		if objID > 2 and objID <= #baseList then
@@ -275,13 +273,6 @@ function DifficultyHitObject.GenerateDifficultyHitObjects(baseList:{any}, baseDa
 					NormalisedVectorAngle = math.atan2(math.abs(v.Y), math.abs(v.X))
 
 					angle = math_abs(math_atan2(det, dot))
-
-					if prevprevDiffObj.Angle and prevprevDiffObj.Angle ~= -1 then
-						local angleDifference = math_abs(angle - prevprevDiffObj.Angle)
-						local angleDifferenceAdjusted = math.sin(angleDifference / 2) * 180.0
-
-						AngularVelocity = angleDifferenceAdjusted / (AdjustedDeltaTime * 0.1)
-					end
 				end
 			end
 		end
@@ -293,7 +284,8 @@ function DifficultyHitObject.GenerateDifficultyHitObjects(baseList:{any}, baseDa
 
 		local lazySLTravelTime
 		local SLTickData = {}
-		local SLRepeatCount = 0
+		local SLRepeatCount = 0		
+		local LazyTravelDistance = 0
 
 		-- Set distances
 
@@ -348,7 +340,6 @@ function DifficultyHitObject.GenerateDifficultyHitObjects(baseList:{any}, baseDa
 			end
 
 			local currentCursorPosition = positionOf(crr.Position)
-			local LazyTravelDistance = 0
 			if TickData then
 				for i, currentTick in ipairs(TickData) do
 					local currentMovement:Vector2 = currentTick.Position - currentCursorPosition
@@ -432,7 +423,6 @@ function DifficultyHitObject.GenerateDifficultyHitObjects(baseList:{any}, baseDa
 		crrObj.Position = positionOf(crr.Position)
 		crrObj.Time = crr.Time
 		crrObj.Angle = angle
-		crrObj.AngularVelocity = AngularVelocity
 		crrObj.NormalisedVectorAngle = NormalisedVectorAngle
 		crrObj.DeltaTime = DeltaTime
 		crrObj.AdjustedDeltaTime = AdjustedDeltaTime
@@ -451,7 +441,7 @@ function DifficultyHitObject.GenerateDifficultyHitObjects(baseList:{any}, baseDa
 		crrObj.SLTickData = SLTickData
 		crrObj.Radius = radius
 		crrObj.SLRepeatCount = SLRepeatCount
-		crrObj.lazyTravelDistance = 0 -- I will implement later
+		crrObj.LazyTravelDistance = LazyTravelDistance
 
 		DifficultyObjects[objID] = crrObj::ObjectData	
 	end
