@@ -5,10 +5,10 @@ local DifficultyCalculationUtils = require(Workspace.DifficultyCalculator.Diffic
 local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHitObjects)
 local SnapAimEvaluator = {}
 
-local WIDE_ANGLE_MULTIPLIER = 1.35
-local ACUTE_ANGLE_MULTIPLIER = 2.5
-local SLIDER_MULTIPLIER = 1.9
-local VELOCITY_CHANGE_MULTIPLIER = 1.1
+local WIDE_ANGLE_MULTIPLIER = 1.05
+local ACUTE_ANGLE_MULTIPLIER = 2.41
+local SLIDER_MULTIPLIER = 1.5
+local VELOCITY_CHANGE_MULTIPLIER = 0.9
 local WIGGLE_MULTIPLIER = 1.02
 local MAXIMUM_REPETITION_NERF = 0.15
 local MAXIMUM_VECTOR_INFLUENCE = 0.5

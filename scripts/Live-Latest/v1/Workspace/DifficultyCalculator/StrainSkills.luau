@@ -2,6 +2,7 @@
 --!strict
 local Workspace = game:GetService("Workspace")
 
+local RatingCalculator = require(script.Parent.RatingCalculator)
 local AgilityEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.Aim.AgilityEvaluator)
 local FlowAimEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.Aim.FlowAimEvaluator)
 local SnapAimEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.Aim.SnapAimEvaluator)
@@ -100,7 +101,7 @@ local readingAdjustedMultiplier = 1
 local aimSnapSkillMultiplier = 71 * aimSnapAdjustedMultiplier
 local aimAgilitySkillMultiplier = 2 * aimAgilityAdjustedMultiplier
 local aimFlowSkillMultiplier = 245 * aimFlowAdjustedMultiplier
-local skillMultiplierTotal = 1.2 * totalAdjustedMultiplier
+local skillMultiplierTotal = 1.1 * totalAdjustedMultiplier
 local speedSkillMultiplier = 1.07 * speedAdjustedMultiplier
 local readingSkillMultiplier = 2.5 * readingAdjustedMultiplier
 local meanExponent = 1.2
@@ -110,10 +111,7 @@ local AimFLBaseStrainDecay = 0.15
 local SpeedBaseStrainDecay = 0.3
 local ReadingBaseStrainDecay = 0.8
 
-local DIFFICULTY_VALUE_EXPOMENTAL_RATE = 1/3
-local DIFFICULTY_VALUE_MULTIPLIER_RATE = 0.265
-local DIFFICULTY_VALUE_AIM_MULTIPLIER = 1
-local DIFFICULTY_VALUE_SPEED_MULTIPLIER = 1
+local perfomance_base_multiplier = 1.12
 local EvaluatorContainer = script.Parent.DifficultyEvaluator
 local Evaluators = {
 	Speed = require(EvaluatorContainer.SpeedEvaluator),
@@ -147,6 +145,45 @@ local function CalculateTotalAimValue(snapDifficulty: number, agilityDifficulty:
 	local totalStrain = totalDifficulty * skillMultiplierTotal
 
 	return totalStrain	
+end
+
+local function SumCognitionDifficulty(reading: number, flashlight: number)
+	if reading <= 0 then
+		return flashlight
+	elseif flashlight <= 0 then
+		return reading
+	end
+
+	return DifficultyCalculationUtils.Normalise(1.1, reading, flashlight * math.clamp(flashlight/reading, 0.25, 1))
+end
+
+local function CalculateStarRating(BasePerformance: number)
+	return math_pow(BasePerformance * perfomance_base_multiplier, 1/3)
+end
+
+local strainMultiplier = 9.9963
+local harmonicMultiplier = 12.222	-- Assumed same value in a map of 2000 notes
+
+function StrainSkills.CalculateCurrentStrainRating(aimValue: number, speedValue: number, readingValue: number, flashlightValue: number): number
+	local aimRating = math_pow((aimValue * strainMultiplier * 10), 0.63) * 0.02275
+	local speedRating = RatingCalculator.CalculateDifficultyRating(speedValue * harmonicMultiplier * 10)
+	local readingRating = RatingCalculator.CalculateDifficultyRating(readingValue * harmonicMultiplier * 10)
+	local flashlightRating = RatingCalculator.CalculateDifficultyRating(flashlightValue * strainMultiplier * 10)
+
+	local RewardedAimPS = BasePerformance.DifficultyToPerformance(aimRating)
+	local RewardedSpeedPS = BasePerformance.DifficultyToPerformance(speedRating)
+	local RewardedReadingPS = BasePerformance.DifficultyToPerformance(readingRating)
+	local RewardedFlashlightPS = BasePerformance.DifficultyToPerformanceFL(flashlightRating)
+	local baseCognitionPerformance = SumCognitionDifficulty(RewardedReadingPS, RewardedFlashlightPS)
+
+	local performance = DifficultyCalculationUtils.Normalise(1.1, RewardedAimPS, RewardedSpeedPS, baseCognitionPerformance)
+	local difficulty = CalculateStarRating(performance)
+
+	if performance < 1 then
+		difficulty *= performance
+	end
+
+	return difficulty / 4
 end
 
 function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModData.ModData, ConvertedData, RawDifficulty)	
@@ -243,12 +280,7 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 			AimSLStrainData[aimSLIdx] = {AimStrain, objectTime}
 		end		
 		
-		local baseAim = math_pow(AimStrain * 10, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
-		local baseSpeed = math_pow(speedRhythm * 10, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_SPEED_MULTIPLIER
-		local baseFL = math_pow(FLStrain * 10, DIFFICULTY_VALUE_EXPOMENTAL_RATE)*DIFFICULTY_VALUE_MULTIPLIER_RATE * DIFFICULTY_VALUE_AIM_MULTIPLIER
-		local BasePerformance = math_pow(math_pow(BasePerformance.DifficultyToPerformance(baseAim), 1.1) + math_pow(BasePerformance.DifficultyToPerformance(baseSpeed), 1.1) + math_pow(BasePerformance.DifficultyToPerformance(baseFL), 1.1), 1/1.1)
-		local CurrentStrain = 0.027 * 1.04768955549 * (math_pow(100000 / 1.86606598308 * BasePerformance, 1/3) + 4)
-		CurrentStrain = CurrentStrain < 0 and 0 or (CurrentStrain > 50 and 50 or CurrentStrain)
+		local CurrentStrain = StrainSkills.CalculateCurrentStrainRating(AimStrain, speedRhythm, ReadingStrain, FLStrain)
 		
 		rawIdx += 1
 		RawDifficulty[rawIdx] = {CurrentStrain, objectTime}
