@@ -196,13 +196,12 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		local ReadingStrainDecay = math_pow(ReadingBaseStrainDecay, deltaTime / 1000)
 
 		if isTD then
-			AimSnapDiff = math_pow(AimSnapDiff, 0.76)
+			AimSnapDiff = math_pow(AimSnapDiff, 0.89)
 			FlowAimDiff = math_pow(FlowAimDiff, 1.1)
 		end
 
 		if isRX then
-			AimAgilityDiff = 0
-			FlowAimDiff *= 0.1
+			AimAgilityDiff *= 0.3
 		end
 
 		-- Calculate aim skill
