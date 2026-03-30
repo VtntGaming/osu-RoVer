@@ -1,5 +1,6 @@
 local workspace = game:GetService("Workspace")
 local DifficultyEvaluator = require(script.Parent)
+local DifficultyCalculationUtils = require(script.Parent.DifficultyCalculationUtils)
 local preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
 
 -- Cache math functions for faster access
@@ -144,6 +145,10 @@ local function retrieveCurrentVisibleObjectDensity(current: DifficultyHitObject)
     return visibleObjectCount
 end
 
+local function checkAngle(angle: number?)
+    return angle ~= nil and angle ~= -1
+end
+
 local function getConstantAngleNerfFactor(current: DifficultyHitObject)
     local constantAngleCount = 0
     local index = 0
@@ -151,6 +156,11 @@ local function getConstantAngleNerfFactor(current: DifficultyHitObject)
     local currentAngle = current.Angle
     local currentTime = current.Time
     local reverseLerpDenom = 1 / (MINIMUM_ANGLE_RELEVANCY_TIME - MAXIMUM_ANGLE_RELEVANCY_TIME)
+
+    local loopObjPrev0: DifficultyHitObject = current
+    local loopObjPrev1: DifficultyHitObject? = nil
+    local loopObjPrev2: DifficultyHitObject? = nil
+
 
     while currentTimeGap < MINIMUM_ANGLE_RELEVANCY_TIME do
         local loopObj = current.Previous(index + 1)
@@ -163,13 +173,30 @@ local function getConstantAngleNerfFactor(current: DifficultyHitObject)
 
         if loopObj.Angle and currentAngle then
             local angleDifference = math_abs(currentAngle - loopObj.Angle)
+            local angleDifferenceAlternating  = math.pi
+
+            if loopObjPrev0 and checkAngle(loopObjPrev0.Angle) and loopObjPrev1 and checkAngle(loopObjPrev1.Angle) and loopObjPrev2 and checkAngle(loopObjPrev2.Angle) then
+                angleDifferenceAlternating = math.abs(loopObjPrev1.Angle - loopObj.Angle)
+                angleDifferenceAlternating += math.abs(loopObjPrev2.Angle - loopObjPrev0.Angle)
+
+                local weight = 1
+
+                weight *= DifficultyCalculationUtils.ReverseLerp(math.min(loopObj.Angle.Value, loopObjPrev0.Angle) * 180 / math.pi, 20, 5);
+                weight *= DifficultyCalculationUtils.ReverseLerp(math.max(loopObj.Angle.Value, loopObjPrev0.Angle) * 180 / math.pi, 60, 120);
+
+                angleDifferenceAlternating = math.lerp(math.pi, 0.1 * angleDifferenceAlternating, weight)
+            end
             local stackFactor = smootherstep(loopObj.LazyJumpDistance, 0, NORMALIZED_RADIUS)
 
-            constantAngleCount += math_cos(3 * math_min(RAD_30, angleDifference * stackFactor)) * longIntervalFactor
+            constantAngleCount += math_cos(3 * math_min(RAD_30, math.min(angleDifference, angleDifferenceAlternating)  * stackFactor)) * longIntervalFactor
         end
 
         currentTimeGap = currentTime - loopObj.Time
         index += 1
+
+        loopObjPrev2 = loopObjPrev1
+        loopObjPrev1 = loopObjPrev0
+        loopObjPrev0 = loopObj
     end
 
     return math_clamp(2 / constantAngleCount, 0.2, 1)
