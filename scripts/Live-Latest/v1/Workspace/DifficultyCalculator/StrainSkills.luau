@@ -99,17 +99,18 @@ local totalAdjustedMultiplier = 1
 local speedAdjustedMultiplier = 1
 local readingAdjustedMultiplier = 1
 local aimSnapSkillMultiplier = 71 * aimSnapAdjustedMultiplier
-local aimAgilitySkillMultiplier = 2.5 * aimAgilityAdjustedMultiplier
+local aimAgilitySkillMultiplier = 2.35 * aimAgilityAdjustedMultiplier
 local aimFlowSkillMultiplier = 245 * aimFlowAdjustedMultiplier
-local skillMultiplierTotal = 1.1 * totalAdjustedMultiplier
+local skillMultiplierTotal = 1.11 * totalAdjustedMultiplier
 local speedSkillMultiplier = 1.16 * speedAdjustedMultiplier
 local readingSkillMultiplier = 2.5 * readingAdjustedMultiplier
 local meanExponent = 1.2
 local flashlightSkillMultiplier = 0.056
 
-local AimFLBaseStrainDecay = 0.15
+local AimBaseStrainDecay = 0.2
 local SpeedBaseStrainDecay = 0.3
 local ReadingBaseStrainDecay = 0.8
+local FLBaseStrainDecay = 0.15
 
 local perfomance_base_multiplier = 1.12
 local EvaluatorContainer = script.Parent.DifficultyEvaluator
@@ -228,8 +229,9 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		local FLDiff = isFL and EvaluatorFlashlight.getFlashLightDiff(objectData, isHD) * flashlightSkillMultiplier or 0
 		
 		local strainTimeDiv1000 = strainTime / 1000
-		local AimFLStrainDecay = math_pow(AimFLBaseStrainDecay, strainTimeDiv1000)
+		local AimStrainDecay = math_pow(AimBaseStrainDecay, strainTimeDiv1000)
 		local SpeedStrainDecay = math_pow(SpeedBaseStrainDecay, strainTimeDiv1000)
+		local FLStrainDecay = math_pow(FLBaseStrainDecay, strainTimeDiv1000)
 		local ReadingStrainDecay = math_pow(ReadingBaseStrainDecay, deltaTime / 1000)
 
 		if isTD then
@@ -244,14 +246,14 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		-- Calculate aim skill
 		local aimTotalDifficulty = CalculateTotalAimValue(AimSnapDiff, AimAgilityDiff, FlowAimDiff)
 		
-		AimStrain *= AimFLStrainDecay
-		AimStrain += aimTotalDifficulty * (1 - AimFLStrainDecay)
+		AimStrain *= AimStrainDecay
+		AimStrain += aimTotalDifficulty * (1 - AimStrainDecay)
 		-- Calculate speed diff
 		SpeedStrain = SpeedStrain * SpeedStrainDecay + SpeedDiff * (1 - SpeedStrainDecay)
 		-- Calculate reading diff
 		ReadingStrain = ReadingStrain * ReadingStrainDecay + ReadingDiff
 		-- Calculate flash light skill
-		FLStrain = FLStrain * AimFLStrainDecay + FLDiff
+		FLStrain = FLStrain * FLStrainDecay + FLDiff
 		
 		local PSValue = ConvertedData[objectId].PSValue
 		PSValue.Aim = AimSnapDiff
@@ -259,10 +261,10 @@ function StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData: ModD
 		PSValue.Rhythm = RhythmDiff
 		PSValue.Reading = ReadingDiff
 		PSValue.Flashlight = FLDiff
-		PSValue.AimStrainDecay = AimFLStrainDecay
+		PSValue.AimStrainDecay = AimStrainDecay
 		PSValue.SpeedStrainDecay = SpeedStrainDecay
 		PSValue.ReadingStrainDecay = ReadingStrainDecay
-		PSValue.FLStrainDecay = AimFLStrainDecay
+		PSValue.FLStrainDecay = FLStrainDecay
 		
 		aimIdx += 1
 		speedIdx += 1
