@@ -39,7 +39,7 @@ function FlowAimEvaluator.GetFlowAimDiff(currentObject: HitObject, withSliderTra
 
 	local flowDifficulty = currentVelocity
 
-	flowDifficulty *= math.pow(currentObject.SmallCircleBonus, 0.75)
+	flowDifficulty *= math.sqrt(currentObject.SmallCircleBonus)
 
 	flowDifficulty *= 1 + math.min(0.25, 
 		math.pow((math.max(currentObject.AdjustedDeltaTime, lastObject.AdjustedDeltaTime) - math.min(currentObject.AdjustedDeltaTime, lastObject.AdjustedDeltaTime)) / 50, 4))

@@ -27,7 +27,7 @@ function AgilityEvaluator.GetAimAgilityDiff(currentObject: ObjectData): number
 	local distanceScaled = math.min(distance, DISTANCE_CAP) / DISTANCE_CAP
 	local strain = distanceScaled * 1000 / currentObject.AdjustedDeltaTime
 	if currentObject.SmallCircleBonus then
-		strain *= currentObject.SmallCircleBonus		
+		strain *= math.pow(currentObject.SmallCircleBonus, 1.5)		
 	end
 
 	strain *= GetHighBPMBonus(currentObject.AdjustedDeltaTime)
