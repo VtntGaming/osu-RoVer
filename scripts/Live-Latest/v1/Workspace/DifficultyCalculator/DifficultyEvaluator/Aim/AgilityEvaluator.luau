@@ -11,7 +11,7 @@ local DISTANCE_CAP = NOMALISED_DIAMETER * 1.25
 type ObjectData = DifficultyHitObjects.ObjectData
 
 local function GetHighBPMBonus(ms: number): number
-	return 1 / (1 - math.pow(0.3, math.pow(ms / 1000, 0.9)))
+	return 1 / (1 - math.pow(0.15, ms / 1000))
 end
 
 function AgilityEvaluator.GetAimAgilityDiff(currentObject: ObjectData): number
