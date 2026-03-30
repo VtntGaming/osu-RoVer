@@ -15,7 +15,7 @@ function calculateMissPenalty(missCount:number, diffStrainCount:number):number
 	if missCount <= 0 then
 		return 1
 	end
-	return 0.96 / ((missCount / (4 * math.pow(math.log(diffStrainCount), 0.94))) + 1)
+	return 0.93 / (missCount / (4 * math.log(diffStrainCount)) + 1)
 end
 
 function reverseLerp(x, a, b)
