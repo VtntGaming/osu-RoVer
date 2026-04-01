@@ -181,8 +181,8 @@ local function getConstantAngleNerfFactor(current: DifficultyHitObject)
 
                 local weight = 1
 
-                weight *= DifficultyCalculationUtils.ReverseLerp(math.min(loopObj.Angle.Value, loopObjPrev0.Angle) * 180 / math.pi, 20, 5);
-                weight *= DifficultyCalculationUtils.ReverseLerp(math.max(loopObj.Angle.Value, loopObjPrev0.Angle) * 180 / math.pi, 60, 120);
+                weight *= DifficultyCalculationUtils.ReverseLerp(math.min(loopObj.Angle, loopObjPrev0.Angle) * 180 / math.pi, 20, 5);
+                weight *= DifficultyCalculationUtils.ReverseLerp(math.max(loopObj.Angle, loopObjPrev0.Angle) * 180 / math.pi, 60, 120);
 
                 angleDifferenceAlternating = math.lerp(math.pi, 0.1 * angleDifferenceAlternating, weight)
             end
