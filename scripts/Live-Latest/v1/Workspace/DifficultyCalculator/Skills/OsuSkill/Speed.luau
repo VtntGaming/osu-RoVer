@@ -6,6 +6,7 @@ local ModData = require(Workspace.ModData)
 local HarmonicSkill = require(Workspace.DifficultyCalculator.Skills.BaseSkill.HarmonicSkill)
 local SpeedEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.SpeedEvaluator)
 local RhythmCalculator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.RhythmCalculator)
+local SkillUtils = require(Workspace.DifficultyCalculator.Skills.SkillUtils)
 
 local Speed = {}
 
@@ -21,17 +22,10 @@ export type Speed = BaseHarmonicSkill & {
     CountTopWeightedSliders: (self: Speed, difficultyValue: number) -> number,
 }
 
-local function overrideSelf(self)
-    for k, v in pairs(Speed) do
-        self[k] = v
-    end
-    return self
-end
-
 function Speed.new(mods: ModData.ModData): Speed
     local self = HarmonicSkill.new(mods) :: Speed
 
-    overrideSelf(self)
+    SkillUtils.OverrideSelf(self, Speed)
     self.SkillMultiplier = 1.16
     self.StrainDecayBase = 0.3
     self.CurrentStrain = 0

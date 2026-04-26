@@ -4,6 +4,7 @@ local Workspace = game:GetService("Workspace")
 local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHitObjects)
 local ModData = require(Workspace.ModData)
 local Skill = require(Workspace.DifficultyCalculator.Skills.BaseSkill.Skill)
+local SkillUtils = require(Workspace.DifficultyCalculator.Skills.SkillUtils)
 
 local math_pow = math.pow
 local math_max = math.max
@@ -50,18 +51,10 @@ export type VariableLengthStrainSkill = {
 
 local VariableLengthStrainSkill: VariableLengthStrainSkill = {} :: VariableLengthStrainSkill
 
-local function overrideSelf(self)
-    for k, v in pairs(VariableLengthStrainSkill) do
-        self[k] = v
-    end
-
-    return self
-end
-
 function VariableLengthStrainSkill.new(mods: ModData.ModData): VariableLengthStrainSkill
     local self = Skill.new(mods) :: any
 
-    overrideSelf(self)
+    SkillUtils.OverrideSelf(self, VariableLengthStrainSkill)
     self.DecayWeight = 0.9
     self.MaxSectionLength = 400
 

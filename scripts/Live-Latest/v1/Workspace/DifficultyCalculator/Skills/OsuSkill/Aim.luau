@@ -8,6 +8,7 @@ local SnapAimEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvalua
 local AgilityEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.Aim.AgilityEvaluator)
 local FlowAimEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.Aim.FlowAimEvaluator)
 local DifficultyCalculationUtils = require(Workspace.DifficultyCalculator.DifficultyEvaluator.DifficultyCalculationUtils)
+local SkillUtils = require(Workspace.DifficultyCalculator.Skills.SkillUtils)
 
 type BaseVLSS = VariableLengthStrainSkill.VariableLengthStrainSkill
 type StrainPeak = VariableLengthStrainSkill.StrainPeak
@@ -34,17 +35,10 @@ local REDUCED_STRAIN_BASELINE = 0.727
 local CHUNK_SIZE = 20
 local K = 7.27
 
-local function overrideSelf(self)
-    for k, v in pairs(Aim) do
-        self[k] = v
-    end
-    return self
-end
-
 function Aim.new(mods: ModData.ModData, includeSliders: boolean): Aim
     local self = VariableLengthStrainSkill.new(mods) :: Aim
 
-    overrideSelf(self)
+    SkillUtils.OverrideSelf(self, Aim)
     self.IncludeSliders = includeSliders
     self.CurrentStrain = 0
     self.sliderStrains = {} :: {number}
