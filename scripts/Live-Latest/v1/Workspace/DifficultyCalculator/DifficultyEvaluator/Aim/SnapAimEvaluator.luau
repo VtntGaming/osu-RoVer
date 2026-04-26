@@ -32,7 +32,7 @@ local function vectorAngleRepetition(current: HitObject, previous: HitObject)
 
 	local constantAngleCount = 0
 
-	for index = 0, NOTE_LIMIT do
+	for index = 0, NOTE_LIMIT - 1 do
 		local loopObj = current.Previous(index + 1)
 
 		if not loopObj then
