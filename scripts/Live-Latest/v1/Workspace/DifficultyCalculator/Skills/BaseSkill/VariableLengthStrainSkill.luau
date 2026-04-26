@@ -134,8 +134,9 @@ function VariableLengthStrainSkill:ProcessInternal(current: DifficultyHitObjects
         self.currentSectionEnd = self.currentSectionBegin + self.MaxSectionLength
         self.currentSectionPeak = currentStrain
     else
-        while #self.queuedStrains > 0 and self.queuedStrains[#self.queuedStrains].StrainValue < currentStrain do
-            table.remove(self.queuedStrains, #self.queuedStrains)
+        local queuedStrain = self.queuedStrains
+        while #queuedStrain > 0 and queuedStrain[#queuedStrain].StrainValue < currentStrain do
+            table.remove(queuedStrain, #queuedStrain)
         end
 
         self.queuedStrains[#self.queuedStrains + 1] = {
@@ -183,16 +184,16 @@ function VariableLengthStrainSkill:DifficultyValue(): number
         return a.Value > b.Value
     end)
 
-    local time = 0
+    local t = 0
     local difficulty = 0
 
     for i = 1, #strains do
-        local startTime = time
-        local endTime = time + strains[i].SectionLength
+        local startTime = t
+        local endTime = t + strains[i].SectionLength
         local weight = math_pow(self.DecayWeight, startTime) - math_pow(self.DecayWeight, endTime)
 
         difficulty += strains[i].Value * weight
-        time = endTime
+        t = endTime
     end
 
     return difficulty / (1 - self.DecayWeight)
