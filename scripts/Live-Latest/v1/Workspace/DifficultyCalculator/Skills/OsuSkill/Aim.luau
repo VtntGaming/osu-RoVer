@@ -70,7 +70,7 @@ local function calculateSnapFlowProbability(ratio: number): number
 end
 
 function Aim:StrainValueAt(current: DifficultyHitObjects.ObjectData): number
-    local decay = self:strainDecay(current.AdjustedDeltaTime)
+	local decay = self:strainDecay(current.AdjustedDeltaTime)
 
     local snapDifficulty = SnapAimEvaluator.GetSnapAimDiff(current, self.IncludeSliders) * SKILL_MULTIPLIER_SNAP
     local agilityDifficulty = AgilityEvaluator.GetAimAgilityDiff(current) * SKILL_MULTIPLIER_AGILITY
