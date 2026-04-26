@@ -7,7 +7,7 @@ local IS_GAME_RUNNING = game:GetService("RunService"):IsRunning()	-- If it's exe
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local workspace = game:GetService("Workspace")
-local StrainSkills = require(workspace.DifficultyCalculator.StrainSkills)
+
 local calculator = require(workspace.DifficultyCalculator)
 local tool = require(script.converterTools)
 local sliderTools = require(script.sliderTools)
@@ -332,11 +332,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	local ConvertedData = {}
 	local RawDifficulty = {}
 	--local StrainData = {}
-	local AimStrainData = {}
-	local AimSLStrainData = {}
-	local SpeedStrainData = {}
-	local ReadingStrainData = {}
-	local FLStrainData = {}
 	local AimDifficulty = 0
 	local SpeedDifficulty = 0
 	local FlashlightDifficulty = 0
@@ -659,12 +654,7 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	
 	----------------------------------------------------------------------------
 	-- > Difficulty evaluator
-	
-	AimStrainData = {}
-	AimSLStrainData = {}
-	SpeedStrainData = {}
-	FLStrainData = {}
-	
+
 	local baseData = {
 		AR = tool.GetDifficultyValueAfterMod.AR(ReturningData.Difficulty.ApproachRate, modData),
 		CS = tool.GetDifficultyValueAfterMod.CS(ReturningData.Difficulty.CircleSize, modData),
@@ -674,9 +664,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		ModData = modData
 	}
 	local ProcessedDifficultyObject = DifficultyHitObject.GenerateDifficultyHitObjects(ConvertedData, baseData)
-	
-	-- Skills
-	AimStrainData, AimSLStrainData, SpeedStrainData, FLStrainData, ReadingStrainData = StrainSkills.InitializeStrains(ProcessedDifficultyObject, modData, ConvertedData, RawDifficulty)
 
 	local BeatmapDifficulty = 0
 	local AimDiffStrainCount = 0
@@ -731,11 +718,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			HP = tool.GetDifficultyValueAfterMod.HP(ReturningData.Difficulty.HPDrainRate, modData)
 		}
 		local attributeData:calculator.Data = {
-			AimStrain = AimStrainData,
-			AimSLStrain = AimSLStrainData,
-			SpeedStrain = SpeedStrainData,
-			ReadingStrain = ReadingStrainData,
-			FlashlightStrain = FLStrainData,
+			HitObjects = ProcessedDifficultyObject,
+			IncludeSliders = not modData.NS,
 			DifficultyValue = DifficultyValue,
 			ModData = modData,
 			NoteCount = ReturningData.NoteCount

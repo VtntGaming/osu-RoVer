@@ -11,20 +11,25 @@ local BasePerformance = require(Workspace.PerformanceCalculator.BasePerformance)
 local converterTools = require(workspace.OsuConvert.converterTools)
 local evaluator = require(script.DifficultyEvaluator)
 local DifficultyCalculationUtils = require(script.DifficultyEvaluator.DifficultyCalculationUtils)
+local _DifficultyCalculationUtils = DifficultyCalculationUtils -- suppress unused warning
 local RatingCalculator = require(script.RatingCalculator)
-local StrainSkills = require(script.StrainSkills)
+local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHitObjects)
+local AimSkillModule = require(Workspace.DifficultyCalculator.Skills.OsuSkill.Aim)
+local SpeedSkillModule = require(Workspace.DifficultyCalculator.Skills.OsuSkill.Speed)
+local ReadingSkillModule = require(Workspace.DifficultyCalculator.Skills.OsuSkill.Reading)
+local FlashlightSkillModule = require(Workspace.DifficultyCalculator.Skills.OsuSkill.Flashlight)
 local modData = require(workspace.ModData)
 
 -- Cache math functions for performance
 local math_pow = math.pow
 local math_max = math.max
-local math_min = math.min
+local _math_min = math.min
 -- local math_sqrt = math.sqrt
 local math_log10 = math.log10
 local math_exp = math.exp
 local math_clamp = math.clamp
 local math_lerp = math.lerp
-local table_sort = converterTools.TrySort
+
 
 local perfomance_base_multiplier = 1.12
 local normalised_expoment = 1.1
@@ -57,80 +62,6 @@ type ModData = modData.ModData
 function calculator.CalculateDifficultyMultiplier(ModData:ModData):number
 	local multiplier = perfomance_base_multiplier
 	return multiplier
-end
-
-function calculator.DifficultyValue(StrainData:{{number}}, strainType:string)
-	local reducedSelectionCount = 10
-	local weight = 1
-	local decayWeight = 0.9
-	local difficulty = 0
-	local ReducedStrainBaseline = 0.75
-	
-	if strainType == "Speed" then
-		reducedSelectionCount = 5
-	end
-	
-	table_sort(StrainData, function(a,b)
-		return a[2] < b[2]	-- Sort the timing to be perfect
-	end)
-	
-	local StrainPeak = StrainSkills.GetStrainPeak(StrainData, strainType)
-	
-	sortPeak(StrainPeak)
-
-	for i = 1, #StrainPeak do
-		local scale = math_log10(math_lerp(1,10,math_clamp((i-1)/reducedSelectionCount,0,1)))
-		StrainPeak[i] *= math_lerp(ReducedStrainBaseline, 1, scale)
-		if i > 10 then
-			break
-		end
-	end
-
-	sortPeak(StrainPeak)
-
-	for i = 1, #StrainPeak do
-		local strain = StrainPeak[i]
-		if strain <= 0 then break end
-		
-		difficulty += strain * weight
-		weight *= decayWeight
-	end
-	return difficulty
-end
-
-local aimReducedSelectionCount = 10
-local aimReducedStrainBaseline = 0.75
-local aimDecayWeight = 0.9
-
-function calculator.DifficultyValueAim(StrainData:{{number}}): number
-	local difficulty = 0
-	local weight = 1
-
-	table_sort(StrainData, function(a,b)
-		return a[2] < b[2]	-- Sort the timing to be perfect
-	end)
-
-	local strains = StrainSkills.GetStrainPeak(StrainData, "Aim")
-
-	sortPeak(strains)
-
-	for i = 1, math_min(#strains, aimReducedSelectionCount) do
-		local scale = math_log10(math_lerp(1,10,math_clamp((i - 1) / aimReducedSelectionCount, 0, 1)))
-		
-		strains[i] *= math_lerp(aimReducedStrainBaseline, 1, scale)
-	end
-
-	sortPeak(strains)
-
-	for i = 1, #strains do
-		local strain = strains[i]
-		if strain <= 0 then break end
-		
-		difficulty += strain * weight
-		weight *= aimDecayWeight
-	end
-
-	return difficulty
 end
 
 local HarmonicScale = 1
@@ -208,21 +139,6 @@ function calculator.DifficultyValueHarmonic(StrainData: {{number}}, type: string
 	return difficulty, noteWeightSum
 end
 
-function calculator.FLDifficultyValue(StrainData:{{number}})
-	table_sort(StrainData, function(a,b)
-		return a[2] < b[2]	-- Sort the timing to be perfect
-	end)
-	local StrainPeak = StrainSkills.GetStrainPeak(StrainData, "Flashlight")
-	
-	-- Since flashlight sum all the value so no need to sort
-	
-	local difficulty = 0
-	for i = 1, #StrainPeak do
-		difficulty += StrainPeak[i]
-	end
-	return difficulty
-end
-
 function calculator.LiveDifficultyValue(StrainPeak:{number}, strainType:string):number
 	local reducedSelectionCount = 10
 	local weight = 1
@@ -271,6 +187,7 @@ end
 
 
 function calculator.RelevantNoteCount(strainData:{{number}})
+	-- Legacy: kept for compatibility; use Speed skill's RelevantNoteCount() for new code
 	strainData = _DeepCopy(strainData)
 	sortStrain(strainData)
 	if #strainData == 0 then
@@ -291,79 +208,13 @@ function calculator.RelevantNoteCount(strainData:{{number}})
 	return relevantNoteCount
 end
 
-function calculator.CountTopWeightedStrains(strainData:{{number}}, strainType:string)
-	if #strainData == 0 then
-		return 0
-	end
-	local decayWeight = 0.9
-	
-	local consistenTopStrain = calculator.DifficultyValue(strainData, strainType) * (1 - decayWeight)
-	if consistenTopStrain == 0 then
-		return #strainData
-	end
-	
-	local strainCount = 0
-	local invConsistentTopStrain = 1 / consistenTopStrain
-	for i = 1, #strainData do
-		local strain = strainData[i]
-		strainCount += 1.1 / (1 + math_exp(-10 * (strain[1] * invConsistentTopStrain - 0.88)))
-	end
-	
-	return strainCount
-end
-
-function calculator.CountTopWeightedDifficultyHarmonic(StrainData: {{number}}, difficulty: number, noteWeightSum: number)
-	if #StrainData == 0 then
-		return 0
-	end
-
-	if noteWeightSum == 0 then
-		return 0
-	end
-
-	local consistentTopNote = difficulty / noteWeightSum
-
-	if consistentTopNote == 0 then
-		return 0
-	end
-
-	local sum = 0
-	for i = 1, #StrainData do
-		local strain = StrainData[i][1]
-
-		sum += DifficultyCalculationUtils.Logistic(strain / consistentTopNote, 0.88, 10, 1.1)
-	end
-	return sum
-end
-
-function calculator.getDificultSliders(strainData:{{number}})
-	if #strainData == 0 then
-		return 0
-	end
-	
-	sortStrain(strainData)
-	local maxSLStrain = strainData[1][1]
-	
-	if maxSLStrain == 0 then
-		return 0
-	end
-	
-	local strainDiff = 0
-	local invMaxSLStrain = 1 / maxSLStrain
-	for i = 1, #strainData do
-		local strain = strainData[i]
-		strainDiff += 1 / (1 + math_exp(-(strain[1] * invMaxSLStrain * 12 - 6)))
-	end
-	
-	return strainDiff
-end
+-- CountTopWeightedStrains: removed (replaced by Aim skill's CountTopWeightedStrains)
+-- CountTopWeightedDifficultyHarmonic: removed (replaced by Speed/Reading skill's CountTopWeightedObjectDifficulties)
+-- getDificultSliders: removed (replaced by Aim skill's GetDifficultSliders)
 
 export type Data = {
-	AimStrain:{{number}},
-	AimSLStrain:{{number}},
-	SpeedStrain:{{number}},
-	ReadingStrain:{{number}},
-	FlashlightStrain:{{number}},
+	HitObjects: {DifficultyHitObjects.ObjectData},
+	IncludeSliders: boolean,
 	DifficultyValue:{
 		CS:number,
 		AR:number,
@@ -427,39 +278,58 @@ function calculator.SumCognitionDifficulty(reading: number, flashlight: number)
 end
 
 function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
-	local speedNotes = calculator.RelevantNoteCount(data.SpeedStrain)
-	local difficultSliders = calculator.getDificultSliders(data.AimSLStrain)
-	
+	local mods = data.ModData
 	local ARRate = data.DifficultyValue.AR
 	local ODRate = data.DifficultyValue.OD
-	
-	local aimDifficultyValue = calculator.DifficultyValueAim(data.AimStrain)
-	local speedDifficultyValue, speedNoteWeightSum = calculator.DifficultyValueHarmonic(data.SpeedStrain, "Speed")
-	local readingDifficultyValue, readingNoteWeightSum = calculator.DifficultyValueHarmonic(data.ReadingStrain, "Reading")
-	local flashlightDifficultyValue = calculator.FLDifficultyValue(data.FlashlightStrain)
 
-	
-	local aimDiffStrainCount = calculator.CountTopWeightedStrains(data.AimStrain, "Aim")
-	local speedDiffStrainCount = calculator.CountTopWeightedDifficultyHarmonic(data.SpeedStrain, speedDifficultyValue, speedNoteWeightSum)
-	local readingDiffStrainCount = calculator.CountTopWeightedDifficultyHarmonic(data.ReadingStrain, readingDifficultyValue, readingNoteWeightSum)
-	
-	local aimRating = RatingCalculator.ComputeAimRating(aimDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate)
-	local speedRating = RatingCalculator.ComputeSpeedRating(speedDifficultyValue, data.ModData, data. NoteCount.Total, ARRate, ODRate)
-	local flashlightRating = RatingCalculator.ComputeFlashlightRating(flashlightDifficultyValue, data.ModData, data.NoteCount.Total, ARRate, ODRate)
-	local readingRating = RatingCalculator.ComputeReadingRating(readingDifficultyValue, data.ModData, ODRate)
-	
+	-- Create skill instances
+	local aimSkill = AimSkillModule.new(mods, data.IncludeSliders)
+	local speedSkill = SpeedSkillModule.new(mods)
+	local readingSkill = ReadingSkillModule.new(mods)
+	local flashlightSkill = mods.FL and FlashlightSkillModule.new(mods) or nil
+
+	-- Process all hit objects through each skill
+	local hitObjects = data.HitObjects
+	for i = 1, #hitObjects do
+		local current = hitObjects[i]
+		aimSkill:Process(current)
+		speedSkill:Process(current)
+		readingSkill:Process(current)
+		if flashlightSkill then
+			flashlightSkill:Process(current)
+		end
+	end
+
+	-- Get difficulty values from skills
+	local aimDifficultyValue = aimSkill:DifficultyValue()
+	local speedDifficultyValue = speedSkill:DifficultyValue()
+	local readingDifficultyValue = readingSkill:DifficultyValue()
+	local flashlightDifficultyValue = flashlightSkill and flashlightSkill:DifficultyValue() or 0
+
+	-- Get strain/note counts
+	local difficultSliders = aimSkill:GetDifficultSliders()
+	local speedNotes = speedSkill:RelevantNoteCount()
+	local aimDiffStrainCount = aimSkill:CountTopWeightedStrains(aimDifficultyValue)
+	local speedDiffStrainCount = speedSkill:CountTopWeightedObjectDifficulties(speedDifficultyValue)
+	local readingDiffStrainCount = readingSkill:CountTopWeightedObjectDifficulties(readingDifficultyValue)
+
+	-- Compute ratings
+	local aimRating = RatingCalculator.ComputeAimRating(aimDifficultyValue, mods, data.NoteCount.Total, ARRate, ODRate)
+	local speedRating = RatingCalculator.ComputeSpeedRating(speedDifficultyValue, mods, data.NoteCount.Total, ARRate, ODRate)
+	local flashlightRating = RatingCalculator.ComputeFlashlightRating(flashlightDifficultyValue, mods, data.NoteCount.Total, ARRate, ODRate)
+	local readingRating = RatingCalculator.ComputeReadingRating(readingDifficultyValue, mods, ODRate)
+
+	-- Compute base performances
 	local aimBasePerformance = BasePerformance.DifficultyToPerformance(aimRating)
 	local speedBasePerformance = BasePerformance.DifficultyToPerformance(speedRating)
 	local readingBasePerformance = BasePerformance.DifficultyToPerformance(readingRating)
 	local flashlightBasePerformance = BasePerformance.DifficultyToPerformanceFL(flashlightRating)
 	local baseCognitionPerformance = calculator.SumCognitionDifficulty(readingBasePerformance, flashlightBasePerformance)
-	
+
 	local basePerformance = evaluator.Normalise(normalised_expoment, aimBasePerformance, speedBasePerformance, baseCognitionPerformance)
-	
-	-- local multiplier = calculateDifficultyMultiplier(data.ModData, data.NoteCount.Total, data.NoteCount.Spinner)
 	local starRating = calculator.CalculateStarRating(basePerformance)
-	
-	local Attributes = {
+
+	return {
 		StarRating = starRating,
 		AimDifficulty = aimRating,
 		AimDifficultySliderCount = difficultSliders,
@@ -471,8 +341,6 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 		SpeedDifficultStrainCount = speedDiffStrainCount,
 		ReadingDifficultStrainCount = readingDiffStrainCount
 	}
-	
-	return Attributes
 end
 
 export type LiveDifficultyAttributes = {
