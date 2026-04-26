@@ -103,11 +103,8 @@ function VariableLengthStrainSkill:backfillPeaks(current: DifficultyHitObjects.O
 
             self.currentSectionEnd = queuedStrain.StartTime + self.MaxSectionLength
             self:startNewSectionFrom(self.currentSectionBegin, current)
-            -- Decay the queued strain from its original time to the current section begin
-            -- to avoid inflating section peaks with undecayed historical strain values
-            local elapsed = self.currentSectionBegin - queuedStrain.StartTime
-            local decayedQueuedStrain = queuedStrain.StrainValue * self:strainDecay(elapsed)
-            self.currentSectionPeak = math_max(self.currentSectionPeak, decayedQueuedStrain)
+            
+            self.currentSectionPeak = math_max(self.currentSectionPeak, queuedStrain.StrainValue)
         else
             self.currentSectionEnd = self.currentSectionBegin + self.MaxSectionLength
             self:startNewSectionFrom(self.currentSectionBegin, current)
