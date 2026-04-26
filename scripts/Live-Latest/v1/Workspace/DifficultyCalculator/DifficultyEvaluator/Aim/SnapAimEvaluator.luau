@@ -64,9 +64,8 @@ local function vectorAngleRepetition(current: HitObject, previous: HitObject)
     return math.pow(baseNerf + (1 - baseNerf) * vectorRepetition * MAXIMUM_VECTOR_INFLUENCE * stackFactor, 2);
 end
 
-local function highBpmBonus(ms: number, distance: number): number
-    return 1 / (1 - math.pow(0.03, math.pow(ms / 1000, 0.65)))
-        * DifficultyCalculationUtils.Smootherstep(distance, 0, DifficultyHitObjects.NORMALISED_RADIUS)
+local function highBpmBonus(ms: number): number
+	return 1 / (1 - math.pow(0.03, math.pow(ms / 1000, 0.65)))
 end
 
 SnapAimEvaluator.CalcAcuteAngleBonus = CalcAcuteAngleBonus
@@ -189,7 +188,7 @@ function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTra
 	-- Apply high circle size bonus
 	aimStrain *= currentObject.SmallCircleBonus
 
-	aimStrain *= highBpmBonus(currentObject.AdjustedDeltaTime, currentObject.LazyJumpDistance)
+	aimStrain *= highBpmBonus(currentObject.AdjustedDeltaTime)
 
 	return aimStrain
 end
