@@ -77,7 +77,6 @@ function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTra
 	end
 
 	local lastObject = currentObject.Previous(1)
-	local lastLastObject = currentObject.Previous(2)
 	local last2Object = currentObject.Previous(3)
 
 	local radius = DifficultyHitObjects.NORMALISED_RADIUS
@@ -95,9 +94,11 @@ function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTra
 	local prevVelocity = prevDistance / lastObject.AdjustedDeltaTime
 
 	local sliderBonus = 0
-	local velocityChangeBonus = 0
 
 	local snapDifficulty = currVelocity
+	
+	-- Penalize angle repetition.
+	snapDifficulty *= vectorAngleRepetition(currentObject, lastObject)
 
 	if currentObject.Angle and lastObject.Angle then
 		local currAngle = currentObject.Angle
@@ -129,7 +130,7 @@ function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTra
 		local wideAngleCurrVelocity = currDistance / math.pow(currentObject.AdjustedDeltaTime, WIDE_ANGLE_TIME_SCALE);
 		local wideAnglePrevVelocity = prevDistance / math.pow(lastObject.AdjustedDeltaTime, WIDE_ANGLE_TIME_SCALE);
 
-		if currentObject.isSlider and withSliderTravelDistance then
+		if lastObject.isSlider and withSliderTravelDistance then
 			local sliderDistance = lastObject.LazyTravelDistance + currentObject.LazyJumpDistance;
 			wideAngleCurrVelocity = math.max(wideAngleCurrVelocity, sliderDistance / math.pow(currentObject.AdjustedDeltaTime, WIDE_ANGLE_TIME_SCALE));
 		end
@@ -164,9 +165,8 @@ function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTra
 
 	if math.max(prevVelocity, currVelocity) ~= 0 then
 		if withSliderTravelDistance then
-			-- We want to use the average velocity over the whole object when awarding differences, not the individual jump and slider path velocities.
-			prevVelocity = (lastObject.LazyJumpDistance or 0 + lastLastObject.BaseTravelDistance or 0) / lastObject.AdjustedDeltaTime
-			currVelocity = (currentObject.LazyJumpDistance + lastObject.BaseTravelDistance) / currentObject.AdjustedDeltaTime
+			-- We want to use just the object jump without slider velocity when awarding differences
+			currVelocity = currDistance / currentObject.AdjustedDeltaTime
 		end
 
 		-- Scale with ratio of difference compared to 0.5 * max dist.
@@ -175,10 +175,12 @@ function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTra
 		-- Reward for % distance up to 125 / strainTime for overlaps where velocity is still changing.
 		local overlapVelocityBuff = math.min(diameter * 1.25 / math.min(currentObject.AdjustedDeltaTime, lastObject.AdjustedDeltaTime), math.abs(prevVelocity - currVelocity))
 
-		velocityChangeBonus = overlapVelocityBuff * distRatio
+		local velocityChangeBonus = overlapVelocityBuff * distRatio
 
 		-- Penalize for rhythm changes.
 		velocityChangeBonus *= math.pow(math.min(currentObject.AdjustedDeltaTime, lastObject.AdjustedDeltaTime) / math.max(currentObject.AdjustedDeltaTime, lastObject.AdjustedDeltaTime), 2)
+		
+		snapDifficulty += velocityChangeBonus * VELOCITY_CHANGE_MULTIPLIER
 	end
 
 	if currentObject.isSlider then
@@ -186,10 +188,6 @@ function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTra
 		sliderBonus = currentObject.BaseTravelDistance / currentObject.BaseTravelTime
 	end
 
-	-- Penalize angle repetition.
-	snapDifficulty *= vectorAngleRepetition(currentObject, lastObject)
-
-	snapDifficulty += velocityChangeBonus * VELOCITY_CHANGE_MULTIPLIER
 
 	-- Add in additional slider velocity bonus.
 	if withSliderTravelDistance then

@@ -146,11 +146,7 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 				addDelta(Island, currDelta)
 			else
 				if currentObj.isSlider then
-					effectiveRatio *= 0.125
-				end
-
-				if PrevObj.isSlider then
-					effectiveRatio *= 0.3
+					effectiveRatio *= 0.5
 				end
 				
 				if isSimilarPolarity(Island, PrevIsland) then

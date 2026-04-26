@@ -63,13 +63,13 @@ local function calculateHiddenDifficulty(
         velocity: number, 
         constantAngleNerfFactor: number
     )
-    local preemptFactor = math_pow(crrObj.Preempt, 2.2 * 0.01)
+    local preemptFactor = math_pow(crrObj.Preempt, 2.2) * 0.01
     local densityFactor = math_pow(currentVisibleObjectDensity + pastObjectDifficultyInfluence, 3.3) * 3
     
     local hiddenDifficulty = (preemptFactor + densityFactor) * constantAngleNerfFactor * velocity * 0.01
     hiddenDifficulty = math.pow(hiddenDifficulty, 0.4) * HIDDEN_MULTIPLIER
     local previousObj = crrObj.Previous(1)
-    if crrObj.LazyJumpDistance and crrObj.OpacityAt(previousObj.Time) and previousObj.Time > crrObj.Time - crrObj.Preempt then
+    if crrObj.LazyJumpDistance == 0 and crrObj.OpacityAt(previousObj.Time) == 0 and previousObj.Time > crrObj.Time - crrObj.Preempt then
         hiddenDifficulty += HIDDEN_MULTIPLIER * 2500 / math.pow(crrObj.AdjustedDeltaTime, 1.5)
     end
    
@@ -89,8 +89,8 @@ local function retrievePastVisibleObjects(current: DifficultyHitObject): {Diffic
     for i = 1, current.objID do
         local hitObject = current.Previous(i)
         if not hitObject or
-            current.Time - hitObject.Time > READING_WINDOW_SIZE or
-            hitObject.Time + hitObject.Preempt < current.Time
+            hitObject.Time - current.Time > READING_WINDOW_SIZE or
+            current.Time < hitObject.Time - current.Preempt
         then
             break
         end
@@ -114,7 +114,7 @@ local function getPastObjectDifficultyInfluence(crrObj: DifficultyHitObject)
         local loopDifficulty = crrObj.OpacityAt(loopObj.Time)
         loopDifficulty *= smootherstep(loopObj.LazyJumpDistance, 15, DISTANCE_INFLUENCE_THRESHOLD)
         
-        local timeBetweenCurrAndLoopObj = crrObj.AdjustedDeltaTime - loopObj.Time
+        local timeBetweenCurrAndLoopObj = crrObj.Time - loopObj.Time
         local timeNerfFactor = getTimeNerfFactor(timeBetweenCurrAndLoopObj)
         
         loopDifficulty *= timeNerfFactor
@@ -129,12 +129,12 @@ local function retrieveCurrentVisibleObjectDensity(current: DifficultyHitObject)
     local hitObject = current.Next(1)
 
     while hitObject do
-        if current.Time - hitObject.Time > READING_WINDOW_SIZE or
-            hitObject.Time + hitObject.Preempt < current.Time then
+        if hitObject.Time - current.Time > READING_WINDOW_SIZE or
+            current.Time < hitObject.Time - hitObject.Preempt then
             break
         end
 
-        local timeBetweenCurrAndLoopObj = hitObject.AdjustedDeltaTime - current.Time
+        local timeBetweenCurrAndLoopObj = hitObject.Time - current.Time
         local timeNerfFactor = getTimeNerfFactor(timeBetweenCurrAndLoopObj)
 
         visibleObjectCount += hitObject.OpacityAt(current.Time) * timeNerfFactor
@@ -202,6 +202,10 @@ local function getConstantAngleNerfFactor(current: DifficultyHitObject)
     return math_clamp(2 / constantAngleCount, 0.2, 1)
 end
 
+local function getHighBPMBonus(ms: number)
+    return 1 / (1 - math.pow(0.8, ms / 1000))
+end
+
 function ReadingEvaluator.GetReadingDiff(crrObj: DifficultyHitObject, isHidden: boolean)
     if crrObj.isSpinner or crrObj.objID <= 2 then
         return 0
@@ -220,9 +224,11 @@ function ReadingEvaluator.GetReadingDiff(crrObj: DifficultyHitObject, isHidden: 
 
     local preemptDifficulty = calculatePreemptDifficulty(velocity, constantAngleNerfFactor, crrObj.Preempt)
 
-    local difficulty = DifficultyEvaluator.Normalise(1.5, preemptDifficulty, hiddenDifficulty, noteDensityDifficulty)
+    local readingDifficulty = DifficultyEvaluator.Normalise(1.5, preemptDifficulty, hiddenDifficulty, noteDensityDifficulty)
 
-    return difficulty
+    readingDifficulty *= getHighBPMBonus(crrObj.AdjustedDeltaTime)
+
+    return readingDifficulty
 end
 
 return ReadingEvaluator
