@@ -200,13 +200,17 @@ function Aim:getReducedStrainPeaks(): {StrainPeak}
     while strainsToRemove < #strains and time < REDUCED_SECTION_TIME do
         local strain = strains[strainsToRemove + 1]
 
-        for addedTime = 0, strain.SectionLength, CHUNK_SIZE do
+        local addedTime = 0
+
+        while addedTime < strain.SectionLength do
             local scale = math.log10(math.lerp(1, 10, math.clamp((time + addedTime) / REDUCED_SECTION_TIME, 0, 1)))
 
             strains[#strains + 1] = {
                 Value = strain.Value * math.lerp(REDUCED_STRAIN_BASELINE, 1.0, scale),
                 SectionLength = math.min(CHUNK_SIZE, strain.SectionLength - addedTime),
             }
+
+            addedTime += CHUNK_SIZE
         end
 
         time += strain.SectionLength

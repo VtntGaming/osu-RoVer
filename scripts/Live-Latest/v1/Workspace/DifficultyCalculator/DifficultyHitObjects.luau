@@ -174,6 +174,16 @@ DifficultyHitObject.MIN_DELTA_TIME = MIN_DELTA_TIME
 DifficultyHitObject.Maximum_Slider_Radius = Maximum_Slider_Radius
 DifficultyHitObject.Assumed_Slider_Radius = Assumed_Slider_Radius
 
+local function calculateAngle(currentPosition: Vector2, lastPosition: Vector2, lastLastPosition: Vector2)
+	local v1 = lastLastPosition - lastPosition
+	local v2 = currentPosition - lastPosition
+
+	local dot = v1:Dot(v2)
+	local det = v1.X * v2.Y - v1.Y * v2.X
+
+	return math_abs(math_atan2(det, dot))
+end
+
 function DifficultyHitObject.GenerateDifficultyHitObjects(baseList:{any}, baseData):{ObjectData}
 	local DifficultyObjects:{ObjectData} = {}
 	for objID = 1, #baseList do
@@ -259,21 +269,28 @@ function DifficultyHitObject.GenerateDifficultyHitObjects(baseList:{any}, baseDa
 			if prevprevDiffObj and not prevprevDiffObj.isSpinner then
 				local prevPrevCursorPosition = prevprevDiffObj.endCursorPosition or prevprevDiffObj.Position
 				local prevCursorPosition = prevDiffObj.endCursorPosition
-				local prevHeadPosition = prevDiffObj.Position
+				-- local prevHeadPosition = prevDiffObj.Position
 				local crrHeadPosition = positionOf(crr.Position)
 
-				if prevPrevCursorPosition then
-					local v1 = prevPrevCursorPosition - prevHeadPosition
-					local v2 = crrHeadPosition - prevCursorPosition
-
-					local dot = v1:Dot(v2)
-					local det = v1.X * v2.Y - v1.Y * v2.X
+				if crrHeadPosition and prevCursorPosition and prevPrevCursorPosition then					
+					angle = calculateAngle(crrHeadPosition, prevCursorPosition, prevPrevCursorPosition)
 
 					local v = positionOf(crr.Position) - lastCursorPosition
-					NormalisedVectorAngle = math.atan2(math.abs(v.Y), math.abs(v.X))
-
-					angle = math_abs(math_atan2(det, dot))
+					NormalisedVectorAngle = math_atan2(math.abs(v.Y), math_abs(v.X))
 				end
+
+				-- if prevPrevCursorPosition then
+				-- 	local v1 = prevPrevCursorPosition - prevHeadPosition
+				-- 	local v2 = crrHeadPosition - prevCursorPosition
+
+				-- 	local dot = v1:Dot(v2)
+				-- 	local det = v1.X * v2.Y - v1.Y * v2.X
+
+				-- 	local v = positionOf(crr.Position) - lastCursorPosition
+				-- 	NormalisedVectorAngle = math.atan2(math.abs(v.Y), math.abs(v.X))
+
+				-- 	angle = math_abs(math_atan2(det, dot))
+				-- end
 			end
 		end
 
