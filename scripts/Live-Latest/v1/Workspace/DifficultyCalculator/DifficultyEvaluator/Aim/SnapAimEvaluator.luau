@@ -15,11 +15,11 @@ local MAXIMUM_VECTOR_INFLUENCE = 0.5
 
 type HitObject = DifficultyHitObjects.ObjectData
 
-local function calcWideAngleBonus(angle: number): number
+local function calcAngleWideness(angle: number): number
 	return DifficultyCalculationUtils.Smoothstep(angle, math.rad(40), math.rad(140))
 end
 
-local function CalcAcuteAngleBonus(angle: number): number
+local function CalcAngleAcuteness(angle: number): number
 	return DifficultyCalculationUtils.Smoothstep(angle, math.rad(140), math.rad(40))
 end
 local NOTE_LIMIT = 6;
@@ -59,7 +59,7 @@ local function vectorAngleRepetition(current: HitObject, previous: HitObject)
 
     local angleDifferenceAdjusted = math.cos(2 * math.min(math.rad(45), math.abs(currAngle - lastAngle) * stackFactor));
 
-    local baseNerf = 1 - MAXIMUM_REPETITION_NERF * CalcAcuteAngleBonus(lastAngle) * angleDifferenceAdjusted;
+    local baseNerf = 1 - MAXIMUM_REPETITION_NERF * CalcAngleAcuteness(lastAngle) * angleDifferenceAdjusted;
 
     return math.pow(baseNerf + (1 - baseNerf) * vectorRepetition * MAXIMUM_VECTOR_INFLUENCE * stackFactor, 2);
 end
@@ -68,7 +68,7 @@ local function highBpmBonus(ms: number): number
 	return 1 / (1 - math.pow(0.03, math.pow(ms / 1000, 0.65)))
 end
 
-SnapAimEvaluator.CalcAcuteAngleBonus = CalcAcuteAngleBonus
+SnapAimEvaluator.CalcAngleAcuteness = CalcAngleAcuteness
 
 function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTravelDistance: boolean?): number
 	if currentObject.isSpinner or currentObject.objID < 3 or currentObject.Previous(1).isSpinner then
@@ -93,26 +93,25 @@ function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTra
 	local prevDistance = withSliderTravelDistance and lastObject.LazyJumpDistance or lastObject.JumpDistance
 	local prevVelocity = prevDistance / lastObject.AdjustedDeltaTime
 
-	local wideAngleBonus = 0
-	local acuteAngleBonus = 0
 	local sliderBonus = 0
 	local velocityChangeBonus = 0
-	local wiggleBonus = 0
 
-	local aimStrain = currVelocity
+	local snapDifficulty = currVelocity
 
 	if currentObject.Angle and lastObject.Angle then
 		local currAngle = currentObject.Angle
 		local lastAngle = lastObject.Angle
 
+		local acuteAngleBonus = 0
+
 		-- Rewarding angles, take the smaller velocity as base.
 		local angleBonus = math.min(currVelocity, prevVelocity)
 
 		if math.max(currentObject.AdjustedDeltaTime, lastObject.AdjustedDeltaTime) < 1.25 * math.min(currentObject.AdjustedDeltaTime, lastObject.AdjustedDeltaTime) then -- If rhythms are the same.
-			acuteAngleBonus = CalcAcuteAngleBonus(currAngle)
+			acuteAngleBonus = CalcAngleAcuteness(currAngle)
 
 			-- Penalize angle repetition.
-			acuteAngleBonus *= 0.08 + 0.92 * (1 - math.min(acuteAngleBonus, math.pow(CalcAcuteAngleBonus(lastAngle), 3)))
+			acuteAngleBonus *= 0.08 + 0.92 * (1 - math.min(acuteAngleBonus, math.pow(CalcAngleAcuteness(lastAngle), 3)))
 
 			-- Apply acute angle bonus for BPM above 300 1/2 and distance more than one diameter
 			acuteAngleBonus *= angleBonus *
@@ -120,21 +119,13 @@ function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTra
 				DifficultyCalculationUtils.Smootherstep(currDistance, 0, diameter * 2)
 		end
 
-		wideAngleBonus = calcWideAngleBonus(currAngle)
+		local wideAngleBonus = calcAngleWideness(currAngle)
 
 		-- Penalize angle repetition.
-		wideAngleBonus *= 0.25 + 0.75 * (1 - math.min(wideAngleBonus, math.pow(calcWideAngleBonus(lastAngle), 3)))
+		wideAngleBonus *= 0.25 + 0.75 * (1 - math.min(wideAngleBonus, math.pow(calcAngleWideness(lastAngle), 3)))
 
 		wideAngleBonus *= angleBonus
 
-		-- Apply wiggle bonus for jumps that are [radius, 3*diameter] in distance, with < 110 angle
-		wiggleBonus = angleBonus
-			* DifficultyCalculationUtils.Smootherstep(currDistance, radius, diameter)
-			* math.pow(DifficultyCalculationUtils.ReverseLerp(currDistance, diameter * 3, diameter), 1.8)
-			* DifficultyCalculationUtils.Smootherstep(currAngle, math.rad(110), math.rad(60))
-			* DifficultyCalculationUtils.Smootherstep(prevDistance, radius, diameter)
-			* math.pow(DifficultyCalculationUtils.ReverseLerp(prevDistance, diameter * 3, diameter), 1.8)
-			* DifficultyCalculationUtils.Smootherstep(lastAngle, math.rad(110), math.rad(60))
 
 		if last2Object and last2Object.Position then
 			-- If objects just go back and forth through a middle point - don't give as much wide bonus
@@ -146,6 +137,20 @@ function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTra
 				wideAngleBonus *= 1 - 0.55 * (1 - distance)
 			end
 		end
+
+		-- Add in acute angle bonus or wide angle bonus, whichever is larger.
+		snapDifficulty += math.max(acuteAngleBonus * ACUTE_ANGLE_MULTIPLIER, wideAngleBonus * WIDE_ANGLE_MULTIPLIER)
+
+		-- Apply wiggle bonus for jumps that are [radius, 3*diameter] in distance, with < 110 angle
+		local wiggleBonus = angleBonus
+			* DifficultyCalculationUtils.Smootherstep(currDistance, radius, diameter)
+			* math.pow(DifficultyCalculationUtils.ReverseLerp(currDistance, diameter * 3, diameter), 1.8)
+			* DifficultyCalculationUtils.Smootherstep(currAngle, math.rad(110), math.rad(60))
+			* DifficultyCalculationUtils.Smootherstep(prevDistance, radius, diameter)
+			* math.pow(DifficultyCalculationUtils.ReverseLerp(prevDistance, diameter * 3, diameter), 1.8)
+			* DifficultyCalculationUtils.Smootherstep(lastAngle, math.rad(110), math.rad(60))
+
+		snapDifficulty += wiggleBonus * WIGGLE_MULTIPLIER
 	end
 
 	if math.max(prevVelocity, currVelocity) ~= 0 then
@@ -173,24 +178,20 @@ function SnapAimEvaluator.GetSnapAimDiff(currentObject: HitObject, withSliderTra
 	end
 
 	-- Penalize angle repetition.
-	aimStrain *= vectorAngleRepetition(currentObject, lastObject)
+	snapDifficulty *= vectorAngleRepetition(currentObject, lastObject)
 
-	aimStrain += wiggleBonus * WIGGLE_MULTIPLIER
-	aimStrain += velocityChangeBonus * VELOCITY_CHANGE_MULTIPLIER
-
-	-- Add in acute angle bonus or wide angle bonus, whichever is larger.
-	aimStrain += math.max(acuteAngleBonus * ACUTE_ANGLE_MULTIPLIER, wideAngleBonus * WIDE_ANGLE_MULTIPLIER)
+	snapDifficulty += velocityChangeBonus * VELOCITY_CHANGE_MULTIPLIER
 
 	-- Add in additional slider velocity bonus.
 	if withSliderTravelDistance then
-		aimStrain += (sliderBonus < 1 and sliderBonus or math.pow(sliderBonus, 0.75)) * SLIDER_MULTIPLIER
+		snapDifficulty += (sliderBonus < 1 and sliderBonus or math.pow(sliderBonus, 0.75)) * SLIDER_MULTIPLIER
 	end
 	-- Apply high circle size bonus
-	aimStrain *= currentObject.SmallCircleBonus
+	snapDifficulty *= currentObject.SmallCircleBonus
 
-	aimStrain *= highBpmBonus(currentObject.AdjustedDeltaTime)
+	snapDifficulty *= highBpmBonus(currentObject.AdjustedDeltaTime)
 
-	return aimStrain
+	return snapDifficulty
 end
 
 return SnapAimEvaluator

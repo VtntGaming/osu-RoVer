@@ -64,7 +64,7 @@ function FlowAimEvaluator.GetFlowAimDiff(currentObject: HitObject, withSliderTra
 
 	if currentObject.Angle and currentObject.Angle ~= -1 then
 		flowDifficulty += math.sqrt(currentVelocity) *
-			SnapAimEvaluator.CalcAcuteAngleBonus(currentObject.Angle) * overlappedNotesWeight
+			SnapAimEvaluator.CalcAngleAcuteness(currentObject.Angle) * overlappedNotesWeight
 	end
 
 	if math.max(previousVelocity, currentVelocity) ~= 0 then
