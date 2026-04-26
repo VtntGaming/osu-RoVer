@@ -1,12 +1,11 @@
 --!strict
 local Workspace = game:GetService("Workspace")
 
-local DifficultyCalculationUtils = require(Workspace.DifficultyCalculator.DifficultyEvaluator.DifficultyCalculationUtils)
 local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHitObjects)
 local AgilityEvaluator = {}
 
 local NOMALISED_DIAMETER = DifficultyHitObjects.NORMALISED_DIAMETER
-local DISTANCE_CAP = NOMALISED_DIAMETER * 1.25
+local DISTANCE_CAP = NOMALISED_DIAMETER * 1.2
 
 type ObjectData = DifficultyHitObjects.ObjectData
 
@@ -25,14 +24,15 @@ function AgilityEvaluator.GetAimAgilityDiff(currentObject: ObjectData): number
 	local distance = travelDistance + currentObject.LazyJumpDistance
 
 	local distanceScaled = math.min(distance, DISTANCE_CAP) / DISTANCE_CAP
-	local strain = distanceScaled * 1000 / currentObject.AdjustedDeltaTime
+
+	local agilityDifficulty = distanceScaled * 1000 / currentObject.AdjustedDeltaTime
 	if currentObject.SmallCircleBonus then
-		strain *= math.pow(currentObject.SmallCircleBonus, 1.5)		
+		agilityDifficulty *= math.pow(currentObject.SmallCircleBonus, 1.5)		
 	end
 
-	strain *= GetHighBPMBonus(currentObject.AdjustedDeltaTime)
+	agilityDifficulty *= GetHighBPMBonus(currentObject.AdjustedDeltaTime)
 
-	return strain * DifficultyCalculationUtils.Smootherstep(distance, 0, DifficultyHitObjects.NORMALISED_RADIUS)
+	return agilityDifficulty
 end
 
 return AgilityEvaluator

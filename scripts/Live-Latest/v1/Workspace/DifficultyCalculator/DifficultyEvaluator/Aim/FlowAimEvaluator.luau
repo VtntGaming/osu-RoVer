@@ -6,7 +6,7 @@ local SnapAimEvaluator = require(script.Parent.SnapAimEvaluator)
 local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHitObjects)
 local FlowAimEvaluator = {}
 
-local VELOCITY_CHANGE_MULTIPLIER = 2
+local VELOCITY_CHANGE_MULTIPLIER = 0.52
 
 type HitObject = DifficultyHitObjects.ObjectData
 
@@ -83,7 +83,8 @@ function FlowAimEvaluator.GetFlowAimDiff(currentObject: HitObject, withSliderTra
 		flowDifficulty += currentObject.BaseTravelDistance / currentObject.BaseTravelTime
 	end
 
-	return math.pow(flowDifficulty, 1.45)
+	flowDifficulty = math.pow(flowDifficulty, 1.45)
+	return flowDifficulty * DifficultyCalculationUtils.Smootherstep(currentDistance, 0, DifficultyHitObjects.NORMALISED_RADIUS)
 end
 
 return FlowAimEvaluator
