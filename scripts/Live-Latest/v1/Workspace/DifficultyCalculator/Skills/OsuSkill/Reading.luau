@@ -5,6 +5,7 @@ local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHi
 local ModData = require(Workspace.ModData)
 local HarmonicSkill = require(Workspace.DifficultyCalculator.Skills.BaseSkill.HarmonicSkill)
 local ReadingEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.ReadingEvaluator)
+local SkillUtils = require(Workspace.DifficultyCalculator.Skills.SkillUtils)
 
 local Reading = {}
 
@@ -20,17 +21,10 @@ export type Reading = BaseHarmonicSkill & {
     CountTopWeightedObjectDifficulties: (self: Reading, difficultyValue: number) -> number,
 }
 
-local function overrideSelf(self)
-    for k, v in pairs(Reading) do
-        self[k] = v
-    end
-    return self
-end
-
 function Reading.new(mods: ModData.ModData): Reading
     local self = HarmonicSkill.new(mods) :: Reading
 
-    overrideSelf(self)
+    SkillUtils.OverrideSelf(self, Reading)
     self.SkillMultiplier = 2.5
     self.StrainDecayBase = 0.8
     self.CurrentStrain = 0

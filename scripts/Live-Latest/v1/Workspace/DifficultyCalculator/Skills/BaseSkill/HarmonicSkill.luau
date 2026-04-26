@@ -4,6 +4,7 @@ local Workspace = game:GetService("Workspace")
 local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHitObjects)
 local ModData = require(Workspace.ModData)
 local Skill = require(Workspace.DifficultyCalculator.Skills.BaseSkill.Skill)
+local SkillUtils = require(Workspace.DifficultyCalculator.Skills.SkillUtils)
 
 local HarmonicSkill = {}
 
@@ -18,18 +19,10 @@ export type HarmonicSkill = BaseSkill & {
     CountTopWeightedObjectDifficulties: (self: HarmonicSkill, difficultyValue: number) -> number,
 }
 
-local function overrideSelf(self)
-    for k, v in pairs(HarmonicSkill) do
-        self[k] = v
-    end
-
-    return self
-end
-
 function HarmonicSkill.new(mods: ModData.ModData): HarmonicSkill
     local self = Skill.new(mods) :: HarmonicSkill
 
-    overrideSelf(self)
+    SkillUtils.OverrideSelf(self, HarmonicSkill)
     self.NoteWeightSum = 0
     self.HarmonicScale = 1
     self.DecayExponent = 0.9

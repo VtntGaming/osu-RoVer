@@ -2,6 +2,7 @@
 local Workspace = game:GetService("Workspace")
 
 local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHitObjects)
+local SkillUtils = require(Workspace.DifficultyCalculator.Skills.SkillUtils)
 local ModData = require(Workspace.ModData)
 
 local Skill = {}
@@ -15,18 +16,10 @@ export type Skill = {
     GetObjectDifficulties: (self: Skill) -> {number},
 }
 
-local function overrideSelf(self)
-    for k, v in pairs(Skill) do
-        self[k] = v
-    end
-
-    return self
-end
-
 function Skill.new(mods: ModData.ModData): Skill
     local self = {} :: Skill
 
-    overrideSelf(self)
+    SkillUtils.OverrideSelf(self, Skill)
     self.Mods = mods
     self.ObjectDifficulties = {}
 

@@ -4,6 +4,7 @@ local Workspace = game:GetService("Workspace")
 local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHitObjects)
 local ModData = require(Workspace.ModData)
 local StrainSkill = require(Workspace.DifficultyCalculator.Skills.BaseSkill.StrainSkill)
+local SkillUtils = require(Workspace.DifficultyCalculator.Skills.SkillUtils)
 
 local StrainDecaySkill = {}
 
@@ -17,18 +18,10 @@ export type StrainDecaySkill = BaseStrainSkill & {
     StrainValueOf: (self: StrainDecaySkill, current: DifficultyHitObjects.ObjectData) -> number,
 }
 
-local function overrideSelf(self)
-    for k, v in pairs(StrainDecaySkill) do
-        self[k] = v
-    end
-
-    return self
-end
-
 function StrainDecaySkill.new(mods: ModData.ModData): StrainDecaySkill
     local self = StrainSkill.new(mods) :: StrainDecaySkill
 
-    overrideSelf(self)
+    SkillUtils.OverrideSelf(self, StrainDecaySkill)
     self.SkillMultiplier = 1
     self.StrainDecayBase = 0.3
     self.CurrentStrain = 0

@@ -5,6 +5,7 @@ local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHi
 local ModData = require(Workspace.ModData)
 local StrainSkill = require(Workspace.DifficultyCalculator.Skills.BaseSkill.StrainSkill)
 local FLEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.FLEvaluator)
+local SkillUtils = require(Workspace.DifficultyCalculator.Skills.SkillUtils)
 
 local Flashlight = {}
 
@@ -17,17 +18,10 @@ export type Flashlight = BaseStrainSkill & {
     strainDecay: (self: Flashlight, ms: number) -> number,
 }
 
-local function overrideSelf(self)
-    for k, v in pairs(Flashlight) do
-        self[k] = v
-    end
-    return self
-end
-
 function Flashlight.new(mods: ModData.ModData): Flashlight
     local self = StrainSkill.new(mods) :: Flashlight
 
-    overrideSelf(self)
+    SkillUtils.OverrideSelf(self, Flashlight)
     self.SkillMultiplier = 0.056
     self.StrainDecayBase = 0.15
     self.CurrentStrain = 0
