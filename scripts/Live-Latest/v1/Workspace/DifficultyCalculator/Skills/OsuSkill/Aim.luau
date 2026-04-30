@@ -46,6 +46,8 @@ function Aim.new(mods: ModData.ModData, includeSliders: boolean): Aim
     return self
 end
 
+local NewStrainPeak = VariableLengthStrainSkill.NewStrainPeak
+
 function Aim:strainDecay(ms: number): number
     return math.pow(0.2, ms / 1000)
 end
@@ -205,10 +207,7 @@ function Aim:getReducedStrainPeaks(): {StrainPeak}
         while addedTime < strain.SectionLength do
             local scale = math.log10(math.lerp(1, 10, math.clamp((time + addedTime) / REDUCED_SECTION_TIME, 0, 1)))
 
-            strains[#strains + 1] = {
-                Value = strain.Value * math.lerp(REDUCED_STRAIN_BASELINE, 1.0, scale),
-                SectionLength = math.min(CHUNK_SIZE, strain.SectionLength - addedTime),
-            }
+            strains[#strains + 1] = NewStrainPeak(strain.Value * math.lerp(REDUCED_STRAIN_BASELINE, 1.0, scale), math.min(CHUNK_SIZE, strain.SectionLength - addedTime))
 
             addedTime += CHUNK_SIZE
         end
