@@ -722,7 +722,8 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 			IncludeSliders = not modData.NS,
 			DifficultyValue = DifficultyValue,
 			ModData = modData,
-			NoteCount = ReturningData.NoteCount
+			NoteCount = ReturningData.NoteCount,
+			BaseObjects = ConvertedData
 		}
 		local difficultyAttributes = calculator.GetDifficultyAttributes(attributeData)
 		AimDifficulty = difficultyAttributes.AimDifficulty
