@@ -46,6 +46,7 @@ export type VariableLengthStrainSkill = {
     DifficultyValue: (self: VariableLengthStrainSkill) -> number,
     new: (mods: ModData.ModData) -> VariableLengthStrainSkill,
     ProcessInternal: (self: VariableLengthStrainSkill, current: DifficultyHitObjects.ObjectData) -> number,
+    NewStrainPeak: (value: number, length: number) -> StrainPeak,
 }
 
 
@@ -70,16 +71,44 @@ function VariableLengthStrainSkill.new(mods: ModData.ModData): VariableLengthStr
     return self :: VariableLengthStrainSkill
 end
 
-function VariableLengthStrainSkill:saveCurrentPeak(sectionLength: number)
-    self.strainPeaks[#self.strainPeaks + 1] = {
-        Value = self.currentSectionPeak,
-        SectionLength = math_round(sectionLength),
+local function NewStrainPeak(value, length)
+    return {
+        Value = value,
+        SectionLength = length
     }
+end
+
+local function IsHigher(a: StrainPeak, b: StrainPeak)
+    if a.Value == b.Value then
+        return a.SectionLength > b.SectionLength
+    end
+    return a.Value > b.Value
+end
+
+-- This is like insert then sort (but doesn't use table.sort() .-.)
+-- I still don't know why C# remove at index 0 and still worked normally and luau isn't???
+local function AddInPlace(tbl: {StrainPeak}, current: StrainPeak)
+    for i = 1, #tbl do
+        local strain = tbl[i]
+        if IsHigher(current, strain) then
+            table.insert(tbl, i, current)
+            return
+        end
+    end
+
+    tbl[#tbl+1] = current
+end
+
+VariableLengthStrainSkill.NewStrainPeak = NewStrainPeak
+
+function VariableLengthStrainSkill:saveCurrentPeak(sectionLength: number)
+    AddInPlace(self.strainPeaks, NewStrainPeak(self.currentSectionPeak, math_round(sectionLength)))
     self.totalLength += sectionLength
 
+    -- Remove the LAST index
     while self.totalLength > self.maxStoredSections * self.MaxSectionLength and #self.strainPeaks > 0 do
-        self.totalLength -= self.strainPeaks[1].SectionLength
-        table.remove(self.strainPeaks, 1)
+        self.totalLength -= self.strainPeaks[#self.strainPeaks].SectionLength
+        self.strainPeaks[#self.strainPeaks] = nil
     end
 end
 
@@ -158,10 +187,7 @@ end
 
 function VariableLengthStrainSkill:GetCurrentStrainPeaks(): {StrainPeak}
     local peaks = table.clone(self.strainPeaks)
-    peaks[#peaks + 1] = {
-        Value = self.currentSectionPeak,
-        SectionLength = self.currentSectionEnd - self.currentSectionBegin,
-    }
+    peaks[#peaks + 1] = NewStrainPeak(self.currentSectionPeak, self.currentSectionEnd - self.currentSectionBegin)
 
     return peaks
 end
