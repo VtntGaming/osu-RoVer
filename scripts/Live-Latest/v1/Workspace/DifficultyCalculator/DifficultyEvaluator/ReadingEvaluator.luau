@@ -1,4 +1,7 @@
+local Workspace = game:GetService("Workspace")
 local workspace = game:GetService("Workspace")
+
+local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHitObjects)
 local DifficultyEvaluator = require(script.Parent)
 local DifficultyCalculationUtils = require(script.Parent.DifficultyCalculationUtils)
 local preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
@@ -17,9 +20,8 @@ type DifficultyHitObject = preprocessing.ObjectData
 local ReadingEvaluator = {}
 
 local READING_WINDOW_SIZE = 3000
-local NORMALIZED_RADIUS = 50
-local NORMALIZED_DIAMETER = NORMALIZED_RADIUS * 2
-local DISTANCE_INFLUENCE_THRESHOLD = NORMALIZED_DIAMETER * 1.5
+local NORMALIZED_RADIUS = DifficultyHitObjects.NORMALISED_RADIUS
+local DISTANCE_INFLUENCE_THRESHOLD = DifficultyHitObjects.NORMALISED_DIAMETER * 1.5
 local HIDDEN_MULTIPLIER = 0.28
 local DENSITY_MULTIPLIER = 2.4
 local DENSITY_DIFFICULTY_BASE = 2.5
@@ -31,12 +33,6 @@ local MAXIMUM_ANGLE_RELEVANCY_TIME = 200
 local HALF_READING_WINDOW = READING_WINDOW_SIZE / 2
 local RAD_30 = math_rad(30)
 
-local function smootherstep(x: number, _start: number, _end: number)
-	x = math_clamp((x - _start) / (_end - _start), 0.0, 1.0)
-	local x2 = x * x
-	return x2 * x * (x * (6.0 * x - 15.0) + 10.0)
-end
-
 local function calculateDensityDifficulty(nextObj: DifficultyHitObject?, 
     velocity: number, 
     constantAngleNerfFactor: number, 
@@ -45,7 +41,7 @@ local function calculateDensityDifficulty(nextObj: DifficultyHitObject?,
     local futureObjectDifficultyInfluence = math_sqrt(currentVisibleObjectDensity)
 
     if nextObj then
-        futureObjectDifficultyInfluence *= smootherstep(nextObj.LazyJumpDistance, 15, DISTANCE_INFLUENCE_THRESHOLD)
+        futureObjectDifficultyInfluence *= DifficultyCalculationUtils.Smootherstep(nextObj.LazyJumpDistance, 15, DISTANCE_INFLUENCE_THRESHOLD)
     end
 
     local noteDensityDifficulty = math_pow(pastObjectDifficultyInfluence + futureObjectDifficultyInfluence, 1.7) * 0.4 * constantAngleNerfFactor * velocity
@@ -112,7 +108,7 @@ local function getPastObjectDifficultyInfluence(crrObj: DifficultyHitObject)
         local loopObj = pastVisibleObjs[i]
 
         local loopDifficulty = crrObj.OpacityAt(loopObj.Time)
-        loopDifficulty *= smootherstep(loopObj.LazyJumpDistance, 15, DISTANCE_INFLUENCE_THRESHOLD)
+        loopDifficulty *= DifficultyCalculationUtils.Smootherstep(loopObj.LazyJumpDistance, 15, DISTANCE_INFLUENCE_THRESHOLD)
         
         local timeBetweenCurrAndLoopObj = crrObj.Time - loopObj.Time
         local timeNerfFactor = getTimeNerfFactor(timeBetweenCurrAndLoopObj)
@@ -186,7 +182,7 @@ local function getConstantAngleNerfFactor(current: DifficultyHitObject)
 
                 angleDifferenceAlternating = math.lerp(math.pi, 0.1 * angleDifferenceAlternating, weight)
             end
-            local stackFactor = smootherstep(loopObj.LazyJumpDistance, 0, NORMALIZED_RADIUS)
+            local stackFactor = DifficultyCalculationUtils.Smootherstep(loopObj.LazyJumpDistance, 0, NORMALIZED_RADIUS)
 
             constantAngleCount += math_cos(3 * math_min(RAD_30, math.min(angleDifference, angleDifferenceAlternating)  * stackFactor)) * longIntervalFactor
         end
