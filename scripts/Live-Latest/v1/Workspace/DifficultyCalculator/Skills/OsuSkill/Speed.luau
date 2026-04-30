@@ -4,8 +4,8 @@ local Workspace = game:GetService("Workspace")
 local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHitObjects)
 local ModData = require(Workspace.ModData)
 local HarmonicSkill = require(Workspace.DifficultyCalculator.Skills.BaseSkill.HarmonicSkill)
-local SpeedEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.SpeedEvaluator)
-local RhythmCalculator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.RhythmCalculator)
+local SpeedEvaluator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.Speed.SpeedEvaluator)
+local RhythmCalculator = require(Workspace.DifficultyCalculator.DifficultyEvaluator.Speed.RhythmCalculator)
 local SkillUtils = require(Workspace.DifficultyCalculator.Skills.SkillUtils)
 
 local Speed = {}
