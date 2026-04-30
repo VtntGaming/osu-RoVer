@@ -422,17 +422,19 @@ function DifficultyHitObject.GenerateDifficultyHitObjects(baseList:{any}, baseDa
 			local TimePreempt = crrObj.TimePreempt
 
 			local fadeInStartTime = crr.Time - TimePreempt
-			local TimeFadeIn = 400 * math_min(1, TimePreempt/450)
+			local TimeFadeIn = 400 * math_min(1, TimePreempt/PREEMPT_MIN)
+
+			local fadeInDuration = 400 * math.min(1, TimePreempt / PREEMPT_MIN)
 
 			if baseData.ModData.HD then
 				local fadeOutStartTime = crr.Time - TimePreempt + TimeFadeIn
 				local fadeOutDuration = TimePreempt * 0.3
 
 				return math_min(
-					math_clamp((t - fadeInStartTime) / TimeFadeIn, 0.0, 1.0),
+					math_clamp((t - fadeInStartTime) / fadeInDuration, 0.0, 1.0),
 					1.0 - math_clamp((t - fadeOutStartTime) / fadeOutDuration, 0.0, 1.0))
 			else
-				return math_clamp((t - fadeInStartTime) / TimeFadeIn, 0.0, 1.0)
+				return math_clamp((t - fadeInStartTime) / fadeInDuration, 0.0, 1.0)
 			end
 		end
 
