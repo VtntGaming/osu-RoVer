@@ -115,8 +115,8 @@ local FLBaseStrainDecay = 0.15
 local perfomance_base_multiplier = 1.12
 local EvaluatorContainer = script.Parent.DifficultyEvaluator
 local Evaluators = {
-	Speed = require(EvaluatorContainer.SpeedEvaluator),
-	Rhythm = require(EvaluatorContainer.RhythmCalculator),
+	Speed = require(EvaluatorContainer.Speed.SpeedEvaluator),
+	Rhythm = require(EvaluatorContainer.Speed.RhythmCalculator),
 	Flashlight = require(EvaluatorContainer.FLEvaluator),
 	Reading = require(EvaluatorContainer.ReadingEvaluator)
 }

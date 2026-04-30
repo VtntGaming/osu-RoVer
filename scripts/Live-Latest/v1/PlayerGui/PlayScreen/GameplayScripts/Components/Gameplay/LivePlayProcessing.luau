@@ -315,6 +315,7 @@ function LivePlayProcessing:ProcessFinalResult(AccData:PerformanceCalculator.Acc
 	-- It will use the stats of pre-calculated instead of live-calculated
 	self.AimDiffFinal = self.BaseAimDiff
 	self.SpeedDiffFinal = self.BaseSpeedDiff
+	self.ReadingDiffFinal = self.BaseReadingDiff
 	self.FLDiffFinal = self.BaseFlashlightDiff
 	self:ProcessPerfomanceScore(nil, nil, AccData)
 end
