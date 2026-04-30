@@ -1,6 +1,6 @@
 --[LOCATION]:[Workspace.DifficultyCalculator.DifficultyEvaluator.SpeedEvaluator]
 local workspace = game:GetService("Workspace")
-local DifficultyCalculationUtils = require(script.Parent.DifficultyCalculationUtils)
+local DifficultyCalculationUtils = require(script.Parent.Parent.DifficultyCalculationUtils)
 local Preprocessing = require(workspace.DifficultyCalculator.DifficultyHitObjects)
 
 -- Localize for faster access
