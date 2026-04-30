@@ -10,7 +10,7 @@ local Skill = {}
 export type Skill = {
     Mods: ModData.ModData,
     ObjectDifficulties: {number},
-    Process: (self: Skill, current: DifficultyHitObjects.ObjectData) -> (),
+    Process: (self: Skill, current: DifficultyHitObjects.ObjectData) -> number,
     ProcessInternal: (self: Skill, current: DifficultyHitObjects.ObjectData) -> number,
     DifficultyValue: (self: Skill) -> number,
     GetObjectDifficulties: (self: Skill) -> {number},
@@ -30,6 +30,7 @@ function Skill:Process(current: DifficultyHitObjects.ObjectData)
     local difficultyValue = self:ProcessInternal(current)
 
     self.ObjectDifficulties[#self.ObjectDifficulties + 1] = difficultyValue
+    return difficultyValue
 end
 
 function Skill:ProcessInternal(_current: DifficultyHitObjects.ObjectData): number

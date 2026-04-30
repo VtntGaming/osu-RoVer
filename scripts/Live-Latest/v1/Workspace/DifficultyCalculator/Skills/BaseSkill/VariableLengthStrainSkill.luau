@@ -34,7 +34,7 @@ export type VariableLengthStrainSkill = {
     ObjectDifficulties: {number},
     Mods: ModData.ModData,
     maxStoredSections: number,
-    Process: (self: VariableLengthStrainSkill, current: DifficultyHitObjects.ObjectData) -> (),
+    Process: (self: VariableLengthStrainSkill, current: DifficultyHitObjects.ObjectData) -> number,
     saveCurrentPeak: (self: VariableLengthStrainSkill, sectionLength: number) -> (),
     startNewSectionFrom: (self: VariableLengthStrainSkill, time: number, current: DifficultyHitObjects.ObjectData) -> (),
     backfillPeaks: (self: VariableLengthStrainSkill, current: DifficultyHitObjects.ObjectData) -> (),

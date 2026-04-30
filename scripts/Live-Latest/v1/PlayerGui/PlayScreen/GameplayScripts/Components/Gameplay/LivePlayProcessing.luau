@@ -165,7 +165,7 @@ end
 function LivePlayProcessing:SetupData(Attributes:InputAttributes)
 	self.ModData = Attributes.ModData
 	self.ODRate = ConverterTools.GetDifficultyValueAfterMod.OD(Attributes.ODRate, Attributes.ModData)
-	self.ARRate = ConverterTools.GetDifficultyValueAfterMod.OD(Attributes.ARRate, Attributes.ModData)
+	self.ARRate = ConverterTools.GetDifficultyValueAfterMod.AR(Attributes.ARRate, Attributes.ModData)
 	self.NoteCount = Attributes.NoteCount
 	self.AimDiffStrainCount = Attributes.AimDiffStrainCount
 	self.SpeedDiffStrainCount = Attributes.SpeedDiffStrainCount

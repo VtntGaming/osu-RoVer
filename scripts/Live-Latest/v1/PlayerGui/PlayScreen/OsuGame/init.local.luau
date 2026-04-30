@@ -5689,6 +5689,7 @@ task.spawn(function()
 				StarRating = LivePlaySession.CurrentStarRating
 			}
 		})		
+		return
 	end)
 end)
 if not coreConfig.Flashlight then

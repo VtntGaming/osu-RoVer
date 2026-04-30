@@ -214,6 +214,7 @@ end
 
 export type Data = {
 	HitObjects: {DifficultyHitObjects.ObjectData},
+	BaseObjects: {any},
 	IncludeSliders: boolean,
 	DifficultyValue:{
 		CS:number,
@@ -292,11 +293,28 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	local hitObjects = data.HitObjects
 	for i = 1, #hitObjects do
 		local current = hitObjects[i]
-		aimSkill:Process(current)
-		speedSkill:Process(current)
-		readingSkill:Process(current)
+		local aimValue = aimSkill:Process(current)
+		local speedValue = speedSkill:Process(current)
+		local readingValue = readingSkill:Process(current)
+		local ms = current.AdjustedDeltaTime
+		local flValue = 0
 		if flashlightSkill then
 			flashlightSkill:Process(current)
+		end
+
+		local relatedObject = data.BaseObjects[i]
+
+		if relatedObject then
+			relatedObject.PSValue = {
+				Aim = aimValue, 
+				Speed = speedValue,
+				Reading = readingValue,
+				Flashlight = flValue, 
+				AimStrainDecay = aimSkill:strainDecay(ms), 
+				SpeedStrainDecay = speedSkill:strainDecay(ms), 
+				ReadingStrainDecay = readingSkill:strainDecay(ms),
+				FLStrainDecay = flashlightSkill and flashlightSkill:strainDecay(ms) or 0,
+			}
 		end
 	end
 
