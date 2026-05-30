@@ -927,11 +927,13 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 			if isExistSecondSong then
 				PreviewFrame.OverviewSong2.Volume = 0
 			end
+			
+			local BeatmapVolume = ReturnData.BeatmapVolume or 1
 			local PreviewVolume = PreviewFrameBaseVolume
 			PreviewFrame.OverviewVolume.Value = PreviewVolume
-			TweenService:Create(PreviewFrame.OverviewSong,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = PreviewVolume*SongVolume*0.01}):Play()
+			TweenService:Create(PreviewFrame.OverviewSong,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = BeatmapVolume*PreviewVolume*SongVolume*0.01}):Play()
 			if isExistSecondSong then
-				TweenService:Create(PreviewFrame.OverviewSong2,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = PreviewVolume*SongVolume*0.01}):Play()
+				TweenService:Create(PreviewFrame.OverviewSong2,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = BeatmapVolume*PreviewVolume*SongVolume*0.01}):Play()
 			end
 			TweenService:Create(OldSongObj,TweenInfo.new(0.5,Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Volume = 0}):Play()
 			if OldSongObj2 then
