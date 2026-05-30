@@ -4,6 +4,7 @@ TweenService = game:GetService("TweenService")
 UserInputService = game:GetService("UserInputService")
 RunService = game:GetService("RunService")
 HttpService = game:GetService("HttpService")
+SoundService = game:GetService("SoundService")
 local workspace = game:GetService("Workspace")
 StarterGui = game:GetService("StarterGui")
 ScriptComponent = script.Parent.GameplayScripts.Components
@@ -5364,23 +5365,9 @@ function CreateHitSound(HitsoundType,CustomSampleSet, AmbientRatio)
 		local HitsoundFilename = SelectedSampleSet.."-"..HitsoundTypeset[HitsoundType]
 		local CurrentHitsound = script.Hitsounds[HitsoundFilename]:Clone()
 		local CurrentHitsound2 = script.Hitsounds[HitsoundFilename]:Clone()
-
-
-		CurrentHitsound.Volume *= 0.5 + (1-AmbientRatio)*0.5
-		CurrentHitsound2.Volume *= 0.5 + (AmbientRatio)*0.5
-
-		CurrentHitsound.Parent = workspace.AudioOutput:WaitForChild("Audio_L")
-		CurrentHitsound2.Parent = workspace.AudioOutput:WaitForChild("Audio_R")
-
-		--CurrentHitsound.Parent = script.Parent.HitSounds
-
-		CurrentHitsound:Play()
-		CurrentHitsound2:Play()
-		task.spawn(function()
-			task.wait(0.5)
-			CurrentHitsound:Destroy()
-			CurrentHitsound2:Destroy()
-		end)
+		
+		SoundService:PlayLocalSound(CurrentHitsound)
+		SoundService:PlayLocalSound(CurrentHitsound2)
 	end)
 end
 
