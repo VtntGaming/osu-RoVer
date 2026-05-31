@@ -234,6 +234,11 @@ function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:numb
 			}
 		)
 
+		self.CurrentLiveDiffAim = PSValue.Aim
+		self.CurrentLiveDiffSpeed = PSValue.Speed
+		self.CurrentLiveDiffReading = PSValue.Reading
+		self.CurrentLiveDiffFL = PSValue.Flashlight
+
 		-- Harmonic skill processing
 		self.ObjectData.Speed[#self.ObjectData.Speed + 1] = {PSValue.Speed, Timing}
 		self.ObjectData.Reading[#self.ObjectData.Reading + 1] = {PSValue.Reading, Timing}
