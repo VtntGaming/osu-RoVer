@@ -230,6 +230,11 @@ export type Data = {
 	ModData:ModData
 }
 
+type DifficultyTimeline = {
+	Time: number,
+	Value: number
+}
+
 export type DifficultyAttributes = {
 	StarRating:number,
 	AimDifficulty:number,
@@ -240,7 +245,8 @@ export type DifficultyAttributes = {
 	FlashlightDifficulty:number,
 	AimDifficultStrainCount:number,
 	SpeedDifficultStrainCount:number,
-	ReadingDifficultStrainCount: number
+	ReadingDifficultStrainCount: number,
+	DifficultyTimeline: {DifficultyTimeline},
 }
 
 function calculator.CalculateStarRating(BasePerformance: number)

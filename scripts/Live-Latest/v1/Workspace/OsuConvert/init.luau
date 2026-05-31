@@ -330,7 +330,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 	]]
 
 	local ConvertedData = {}
-	local RawDifficulty = {}
 	--local StrainData = {}
 	local AimDifficulty = 0
 	local SpeedDifficulty = 0
@@ -683,33 +682,6 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 
 	-- Difficulty timeline caculation
 	if isReturnDifficulty == true then
-		local DiffTimeline = {}
-		local DiffHighest = 0
-		
-		local ActualMapLength = LastNoteTime
-		local TimelineCount = math.max(1, math.ceil(ActualMapLength/DifficultyStrikeRecord))
-		
-		for i = 1, TimelineCount + 1 do
-			DiffTimeline[#DiffTimeline+1] = 0
-		end
-		
-		for i = 1, #RawDifficulty do
-			local RawDiff = RawDifficulty[i]
-			local diffTime = RawDiff[2]
-			local diff = RawDiff[1] * 10
-			DiffHighest = math.max(DiffHighest, diff)
-			local crrTimeLine = math.floor(diffTime/DifficultyStrikeRecord) + 1
-			if crrTimeLine < 1 then
-				continue
-			end
-			DiffTimeline[crrTimeLine] = math.max(DiffTimeline[crrTimeLine], diff)
-		end
-
-		DifficultyStrikeList = {
-			List = DiffTimeline,
-			Highest = DiffHighest
-		}
-		
 		-- Get difficulty value of Aim, Speed, Flashlight		
 		local DifficultyValue = {
 			CS = tool.GetDifficultyValueAfterMod.CS(ReturningData.Difficulty.CircleSize, modData),
@@ -734,6 +706,35 @@ return function(FileType,Beatmap,DelayedTime,isReturnDifficulty,metadataonly,mod
 		ReadingDiffStrainCount = difficultyAttributes.ReadingDifficultStrainCount
 		FlashlightDifficulty = difficultyAttributes.FlashlightDifficulty
 		ReadingDifficulty = difficultyAttributes.ReadingDifficulty
+
+		local timelineList = difficultyAttributes.DifficultyTimeline
+
+		local DiffTimeline = {}
+		local DiffHighest = 0
+		
+		local ActualMapLength = LastNoteTime
+		local TimelineCount = math.max(1, math.ceil(ActualMapLength/DifficultyStrikeRecord))
+		
+		for i = 1, TimelineCount + 1 do
+			DiffTimeline[#DiffTimeline+1] = 0
+		end
+		
+		for i = 1, #timelineList do
+			local diffData = timelineList[i]
+			local diffTime = diffData.Time
+			local diff = diffData.Value * 10
+			DiffHighest = math.max(DiffHighest, diff)
+			local crrTimeLine = math.floor(diffTime/DifficultyStrikeRecord) + 1
+			if crrTimeLine < 1 then
+				continue
+			end
+			DiffTimeline[crrTimeLine] = math.max(DiffTimeline[crrTimeLine], diff)
+		end
+
+		DifficultyStrikeList = {
+			List = DiffTimeline,
+			Highest = DiffHighest
+		}
 
 		BeatmapDifficulty = difficultyAttributes.StarRating
 	end
