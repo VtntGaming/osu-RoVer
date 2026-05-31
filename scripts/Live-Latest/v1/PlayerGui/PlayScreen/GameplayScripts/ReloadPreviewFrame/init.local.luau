@@ -1,9 +1,11 @@
 --[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.ReloadPreviewFrame]
 local StarterGui = game:GetService("StarterGui")
+local Workspace = game:GetService("Workspace")
 local workspace = game:GetService("Workspace")
 local BasePreviewBeatmapset = ""
 TweenService = game:GetService("TweenService")
 
+local retrospecter___revolvania__sanzu_alternate___expert_ = require(Workspace.Beatmaps["retrospecter - revolvania (sanzu_alternate) [expert]"])
 local GetMaxScore = require(StarterGui.PlayScreen.GameplayScripts.Components.Gameplay.GetMaxScore)
 local wait = require(workspace.WaitModule)
 local PerformanceCalculator = require(workspace.PerformanceCalculator)
@@ -69,6 +71,24 @@ function compare(num1, num2)
 	else
 		return 0
 	end
+end
+
+local function formatNumber(num: number): string
+	local result = ""
+
+	local numStr = tostring(num)
+
+	for i = #numStr, 1, -1 do
+		local index = #numStr - i
+		local char = numStr:sub(i, i)
+
+		result = char .. result
+		if index % 3 == 2 and index ~= 0 and i ~= 1 then
+			result = "," .. result
+		end
+	end
+
+	return result
 end
 
 script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,FileType,CurrentModData,BeatmapStudio
@@ -512,8 +532,8 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 
 		WebDetailedFrame.BeatmapID.Data.Text = tostring(BeatmapID)
 		WebDetailedFrame.BeatmapsetID.Data.Text = tostring(BeatmapsetID)
-		WebDetailedFrame.WebPlayCount.Data.Text = tostring(webData.play_count)
-		WebDetailedFrame.WebFavoriteCount.Data.Text = tostring(webData.favourite_count)
+		WebDetailedFrame.WebPlayCount.Data.Text = formatNumber(tonumber(webData.play_count) or 0)
+		WebDetailedFrame.WebFavoriteCount.Data.Text = formatNumber(tonumber(webData.favourite_count) or 0)
 		WebDetailedFrame.WebRankedStatus.Data.Text = tostring(webData.status)
 		local creationDate
 		pcall(function()
@@ -526,7 +546,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		end
 		local mapData = getBeatmapData(webData.beatmaps, BeatmapID)
 		if mapData then
-			WebDetailedFrame.SuccessRate.Data.Text = string.format("%.2f%% (%d/%d)", (mapData.passcount/mapData.playcount) * 100, mapData.passcount, mapData.playcount)
+			WebDetailedFrame.SuccessRate.Data.Text = string.format("%.2f%% (%s/%s)", (mapData.passcount/mapData.playcount) * 100, formatNumber(mapData.passcount), formatNumber(mapData.playcount))
 		end
 	end)
 
@@ -582,7 +602,7 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	DetailedInterface.ModsBonus.Data.Text = string.format("%.2fps",ModPS)
 	DetailedInterface.TouchDeviceBonus.Data.Text = string.format("%.2fps",TouchDevicePS)
 	DetailedInterface.MaxCombo.Data.Text = `{ReturnData.Difficulty.MaxCombo}x`
-	DetailedInterface.MaxScoreV1.Data.Text = `{math.floor(ReturnData.Difficulty.MaxScoreV1.Total)}`
+	DetailedInterface.MaxScoreV1.Data.Text = `{formatNumber(math.floor(ReturnData.Difficulty.MaxScoreV1.Total))}`
 
 	-- Gameplay Data
 	local ConstantHPDrainRate = 5
