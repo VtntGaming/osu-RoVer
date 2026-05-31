@@ -4,6 +4,7 @@
 -- Even though I have to transfer code from C# to lua all by myself
 -- The calculator might different compare to the original one
 
+local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local workspace = game:GetService("Workspace")
 
@@ -13,6 +14,7 @@ local evaluator = require(script.DifficultyEvaluator)
 local DifficultyCalculationUtils = require(script.DifficultyEvaluator.DifficultyCalculationUtils)
 local _DifficultyCalculationUtils = DifficultyCalculationUtils -- suppress unused warning
 local RatingCalculator = require(script.RatingCalculator)
+local StrainSkills = require(script.StrainSkills)
 local DifficultyHitObjects = require(Workspace.DifficultyCalculator.DifficultyHitObjects)
 local AimSkillModule = require(Workspace.DifficultyCalculator.Skills.OsuSkill.Aim)
 local SpeedSkillModule = require(Workspace.DifficultyCalculator.Skills.OsuSkill.Speed)
@@ -70,39 +72,36 @@ local DecayExponent = 0.9
 local SpeedHarmonicScale = 20
 local SpeedDecayExponent = 0.85
 
-local READING_REDUCED_DIFFICULTY_BASELINE = 0.0
-local READING_REDUCED_DIFFICULTY_DURATION = 60000	-- 1 minute
+local function calculateReadingReducedNoteCount(objectList: {{number}}):number
+	local reducedDifficultyDuration = 60 * 1000
 
-local function calculateReducedNoteCount(StrainData: {{number}}): number
-	local objectCount = #StrainData
-	if objectCount == 0 then
-		return 0
-	end
+    if #objectList == 0 then
+        return 0
+    end
 
-	local reducedDuration = StrainData[1][2] + READING_REDUCED_DIFFICULTY_DURATION
-	local reducedNoteCount = 0
+    local reducedDuration = objectList[1][2] + reducedDifficultyDuration
+    local reducedNoteCount = 0
 
-	for i = 1, #StrainData do
-		local strain = StrainData[i]
+    for i = 1, #objectList do
+        if objectList[i][2] > reducedDuration then
+            break
+        end
+        reducedNoteCount += 1
+    end
 
-		if strain[2] > reducedDuration then
-			break
-		end
-
-		reducedNoteCount += 1
-	end
-
-	return reducedNoteCount
+    return reducedNoteCount
 end
 
 function calculator.ApplyDifficultyTransformation(StrainData: {{number}}, type: string)
 	if type == "Reading" then
-		local reducedNoteCount = calculateReducedNoteCount(StrainData)
+		local reducedDifficultyBaseline = 0.0
 
-		for i = 1, math.min(#StrainData, reducedNoteCount) do
-			local index = i-1
-			local scale = math.log10(math_lerp(1, 10, math_clamp(index/reducedNoteCount, 0, 1)))
-			StrainData[i][1] *= math_lerp(READING_REDUCED_DIFFICULTY_BASELINE, 1, scale)
+		local reducedNoteCount = calculateReadingReducedNoteCount(StrainData)
+		local limit = math.min(#StrainData, reducedNoteCount)
+
+		for i = 1, limit do
+			local scale = math.log10(1 + (10 - 1) * math.clamp((i - 1) / reducedNoteCount, 0, 1))
+			StrainData[i][1] *= reducedDifficultyBaseline + (1.0 - reducedDifficultyBaseline) * scale
 		end
 	end
 end
@@ -283,6 +282,10 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 	local ARRate = data.DifficultyValue.AR
 	local ODRate = data.DifficultyValue.OD
 
+	-- Timeline
+	local difficultyTimeline = {}
+	local timelineRecordEnabled = RunService:IsRunning()
+
 	-- Create skill instances
 	local aimSkill = AimSkillModule.new(mods, data.IncludeSliders)
 	local speedSkill = SpeedSkillModule.new(mods)
@@ -297,6 +300,7 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 		local speedValue = speedSkill:Process(current)
 		local readingValue = readingSkill:Process(current)
 		local ms = current.AdjustedDeltaTime
+		local dt = current.DeltaTime
 		local flValue = 0
 		if flashlightSkill then
 			flashlightSkill:Process(current)
@@ -312,9 +316,18 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 				Flashlight = flValue, 
 				AimStrainDecay = aimSkill:strainDecay(ms), 
 				SpeedStrainDecay = speedSkill:strainDecay(ms), 
-				ReadingStrainDecay = readingSkill:strainDecay(ms),
+				ReadingStrainDecay = readingSkill:strainDecay(dt),
 				FLStrainDecay = flashlightSkill and flashlightSkill:strainDecay(ms) or 0,
 			}
+		end
+
+		if timelineRecordEnabled then
+			local liveDiff = StrainSkills.CalculateCurrentStrainRating(aimValue, speedValue, readingValue, flValue)
+			local diffData = {
+				Time = current.Time,
+				Value = liveDiff
+			}
+			difficultyTimeline[#difficultyTimeline + 1] = diffData
 		end
 	end
 
@@ -357,7 +370,8 @@ function calculator.GetDifficultyAttributes(data:Data):DifficultyAttributes
 		FlashlightDifficulty = flashlightRating,
 		AimDifficultStrainCount = aimDiffStrainCount,
 		SpeedDifficultStrainCount = speedDiffStrainCount,
-		ReadingDifficultStrainCount = readingDiffStrainCount
+		ReadingDifficultStrainCount = readingDiffStrainCount,
+		DifficultyTimeline = difficultyTimeline
 	}
 end
 

@@ -224,29 +224,19 @@ end
 
 function LivePlayProcessing:ProcessPerfomanceScore(PSValue:PSValue?, Timing:number?, AccData:PerformanceCalculator.AccuracyData)
 	if PSValue and Timing then
-		self.CurrentLiveDiffAim *= PSValue.AimStrainDecay
-		self.CurrentLiveDiffAim += PSValue.Aim * (1 - PSValue.AimStrainDecay)
-		self.CurrentLiveDiffSpeed *= PSValue.SpeedStrainDecay
-		self.CurrentLiveDiffSpeed += PSValue.Speed * (1 - PSValue.SpeedStrainDecay)
-		self.CurrentLiveDiffReading *= PSValue.ReadingStrainDecay
-		self.CurrentLiveDiffReading += PSValue.Reading
-		if self.ModData.FL then
-			self.CurrentLiveDiffFL *= PSValue.FLStrainDecay
-			self.CurrentLiveDiffFL += PSValue.Flashlight
-		end
 		self.LiveDiffLastHit = os.clock()
 		
 		self:_ProcessCurrentStrain(Timing,
 			{
-				Aim = self.CurrentLiveDiffAim,
-				Flashlight = self.CurrentLiveDiffFL,
+				Aim = PSValue.Aim,
+				Flashlight = PSValue.Flashlight,
 				Rhythm = PSValue.Rhythm,
 			}
 		)
 
 		-- Harmonic skill processing
-		self.ObjectData.Speed[#self.ObjectData.Speed + 1] = {self.CurrentLiveDiffSpeed, Timing}
-		self.ObjectData.Reading[#self.ObjectData.Reading + 1] = {self.CurrentLiveDiffReading, Timing}
+		self.ObjectData.Speed[#self.ObjectData.Speed + 1] = {PSValue.Speed, Timing}
+		self.ObjectData.Reading[#self.ObjectData.Reading + 1] = {PSValue.Reading, Timing}
 		
 		local _noteCount = {
 			Circle = self.NoteCount.Circle,
