@@ -40,4 +40,5 @@
 - Warak - REANIMATE
 - YABUJIN - .\*302? ionwan2go\*.
 - fripSide - black bullet
+- Dion Timmer - Shiawase (VIP)
 
