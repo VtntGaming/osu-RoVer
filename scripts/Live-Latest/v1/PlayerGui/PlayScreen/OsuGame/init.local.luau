@@ -5,6 +5,7 @@ UserInputService = game:GetService("UserInputService")
 RunService = game:GetService("RunService")
 HttpService = game:GetService("HttpService")
 SoundService = game:GetService("SoundService")
+Debris = game:GetService("Debris")
 local workspace = game:GetService("Workspace")
 StarterGui = game:GetService("StarterGui")
 ScriptComponent = script.Parent.GameplayScripts.Components
@@ -5368,6 +5369,9 @@ function CreateHitSound(HitsoundType,CustomSampleSet, AmbientRatio)
 		
 		SoundService:PlayLocalSound(CurrentHitsound)
 		SoundService:PlayLocalSound(CurrentHitsound2)
+
+		Debris:AddItem(CurrentHitsound, 2)
+		Debris:AddItem(CurrentHitsound2, 2)
 	end)
 end
 
