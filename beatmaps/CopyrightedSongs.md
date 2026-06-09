@@ -38,6 +38,6 @@
 - SakiZ - osu!memories
 - Station Earth - Cold Green Eyes ft. Roos Denayer
 - Warak - REANIMATE
-- YABUJIN - .*302? ionwan2go*.
+- YABUJIN - .\*302? ionwan2go\*.
 - fripSide - black bullet
 
