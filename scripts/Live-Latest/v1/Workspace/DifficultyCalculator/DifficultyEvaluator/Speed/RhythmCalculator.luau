@@ -1,3 +1,6 @@
+local Workspace = game:GetService("Workspace")
+
+local DifficultyCalculationUtils = require(Workspace.DifficultyCalculator.DifficultyEvaluator.DifficultyCalculationUtils)
 --[LOCATION]:[Workspace.DifficultyCalculator.DifficultyEvaluator.RhythmCalculator]
 local rhythmCalculator = {}
 
@@ -91,8 +94,8 @@ end
 
 local history_time_max = 5000 -- ms
 local history_obj_max = 32
-local rhythm_overall_multiplier = 0.8
-local rhythm_ratio_multiplier = 32
+local rhythm_overall_multiplier = 0.95
+local rhythm_ratio_multiplier = 26
 
 function rhythmCalculator.GetRhythmDiff(CrrObj)
 	-- This is the most complicate section I ever transfer
@@ -131,6 +134,10 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 		local prevDelta = math_max(PrevObj.DeltaTime, 1e-7)
 		local lastDelta = math_max(LastObj.DeltaTime, 1e-7)
 
+		if Island.delta == math.huge then
+			Island = newIsland(currDelta, deltaDifferenceEpsilon)
+		end
+
 		local deltaDifference = math_max(prevDelta, currDelta) / math_min(prevDelta, currDelta)
 		local deltaDifferenceFraction = deltaDifference - mathTruncate(deltaDifference)
 
@@ -141,10 +148,14 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 		local windowPenalty = math_min(1, math_max(0, math_abs(prevDelta - currDelta) - deltaDifferenceEpsilon) / deltaDifferenceEpsilon)
 		local effectiveRatio = windowPenalty * currRatio * differenceMultiplier
 
+		local isSpeedingUp = prevDelta > currDelta + deltaDifferenceEpsilon
+
+		if math.abs(prevDelta - currDelta) < deltaDifferenceEpsilon then
+			addDelta(Island, currDelta)
+		end
+
 		if firstDeltaSwitch then
-			if math_abs(prevDelta - currDelta) < deltaDifferenceEpsilon then
-				addDelta(Island, currDelta)
-			else
+			if math_abs(prevDelta - currDelta) > deltaDifferenceEpsilon then
 				if currentObj.isSlider then
 					effectiveRatio *= 0.5
 				end
@@ -161,6 +172,10 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 					effectiveRatio *= 0.5
 				end
 
+				if isSpeedingUp then
+					effectiveRatio *= 0.65
+				end
+
 				local countIndex , islandCount = getIslandCount(IslandList, Island)
 				if islandCount then
 					if isEqual(PrevIsland, Island) then
@@ -172,13 +187,20 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 
 					IslandList[countIndex+1] = islandCount
 				else
-					IslandList[#IslandList+1] = Island
+					if Island.deltaCount > 0 then
+						IslandList[#IslandList + 1] = table.clone(Island)
+					end
 				end
 
 				local doubletapness = PrevObj.getDoubletapness(currentObj)
 				effectiveRatio *= 1 - doubletapness * 0.75
 
-				rhythmComplexitySum += math_sqrt(effectiveRatio * startRatio) * currHistoricalDecay
+				if Island.deltaCount > 1 then					
+					rhythmComplexitySum += math_sqrt(effectiveRatio * startRatio) * currHistoricalDecay
+				else
+					rhythmComplexitySum += 0.7 * currHistoricalDecay
+				end
+				
 				startRatio = effectiveRatio
 				PrevIsland = Island
 
@@ -207,6 +229,8 @@ function rhythmCalculator.GetRhythmDiff(CrrObj)
 		LastObj = PrevObj
 		PrevObj = currentObj
 	end
+
+	rhythmComplexitySum *= DifficultyCalculationUtils.ReverseLerp(Island.deltaCount, 22, 3)
 
 	return math_sqrt(4 + rhythmComplexitySum * rhythm_overall_multiplier) / 2
 end

@@ -22,7 +22,7 @@ function Flashlight.new(mods: ModData.ModData): Flashlight
     local self = StrainSkill.new(mods) :: Flashlight
 
     SkillUtils.OverrideSelf(self, Flashlight)
-    self.SkillMultiplier = 0.056
+    self.SkillMultiplier = 0.058
     self.StrainDecayBase = 0.15
     self.CurrentStrain = 0
 

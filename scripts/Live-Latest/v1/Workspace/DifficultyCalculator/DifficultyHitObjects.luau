@@ -1,3 +1,4 @@
+local Workspace = game:GetService("Workspace")
 --[LOCATION]:[Workspace.DifficultyCalculator.DifficultyHitObjects]
 --[[
 {ObjId = objectID,
@@ -14,6 +15,7 @@ isSlider = isSlider,
 isSpinner = isSpinner, 
 SLTravelDistance = SliderLength
 }]]
+local DifficultyCalculationUtils = require(Workspace.DifficultyCalculator.DifficultyEvaluator.DifficultyCalculationUtils)
 local converterTool = require(workspace.OsuConvert.converterTools)
 
 -- Cache math functions
@@ -410,7 +412,9 @@ function DifficultyHitObject.GenerateDifficultyHitObjects(baseList:{any}, baseDa
 				local speedRatio = crrDeltaTime/math_max(crrDeltaTime,deltaDifference)
 				local windowRatio = math_pow(math_min(1, crrDeltaTime / Hit300Value), 5)
 
-				return 1 - math_pow(speedRatio, 1 - windowRatio)
+				local distanceFactor = math_pow(DifficultyCalculationUtils.ReverseLerp(LazyJumpDistance, NORMALISED_DIAMETER, NORMALISED_RADIUS), 2)
+
+				return 1 - math_pow(speedRatio, distanceFactor * (1 - windowRatio))
 			end
 			return 0
 		end

@@ -243,10 +243,6 @@ local function ComputeAccuracyValue(Attributes:AccuracyAttributes):number
 		accPS *= 1 + 0.08 * DifficultyCalculationUtils.ReverseLerp(Attributes.ARRate, 11.5, 10)
 	end
 	
-	if Attributes.ModData.FL then
-		accPS *= 1.02
-	end
-	
 	return accPS
 end
 
