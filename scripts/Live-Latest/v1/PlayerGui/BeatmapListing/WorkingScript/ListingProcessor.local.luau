@@ -308,15 +308,17 @@ function ChooseSet(MapFrame,Data,CustomDiffOrder,CustomMapID,DoNotLoadMap)
 	local DiffStoreLocation = MapFrame.MainFrame.DifficultyListing.Actual:FindFirstChild("Base") 
 		or MapFrame.MainFrame.DifficultyListing.Overlay:FindFirstChild("Base")
 	
-	for _,a in pairs(DiffStoreLocation:GetChildren()) do
-		if not a:IsA("UIListLayout") then
-			a:Destroy()
-		end
-	end
-
 
 	if CurrentChoosing then
-		if CurrentChoosing == MapFrame then return end
+		if CurrentChoosing ~= MapFrame then 
+			for _,a in pairs(DiffStoreLocation:GetChildren()) do
+				if not a:IsA("UIListLayout") then
+					a:Destroy()
+				end
+			end
+		else
+			return 
+		end
 		local DiffStoreLocation = CurrentChoosing.MainFrame.DifficultyListing.Actual:FindFirstChild("Base") 
 			or CurrentChoosing.MainFrame.DifficultyListing.Overlay:FindFirstChild("Base")
 		DiffStoreLocation.Parent = CurrentChoosing.MainFrame.DifficultyListing.Overlay
