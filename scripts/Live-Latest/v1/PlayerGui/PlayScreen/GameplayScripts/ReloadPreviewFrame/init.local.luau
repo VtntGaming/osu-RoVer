@@ -1,11 +1,9 @@
 --[LOCATION]:[StarterGui.PlayScreen.GameplayScripts.ReloadPreviewFrame]
 local StarterGui = game:GetService("StarterGui")
-local Workspace = game:GetService("Workspace")
 local workspace = game:GetService("Workspace")
 local BasePreviewBeatmapset = ""
 TweenService = game:GetService("TweenService")
 
-local retrospecter___revolvania__sanzu_alternate___expert_ = require(Workspace.Beatmaps["retrospecter - revolvania (sanzu_alternate) [expert]"])
 local GetMaxScore = require(StarterGui.PlayScreen.GameplayScripts.Components.Gameplay.GetMaxScore)
 local wait = require(workspace.WaitModule)
 local PerformanceCalculator = require(workspace.PerformanceCalculator)
