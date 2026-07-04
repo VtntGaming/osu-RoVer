@@ -24,7 +24,3 @@ end
 script.Parent.SetEnabled.Event:Connect(function(enabled: boolean?)
 	SetEnabled(enabled)
 end)
-
-if true then
-	SetEnabled(true)
-end
