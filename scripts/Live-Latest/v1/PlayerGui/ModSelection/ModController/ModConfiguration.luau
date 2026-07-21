@@ -100,10 +100,16 @@ local ModList: {[string]: ModData} = {
 }
 
 export type CategoryColor = {
+	-- Default color
 	BackgroundColor: Color3,
 	TextColor: Color3,
 	StrokeColor: Color3,
 	IconColor: Color3,
+	-- Highlight color (when enabled)
+	HighlightedBackgroundColor: Color3,
+	HighlightedTextColor: Color3,
+	HighlightedStrokeColor: Color3,
+	HighlightedIconColor: Color3,
 }
 
 local Palette: {[string]: CategoryColor} = {
@@ -112,24 +118,40 @@ local Palette: {[string]: CategoryColor} = {
 		TextColor = Color3.fromHex("#ff9b9b"),
 		IconColor = Color3.fromHex("#ff9b9b"),
 		StrokeColor = Color3.fromHex("#ff3737"),
+		HighlightedBackgroundColor = Color3.fromHex("#ff6969"),
+		HighlightedTextColor = Color3.fromHex("#961e1e"),
+		HighlightedIconColor = Color3.fromHex("#961e1e"),
+		HighlightedStrokeColor = Color3.fromHex("#ff3737"),
 	},
 	DifficultyReduction = {
 		BackgroundColor = Color3.fromHex("#0e1e06"),
 		TextColor = Color3.fromHex("#bcff9b"),
 		IconColor = Color3.fromHex("#bcff9b"),
 		StrokeColor = Color3.fromHex("#7aff37"),
+		HighlightedBackgroundColor = Color3.fromHex("#beff9b"),
+		HighlightedTextColor = Color3.fromHex("#2f6414"),
+		HighlightedIconColor = Color3.fromHex("#2f6414"),
+		HighlightedStrokeColor = Color3.fromHex("#44cc00"),
 	},
 	Conversion = {
 		BackgroundColor = Color3.fromHex("#06061e"),
 		TextColor = Color3.fromHex("#9b9bff"),
 		IconColor = Color3.fromHex("#9b9bff"),
 		StrokeColor = Color3.fromHex("#5555ff"),
+		HighlightedBackgroundColor = Color3.fromHex("#afafff"),
+		HighlightedTextColor = Color3.fromHex("#141464"),
+		HighlightedIconColor = Color3.fromHex("#141464"),
+		HighlightedStrokeColor = Color3.fromHex("#3333cc"),
 	},
 	Automation = {
 		BackgroundColor = Color3.fromHex("#061e1e"),
 		TextColor = Color3.fromHex("#9bffff"),
 		IconColor = Color3.fromHex("#9bffff"),
 		StrokeColor = Color3.fromHex("#37ffff"),
+		HighlightedBackgroundColor = Color3.fromHex("#9bffff"),
+		HighlightedTextColor = Color3.fromHex("#146464"),
+		HighlightedIconColor = Color3.fromHex("#146464"),
+		HighlightedStrokeColor = Color3.fromHex("#00cccc"),
 	},
 }
 

@@ -1688,30 +1688,58 @@ coreConfig.PreviewMapPS = {
 
 previewFrameFirstLoad = false
 
+modSelectionController = PlayerGui.ModSelection.MainFrame.Scripts
+
+function GetModDataFromModSelection() : modData.ModData
+	local modData = modSelectionController.GetMods:Invoke() :: modData.ModData
+	
+	-- External adjustment
+	modData.TD = IsTouchDeviceActive()
+	modData.DA = DifficultyAdjust
+
+	return modData
+end
+
+function ApplyModDataToCoreConfig()
+	local modData = GetModDataFromModSelection()
+
+	-- Difficulty increase
+	coreConfig.HardRock = modData.HR
+	coreConfig.HiddenMod = modData.HD
+	coreConfig.Flashlight = modData.FL
+	-- Difficulty reduction
+	coreConfig.EasyMod = modData.EZ
+	coreConfig.NoFail = modData.NF
+	-- Automation
+	coreConfig.AutoPlay = modData.AT
+end
+
 ReloadPreviewFrame = function(isInit: boolean?)
 	if isInit then
 		previewFrameFirstLoad = true
 	elseif not previewFrameFirstLoad then
 		return
 	end
-	local ModData:modData.ModData = {
-		HD = coreConfig.HiddenMod,
-		HR = coreConfig.HardRock,
-		EZ = coreConfig.EasyMod,
-		NF = coreConfig.NoFail,
-		NS = not coreConfig.SliderMode,
-		FL = coreConfig.Flashlight,
-		RX = false,
-		AP = false,
-		AT = coreConfig.AutoPlay,
-		SO = false,
-		V2 = coreConfig.ScoreV2Enabled,
-		TD = IsTouchDeviceActive(),	-- By deafault it is false
-		DA = DifficultyAdjust
-	}
+
+	local modData = GetModDataFromModSelection()
+	-- local ModData:modData.ModData = {
+	-- 	HD = coreConfig.HiddenMod,
+	-- 	HR = coreConfig.HardRock,
+	-- 	EZ = coreConfig.EasyMod,
+	-- 	NF = coreConfig.NoFail,
+	-- 	NS = not coreConfig.SliderMode,
+	-- 	FL = coreConfig.Flashlight,
+	-- 	RX = false,
+	-- 	AP = false,
+	-- 	AT = coreConfig.AutoPlay,
+	-- 	SO = false,
+	-- 	V2 = coreConfig.ScoreV2Enabled,
+	-- 	TD = IsTouchDeviceActive(),	-- By deafault it is false
+	-- 	DA = DifficultyAdjust
+	-- }
 	local _1,_2,_3,_4,_5,_6 = script.Parent.GameplayScripts.ReloadPreviewFrame.LoadPreviewFrame:Invoke(
 		coreConfig.CurrentPreviewFrame,CurrentSetting,coreConfig.FileType,CurrentModData,BeatmapStudio,CurrentKey,BeatmapKey
-		,PreviewFrameBaseVolume,PreviewBeatmapset, ModData
+		,PreviewFrameBaseVolume,PreviewBeatmapset, modData
 	)
 	CurrentModData = _1
 	CurrentKey = _2
@@ -1721,6 +1749,10 @@ ReloadPreviewFrame = function(isInit: boolean?)
 	coreConfig.PreviewMapPS = _6
 	LoadMultiplier()
 end
+
+modSelectionController.AnyChanged.Event:Connect(function()
+	ReloadPreviewFrame()
+end)
 
 script.Parent.RequestMapDifficulty.OnInvoke = function(map): number
 	local songSpeed = tonumber(CurrentSetting.MainSettings.Speed.Text)
@@ -2665,24 +2697,29 @@ if coreConfig.ReplayMode then
 	SongSpeed = FinaleReplayData.Speed
 end
 
+ApplyModDataToCoreConfig()
 
 -- Get beatmap data
-local ModData:modData.ModData = {
-	HD = coreConfig.HiddenMod,
-	HR = coreConfig.HardRock,
-	EZ = coreConfig.EasyMod,
-	NF = coreConfig.NoFail,
-	NS = not coreConfig.SliderMode,
-	FL = coreConfig.Flashlight,
-	RX = false,
-	AP = false,
-	AT = coreConfig.AutoPlay,
-	SO = false,
-	V2 = coreConfig.ScoreV2Enabled,
-	TD = not coreConfig.ReplayMode and IsTouchDeviceActive() or coreConfig.Replay_TouchDevice,
-	DA = DifficultyAdjust,
-	SA = SongSpeed
-}
+local ModData = GetModDataFromModSelection()
+ModData.TD = not coreConfig.ReplayMode and IsTouchDeviceActive() or coreConfig.Replay_TouchDevice
+ModData.DA = DifficultyAdjust
+ModData.SA = SongSpeed
+-- local ModData:modData.ModData = {
+-- 	HD = coreConfig.HiddenMod,
+-- 	HR = coreConfig.HardRock,
+-- 	EZ = coreConfig.EasyMod,
+-- 	NF = coreConfig.NoFail,
+-- 	NS = not coreConfig.SliderMode,
+-- 	FL = coreConfig.Flashlight,
+-- 	RX = false,
+-- 	AP = false,
+-- 	AT = coreConfig.AutoPlay,
+-- 	SO = false,
+-- 	V2 = coreConfig.ScoreV2Enabled,
+-- 	TD = not coreConfig.ReplayMode and IsTouchDeviceActive() or coreConfig.Replay_TouchDevice,
+-- 	DA = DifficultyAdjust,
+-- 	SA = SongSpeed
+-- }
 
 local BeatmapData,ReturnData,TimingPoints,BeatmapComboColor = require(workspace.OsuConvert)(coreConfig.FileType,Beatmap,SongDelay,true,false, ModData)
 

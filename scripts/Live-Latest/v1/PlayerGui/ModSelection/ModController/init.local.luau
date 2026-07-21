@@ -1,8 +1,13 @@
+local Workspace = game:GetService("Workspace")
+
 local ModConfig = require(script.ModConfiguration)
 local ModItem = require(script.ModItem)
+local ModData = require(Workspace.ModData)
 local Container = script.Parent.Parent.ModList.List
 
-local Items = {}
+type ModData = ModData.ModData
+
+local Items = {} :: {[string]: ModItem.ModItem}
 
 local Piority = {
     "DifficultyIncrease",
@@ -11,6 +16,36 @@ local Piority = {
     "Automation",
     "Misc",
 }
+
+local StaticBooleanMods = {
+    "HD",
+    "HR",
+    "EZ",
+    "NF",
+    "NS",
+    "FL",
+    "AT",
+}
+
+local function GetBooleanStateOrDefault(mod: string, default: boolean?): boolean?
+    local item = Items[mod]
+
+    if not item then
+        return default
+    end
+
+    return item.IsActivated
+end
+
+function GetModData(): ModData
+    local data = {}
+
+    for _, mod in ipairs(StaticBooleanMods) do
+        data[mod] = GetBooleanStateOrDefault(mod, false)
+    end
+
+    return data
+end
 
 for id, data in pairs(ModConfig.ModList) do
     if data.DisableUI then
@@ -26,3 +61,5 @@ for id, data in pairs(ModConfig.ModList) do
 
     Items[id] = modItem
 end
+
+script.Parent.GetMods.OnInvoke = GetModData
