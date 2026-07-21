@@ -1054,7 +1054,9 @@ local DiffDataSearchList = {
 	CS = "CS", CIRCLESIZE = "CS", SIZE = "CS",
 	OD = "OD", OVERALLDIFFICULTY = "OD", ACC = "OD", ACCURACY = "OD",
 	AR = "AR", APPROACHRATE = "AR",
-	DR = "DR", DIFFICULTYRATING = "DR", DIFF = "DR", SR = "DR", STARRATING = "DR", STAR = "DR", STARS = "DR"
+	DR = "DR", DIFFICULTYRATING = "DR", DIFF = "DR", SR = "DR", STARRATING = "DR", STAR = "DR", STARS = "DR",
+	LENGTH = "Length",
+	BPM = "BPM",
 }
 
 function findForCondition(key)
