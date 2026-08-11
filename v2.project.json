@@ -1,0 +1,31 @@
+{
+  "name": "osu!RoVer",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$ignoreUnknownInstances": true,
+      "$path": "scripts/RebuildV2/Workspace"
+    },
+    "ReplicatedFirst": {
+      "$ignoreUnknownInstances": true
+    },
+    "ReplicatedStorage": {
+      "$ignoreUnknownInstances": true
+    },
+    "ServerScriptService": {
+      "$ignoreUnknownInstances": true
+    },
+    "StarterPlayer": {
+      "$ignoreUnknownInstances": true
+    },
+    "StarterGui": {
+      "$ignoreUnknownInstances": true,
+      "$path": "scripts/RebuildV2/PlayerGui",
+      "MainGameplay": {
+        "$className": "ScreenGui",
+        "$ignoreUnknownInstances": true,
+        "$path": "scripts/RebuildV2/PlayerGui/MainGameplay",
+      }
+    }
+  }
+}

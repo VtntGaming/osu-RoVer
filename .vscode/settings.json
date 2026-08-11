@@ -7,5 +7,6 @@
         "**/scripts/Corescript/**",
         "**/scripts/converter/**",
         "**/scripts/corescript/**"
-	],
+    ],
+    "luau-lsp.sourcemap.rojoProjectFile": "v2.project.json",
 }
