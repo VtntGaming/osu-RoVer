@@ -6,7 +6,7 @@ type MapList = {ModuleScript}
 local Dictionaries = {} :: {[string]: MapList}
 local List = {} :: {MapList}
 
-local function GetValue(Data,Pattern,Space)
+local function GetValue(Data: string, Pattern: string, Space: number)
 	if not Space then
 		Space = 1
 	end
@@ -29,7 +29,7 @@ function Randomizer:Setup(mapList: {Instance})
 		if map:IsA("ModuleScript") then
 			local data = require(map)
 			
-			local mapsetID = GetValue("BeatmapSetID:", 0)
+			local mapsetID = GetValue(data, "BeatmapSetID:", 0)
 			
 			local setData = Dictionaries[mapsetID]
 			

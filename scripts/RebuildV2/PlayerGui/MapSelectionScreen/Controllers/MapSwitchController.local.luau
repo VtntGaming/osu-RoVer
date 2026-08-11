@@ -29,11 +29,11 @@ function SwitchSong(customMap)
 
 	local SongId = GetValue(MapData,"RblxSoundID:")
 	local ImageId = GetValue(MapData,"BackgroundImageId:") or "0"
-	local SongName = GetValue(MapData,"Title:",0)
-	local ArtistName = GetValue(MapData,"Artist:",0)
+	-- local SongName = GetValue(MapData,"Title:",0)
+	-- local ArtistName = GetValue(MapData,"Artist:",0)
 	local SongSpeed = GetValue(MapData,"SongSpeed:") or 1
-	local SongPitch = GetValue(MapData,"SongPitch:")
-	local SongVolume = GetValue(MapData,"BeatmapVolume:")
+	-- local SongPitch = GetValue(MapData,"SongPitch:")
+	-- local SongVolume = GetValue(MapData,"BeatmapVolume:")
 	local PreviewTime = tonumber(GetValue(MapData, "PreviewTime:", 1)) or 0
 
 	BackgroundFrame.ChangeRequest:Fire(ImageId)
@@ -50,7 +50,7 @@ function SwitchSong(customMap)
 
 	if not Song.IsReady then
 		local s = tick()
-		repeat wait() until Song.IsReady or tick() - s > 10
+		repeat task.wait() until Song.IsReady or tick() - s > 10
 
 		if not Song.IsReady and ThisSession == CurrentSession then
 			SwitchSong()

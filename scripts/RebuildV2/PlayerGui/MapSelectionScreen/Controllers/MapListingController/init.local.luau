@@ -30,10 +30,6 @@ function GetValue(FileData,Name,Spaces)
 	return Value
 end
 
-local function FetchMap()
-	
-end
-
 local CachedData = {}
 
 local function GetInformationOfMap(mapFile)
@@ -85,9 +81,7 @@ for _, item in ipairs(Items) do
 	item:Setup()
 end
 
-local function UpdateContainerPosition()
-	local pos = CurrentPosition
-	
+local function UpdateContainerPosition()	
 	ContainerFrame.Position = UDim2.fromScale(0, 0.5 - CurrentPosition * 0.15)
 	
 	local minIndex = math.max(1, CurrentPosition // 1 - RenderCap)
@@ -140,7 +134,7 @@ script.Parent.FocusToMap.Event:Connect(function(map)
 	if item then
 		local index = item.Index
 		
-		CurrentPosition = index - 10
+		SetCurrent(index - 10)
 		SetTarget(index)
 		item:SetFocus(true)
 	end
