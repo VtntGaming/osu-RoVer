@@ -24,7 +24,7 @@
       "MainGameplay": {
         "$className": "ScreenGui",
         "$ignoreUnknownInstances": true,
-        "$path": "scripts/RebuildV2/PlayerGui/MainGameplay",
+        "$path": "scripts/RebuildV2/PlayerGui/MainGameplay"
       }
     }
   }

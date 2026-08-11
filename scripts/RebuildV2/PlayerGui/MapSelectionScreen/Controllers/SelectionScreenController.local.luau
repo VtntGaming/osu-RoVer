@@ -12,7 +12,7 @@ local function SetEnabled(enabled: boolean)
 		MainUI.Enabled = true
 		local currentActiveBeatmap = SongChoosingValue.Value
 		if currentActiveBeatmap then
-			MainUI.MainFrame.MapListing.Scripts.FocusToMap:Fire(currentActiveBeatmap)
+			script.Parent.FocusToMap:Fire(currentActiveBeatmap)
 		end
 		
 		TweenService:Create(BackgroundFrame.DimBackground,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.75}):Play()
