@@ -19,8 +19,7 @@ local wait = require(workspace.WaitModule)
 local SystemGame = game.Players.LocalPlayer.PlayerGui.SystemGame
 local PlayScreen = script.Parent.Parent.PlayScreen.MainGameplay
 local GameSong = SystemGame.Song.GameSong
-
-
+local GameTime = require(script.Parent.GameTime)
 
 -- Game data
 
@@ -32,7 +31,7 @@ local MapData = require(OsuMapConvert)(SelectedMap,{
 	ReturnType = 1
 })
 
-local Start = tick() + 3
+GameTime.SetTime(-3)
 
 local AppliedMods = {
 	Speed = 1,
@@ -178,14 +177,14 @@ task.spawn(function()
 	local LastOffsetChange = tick()
 	
 	while task.wait() do
-		if math.abs(GameSong.TimePosition - (tick()-Start) * audioSpeed) > 0.25 and tick() - LastOffsetChange > 1 then
-			GameSong.TimePosition = math.max(0,(tick()-Start) * audioSpeed)
+		if math.abs(GameSong.TimePosition - (GameTime.GetTime()) * audioSpeed) > 0.25 and tick() - LastOffsetChange > 1 then
+			GameSong.TimePosition = math.max(0,(GameTime.GetTime()) * audioSpeed)
 			LastOffsetChange = tick()
 		end
 		
-		if not GameSong.IsPlaying and tick() - Start >= 0 and not isGameEnded then
+		if not GameSong.IsPlaying and GameTime.GetTime() >= 0 and not isGameEnded then
 			GameSong:Play()
-		elseif tick() - Start < 0 then
+		elseif GameTime.GetTime() < 0 then
 			GameSong:Stop()
 		end
 	end	
@@ -203,7 +202,7 @@ local BreakTimeFrame = script.Parent.Parent.PlayScreen.BreakTimeFrame
 
 task.spawn(function()
 	for _,BreakTimeData in pairs(MapData.BreakTime) do
-		repeat task.wait() until tick() - Start >= BreakTimeData.startTime/1000
+		repeat task.wait() until GameTime.GetTime() >= BreakTimeData.startTime/1000
 		local StartTime = BreakTimeData.startTime/1000
 		local EndTime = BreakTimeData.endTime/1000
 		local Duration = EndTime-StartTime
@@ -213,9 +212,9 @@ task.spawn(function()
 		TweenService:Create(BGDim,TweenInfo.new(1,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.4}):Play()
 		
 		task.spawn(function()
-			while task.wait() and tick() - Start < EndTime do
-				BreakTimeFrame.Progress.ActualProgress.Size = UDim2.new((EndTime - (tick() - Start))/Duration,0,1,0)
-				BreakTimeFrame.TimeDisplay.Text = string.format("%d",(EndTime - (tick() - Start) + 1))
+			while task.wait() and GameTime.GetTime() < EndTime do
+				BreakTimeFrame.Progress.ActualProgress.Size = UDim2.new((EndTime - (GameTime.GetTime()))/Duration,0,1,0)
+				BreakTimeFrame.TimeDisplay.Text = string.format("%d",(EndTime - (GameTime.GetTime()) + 1))
 			end
 		end)
 		
@@ -234,7 +233,7 @@ task.spawn(function()
 			end
 		end
 		
-		repeat task.wait() until tick() - Start >= EndTime-0.75
+		repeat task.wait() until GameTime.GetTime() >= EndTime-0.75
 		
 		for _,obj in pairs(BreakTimeFrame.StatusDisplay_L:GetChildren()) do
 			if obj:IsA("Frame") then
@@ -249,7 +248,7 @@ task.spawn(function()
 		end
 		
 		TweenService:Create(BreakTimeFrame.TimeDisplay,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.In),{Position = UDim2.new(0.5,0,0.25,20), TextTransparency = 1}):Play()
-		repeat task.wait() until tick() - Start >= EndTime
+		repeat task.wait() until GameTime.GetTime() >= EndTime
 		TweenService:Create(BGDim,TweenInfo.new(1,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.2}):Play()
 		
 		TweenService:Create(BreakTimeFrame.Progress,TweenInfo.new(0,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{Size = UDim2.new(0,0,0,5)}):Play()
@@ -263,14 +262,14 @@ local BackgroundFrame = game.Players.LocalPlayer.PlayerGui.GameBackground
 BackgroundFrame.ChangeRequest:Fire(MapData.RobloxData.BackgroundImageId)
 task.spawn(function()
 	TweenService:Create(BackgroundFrame.DimBackground,TweenInfo.new(1,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.4}):Play()
-	repeat task.wait() until tick() - Start >= (MapData.ObjectData[1].Timing-1000-ApproachTime)/1000
+	repeat task.wait() until GameTime.GetTime() >= (MapData.ObjectData[1].Timing-1000-ApproachTime)/1000
 	TweenService:Create(BackgroundFrame.DimBackground,TweenInfo.new(1,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.2}):Play()
 end)
 
 -- BETA game alert
 
 task.spawn(function()
-	repeat task.wait() until tick() - Start > 0
+	repeat task.wait() until GameTime.GetTime() > 0
 	
 	TweenService:Create(game.Players.LocalPlayer.PlayerGui.EarlyDevelopmentAlert.Alert,
 		TweenInfo.new(2,Enum.EasingStyle.Linear),{TextTransparency = 0.75}
@@ -359,10 +358,9 @@ inputEvent.Event:Connect(function(isEnabled, keyType)
 end)
 
 for ObjectId,ObjectData in pairs(MapData.ObjectData) do
-	-- Yeidld until the obj is ready to display
-	
-	if tick() - Start < (ObjectData.Timing-ApproachTime)/1000 then
-		repeat task.wait() until tick() - Start >= (ObjectData.Timing-ApproachTime-HoldingTime)/1000
+	-- Yeidld until the obj is ready to display	
+	if GameTime.GetTime() < (ObjectData.Timing-ApproachTime)/1000 then
+		repeat task.wait() until GameTime.GetTime() >= (ObjectData.Timing-ApproachTime-HoldingTime)/1000
 	end
 	
 	local ObjType = ObjectData.ObjType
@@ -550,12 +548,12 @@ for ObjectId,ObjectData in pairs(MapData.ObjectData) do
 									tickDisplayTime = math.max(SlideStart-500,SlideStart - ApproachTime - 250 + (1/#crrTickList*tickOrder) * math.min(sliderData.MovementTime/sliderData.SlidesCount) * 0.75)
 								end
 								local tickHitTime = SlideStart+data.Time
-								if tick() - Start < (tickDisplayTime)/1000 then
-									repeat task.wait() until tick() - Start >= (tickDisplayTime)/1000
+								if GameTime.GetTime() < (tickDisplayTime)/1000 then
+									repeat task.wait() until GameTime.GetTime() >= (tickDisplayTime)/1000
 								end
 								TweenService:Create(data.Obj,TweenInfo.new(0.25,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size = TickSize, ImageTransparency = 0}):Play()
-								if tick() - Start < tickHitTime/1000 then
-									repeat task.wait() until tick() - Start >= tickHitTime/1000
+								if GameTime.GetTime() < tickHitTime/1000 then
+									repeat task.wait() until GameTime.GetTime() >= tickHitTime/1000
 								end
 								addScore(30)
 								ResultData.Combo += 1
@@ -564,7 +562,7 @@ for ObjectId,ObjectData in pairs(MapData.ObjectData) do
 							end)
 						end
 						
-						repeat task.wait() until tick() - Start >= SlideEnd/1000
+						repeat task.wait() until GameTime.GetTime() >= SlideEnd/1000
 						reset()
 					end
 					
@@ -578,10 +576,10 @@ for ObjectId,ObjectData in pairs(MapData.ObjectData) do
 			local comboBeforeHit = ResultData.Combo
 			
 			task.spawn(function()
-				repeat task.wait() until tick() - Start >= (ObjectData.Timing-ApproachTime)/1000
+				repeat task.wait() until GameTime.GetTime() >= (ObjectData.Timing-ApproachTime)/1000
 				comboBeforeHit = ResultData.Combo
-				while task.wait() and tick() - Start <= (ObjectData.Timing)/1000 do
-					local TimeLeft = (ObjectData.Timing)/1000 - (tick() - Start)
+				while task.wait() and GameTime.GetTime() <= (ObjectData.Timing)/1000 do
+					local TimeLeft = (ObjectData.Timing)/1000 - (GameTime.GetTime())
 					local TimePassed = ApproachTime/1000 - TimeLeft
 					
 					for i,data in pairs(renderData) do
@@ -617,9 +615,9 @@ for ObjectId,ObjectData in pairs(MapData.ObjectData) do
 				
 				followCircle.Visible = true
 				local lastSlide = 0
-				while task.wait() and (tick() - Start < endTime/1000) do
+				while task.wait() and (GameTime.GetTime() < endTime/1000) do
 					local movementTime = sliderData.MovementTime
-					local timePassed = (tick() - Start)*1000 - ObjectData.Timing
+					local timePassed = (GameTime.GetTime())*1000 - ObjectData.Timing
 					local currentSlide = math.floor(timePassed/movementTime*slideCount)
 					local usingcurveData = currentSlide%2 == 0 and sliderData.CurvePoints or sliderData.ReverseCurvePoints
 					if currentSlide > lastSlide then
@@ -664,7 +662,7 @@ for ObjectId,ObjectData in pairs(MapData.ObjectData) do
 				changePos(usingcurveData[#usingcurveData].Pos)
 				AutoPlayData.CurrentNoteId = ObjectId+1
 				
-				--repeat task.wait() until tick() - Start >= endTime/1000
+				--repeat task.wait() until GameTime.GetTime() >= endTime/1000
 				TweenService:Create(sliderBase,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{GroupTransparency = 1}):Play()
 				wait(0.25)
 				sliderBase:Destroy()
@@ -674,17 +672,17 @@ for ObjectId,ObjectData in pairs(MapData.ObjectData) do
 		
 		-- Wait until it's the note turn to appear
 		
-		repeat task.wait() until tick() - Start >= (ObjectData.Timing-ApproachTime)/1000
+		repeat task.wait() until GameTime.GetTime() >= (ObjectData.Timing-ApproachTime)/1000
 		
 		task.spawn(function()
 			if Modifiers.AT then
 				if AutoPlayData.CurrentNoteId < ObjectId then
 					repeat task.wait() until AutoPlayData.CurrentNoteId >= ObjectId
 				end
-				ATMoveCursor(ObjectData.Position,ObjectData.Timing/1000 - (tick() - Start))
+				ATMoveCursor(ObjectData.Position,ObjectData.Timing/1000 - (GameTime.GetTime()))
 				task.spawn(function()
 					if not ObjectData.ExtraData.isSlider then
-						repeat task.wait() until tick() - Start >= ObjectData.Timing/1000
+						repeat task.wait() until GameTime.GetTime() >= ObjectData.Timing/1000
 						AutoPlayData.CurrentNoteId = ObjectId+1
 					end
 				end)
@@ -726,14 +724,14 @@ for ObjectId,ObjectData in pairs(MapData.ObjectData) do
 					local CurrentColor = MapComboColor[CurrentNoteOrder]
 					local h,s,v = CurrentColor:ToHSV()
 					NewConnection.BackgroundColor3 = Color3.fromHSV(h,s,math.min(0.7,math.max(0.4,v)))
-					--local movementTime = (NextNote.Timing/1000 - (tick() - Start))/2
+					--local movementTime = (NextNote.Timing/1000 - (GameTime.GetTime()))/2
 					--TweenService:Create(NewConnection,TweenInfo.new(movementTime, Enum.EasingStyle.Quart,Enum.EasingDirection.Out,0,true),{Size = UDim2.new(Distance/512,0,0.01,0)}):Play()
 					--TweenService:Create(NewConnection,TweenInfo.new(movementTime, Enum.EasingStyle.Linear,Enum.EasingDirection.In),{Position = UDim2.new(EndPos.X/512,0,EndPos.Y/384,0)}):Play()
 					
 					task.spawn(function()
 						local totalTravelTime = NextNote.Timing  - (ObjectData.Timing - ApproachTime)
-						while task.wait() and tick() - Start <= NextNote.Timing/1000 do
-							local progress = ((tick() - Start)*1000 - (ObjectData.Timing - ApproachTime))/totalTravelTime
+						while task.wait() and GameTime.GetTime() <= NextNote.Timing/1000 do
+							local progress = ((GameTime.GetTime())*1000 - (ObjectData.Timing - ApproachTime))/totalTravelTime
 							--print(progress,totalTravelTime)
 							if progress <= 0.75 then
 								if progress < 0 then
@@ -754,8 +752,8 @@ for ObjectId,ObjectData in pairs(MapData.ObjectData) do
 			end
 		end
 		
-		while task.wait() and tick() - Start <= (ObjectData.Timing)/1000 do
-			local TimeLeft = (ObjectData.Timing)/1000 - (tick() - Start)
+		while task.wait() and GameTime.GetTime() <= (ObjectData.Timing)/1000 do
+			local TimeLeft = (ObjectData.Timing)/1000 - (GameTime.GetTime())
 			local TimePassed = ApproachTime/1000 - TimeLeft
 			local Size = 1+3*TimeLeft/(ApproachTime/1000)
 			
