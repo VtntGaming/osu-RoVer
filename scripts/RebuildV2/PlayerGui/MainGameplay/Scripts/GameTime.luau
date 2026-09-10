@@ -6,7 +6,7 @@ local LastPausedTime = 0
 local IsPaused = false
 
 -- Returns the clock time in os.clock
-function GameTime.SetTime(t: number): number
+function GameTime.SetTime(t: number): number	
    CurrentClockTime = os.clock() - t
 
    return CurrentClockTime

@@ -19,6 +19,7 @@ local wait = require(workspace.WaitModule)
 local SystemGame = game.Players.LocalPlayer.PlayerGui.SystemGame
 local PlayScreen = script.Parent.Parent.PlayScreen.MainGameplay
 local GameSong = SystemGame.Song.GameSong
+local GameSong2 = SystemGame.Song.GameSong2
 local GameTime = require(script.Parent.GameTime)
 
 -- Game data
@@ -152,7 +153,7 @@ end
 ]]
 
 local Modifiers = {
-	AT = false
+	AT = true
 }
 
 
@@ -174,18 +175,55 @@ task.spawn(function()
 	GameSong.Looping = false
 	GameSong.PlaybackSpeed = audioSpeed
 	GameSong.Asset = "rbxassetid://"..MapData.RobloxData.RblxSoundID
+	local sound2Exist = MapData.RobloxData.RblxSoundID2 ~= nil
+	
+	if sound2Exist then
+		GameSong2.TimePosition = 0
+		GameSong2.Looping = false
+		GameSong2.PlaybackSpeed = audioSpeed
+		GameSong2.Asset = "rbxassetid://"..MapData.RobloxData.RblxSoundID2
+	end
+	
+	GameSong:Stop()
+	GameSong2:Stop()
+	
+	if not GameSong.IsReady then
+		repeat task.wait() until GameSong.IsReady
+	end
+	
+	if sound2Exist then
+		if not GameSong2.IsReady then
+			repeat task.wait() until GameSong2.IsReady
+		end
+	end
+	
 	local LastOffsetChange = tick()
 	
 	while task.wait() do
-		if math.abs(GameSong.TimePosition - (GameTime.GetTime()) * audioSpeed) > 0.25 and tick() - LastOffsetChange > 1 then
-			GameSong.TimePosition = math.max(0,(GameTime.GetTime()) * audioSpeed)
+		local playbackTime = GameTime.GetTime() * audioSpeed
+		local isPlayingOnAudio2 = false
+		
+		if playbackTime > GameSong.TimeLength then
+			isPlayingOnAudio2 = true
+			playbackTime -= GameSong.TimeLength
+		end
+		
+		local playingSong = isPlayingOnAudio2 and GameSong2 or GameSong
+		
+		if math.abs(playingSong.TimePosition - playbackTime) > 0.25 and tick() - LastOffsetChange > 1 then
+			playingSong.TimePosition = math.max(0, playbackTime)
 			LastOffsetChange = tick()
 		end
 		
-		if not GameSong.IsPlaying and GameTime.GetTime() >= 0 and not isGameEnded then
-			GameSong:Play()
+		if isPlayingOnAudio2 and GameSong.IsPlaying then
+			GameSong:Stop()
+		end
+		
+		if not playingSong.IsPlaying and GameTime.GetTime() >= 0 and not isGameEnded then
+			playingSong:Play()
 		elseif GameTime.GetTime() < 0 then
 			GameSong:Stop()
+			GameSong2:Stop()
 		end
 	end	
 end)
@@ -355,6 +393,10 @@ inputEvent.Event:Connect(function(isEnabled, keyType)
 	if isEnabled then
 		
 	end
+end)
+
+script.Parent.SetTime.Event:Connect(function(t: number)
+	GameTime.SetTime(t)
 end)
 
 for ObjectId,ObjectData in pairs(MapData.ObjectData) do
