@@ -347,7 +347,8 @@ local AutoPlayData = {
 ]]
 
 local ResultData = {
-	Score = 0, Combo = 0, MaxCombo = 0,
+	Score = 0, ScoreV2 = 0,
+	Combo = 0, MaxCombo = 0,
 	Hit300 = 0, Hit100 = 0, Hit50 = 0, Miss = 0,
 	TotalTick = 0, TickHitted = 0, TotalSLTail = 0, SLTailHitted = 0,
 	TotalSpin = 0, SpinnerSpin = 0
@@ -357,21 +358,75 @@ local inputData = {
 	{false,0},{false,0}
 }	-- K1, K2 (M1 and M2 is now grouped with K1 and K2)
 
+local function DoComboAddAnim(combo: number)
+	local comboDisplay = script.Parent.Parent.DisplayOverlay.ComboDisplay
+	local comboEffect = script.Parent.Parent.DisplayOverlay.ComboEffect
+	comboEffect.Text = string.format("%dx", combo)
+	
+	local t1 = TweenService:Create(comboEffect, TweenInfo.new(0), {TextTransparency = 0.4})
+	local t2 = TweenService:Create(comboEffect.UIScale, TweenInfo.new(0), {Scale = 1.5})
+	
+	t1:Play()
+	t2:Play()
+	
+	if t1.PlaybackState == Enum.PlaybackState.Playing then
+		t1.Completed:Wait()
+	end
+	
+	if t2.PlaybackState == Enum.PlaybackState.Playing then
+		t2.Completed:Wait()
+	end
+
+	
+	local animTime = 0.15
+	
+	TweenService:Create(comboEffect, TweenInfo.new(animTime, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
+	TweenService:Create(comboEffect.UIScale, TweenInfo.new(animTime, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {Scale = 1}):Play()
+	task.delay(0.1, function()
+		local t3 = TweenService:Create(comboDisplay.UIScale, TweenInfo.new(0), {Scale = 1.15})
+		t3:Play()
+		if t3.PlaybackState == Enum.PlaybackState.Playing then
+			t3.Completed:Wait()
+		end
+		TweenService:Create(comboDisplay.UIScale, TweenInfo.new(0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Scale = 1}):Play()
+	end)
+end
 
 task.spawn(function()
+	local previousCombo = 0
 	while task.wait() do
-		script.Parent.Parent.DisplayOverlay.ComboDisplay.Text = string.format("%dx",ResultData.Combo)
+		local currentCombo = ResultData.Combo
+		if currentCombo > previousCombo then
+			DoComboAddAnim(currentCombo)
+		end
+		script.Parent.Parent.DisplayOverlay.ComboDisplay.Text = string.format("%dx",currentCombo)
+		previousCombo = currentCombo
 	end
 end)
 
 function addScore(scoreValue)
 	ResultData.Score += scoreValue
-	local ScoreDisplay = script.Parent.Parent.DisplayOverlay.ScoreDisplay
 	local scoreV2 = math.pow(ResultData.Score/MapData.DetailedAnalyse.MaxScore,0.4667510321076327)*1000000
-
-	ScoreDisplay.Text = string.format("%.8d",ResultData.Score)
-	ScoreDisplay.ScoreV2.Text = string.format("%.6d",scoreV2)
+	ResultData.ScoreV2 = scoreV2
 end
+
+task.spawn(function()
+	local displayScore = 0
+	local displayScoreV2 = 0
+	local ScoreDisplay = script.Parent.Parent.DisplayOverlay.ScoreDisplay
+	
+	task.spawn(function()
+		while true do
+			local dt = task.wait()
+			local lerpFactor = math.min(1, dt * 10)
+			displayScore = math.lerp(displayScore, ResultData.Score, lerpFactor)
+			displayScoreV2 = math.lerp(displayScoreV2, ResultData.ScoreV2, lerpFactor)			
+
+			ScoreDisplay.Text = string.format("%.8d", displayScore)
+			ScoreDisplay.ScoreV2.Text = string.format("%.6d", displayScoreV2)
+		end
+	end)
+end)
 
 function ATMoveCursor(Pos,Time)
 	if not Modifiers.AT then
@@ -658,12 +713,25 @@ for ObjectId,ObjectData in pairs(MapData.ObjectData) do
 				local function changePos(pos)
 					followCircle.Position = UDim2.new(pos.X/512,0,pos.Y/384,0)
 				end
+				
+				local function setIndicatorSize(size: number)
+					local extendSize = 2
+					local adjustedSize = 1 + extendSize * size
+					
+					followCircle.Indicator.Size = UDim2.fromScale(adjustedSize, adjustedSize)
+				end
 
 				followCircle.Visible = true
 				local lastSlide = 0
+				local indicatorExpandTime = math.min(150, endTime * 1000 - ObjectData.Timing)
+				
 				while task.wait() and (GameTime.GetTime() < endTime/1000) do
 					local movementTime = sliderData.MovementTime
-					local timePassed = (GameTime.GetTime())*1000 - ObjectData.Timing
+					local timePassed = (GameTime.GetTime())*1000 - ObjectData.Timing					
+										
+					local indicatorSize = math.clamp(timePassed / indicatorExpandTime, 0, 1)
+					setIndicatorSize(indicatorSize)
+					
 					local currentSlide = math.floor(timePassed/movementTime*slideCount)
 					local usingcurveData = currentSlide%2 == 0 and sliderData.CurvePoints or sliderData.ReverseCurvePoints
 					if currentSlide > lastSlide then
@@ -708,8 +776,12 @@ for ObjectId,ObjectData in pairs(MapData.ObjectData) do
 				changePos(usingcurveData[#usingcurveData].Pos)
 				AutoPlayData.CurrentNoteId = ObjectId+1
 
-				--repeat task.wait() until GameTime.GetTime() >= endTime/1000
-				TweenService:Create(sliderBase,TweenInfo.new(0.25,Enum.EasingStyle.Linear),{GroupTransparency = 1}):Play()
+				local remainIndicatorSize = followCircle.Indicator.Size.X.Scale
+				local animateIndicatorSize = 1 + math.max(0, remainIndicatorSize - 1) * 0.5
+				TweenService:Create(followCircle.Indicator, TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+					Size = UDim2.fromScale(animateIndicatorSize, animateIndicatorSize)
+				}):Play()
+				TweenService:Create(sliderBase,TweenInfo.new(0.2,Enum.EasingStyle.Linear),{GroupTransparency = 1}):Play()
 				wait(0.25)
 				sliderBase:Destroy()
 			end)
@@ -829,11 +901,15 @@ for ObjectId,ObjectData in pairs(MapData.ObjectData) do
 
 		for _,obj in pairs(HitCircle:GetDescendants()) do
 			if obj:IsA("ImageLabel") then
-				TweenService:Create(obj,TweenInfo.new(0.25,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
+				local animTime = 0.25
+				if string.match(obj.Name, "Number") then
+					animTime = 0.05
+				end
+				TweenService:Create(obj,TweenInfo.new(animTime,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{ImageTransparency = 1}):Play()
 			end
 		end
 
-		TweenService:Create(HitCircle,TweenInfo.new(0.25,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Size = UDim2.new(CircleSize/384*1.5,0,CircleSize/384*1.5,0)}):Play()
+		TweenService:Create(HitCircle,TweenInfo.new(0.25,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{Size = UDim2.new(CircleSize/384*1.25,0,CircleSize/384*1.25,0)}):Play()
 		wait(0.25)
 
 		HitCircle:Destroy()
