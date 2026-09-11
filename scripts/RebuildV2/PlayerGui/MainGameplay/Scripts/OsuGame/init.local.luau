@@ -508,23 +508,29 @@ for ObjectId,ObjectData in pairs(MapData.ObjectData) do
 			local renderData = {}
 			for i,data in pairs(curvePoints) do
 				local lengthMultiplier = lengthMultiplier
+
+				local sliderPosition = data.Pos
 				if i == #curvePoints then
 					-- the last hitnote indicate NO connection
 					lengthMultiplier = 0
 				end
+				
+				local sliderUIPosition = UDim2.fromScale(sliderPosition.X / 512, sliderPosition.Y / 384)
+				local sliderPointSize = baseMultiplier * CircleSize / 384
+				
 				local baseSLPoint = script.SliderBase:Clone()
 				baseSLPoint.Parent = sliderBase.BaseFrame.Base
 				baseSLPoint.ZIndex = i
 				baseSLPoint.Rotation = data.Rotation
-				baseSLPoint.Size = UDim2.new(baseMultiplier*CircleSize/384,0,baseMultiplier*CircleSize/384,0)
-				baseSLPoint.Position = UDim2.new(data.Pos.X/512,0,data.Pos.Y/384,0)
+				baseSLPoint.Size = UDim2.fromScale(sliderPointSize, sliderPointSize)
+				baseSLPoint.Position = sliderUIPosition
 				baseSLPoint.ExtendFrame.Size = UDim2.new(data.Length*lengthMultiplier*1.15,0,1,0)
 				local baseSLOutline = script.SliderOutline:Clone() -- those 2 are basically the same, it's just the animation
 				baseSLOutline.Parent = sliderBase.BaseFrame.Overlay
 				baseSLOutline.ZIndex = i - 10000
 				baseSLOutline.Rotation = data.Rotation
-				baseSLOutline.Size = UDim2.new(baseMultiplier*outLineMulti*CircleSize/384,0,baseMultiplier*outLineMulti*CircleSize/384,0)
-				baseSLOutline.Position = UDim2.new(data.Pos.X/512,0,data.Pos.Y/384,0)
+				baseSLOutline.Size = UDim2.fromScale(sliderPointSize * outLineMulti, sliderPointSize * outLineMulti)
+				baseSLOutline.Position = sliderUIPosition
 				baseSLOutline.ExtendFrame.Size = UDim2.new((data.Length)*lengthMultiplier*1.01,0,1,-1)
 				renderData[#renderData+1] = {Pos = data.Pos,moveTime = data.MoveTime, basePoint = baseSLPoint, baseOverlay = baseSLOutline}
 			end 

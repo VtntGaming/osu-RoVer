@@ -590,9 +590,14 @@ function OsuMapConvert.Convert(mapObject, Properties): ReturnData
 					table.remove(sliderRawData,1)
 
 					local function insertPoint(list: {SliderCurveData}, position: Vector2)
+						if sliderVirtualLength >= sliderBeatLength then
+							return	-- Do not add more point as it's enough
+						end
+						
 						list[#list+1] = {
 							Pos = position, Length = 0, Rotation = 0, MoveTime = {Base = 0, Start = 0, Stop = 0}
 						}
+						
 						-- calculate previous lengthData
 						if #list > 1 then
 							local data = list[#list-1]
@@ -600,10 +605,26 @@ function OsuMapConvert.Convert(mapObject, Properties): ReturnData
 							local length = (position-crrPos).Magnitude
 							local lookVector = (position-crrPos).Unit 
 							local rotation = math.deg(math.atan2(lookVector.Y,lookVector.X))
+							
+							-- Cap the length if it's gonna reach the beat length limit
+							local adjustedLength = math.min(length, math.max(0, sliderBeatLength - sliderVirtualLength))
+
+							-- Adjust the position to fit with the adjusted length
+							if adjustedLength ~= length then
+								local latestPointData = list[#list]
+								local lengthRatio = adjustedLength / length
+
+								if not math.isfinite(lengthRatio) or lengthRatio < 0 then
+									lengthRatio = 0
+								end
+
+								latestPointData.Pos = crrPos:Lerp(latestPointData.Pos, lengthRatio)
+							end
+
 							data.Rotation = rotation
-							data.Length = length
-							data.MoveTime = {Base = length, Start = sliderVirtualLength, Stop = sliderVirtualLength+length}
-							sliderVirtualLength += length
+							data.Length = adjustedLength
+							data.MoveTime = {Base = adjustedLength, Start = sliderVirtualLength, Stop = sliderVirtualLength+adjustedLength}
+							sliderVirtualLength += adjustedLength
 						end
 					end
 
@@ -647,7 +668,6 @@ function OsuMapConvert.Convert(mapObject, Properties): ReturnData
 					end
 
 					-- For case of multiply slides, making a reverse version
-
 					if sliderSlidesCount > 1 then
 						sliderVirtualLength = 0 -- reset
 						for i = #sliderCurveData, 1, -1 do
