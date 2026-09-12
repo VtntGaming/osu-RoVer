@@ -12,13 +12,14 @@ export type ModItem = {
     ModID: string,
     Frame: ItemInstance,
     IsActivated: boolean,
-    Data: ModConfiguration.ModData,
+	Data: ModConfiguration.ModData,
+	ActivateThread: thread?,
     OptionData: {[string]: any},
     -- Init
     new: (modId: string) -> ModItem,
     -- Methods
     Setup: (self: ModItem) -> (),
-    SetActivated: (self: ModItem, activated: boolean) -> (),
+    SetActivated: (self: ModItem, activated: boolean, system: boolean?) -> (),
 }
 
 local ModItem: ModItem = {} :: ModItem
@@ -26,7 +27,6 @@ ModItem.__index = ModItem
 
 function ModItem.new(modId)
     local item = setmetatable({} :: any, ModItem)
-
 
     item.ModID = modId
     local frame = Template:Clone()
@@ -67,29 +67,41 @@ function ModItem:Setup()
     end)
 end
 
-function ModItem:SetActivated(activated)
-    self.IsActivated = activated
-    script.Parent.Parent.AnyChanged:Fire()
+function ModItem:SetActivated(activated, system)
+	self.IsActivated = activated
+	if not system then
+		script.Parent.Parent.AnyChanged:Fire(self.ModID)		
+	end
 
     local itemData = self.Data
 
     local itemType = itemData.Type
-    local palette = ModConfiguration.Palette[itemType]
+	local palette = ModConfiguration.Palette[itemType]
 
-    if palette then
-        local frame = self.Frame
-        local backgroundColor = activated and palette.HighlightedBackgroundColor or palette.BackgroundColor
-        local textColor = activated and palette.HighlightedTextColor or palette.TextColor
-        local strokeColor = activated and palette.HighlightedStrokeColor or palette.StrokeColor
-        local iconColor = activated and palette.HighlightedIconColor or palette.IconColor
+	if self.ActivateThread then
+		task.cancel(self.ActivateThread)
+	end
+	
+	self.ActivateThread = task.spawn(function()
+		if palette then
+			local frame = self.Frame
+			local backgroundColor = activated and palette.HighlightedBackgroundColor or palette.BackgroundColor
+			local textColor = activated and palette.HighlightedTextColor or palette.TextColor
+			local strokeColor = activated and palette.HighlightedStrokeColor or palette.StrokeColor
+			local iconColor = activated and palette.HighlightedIconColor or palette.IconColor
 
-        TweenService:Create(frame.MainFrame, TWEEN_INFO, {BackgroundColor3 = backgroundColor}):Play()
-        TweenService:Create(frame.MainFrame.Title, TWEEN_INFO, {TextColor3 = textColor}):Play()
-        TweenService:Create(frame.MainFrame.Desc,TWEEN_INFO, {TextColor3 = textColor}):Play()
-        TweenService:Create(frame.MainFrame.UIStroke,TWEEN_INFO, {Color = strokeColor}):Play()
-        TweenService:Create(frame.MainFrame.Icon.UIStroke,TWEEN_INFO, {Color = strokeColor}):Play()
-        TweenService:Create(frame.MainFrame.Icon.Icon,TWEEN_INFO, {ImageColor3 = iconColor}):Play()
-    end
+			for i = 1, 2 do
+				task.wait()
+			end
+
+			TweenService:Create(frame.MainFrame, TWEEN_INFO, {BackgroundColor3 = backgroundColor}):Play()
+			TweenService:Create(frame.MainFrame.Title, TWEEN_INFO, {TextColor3 = textColor}):Play()
+			TweenService:Create(frame.MainFrame.Desc,TWEEN_INFO, {TextColor3 = textColor}):Play()
+			TweenService:Create(frame.MainFrame.UIStroke,TWEEN_INFO, {Color = strokeColor}):Play()
+			TweenService:Create(frame.MainFrame.Icon.UIStroke,TWEEN_INFO, {Color = strokeColor}):Play()
+			TweenService:Create(frame.MainFrame.Icon.Icon,TWEEN_INFO, {ImageColor3 = iconColor}):Play()
+		end
+	end)
 end
 
 return ModItem

@@ -28,8 +28,10 @@ export type ModData = {
 	Name: string,
 	Type: ModType,
 	Description: string,
+	ScoreMultiplier: number?,
 	IconImage: string?,
 	DisableUI: boolean?,
+	IncompatibleMods: {string}?,
 	ModOptions: {ModOptionCombined}?,
 }
 
@@ -38,28 +40,35 @@ local ModList: {[string]: ModData} = {
 	HD = {
 		Name = "Hidden",
 		Type = "DifficultyIncrease",
-		Description = "No approach circle and the circle fade out before you click it.",		
+		Description = "No approach circle and the circle fade out before you click it.",
+		ScoreMultiplier = 1.06,
 	},
 	HR = {
 		Name = "Hard Rock",
 		Type = "DifficultyIncrease",
 		Description = "Faster react time, more accuracy required.",
+		ScoreMultiplier = 1.06,
+		IncompatibleMods = {"EZ"}
 	},
 	FL = {
 		Name = "Flashlight",
 		Type = "DifficultyIncrease",
 		Description = "Restricted view area. The higher combo you have, the less playfield area it gets.",
+		ScoreMultiplier = 1.12
 	},
 	-- DifficultyReduction
 	EZ = {
 		Name = "Easy",
 		Type = "DifficultyReduction",
 		Description = "Take it easy, bigger circle, more timing to react and such more mercy.",
+		ScoreMultiplier = 0.5,
+		IncompatibleMods = {"HR"}
 	},
 	NF = {
 		Name = "No Fail",
 		Type = "DifficultyReduction",
-		Description = "Now nothing can stop you from clearing the map."
+		Description = "Now nothing can stop you from clearing the map.",
+		ScoreMultiplier = 0.5,
 	},
 	-- Conversion
 	SA = {
@@ -75,7 +84,8 @@ local ModList: {[string]: ModData} = {
 				Max = 2,
 				Step = 0.1
 			}
-		}
+		},
+		DisableUI = true
 	},
 	-- Automation
 	AT = {
@@ -89,13 +99,17 @@ local ModList: {[string]: ModData} = {
 		Type = "DifficultyIncrease",
 		Description = "Let's gooooooooo!",
 		IconImage = "rbxassetid://110452058696064",
-		DisableUI = true,
+		--DisableUI = true,
+		ScoreMultiplier = 1.12,
+		IncompatibleMods = {"HT"},
 	},
 	HT = {
 		Name = "Half Time",
-		Type = "DifficultyIncrease",
+		Type = "DifficultyReduction",
 		Description = "Slowww downnnnnnn...",
-		DisableUI = true,
+		--DisableUI = true,
+		ScoreMultiplier = 0.3,
+		IncompatibleMods = {"DT"},
 	},
 }
 

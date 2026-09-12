@@ -103,14 +103,9 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 	local CurrentBeatmap = Settings.BeatmapFile.Text
 	local CurrentFileType = FileType
 	local CurrentSongDelay = Settings.Parent.VirtualSettings.InstantSettings.Offset.Value
-	local SongSpeed = tonumber(Settings.Speed.Text)
+	local SongSpeed = ModData.SA or 1
 	local SongVolume = GameSettings.getSettings:Invoke("MusicVolume")
 	local KeepOriginalPitch = GameSettings.getSettings:Invoke("EnableSpeedPitch")
-
-
-	if SongSpeed == nil or (SongSpeed < 0.5 or SongSpeed > 2) or SongSpeed ~= SongSpeed  then
-		SongSpeed = 1
-	end
 
 	ModData.SA = SongSpeed
 

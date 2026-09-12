@@ -272,34 +272,34 @@ if coreConfig.CursorRipplesEnabled then
 	end)
 end
 
-if CurrentSetting.MainSettings.AutoPlay.Text == "[AT] Auto play: Enabled" then
-	coreConfig.AutoPlay = true
-end
+--if CurrentSetting.MainSettings.AutoPlay.Text == "[AT] Auto play: Enabled" then
+--	coreConfig.AutoPlay = true
+--end
 
-if CurrentSetting.MainSettings.Flashlight.Text == "[FL] Flashlight: Enabled" then
-	coreConfig.Flashlight = true
-end
+--if CurrentSetting.MainSettings.Flashlight.Text == "[FL] Flashlight: Enabled" then
+--	coreConfig.Flashlight = true
+--end
 
-if CurrentSetting.MainSettings.SliderMode.Text == "[NS] No sliders: Enabled" then
-	coreConfig.SliderMode = false
-end
+--if CurrentSetting.MainSettings.SliderMode.Text == "[NS] No sliders: Enabled" then
+--	coreConfig.SliderMode = false
+--end
 
-if CurrentSetting.MainSettings.NoFail.Text == "[NF] No Fail: Enabled" then
-	TweenService:Create(CurrentSetting.MainSettings.HP,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{PlaceholderColor3 = Color3.new(0.698039, 0.423529, 0.423529)}):Play()
-	coreConfig.NoFail = true
-end
+--if CurrentSetting.MainSettings.NoFail.Text == "[NF] No Fail: Enabled" then
+--	TweenService:Create(CurrentSetting.MainSettings.HP,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{PlaceholderColor3 = Color3.new(0.698039, 0.423529, 0.423529)}):Play()
+--	coreConfig.NoFail = true
+--end
 
-if CurrentSetting.MainSettings.Hidden.Text == "[HD] Hidden: Enabled" then
-	coreConfig.HiddenMod = true
-end
+--if CurrentSetting.MainSettings.Hidden.Text == "[HD] Hidden: Enabled" then
+--	coreConfig.HiddenMod = true
+--end
 
-if CurrentSetting.MainSettings.HardRock.Text == "[HR] Hard Rock: Enabled" then
-	coreConfig.HardRock = true
-end
+--if CurrentSetting.MainSettings.HardRock.Text == "[HR] Hard Rock: Enabled" then
+--	coreConfig.HardRock = true
+--end
 
-if CurrentSetting.MainSettings.Easy.Text == "[EZ] Easy: Enabled" then
-	coreConfig.EasyMod = true
-end
+--if CurrentSetting.MainSettings.Easy.Text == "[EZ] Easy: Enabled" then
+--	coreConfig.EasyMod = true
+--end
 
 CurrentModData = {
 	HD = coreConfig.HiddenMod,
@@ -1710,8 +1710,10 @@ function ApplyModDataToCoreConfig()
 	-- Difficulty reduction
 	coreConfig.EasyMod = modData.EZ
 	coreConfig.NoFail = modData.NF
+	-- Conversions
+	SongSpeed = modData.SA or 1
 	-- Automation
-	coreConfig.AutoPlay = modData.AT
+	coreConfig.AutoPlay = coreConfig.AutoPlay or modData.AT
 end
 
 ReloadPreviewFrame = function(isInit: boolean?)
