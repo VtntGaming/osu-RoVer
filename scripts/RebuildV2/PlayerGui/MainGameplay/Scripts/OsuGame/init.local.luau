@@ -15,15 +15,17 @@ local TweenService = game:GetService("TweenService")
 local wait = require(workspace.WaitModule)
 
 -- Core data
-
+local GameplayScripts = script.Parent.Gameplay
+local CoreScripts = script.Parent.Core
 local SystemGame = game.Players.LocalPlayer.PlayerGui.SystemGame
 local PlayScreen = script.Parent.Parent.PlayScreen.MainGameplay
 local GameSong = SystemGame.Song.GameSong
 local GameSong2 = SystemGame.Song.GameSong2
 local GameTime = require(script.Parent.GameTime)
+local Modifiers = require(CoreScripts.Modifiers)
+local BreakTime = require(GameplayScripts.BreakTime)
 
 -- Game data
-
 local SelectedMap = SystemGame.Beatmap.SongChoosing.Value
 local OsuMapConvert = require(workspace.Gameplay.OsuMapConvert)
 local inputEvent = Instance.new("BindableEvent")
@@ -34,14 +36,7 @@ local MapData = OsuMapConvert.Convert(SelectedMap,{
 
 GameTime.SetTime(-3)
 
-local AppliedMods = {
-	Speed = 1,
-	Hidden = false,
-	HardRock = false,
-	Eazy = false,
-	NoFail = false,
-	DifficultyAdjust = false 
-}
+local AppliedMods = Modifiers.AppliedMods
 
 -- Game difficulty
 
@@ -168,7 +163,6 @@ local isGameEnded = false
 local cursorDisplay = script.Parent.Parent.CursorOverlay.Cursor
 
 -- Process the game song audio
-
 task.spawn(function()
 	local audioSpeed =  MapData.RobloxData.SongSpeed or 1
 	GameSong.TimePosition = 0
@@ -235,64 +229,7 @@ function toggleHitsound(sampleSet,HitsoundType,volume)
 end
 
 -- Process the break time
-
-local BreakTimeFrame = script.Parent.Parent.PlayScreen.BreakTimeFrame
-
-task.spawn(function()
-	for _,BreakTimeData in pairs(MapData.BreakTime) do
-		repeat task.wait() until GameTime.GetTime() >= BreakTimeData.StartTime/1000
-		local StartTime = BreakTimeData.StartTime/1000
-		local EndTime = BreakTimeData.EndTime/1000
-		local Duration = EndTime-StartTime
-
-		if Duration < 2 then continue end -- Only process animation if break time is more than 2 sec
-		local BGDim = game.Players.LocalPlayer.PlayerGui.GameBackground.DimBackground
-		TweenService:Create(BGDim,TweenInfo.new(1,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.4}):Play()
-
-		task.spawn(function()
-			while task.wait() and GameTime.GetTime() < EndTime do
-				BreakTimeFrame.Progress.ActualProgress.Size = UDim2.new((EndTime - (GameTime.GetTime()))/Duration,0,1,0)
-				BreakTimeFrame.TimeDisplay.Text = string.format("%d",(EndTime - (GameTime.GetTime()) + 1))
-			end
-		end)
-
-		TweenService:Create(BreakTimeFrame.Progress,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Size = UDim2.new(1,0,0,5)}):Play()
-		TweenService:Create(BreakTimeFrame.TimeDisplay,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0.5,0,0.25,0), TextTransparency = 0}):Play()
-
-		for _,obj in pairs(BreakTimeFrame.StatusDisplay_L:GetChildren()) do
-			if obj:IsA("Frame") then
-				TweenService:Create(obj.MainDisplay,TweenInfo.new(0.5+((obj.LayoutOrder-1)/3*0.5),Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0,-5,0,0),TextTransparency = 0}):Play()
-			end
-		end
-
-		for _,obj in pairs(BreakTimeFrame.StatusDisplay_R:GetChildren()) do
-			if obj:IsA("Frame") then
-				TweenService:Create(obj.MainDisplay,TweenInfo.new(0.5+((obj.LayoutOrder-1)/3*0.25),Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position = UDim2.new(0,0,0,0),TextTransparency = 0}):Play()
-			end
-		end
-
-		repeat task.wait() until GameTime.GetTime() >= EndTime-0.75
-
-		for _,obj in pairs(BreakTimeFrame.StatusDisplay_L:GetChildren()) do
-			if obj:IsA("Frame") then
-				TweenService:Create(obj.MainDisplay,TweenInfo.new(0.5+((obj.LayoutOrder-1)/3*0.25),Enum.EasingStyle.Quart,Enum.EasingDirection.In),{Position = UDim2.new(0,-50,0,0),TextTransparency = 1}):Play()
-			end
-		end
-
-		for _,obj in pairs(BreakTimeFrame.StatusDisplay_R:GetChildren()) do
-			if obj:IsA("Frame") then
-				TweenService:Create(obj.MainDisplay,TweenInfo.new(0.5+((obj.LayoutOrder-1)/3*0.25),Enum.EasingStyle.Quart,Enum.EasingDirection.In),{Position = UDim2.new(0,50,0,0),TextTransparency = 1}):Play()
-			end
-		end
-
-		TweenService:Create(BreakTimeFrame.TimeDisplay,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.In),{Position = UDim2.new(0.5,0,0.25,20), TextTransparency = 1}):Play()
-		repeat task.wait() until GameTime.GetTime() >= EndTime
-		TweenService:Create(BGDim,TweenInfo.new(1,Enum.EasingStyle.Linear),{BackgroundTransparency = 0.2}):Play()
-
-		TweenService:Create(BreakTimeFrame.Progress,TweenInfo.new(0,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{Size = UDim2.new(0,0,0,5)}):Play()
-		BreakTimeFrame.TimeDisplay.Text = "0"
-	end
-end)
+BreakTime.Start(MapData)
 
 -- Background change before starting game
 
