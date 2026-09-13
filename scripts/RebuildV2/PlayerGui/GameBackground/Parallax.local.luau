@@ -21,6 +21,7 @@ local SelectScreen = MenuScreen.MainScreen.SelectScreen
 
 local CurrentOffset = Vector2.zero
 local TargetOffset = Vector2.zero
+local FollowMultiplier = 1
 
 local function UpdateBackgroundParallax(offset: Vector2)
 	local adjustedOffset = offset * ParallaxIntensity * PARALLAX_BASE
@@ -50,8 +51,9 @@ end
 local function UpdateParallaxPosition(pos: Vector2)
 	local currentCamera = workspace.CurrentCamera :: Camera
 	local screenSize = currentCamera.ViewportSize
+	local adjustedPos = Vector2.min(Vector2.max(pos, Vector2.zero), screenSize)
 
-	local offset = (pos - screenSize / 2) / screenSize
+	local offset = (adjustedPos - screenSize / 2) / screenSize
 
 	TargetOffset = offset
 end
@@ -61,8 +63,13 @@ local function BindCursor()
 	local cursorUI = mainGameplayUI.CursorOverlay.Cursor
 	cursorUI:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
 		if mainGameplayUI.Enabled then
+			FollowMultiplier = 2
 			UpdateParallaxPosition(cursorUI.AbsolutePosition)
 		end
+	end)
+	
+	cursorUI.Destroying:Once(function()
+		BindCursor()
 	end)
 end
 
@@ -72,21 +79,17 @@ UserInputService.InputChanged:Connect(function(input)
 		local mainGameplayUI = PlayerGui:FindFirstChild("MainGameplay")
 		
 		if not mainGameplayUI or not mainGameplayUI.Enabled then
+			FollowMultiplier = 1
 			UpdateParallaxPosition(pos)			
 		end
 	end
 end)
 
 BindCursor()
-PlayerGui.ChildAdded:Connect(function(obj)
-	if obj.Name == "MainGameplay" then
-		BindCursor()
-	end
-end)
 
 RunService.PreRender:Connect(function(dt)
 	if CurrentOffset ~= TargetOffset then
-		local lerpAlpha = math.min(dt * 10, 1)
+		local lerpAlpha = math.min(dt * 10 * FollowMultiplier, 1)
 		CurrentOffset = CurrentOffset:Lerp(TargetOffset, lerpAlpha)
 		UpdateBackgroundParallax(CurrentOffset)
 		UpdateMenuScreenParallax(CurrentOffset)
