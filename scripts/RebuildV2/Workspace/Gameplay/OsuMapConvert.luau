@@ -309,10 +309,9 @@ function OsuMapConvert.Convert(mapObject, Properties): ReturnData
 	end
 
 	if string.find(MapData,"%[Metadata]") then
-		ReturnData.Metadata = {}
 		local attributeMetadata = {}
 		local _,s = string.find(MapData,"%[Metadata]")
-		local e = string.find(MapData,"%[",s)
+		local e = string.find(MapData,"%[Difficulty]",s)
 
 		if s and e then
 			local raw = string.split(string.sub(MapData,s+1,e-1),"\n")
