@@ -1,5 +1,8 @@
+--!strict
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local Players = game.Players
+local LocalPlayer = Players.LocalPlayer :: Player
 
 local ParallaxIntensity = 1
 
@@ -11,7 +14,8 @@ local BackgroundScale = Instance.new("UIScale")
 BackgroundScale.Parent = Background
 BackgroundScale.Scale = 1 + PARALLAX_BASE
 
-local MenuScreen = game.Players.LocalPlayer.PlayerGui.MenuScreen
+local PlayerGui = LocalPlayer.PlayerGui
+local MenuScreen = PlayerGui:WaitForChild("MenuScreen")
 local OnCloseValue = MenuScreen.OnClose
 local SelectScreen = MenuScreen.MainScreen.SelectScreen
 
@@ -43,14 +47,40 @@ local function SetIntensity(intensity: number)
 	ParallaxIntensity = intensity
 end
 
+local function UpdateParallaxPosition(pos: Vector2)
+	local currentCamera = workspace.CurrentCamera :: Camera
+	local screenSize = currentCamera.ViewportSize
+
+	local offset = (pos - screenSize / 2) / screenSize
+
+	TargetOffset = offset
+end
+
+local function BindCursor()
+	local mainGameplayUI = PlayerGui:WaitForChild("MainGameplay")
+	local cursorUI = mainGameplayUI.CursorOverlay.Cursor
+	cursorUI:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
+		if mainGameplayUI.Enabled then
+			UpdateParallaxPosition(cursorUI.AbsolutePosition)
+		end
+	end)
+end
+
 UserInputService.InputChanged:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseMovement then
 		local pos = UserInputService:GetMouseLocation()
-		local screenSize = workspace.CurrentCamera.ViewportSize
+		local mainGameplayUI = PlayerGui:FindFirstChild("MainGameplay")
 		
-		local offset = (pos - screenSize / 2) / screenSize
-		
-		TargetOffset = offset
+		if not mainGameplayUI or not mainGameplayUI.Enabled then
+			UpdateParallaxPosition(pos)			
+		end
+	end
+end)
+
+BindCursor()
+PlayerGui.ChildAdded:Connect(function(obj)
+	if obj.Name == "MainGameplay" then
+		BindCursor()
 	end
 end)
 
