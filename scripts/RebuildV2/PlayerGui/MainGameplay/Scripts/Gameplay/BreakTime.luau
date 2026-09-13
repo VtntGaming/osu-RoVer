@@ -83,9 +83,10 @@ function BreakTime.Start(mapData: OsuMapConvert.ReturnData)
 			local endTime = breakTimeData.EndTime/1000
 			local duration = endTime - startTime
 			
-			repeat task.wait() until GameTime.GetTime() >= startTime/1000
+			repeat task.wait() until GameTime.GetTime() >= startTime
 
 			if duration < 2 then continue end -- Only process animation if break time is more than 2 sec
+			
 			TweenService:Create(BGDim ,TweenInfo.new(1, Enum.EasingStyle.Linear),{BackgroundTransparency = 0.4}):Play()
 
 			task.spawn(function()
