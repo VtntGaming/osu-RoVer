@@ -92,7 +92,7 @@ function BreakTime.Start(mapData: OsuMapConvert.ReturnData)
 			task.spawn(function()
 				while task.wait() do
 					local current = GameTime.GetTime()
-					if current < endTime then
+					if current > endTime then
 						break
 					end
 					BreakTimeFrame.Progress.ActualProgress.Size = UDim2.fromScale((endTime - current) / duration, 1)
