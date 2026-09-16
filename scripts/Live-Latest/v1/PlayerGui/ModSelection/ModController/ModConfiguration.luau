@@ -48,7 +48,7 @@ local ModList: {[string]: ModData} = {
 		Type = "DifficultyIncrease",
 		Description = "Faster react time, more accuracy required.",
 		ScoreMultiplier = 1.06,
-		IncompatibleMods = {"EZ"}
+		IncompatibleMods = {"EZ", "DA"}
 	},
 	FL = {
 		Name = "Flashlight",
@@ -62,7 +62,7 @@ local ModList: {[string]: ModData} = {
 		Type = "DifficultyReduction",
 		Description = "Take it easy, bigger circle, more timing to react and such more mercy.",
 		ScoreMultiplier = 0.5,
-		IncompatibleMods = {"HR"}
+		IncompatibleMods = {"HR", "DA"}
 	},
 	NF = {
 		Name = "No Fail",
@@ -86,6 +86,52 @@ local ModList: {[string]: ModData} = {
 			}
 		},
 		DisableUI = true
+	},
+	DA = {
+		Name = "Difficulty Adjust",
+		Type = "Conversion",
+		Description = "Adjust the difficulty to everything you like",
+		ModOptions = {
+			{
+				Name = "AR",
+				Type = ModOptionType.Slider,
+				Default = 5,
+				Min = 0,
+				Max = 11,
+				Step = 0.1
+			},
+			{
+				Name = "OD",
+				Type = ModOptionType.Slider,
+				Default = 5,
+				Min = 0,
+				Max = 11,
+				Step = 0.1
+			},
+			{
+				Name = "CS",
+				Type = ModOptionType.Slider,
+				Default = 5,
+				Min = 0,
+				Max = 11,
+				Step = 0.1
+			},
+			{
+				Name = "HP",
+				Type = ModOptionType.Slider,
+				Default = 5,
+				Min = 0,
+				Max = 11,
+				Step = 0.1
+			},
+		},
+		IncompatibleMods = {"EZ", "HR"},
+		DisableUI = true
+	},
+	NS = {
+		Name = "No Sliders",
+		Type = "Conversion",
+		Description = "Make the slider into the regular circle, no more tricky hold and movement."
 	},
 	-- Automation
 	AT = {

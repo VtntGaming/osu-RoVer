@@ -25,7 +25,8 @@ local StaticBooleanMods = {
     "NF",
     "NS",
     "FL",
-    "AT",
+	"AT",
+	"NS"
 }
 
 local ScoreMultiplierValue = Instance.new("NumberValue")
