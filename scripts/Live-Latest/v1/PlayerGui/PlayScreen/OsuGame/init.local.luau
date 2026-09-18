@@ -1712,6 +1712,7 @@ function ApplyModDataToCoreConfig()
 	-- Conversions
 	SongSpeed = modData.SA or 1
 	coreConfig.SliderMode = not modData.NS
+	DifficultyAdjust = modData.DA
 	-- Automation
 	coreConfig.AutoPlay = coreConfig.AutoPlay or modData.AT
 end
