@@ -5,6 +5,8 @@ local ModConfig = require(script.ModConfiguration)
 local ModItem = require(script.ModItem)
 local ModData = require(Workspace.ModData)
 local Container = script.Parent.Parent.ModList.List
+local CustomizeFrame = script.Parent.Parent.Properties.ModCustomize
+local CustomizeContainer = CustomizeFrame.Listing
 
 type ModData = ModData.ModData
 
@@ -51,8 +53,26 @@ function GetModData(): ModData
 	
 	local isDT = GetBooleanStateOrDefault("DT", false)
 	local isHT = GetBooleanStateOrDefault("HT", false)
+	local isSA = GetBooleanStateOrDefault("SA", false)
+	local isDA = GetBooleanStateOrDefault("DA", false)
 	
-	if isDT then
+	if isDA then
+		local modDAItem = Items.DA
+		data.DA = {
+			Active = true,
+			Data = {
+				CS = modDAItem.OptionData.CS,
+				AR = modDAItem.OptionData.AR,
+				OD = modDAItem.OptionData.OD,
+				HP = modDAItem.OptionData.HP
+			}
+		}
+	end
+	
+	if isSA then
+		local modSAItem = Items.SA
+		data.SA = modSAItem.OptionData.Speed or 1
+	elseif isDT then
 		data.SA = 1.5
 	elseif isHT then
 		data.SA = 0.75
@@ -67,7 +87,11 @@ for id, data in pairs(ModConfig.ModList) do
     end
     local modItem = ModItem.new(id)
     modItem:Setup()
-    modItem.Frame.Parent = Container
+	modItem.Frame.Parent = Container
+	
+	if modItem.CustomizeItem then
+		modItem.CustomizeItem.Parent = CustomizeContainer
+	end
 
     local piority = table.find(Piority, modItem.Data.Type) or 999
 
@@ -99,14 +123,20 @@ script.Parent.AnyChanged.Event:Connect(function(modID: string, system: boolean?)
 	end	
 	
 	local scoreMultiplier = 1
+	local anyCustomizableActivated = false
 	for _, item in pairs(Items) do
 		if item.IsActivated then
 			local modMultiplier = item.Data.ScoreMultiplier
 			if modMultiplier then
 				scoreMultiplier *= modMultiplier
 			end
+			if item.CustomizeItem then
+				anyCustomizableActivated = true
+			end
 		end
 	end
+	
+	CustomizeFrame.Visible = anyCustomizableActivated
 	
 	TweenService:Create(ScoreMultiplierValue, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
 		Value = scoreMultiplier

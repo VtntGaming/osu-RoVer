@@ -10,7 +10,7 @@ local workspace = game:GetService("Workspace")
 StarterGui = game:GetService("StarterGui")
 ScriptComponent = script.Parent.GameplayScripts.Components
 ObjectTools = require(ScriptComponent.Gameplay.CircleObject)
-LocalPlayer = game.Players.LocalPlayer
+LocalPlayer = game.Players.LocalPlayer :: Player
 PlayerGui = LocalPlayer.PlayerGui
 ObjectManagement_Actor = game.Players.LocalPlayer.PlayerScripts.ObjectManagement_Actor
 ExternalFunction_Actor = game.Players.LocalPlayer.PlayerScripts.ExternalFunction_Actor
@@ -1695,7 +1695,6 @@ function GetModDataFromModSelection() : modData.ModData
 	
 	-- External adjustment
 	modData.TD = IsTouchDeviceActive()
-	modData.DA = DifficultyAdjust
 
 	return modData
 end
@@ -1996,6 +1995,7 @@ script.Parent.Parent.BG.StartButton.MouseButton1Click:Connect(function()
 		TweenService:Create(BGFrame.BeatmapLeaderboard,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{AnchorPoint = Vector2.new(0,0)}):Play()
 		TweenService:Create(BGFrame.BeatmapCount,TweenInfo.new(0.75,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{AnchorPoint = Vector2.new(0,0)}):Play()
 		TweenService:Create(PlayerGui.BG.Background.Background.BackgroundDim,TweenInfo.new(0.5,Enum.EasingStyle.Linear),{BackgroundTransparency = math.max(0.8,DefaultBackgroundTrans+0.2)}):Play()
+		PlayerGui.ModSelection.MainFrame.Scripts.SetEnabled:Fire(false)
 		if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
 			coreConfig.AutoPlay = true	-- Right control to toggle auto-play
 			print("Toggle autoplay")

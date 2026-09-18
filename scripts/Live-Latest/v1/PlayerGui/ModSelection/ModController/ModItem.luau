@@ -2,10 +2,16 @@
 local ModConfiguration = require(script.Parent.ModConfiguration)
 local Template = script.Parent.Assets.ModItem
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Assets = script.Parent.Assets
+local CustomizeItem = Assets.CustomizeItem
+local CustomizeSlider = Assets.CustomizeSlider
 
 local TWEEN_INFO = TweenInfo.new(0.1, Enum.EasingStyle.Linear)
 
 type ItemInstance = typeof(Template)
+type CustomizeItem = typeof(CustomizeItem)
+type CustomizeSlider = typeof(CustomizeSlider)
 
 export type ModItem = {
     __index: ModItem,
@@ -13,6 +19,7 @@ export type ModItem = {
     Frame: ItemInstance,
     IsActivated: boolean,
 	Data: ModConfiguration.ModData,
+	CustomizeItem: CustomizeItem?,
 	ActivateThread: thread?,
     OptionData: {[string]: any},
     -- Init
@@ -26,7 +33,7 @@ local ModItem: ModItem = {} :: ModItem
 ModItem.__index = ModItem
 
 function ModItem.new(modId)
-    local item = setmetatable({} :: any, ModItem)
+	local item = setmetatable({} :: any, ModItem) :: ModItem
 
     item.ModID = modId
     local frame = Template:Clone()
@@ -51,7 +58,49 @@ function ModItem.new(modId)
             frame.MainFrame.UIStroke.Color = palette.StrokeColor
             frame.MainFrame.Icon.UIStroke.Color = palette.StrokeColor
             frame.MainFrame.Icon.Icon.ImageColor3 = palette.IconColor
-        end
+		end
+		
+		local modOptions = itemData.ModOptions
+		
+		if modOptions and #modOptions > 0 then
+			local customizeItem = CustomizeItem:Clone()
+			customizeItem.Visible = false -- Default setup
+			customizeItem.Title.Title.Text = itemData.Name
+			local customizeColor = Color3.new(1,1,1)
+			if palette then
+				customizeColor = palette.TextColor
+			end
+			
+			customizeItem.Title.Title.TextColor3 = customizeColor
+			
+			for index, option in ipairs(modOptions) do
+				if option.Type == "Slider" then
+					local slider = CustomizeSlider:Clone()
+					slider.LayoutOrder = index
+					slider.Name = option.Name
+					slider.Title.Display.Text = option.Name
+					
+					local sliderOption = option :: ModConfiguration.ModOptionSlider
+					
+					slider.Name = sliderOption.Name
+					slider.Default.Value = sliderOption.Default
+					slider.Current.Value = sliderOption.Default
+					slider.Min.Value = sliderOption.Min
+					slider.Max.Value = sliderOption.Max
+					slider.Precision.Value = sliderOption.Step
+					
+					local sliderBody = slider.Slider.Body
+					
+					sliderBody.Ratio.BackgroundColor3 = customizeColor
+					sliderBody.Ratio.Center.BackgroundColor3 = customizeColor
+					
+					slider.SliderControl.Enabled = true
+					slider.Parent = customizeItem				
+				end
+			end
+			
+			item.CustomizeItem = customizeItem
+		end		
     end
 
     item.OptionData = {}
@@ -64,13 +113,56 @@ function ModItem:Setup()
 
     button.Activated:Connect(function()
         self:SetActivated(not self.IsActivated)
-    end)
+	end)
+	
+	local customizeItem = self.CustomizeItem
+	local didChange = false
+	if customizeItem then
+		for _, item in ipairs(customizeItem:GetChildren()) do
+			if item ~= self.CustomizeItem.Title and item ~= self.CustomizeItem.UIListLayout then
+				local sliderItem = item :: CustomizeSlider
+				
+				sliderItem.Current.Changed:Connect(function()
+					self.OptionData[sliderItem.Name] = sliderItem.Current.Value
+					didChange = true
+				end)
+				
+				sliderItem.Resetted.Event:Connect(function()
+					self.OptionData[sliderItem.Name] = nil
+				end)
+			end
+		end
+	end
+	
+	UserInputService.InputEnded:Connect(function(data)
+		if didChange and (data.UserInputType == Enum.UserInputType.MouseButton1 or data.UserInputType == Enum.UserInputType.Touch or data.UserInputType == Enum.UserInputType.Focus) then
+			didChange = false
+			script.Parent.Parent.AnyChanged:Fire(self.ModID)
+		end
+	end)
 end
 
 function ModItem:SetActivated(activated, system)
+	local wasActivated = self.IsActivated
 	self.IsActivated = activated
+	
+	if self.CustomizeItem then
+		self.CustomizeItem.Visible = activated
+		
+		if activated and not wasActivated then
+			for _, item in ipairs(self.CustomizeItem:GetChildren()) do
+				if item ~= self.CustomizeItem.Title and item ~= self.CustomizeItem.UIListLayout then
+					local sliderItem = item :: CustomizeSlider
+					sliderItem.Current.Value = sliderItem.Default.Value
+				end
+			end
+			
+			self.OptionData = {}	-- Reset states
+		end
+	end
+	
 	if not system then
-		script.Parent.Parent.AnyChanged:Fire(self.ModID)		
+		script.Parent.Parent.AnyChanged:Fire(self.ModID)
 	end
 
     local itemData = self.Data

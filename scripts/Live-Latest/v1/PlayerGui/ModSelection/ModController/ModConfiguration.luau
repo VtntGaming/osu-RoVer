@@ -79,13 +79,13 @@ local ModList: {[string]: ModData} = {
 			{
 				Name = "Speed",
 				Type = ModOptionType.Slider,
-				Default = 0.5,
+				Default = 1,
 				Min = 0.5,
 				Max = 2,
-				Step = 0.1
+				Step = 0.05
 			}
 		},
-		DisableUI = true
+		IncompatibleMods = {"HT", "DT"},
 	},
 	DA = {
 		Name = "Difficulty Adjust",
@@ -96,7 +96,7 @@ local ModList: {[string]: ModData} = {
 				Name = "AR",
 				Type = ModOptionType.Slider,
 				Default = 5,
-				Min = 0,
+				Min = -11,
 				Max = 11,
 				Step = 0.1
 			},
@@ -126,7 +126,6 @@ local ModList: {[string]: ModData} = {
 			},
 		},
 		IncompatibleMods = {"EZ", "HR"},
-		DisableUI = true
 	},
 	NS = {
 		Name = "No Sliders",
@@ -147,7 +146,7 @@ local ModList: {[string]: ModData} = {
 		IconImage = "rbxassetid://110452058696064",
 		--DisableUI = true,
 		ScoreMultiplier = 1.12,
-		IncompatibleMods = {"HT"},
+		IncompatibleMods = {"HT", "SA"},
 	},
 	HT = {
 		Name = "Half Time",
@@ -155,7 +154,7 @@ local ModList: {[string]: ModData} = {
 		Description = "Slowww downnnnnnn...",
 		--DisableUI = true,
 		ScoreMultiplier = 0.3,
-		IncompatibleMods = {"DT"},
+		IncompatibleMods = {"DT", "SA"},
 	},
 }
 
