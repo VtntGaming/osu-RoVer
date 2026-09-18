@@ -15,8 +15,9 @@ local FirstLoad = true
 local isOpen = false
 local NavigationSwitching = false
 local wait = require(workspace.WaitModule)
-
-local ListingButton = game.Players.LocalPlayer.PlayerGui.BG.BeatmapChooseButton
+local LocalPlayer = game.Players.LocalPlayer :: Player
+local PlayerGui = LocalPlayer.PlayerGui
+local ListingButton = PlayerGui.BG.BeatmapChooseButton
 local ListingFrame = script.Parent.Parent.Listing
 local CurrentChoosing
 local CurrentDiffChoosing
@@ -235,7 +236,7 @@ function ChooseDiff(DiffFrame,diffdata,DoNotLoadMap)
 
 	if CurrentDiffChoosingID ~= diffdata.BeatmapID and not DoNotLoadMap then
 		CurrentDiffChoosingID = diffdata.BeatmapID
-		game.Players.LocalPlayer.PlayerGui.PlayScreen.MapListingChange:Fire(diffdata.MapFile,diffdata.BeatmapID)
+		PlayerGui.PlayScreen.MapListingChange:Fire(diffdata.MapFile,diffdata.BeatmapID)
 	end
 
 	script.Parent.Parent.Parent.Parent.CurrentBeatmap.Value = diffdata.MapFile
@@ -394,7 +395,7 @@ function ChooseSet(MapFrame,Data,CustomDiffOrder,CustomMapID,DoNotLoadMap)
 			
 			task.wait(0.25)
 			
-			local newDiff = game.Players.LocalPlayer.PlayerGui.PlayScreen.RequestMapDifficulty:Invoke(diffdata.MapFile)
+			local newDiff = PlayerGui.PlayScreen.RequestMapDifficulty:Invoke(diffdata.MapFile)
 			newDiff = math.round(newDiff * 1000) / 1000
 			
 			if newDiff ~= diffdata.DiffRating then
@@ -686,8 +687,8 @@ function UpdateConnection()
 		script.Parent.Parent.Parent.Parent.ClickProtect.Visible = isOpen
 
 		local objList = script.Parent.Parent.Parent:GetChildren()
-		local AnimateFrame = game.Players.LocalPlayer.PlayerGui.BeatmapListing.MainFrame_Animation
-		local MainFrame = game.Players.LocalPlayer.PlayerGui.BeatmapListing.MainFrame
+		local AnimateFrame = PlayerGui.BeatmapListing.MainFrame_Animation
+		local MainFrame = PlayerGui.BeatmapListing.MainFrame
 		local InnerFrame = MainFrame.MainFrame
 
 		if FirstLoad then
@@ -761,8 +762,8 @@ script.Parent.MPForceUpdate.Event:Connect(function()
 end)
 
 function YeildForMapChooseButton()
-	repeat wait() until game.Players.LocalPlayer.PlayerGui:WaitForChild("BG"):FindFirstChild("BeatmapChooseButton")
-	return game.Players.LocalPlayer.PlayerGui:WaitForChild("BG"):FindFirstChild("BeatmapChooseButton")
+	repeat wait() until PlayerGui:WaitForChild("BG"):FindFirstChild("BeatmapChooseButton")
+	return PlayerGui:WaitForChild("BG"):FindFirstChild("BeatmapChooseButton")
 end
 
 spawn(function()
@@ -787,15 +788,15 @@ function CloseFrame()
 	if AnimationProcessing == true then
 		return
 	end
-	game.Players.LocalPlayer.PlayerGui.PlayScreen.MapLbUpdate:Fire()
+	PlayerGui.PlayScreen.MapLbUpdate:Fire()
 
 	isOpen = false
 	VisibleValue.Value = false
 	AnimationProcessing = true
 
 	local objList = script.Parent.Parent.Parent:GetChildren()
-	local AnimateFrame = game.Players.LocalPlayer.PlayerGui.BeatmapListing.MainFrame_Animation
-	local MainFrame = game.Players.LocalPlayer.PlayerGui.BeatmapListing.MainFrame
+	local AnimateFrame = PlayerGui.BeatmapListing.MainFrame_Animation
+	local MainFrame = PlayerGui.BeatmapListing.MainFrame
 	local InnerFrame = MainFrame.MainFrame
 
 	AnimateFrame.GroupTransparency = 0
@@ -958,20 +959,22 @@ FilterButton.MouseButton1Click:Connect(function()
 end)
 
 OptionFrame.MainFrame.Settings.Hitbox.MouseButton1Click:Connect(function()
-	local BGHolder = game.Players.LocalPlayer.PlayerGui:WaitForChild("BG").SettingsBG
-	local SettingFrame = game.Players.LocalPlayer.PlayerGui.BG.SettingsFrame
-	SettingFrame.Visible = true
-	SettingFrame.SettingsExitFrame.Visible = true
-	game:GetService("TweenService"):Create(SettingFrame.Parent.SettingsBG,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{BackgroundTransparency = 0.5}):Play()
-	game:GetService("TweenService"):Create(SettingFrame,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{AnchorPoint = Vector2.new(0,0)--[[,GroupTransparency = 0]]}):Play()
-	game:GetService("TweenService"):Create(SettingFrame.Frame.Frame,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(0,10,1,0)}):Play()
-	SettingFrame.InterfaceScript.UIFIx.Disabled = false
+	--local BGHolder = PlayerGui:WaitForChild("BG").SettingsBG
+	--local SettingFrame = PlayerGui.BG.SettingsFrame
+	--SettingFrame.Visible = true
+	--SettingFrame.SettingsExitFrame.Visible = true
+	--game:GetService("TweenService"):Create(SettingFrame.Parent.SettingsBG,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{BackgroundTransparency = 0.5}):Play()
+	--game:GetService("TweenService"):Create(SettingFrame,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{AnchorPoint = Vector2.new(0,0)--[[,GroupTransparency = 0]]}):Play()
+	--game:GetService("TweenService"):Create(SettingFrame.Frame.Frame,TweenInfo.new(1,Enum.EasingStyle.Quart,Enum.EasingDirection.InOut),{Size = UDim2.new(0,10,1,0)}):Play()
+	--SettingFrame.InterfaceScript.UIFIx.Disabled = false
 
-	spawn(function()
-		repeat wait() until
-		TriggerFilter(false) ~= "fail"
-	end)
-	CloseFrame()
+	--spawn(function()
+	--	repeat wait() until
+	--	TriggerFilter(false) ~= "fail"
+	--end)
+	--CloseFrame()
+	
+	PlayerGui.ModSelection.MainFrame.Scripts.SetEnabled:Fire(true)
 end)
 
 
@@ -1260,7 +1263,7 @@ end)
 local KeywordInput = FilterFrame.MainFrame.Keyword.SearchBar
 
 UserInputService.InputBegan:Connect(function(input)
-	if not game.Players.LocalPlayer.PlayerGui.BeatmapListing.Enabled or UserInputService:GetFocusedTextBox() then return end
+	if not PlayerGui.BeatmapListing.Enabled or UserInputService:GetFocusedTextBox() then return end
 	local keyword = UserInputService:GetStringForKeyCode(input.KeyCode)
 	if input.UserInputType == Enum.UserInputType.Keyboard and keyword ~= "" and keyword ~= "/" then -- in a special condition, when player's supposed to open the chat and not searching
 		if not FilterOpening then
