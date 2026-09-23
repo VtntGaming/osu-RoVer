@@ -42,3 +42,9 @@
 - fripSide - black bullet
 - Dion Timmer - Shiawase (VIP)
 - Kardashev - Cellar of Ghosts
+- Sabadu - A Very Polish Christmas
+- Arash - Temptation (feat. Rebecca) (Nightcore Mix)
+- 1914 - Mit Gott fuer Koenig und Vaterland
+- siinamota feat. Kagamine Rin - Shoujo A
+- LeaF - Calamity Fortune
+- rusino - Looping the Rooms feat. Hatsune Miku
