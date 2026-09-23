@@ -4840,34 +4840,33 @@ if isSpectating == true then
 
 		-- we will keep reading from the queue list
 		-- read from the first, remove that data until there's no queue
-
 		task.spawn(function()
 			SpecStartTickChange = tick()
 			while true do
-				local Data = queue[1]
+				local Data = table.remove(queue,1)
 				if not Data then
 					task.wait()
 					continue
 				end
-				table.remove(queue,1)
 				-- read the first queue data
 				local TimeProcess = Data.TimeProcess
 				local CurrentSpecTime = Data.SpecTime
 				local HostTime = Data.HostTime
 				local HostFPS = Data.HostFPS
+				local HostTimeNow = Data.TimeNow
 
 				if tick() - SpecStartTickChange > 5 or SpecStartTickChange == 0 then
 					local HostStartTick = tick() - CurrentSpecTime
 
-					local HostLatency = (workspace.ServerStatus.ServerTick.Value - HostTime)
-					print(HostLatency)
+					local HostLatency = workspace:GetServerTimeNow() - HostTimeNow
 					if HostLatency > SpectateDelay/1000 + 0.5 or HostLatency < SpectateDelay/1000 then -- more than 500ms then update
 						if HostLatency < SpectateDelay/1000 then
-							repeat task.wait() until (workspace.ServerStatus.ServerTick.Value - HostTime) >= SpectateDelay/1000
+							repeat task.wait() until workspace:GetServerTimeNow() - HostTimeNow >= SpectateDelay / 1000
 						end
 						StartTick = HostStartTick
 					end
 				end
+				
 				if SpecStartTickChange ~= 0 then
 					if tick() - StartTick < CurrentSpecTime and SpectateDelay > 0 then
 						repeat task.wait() until tick() - StartTick >= CurrentSpecTime or SpectateDelay <= 0
@@ -4880,18 +4879,22 @@ if isSpectating == true then
 				CurrentPerfomance = Data.InGameData.Perfomance
 				HighestPerfomance = Data.InGameData.HighestPerfomance
 
-				local ServerTick = workspace.ServerStatus.ServerTick.Value
-				local HostDelay = math.floor((ServerTick - HostTime)*1000)
+				local HostDelay = math.floor((workspace:GetServerTimeNow() - HostTimeNow)*1000)
+				
+				local spectateStats = SpecDelayFrame.Stats
 
-				SpecDelayFrame.HostDelay.Text = tostring(HostDelay).."ms"
-				SpecDelayFrame.HostFPS.Text = tostring(HostFPS).." FPS"
+				spectateStats.HostDelay.Text = tostring(HostDelay).."ms"
+				spectateStats.HostFPS.Text = tostring(HostFPS).." FPS"
+				
+				local currentTime = TimeUtils.GetTime()
+				local timeDifferent = math.abs(currentTime - TimeProcess)
+				
+				if timeDifferent > 0.01 then
+					TimeUtils.TimeJump(TimeProcess)					
+				end
 
-				TimeUtils.TimeJump(TimeProcess)
 				ScoreResultDisplay = Data.ScoreResult
 				SpectateGotFirstData = true
-
-
-
 				CursorPosition = Data.Changes.CursorPos
 				if SavedSpectateData.TD then
 					-- yield the action to the next move
@@ -4937,6 +4940,13 @@ if isSpectating == true then
 					GameOver()
 				end
 			end
+		end)		
+
+		task.spawn(function()
+			while task.wait() do
+				local spectateStats = SpecDelayFrame.Stats
+				spectateStats.FrameAwaits.Text = `Await: {#queue}`
+			end
 		end)
 	end
 end
@@ -4957,6 +4967,7 @@ function PostPlayingDataSignal(data)
 		SpecTime = tick() - StartPlayingTick,
 		HostFPS = GameplayFPS,
 		HostTime = workspace.ServerStatus.ServerTick.Value,
+		TimeNow = workspace:GetServerTimeNow(),
 		InGameData = {
 			Score = Score,
 			Acc = {
@@ -4992,7 +5003,7 @@ end)
 MouseHitEndEvent.Event:Connect(function(CurrentSecurityKey,data)
 	if isActivelyPlaying() then
 		if #game.Players:GetPlayers() > 1 and not gameEnded then
-			PostPlayingDataSignal(data)
+			PostPlayingDataSignal(data + 4)
 		end
 	end
 end)
