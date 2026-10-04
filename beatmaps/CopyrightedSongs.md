@@ -1,4 +1,4 @@
-### This list show songs that is copyrighted while attempt to add to Roblox
+### This list show songs that is copyrighted or moderated while attempt to add to Roblox
 ### These songs should not be requested in the future
 ### If you think the song is no longer copyrighted on Roblox, let me know on the Discord server
 
@@ -48,3 +48,4 @@
 - siinamota feat. Kagamine Rin - Shoujo A
 - LeaF - Calamity Fortune
 - rusino - Looping the Rooms feat. Hatsune Miku
+- SAWTOWNE - Confessions of a Rotten Girl feat. Hatsune Miku
