@@ -3201,7 +3201,7 @@ end
 
 function GameOver()
 	task.spawn(function()
-		if BeatmapFailed or coreConfig.NoFail or coreConfig.ReplayMode then
+		if BeatmapFailed or coreConfig.NoFail or coreConfig.ReplayMode or onTutorial then
 			return
 		end
 		if PlayRanked then
@@ -5026,6 +5026,8 @@ task.spawn(function()
 		game.ReplicatedStorage.Gameplay.UpdateStatus:FireServer(5)
 	elseif coreConfig.AutoPlay == true and isSpectating == false then
 		game.ReplicatedStorage.Gameplay.UpdateStatus:FireServer(4)
+	elseif coreConfig.ReplayMode then
+		game.ReplicatedStorage.Gameplay.UpdateStatus:FireServer(6)
 	end
 end)
 
