@@ -1715,6 +1715,21 @@ function ApplyModDataToCoreConfig()
 	DifficultyAdjust = modData.DA
 	-- Automation
 	coreConfig.AutoPlay = coreConfig.AutoPlay or modData.AT
+	
+	-- Special handle for tutorial	
+	if onTutorial then
+		coreConfig.AutoPlay = false
+		coreConfig.SliderMode = true
+		coreConfig.HiddenMod = false
+		coreConfig.Flashlight = false
+		coreConfig.HardRock = false
+		coreConfig.EasyMod = false
+		DifficultyAdjust = {
+			Active = false,
+			Data = {}
+		}
+		SongSpeed = 1
+	end
 end
 
 ReloadPreviewFrame = function(isInit: boolean?)
