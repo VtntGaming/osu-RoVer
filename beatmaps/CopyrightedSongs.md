@@ -49,3 +49,10 @@
 - LeaF - Calamity Fortune
 - rusino - Looping the Rooms feat. Hatsune Miku
 - SAWTOWNE - Confessions of a Rotten Girl feat. Hatsune Miku
+- YUI - again
+- Nogizaka46 - Yubi Bouenkyou ~Anime-ban~
+- KAMELOT - Liar Liar (Wasteland Monarchy)
+- Culprate & Joe Ford - Gaucho
+- HyuN feat. LyuU - Cross Over
+- GALNERYUS - WINGS OF JUSTICE
+- PassCode - Ray
