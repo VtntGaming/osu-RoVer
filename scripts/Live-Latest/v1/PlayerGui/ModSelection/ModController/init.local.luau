@@ -69,14 +69,18 @@ function GetModData(): ModData
 		}
 	end
 	
+	local speed = 1
+	
 	if isSA then
 		local modSAItem = Items.SA
-		data.SA = modSAItem.OptionData.Speed or 1
+		speed = modSAItem.OptionData.Speed or 1
 	elseif isDT then
-		data.SA = 1.5
+		speed = 1.5
 	elseif isHT then
-		data.SA = 0.75
+		speed = 0.75
 	end
+	
+	data.SA = speed
 
     return data
 end
