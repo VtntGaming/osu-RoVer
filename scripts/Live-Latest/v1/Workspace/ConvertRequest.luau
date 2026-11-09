@@ -1,6 +1,7 @@
 --!strict
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
+local OsuConvert = require(workspace.OsuConvert)
 
 local Cached: {[string]: any} = {}
 
@@ -32,6 +33,11 @@ function ConvertRequest.Request(prop, ...)
 		requestOptions = prop
 	else
 		table.insert(query, 1, prop)
+	end
+	
+	if true then
+		-- Disabled for now
+		return OsuConvert(unpack(query))
 	end
 	
 	local map = table.remove(query, 2) :: Instance
