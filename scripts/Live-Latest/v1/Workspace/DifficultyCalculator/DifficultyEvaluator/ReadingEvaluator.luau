@@ -85,8 +85,8 @@ local function retrievePastVisibleObjects(current: DifficultyHitObject): {Diffic
     for i = 1, current.objID do
         local hitObject = current.Previous(i)
         if not hitObject or
-            hitObject.Time - current.Time > READING_WINDOW_SIZE or
-            current.Time < hitObject.Time - current.Preempt
+            current.Time - hitObject.Time > READING_WINDOW_SIZE or
+            hitObject.Time < current.Time - current.Preempt
         then
             break
         end
