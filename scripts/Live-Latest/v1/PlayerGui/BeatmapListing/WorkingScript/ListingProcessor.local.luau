@@ -361,8 +361,6 @@ function ChooseSet(MapFrame,Data,CustomDiffOrder,CustomMapID,DoNotLoadMap)
 	end
 
 	local CurrentSetDiffOrder = RandomMap
-
-
 	
 	if MapFrame.MainFrame.DifficultyListing.Actual:FindFirstChild("Base") then
 		MapFrame.MainFrame.DifficultyListing.Actual.Base.Parent = MapFrame.MainFrame.DifficultyListing.Overlay
@@ -396,6 +394,11 @@ function ChooseSet(MapFrame,Data,CustomDiffOrder,CustomMapID,DoNotLoadMap)
 			task.wait(0.25)
 			
 			local newDiff = PlayerGui.PlayScreen.RequestMapDifficulty:Invoke(diffdata.MapFile)
+			
+			if not DiffFrame.Parent then
+				return
+			end
+			
 			newDiff = math.round(newDiff * 1000) / 1000
 			
 			if newDiff ~= diffdata.DiffRating then
