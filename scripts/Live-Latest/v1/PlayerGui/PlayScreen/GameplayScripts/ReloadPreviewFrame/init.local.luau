@@ -55,13 +55,13 @@ function GenerateSineTimeline(SourceTimeline)
 	return newTimeline
 end
 
-function formatNumber(num)
+function roundNumber(num)
 	return math.round(num*100)/100
 end
 
 function compare(num1, num2)
-	num1 = formatNumber(num1)
-	num2 = formatNumber(num2)
+	num1 = roundNumber(num1)
+	num2 = roundNumber(num2)
 	if num1 > num2 then
 		return 1
 	elseif num1 < num2 then
@@ -123,22 +123,29 @@ script.LoadPreviewFrame.OnInvoke = function(CurrentPreviewFrame,CurrentSetting,F
 		CurrentFileType = 1
 	end
 
-	local env = game.Players.LocalPlayer.PlayerScripts.ExternalFunction_Actor.ProcessCommand:Invoke("Core_OsuConvert",
-		{
-			FileType = CurrentFileType,
-			Beatmap = CurrentBeatmap,
-			DelayedTime = CurrentSongDelay,
-			isReturnDifficulty = true,
-			metadataonly = false,
-			GetPS = true,
-			ModData = ModData
-		}
+	--local env = game.Players.LocalPlayer.PlayerScripts.ExternalFunction_Actor.ProcessCommand:Invoke("Core_OsuConvert",
+	--	{
+	--		FileType = CurrentFileType,
+	--		Beatmap = CurrentBeatmap,
+	--		DelayedTime = CurrentSongDelay,
+	--		isReturnDifficulty = true,
+	--		metadataonly = false,
+	--		GetPS = true,
+	--		ModData = ModData
+	--	}
+	--)
+	local BeatmapData,ReturnData,TimmingPoints = require(workspace.ConvertRequest).Request(
+		CurrentFileType,
+		CurrentBeatmap,
+		CurrentSongDelay,
+		true,
+		false,
+		ModData
 	)
-	local BeatmapData,ReturnData,TimmingPoints
 
-	BeatmapData = env.ConvertedData
-	ReturnData = env.ReturningData
-	TimmingPoints = env.TimingPoints
+	--BeatmapData = env.ConvertedData
+	--ReturnData = env.ReturningData
+	--TimmingPoints = env.TimingPoints
 
 	local MaxCombo = ReturnData.Difficulty.MaxCombo
 	local TotalNoteCount = #BeatmapData

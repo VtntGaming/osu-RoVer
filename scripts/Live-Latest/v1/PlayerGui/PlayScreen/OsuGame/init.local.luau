@@ -1772,33 +1772,49 @@ modSelectionController.AnyChanged.Event:Connect(function()
 	ReloadPreviewFrame()
 end)
 
+local ConvertRequest = require(workspace.ConvertRequest)
+
 script.Parent.RequestMapDifficulty.OnInvoke = function(map): number
 	local songSpeed = tonumber(CurrentSetting.MainSettings.Speed.Text)
 	if songSpeed == nil or (songSpeed < 0.5 or songSpeed > 2) or songSpeed ~= songSpeed  then
 		songSpeed = 1
 	end
-	local data:modData.ModData = {
-		HD = coreConfig.HiddenMod,
-		HR = coreConfig.HardRock,
-		EZ = coreConfig.EasyMod,
-		NF = coreConfig.NoFail,
-		NS = not coreConfig.SliderMode,
-		FL = coreConfig.Flashlight,
-		RX = false,
-		AP = false,
-		AT = coreConfig.AutoPlay,
-		SO = false,
-		V2 = coreConfig.ScoreV2Enabled,
-		TD = IsTouchDeviceActive(),	-- By deafault it is false
-		DA = DifficultyAdjust,
-		SA = songSpeed
+	--local data:modData.ModData = {
+	--	HD = coreConfig.HiddenMod,
+	--	HR = coreConfig.HardRock,
+	--	EZ = coreConfig.EasyMod,
+	--	NF = coreConfig.NoFail,
+	--	NS = not coreConfig.SliderMode,
+	--	FL = coreConfig.Flashlight,
+	--	RX = false,
+	--	AP = false,
+	--	AT = coreConfig.AutoPlay,
+	--	SO = false,
+	--	V2 = coreConfig.ScoreV2Enabled,
+	--	TD = IsTouchDeviceActive(),	-- By deafault it is false
+	--	DA = DifficultyAdjust,
+	--	SA = songSpeed
+	--}
+
+
+	local data = GetModDataFromModSelection()
+	
+	local s = time()
+	local timeAwait = 1
+	
+	local requestOption = {
+		__RequestOptions = true,
+		ReturnDataOnly = true
 	}
 	
-	local _, returnData = require(workspace.OsuConvert)(1,map,0,true, false, data)
+	local _, returnData = ConvertRequest.Request(requestOption, 1, map, 0, true, false, data)
+	
+	--local _, returnData = require(workspace.OsuConvert)(1,map,0,true, false, data)
 	
 	local difficulty = returnData.Difficulty.BeatmapDifficulty
 	
-	for i = 1, 30 do
+	-- Await at least 1 sec, for a better transition ig :)
+	while time() - s < timeAwait do
 		task.wait()
 	end
 	
@@ -3053,10 +3069,11 @@ if isActivelyPlaying() then
 end
 
 -------------------
+local SpectatorsCount = 0
 task.spawn(function()
 	if SpectatorCountRemote then
 		StreamingLoop:AddLoop(function() return true end, 5, function()
-			local SpectatorsCount = SpectatorCountRemote:InvokeServer()
+			SpectatorsCount = SpectatorCountRemote:InvokeServer() or 0
 			if SpectatorsCount > 0 then
 				script.Parent.SpectatorsCount.Visible = true
 				script.Parent.SpectatorsCount.Text = "Spectators: "..tostring(SpectatorsCount)
@@ -4975,7 +4992,10 @@ if isSpectating == false and (coreConfig.AutoPlay == false or (LocalPlayer.UserI
 end
 
 function PostPlayingDataSignal(data)
-	PlayingRemote:FireServer({
+	if SpectatorsCount <= 0 then
+		return
+	end
+	local fullData = {
 		StartTime = Start,
 		ScoreResult = ScoreResultDisplay,
 		TimeProcess = TimeUtils.GetTime(),
@@ -5003,7 +5023,9 @@ function PostPlayingDataSignal(data)
 			CursorPos = CursorPosition,
 			KeyHit = data
 		}
-	})
+	}
+
+	PlayingRemote:FireServer(fullData)
 end
 
 
