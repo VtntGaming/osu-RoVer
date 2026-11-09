@@ -188,15 +188,20 @@ end
 
 function DifficultyHitObject.GenerateDifficultyHitObjects(baseList:{any}, baseData):{ObjectData}
 	local DifficultyObjects:{ObjectData} = {}
+	local timePreempt = converterTool.DifficultyRange(baseData.AR, PREEMPT_MAX, PREEMPT_MID, PREEMPT_MIN) // 1
+	local clockRate = baseData.ModData.SA
+	local preempt = timePreempt / clockRate
+	local timeFadeIn = 400 * math.min(1, timePreempt / PREEMPT_MIN)
+	
 	for objID = 1, #baseList do
 		local crr = baseList[objID]
 		local crrObj = {}::ObjectData
 
 		-- initialize important properties		
-		crrObj.TimePreempt = converterTool.DifficultyRange(baseData.AR, PREEMPT_MAX, PREEMPT_MID, PREEMPT_MIN) // 1
-		crrObj.ClockRate = baseData.ModData.SA
-		crrObj.Preempt = crrObj.TimePreempt / crrObj.ClockRate
-		crrObj.TimeFadeIn = 400 * math.min(1, crrObj.TimePreempt / PREEMPT_MIN)
+		crrObj.TimePreempt = timePreempt
+		crrObj.ClockRate = clockRate
+		crrObj.Preempt = preempt
+		crrObj.TimeFadeIn = timeFadeIn
 		--
 		local registeredIndex = #DifficultyObjects + 1
 		crrObj.objID = objID
