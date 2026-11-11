@@ -1,4 +1,5 @@
 --[LOCATION]:[StarterGui.BeatmapListing.MainFrame.MainFrame.WorkingScript.ListingProcessor]
+local Utils = require(script.Parent.Utils)
 local MapList = {}
 local SortData = {
 	Name = {},
@@ -358,6 +359,17 @@ function ChooseSet(MapFrame,Data,CustomDiffOrder,CustomMapID,DoNotLoadMap)
 		RandomMap = 1
 	elseif CustomDiffOrder == 2 then
 		RandomMap = #diffListing
+	else
+		local recommendedDiff = Utils.GetRecommendedDifficulty()
+		local lastDistance = math.huge
+		
+		for i, map in diffListing do
+			local distance = math.abs(map.DiffRating-recommendedDiff)
+			if distance < lastDistance then
+				lastDistance = distance
+				RandomMap = i
+			end
+		end
 	end
 
 	local CurrentSetDiffOrder = RandomMap
@@ -678,6 +690,31 @@ function resetDefault()
 		CustomSort = {}
 	}
 end
+
+local BeatmapValue = script.Parent.Parent.Parent.Parent.CurrentBeatmap
+
+local function InitialLoad()
+	resetDefault()
+	LoadListing()
+	SortListing()
+	BuildListing()
+	FirstLoad = false
+
+	local CurrentMap = BeatmapValue.Value or workspace.Beatmaps:GetChildren()[#workspace.Beatmaps:GetChildren()]
+	local data = require(CurrentMap)
+	local SetID = GetValue(data, "BeatmapSetID:", 0)
+	local MapID = GetValue(data, "BeatmapID:", 0)
+
+	local MapData = MapList[SetID]
+	local MapFrame = MapData.MapFrame			
+
+	ChooseSet(MapFrame, MapData, -1, MapID, true)
+
+	for i = 1,30 do
+		wait()
+	end
+end
+
 function UpdateConnection()
 	Connection = ListingButton.MouseButton1Click:Connect(function()
 		if AnimationProcessing then
@@ -695,26 +732,7 @@ function UpdateConnection()
 		local InnerFrame = MainFrame.MainFrame
 
 		if FirstLoad then
-			resetDefault()
-			LoadListing()
-			SortListing()
-			BuildListing()
-			FirstLoad = false
-
-			local CurrentMap = script.Parent.Parent.Parent.Parent.CurrentBeatmap.Value or workspace.Beatmaps:GetChildren()[#workspace.Beatmaps:GetChildren()]
-			local data = require(CurrentMap)
-			local SetID = GetValue(data, "BeatmapSetID:", 0)
-			local MapID = GetValue(data, "BeatmapID:", 0)
-			
-			local MapData = MapList[SetID]
-			local MapFrame = MapData.MapFrame			
-
-			ChooseSet(MapFrame, MapData, -1, MapID, true)
-
-			for i = 1,30 do
-				wait()
-			end
-
+			InitialLoad()
 		elseif ForceUpdate then
 			ForceUpdate = false
 		end
@@ -771,6 +789,11 @@ end
 
 spawn(function()
 	UpdateConnection()
+	-- Load the listing on start, so they won't have to experience lag
+	while not BeatmapValue.Value do
+		task.wait()
+	end
+	InitialLoad()
 	while wait() do
 		if ListingButton.Parent == nil then
 			ListingButton = YeildForMapChooseButton()
